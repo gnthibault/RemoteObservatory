@@ -6,6 +6,7 @@ import logging.config
 # Local stuff
 from Observatory.VirtualObservatory import VirtualObservatory
 from Service.VirtualService import VirtualService
+from Service.WUGMoonService import WUGMoonService
 
 
 if __name__ == '__main__':
@@ -15,5 +16,5 @@ if __name__ == '__main__':
   logger = logging.getLogger('mainLogger')
 
   # Instanciate object of interest
-  obs = VirtualObservatory(logger=logger)
-  serv = VirtualService(logger=logger)
+  #obs = VirtualObservatory(logger=logger)
+  serv = WUGMoonService(logger=logger)

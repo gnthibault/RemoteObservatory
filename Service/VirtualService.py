@@ -1,6 +1,6 @@
 #Basic stuff
 import logging
-
+import json
 
 class VirtualService(object):
   """ Virtual Service """
