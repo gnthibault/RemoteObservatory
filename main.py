@@ -24,13 +24,14 @@ if __name__ == '__main__':
   # test moon service
   servMoon = WUGMoonService(logger=logger)
   servMoon.setGpsCoordinates(obs.getGpsCoordinates())
-  servMoon.printEverything()
-  print('illuminated moon is '+str(servMoon.getPercentIlluminated()))
-  print('Age of moon is '+str(servMoon.getAgeOfMoon()))
-  print('Is moon risen '+str(servMoon.isMoonRisen()))
+  #servMoon.printEverything()
+  #print('illuminated moon is '+str(servMoon.getPercentIlluminated()))
+  #print('Age of moon is '+str(servMoon.getAgeOfMoon()))
+  #print('has moon rose '+str(servMoon.hasMoonRose()))
 
   # test Weather service
   servWeather = WUGWeatherService(logger=logger)
   servWeather.setGpsCoordinates(obs.getGpsCoordinates())
   servWeather.printEverything()
+
   

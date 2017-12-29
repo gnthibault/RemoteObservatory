@@ -27,7 +27,7 @@ class WUGMoonService(WUGService):
    res = self.sendRequest(self.APIFuncLink)
    return int(res['moon_phase']['ageOfMoon'])
 
-  def isMoonRisen(self):
+  def hasMoonRose(self):
    res = self.sendRequest(self.APIFuncLink)
    curTime = datetime.time(hour=int(res['moon_phase']['current_time']['hour']),\
      minute=int(res['moon_phase']['current_time']['minute']))
@@ -35,8 +35,18 @@ class WUGMoonService(WUGService):
      minute=int(res['moon_phase']['moonrise']['minute']))
    moonSet = datetime.time(hour=int(res['moon_phase']['moonset']['hour']),\
      minute=int(res['moon_phase']['moonset']['minute']))
+ 
+   # First check wether the rise/set is within the current day
+   isWithin = moonRise<moonSet
 
-   if curTime>moonRise and curTime < moonSet:
-     return True
+   if isWithin:
+     if curTime>moonRise and curTime<moonSet:
+       return True
+     else:
+       return False
    else:
-     return False
+     if curTime>moonRise:
+       return True
+     else:
+       return False
+
