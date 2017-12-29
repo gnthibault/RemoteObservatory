@@ -20,3 +20,8 @@ class WUGMoonService(WUGService):
 
   def __init__(self, configFileName=None, logger=None):
     WUGService.__init__(self,configFileName, logger)
+    self.APIFuncLink = 'astronomy/q'
+
+  def printEverything(self):
+   res = self.sendRequest(self.APIFuncLink)
+   print(str(res))   

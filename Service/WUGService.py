@@ -12,9 +12,11 @@ class WUGService(object):
 
   def __init__(self, configFileName=None, logger=None):
     self.logger = logger or logging.getLogger(__name__)
+    self.gpsCoordinates = {'latitude': '0.0', 'longitude': '0.0'}
+    self.baseAPIURL = 'http://api.wunderground.com/api'
 
     if configFileName is None:
-      # Default file is ~/.wug
+      # Default file is ~/.wug.json
       home = Path.home()
       config = home / '.wug.json'
       self.configFileName = str(config)
@@ -33,19 +35,23 @@ class WUGService(object):
     # Finished configuring
     self.logger.info('Configured WUG service successfully')
 
-
-  def sendRequest(self):
+  def setGpsCoordinates(self,gpsCoordinates):
+    self.gpsCoordinates = gpsCoordinates
+  
+  def sendRequest(self,APIFuncLink):
     try:
-      pass
-      #req = urllib.request.Request('http://api.wunderground.com/api/Your_Key/geolookup/conditions/q/IA/Cedar_Rapids.json')
-      #http://api.wunderground.com/api/33c725c475ee1f3a/conditions/q/10.9838099,-74.853037,13.json
-      #res = urllib.request.urlopen(req)
-      #jsonString = res.read()
-      #parsed_json = json.loads(json_string)
-      #location = parsed_json['location']['city']
-      #temp_f = parsed_json['current_observation']['temp_f']
-      #print( "Current temperature in %s is: %s" % (location, temp_f))
-      #res.close()
+      # Forging the URL
+      url = self.baseAPIURL+'/'+self.key+'/'+APIFuncLink+'/'+\
+      self.gpsCoordinates['latitude']+','+self.gpsCoordinates['longitude']+\
+      '.json'
+
+      self.logger.debug("WUGService about to send request: %s",url)
+
+      req = urllib.request.Request(url)
+      with urllib.request.urlopen(req) as res:
+        jsonString = res.read()
+        data = json.loads(jsonString)
     except urllib.error.URLError as e:
       logger.error("WUGService error is ",e.reason)
 
+    return data

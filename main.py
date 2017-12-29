@@ -8,6 +8,7 @@ from Observatory.VirtualObservatory import VirtualObservatory
 from Observatory.ShedObservatory import ShedObservatory
 from Service.VirtualService import VirtualService
 from Service.WUGMoonService import WUGMoonService
+from Service.WUGWeatherService import WUGWeatherService
 
 
 if __name__ == '__main__':
@@ -19,5 +20,10 @@ if __name__ == '__main__':
   # Instanciate object of interest
   #obs = VirtualObservatory(logger=logger)
   obs = ShedObservatory(logger=logger)
-  serv = WUGMoonService(logger=logger)
+  servMoon = WUGMoonService(logger=logger)
+  servMoon.setGpsCoordinates(obs.getGpsCoordinates())
+  servMoon.printEverything()
+  servWeather = WUGWeatherService(logger=logger)
+  servWeather.setGpsCoordinates(obs.getGpsCoordinates())
+  servWeather.printEverything()
   

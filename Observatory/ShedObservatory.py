@@ -26,6 +26,8 @@ class ShedObservatory(object):
     # Finished configuring
     self.logger.info('Configured ShedObservatory successfully')
     
+  def getGpsCoordinates(self):
+    return self.gpsCoordinates
 
   def openEverything(self):
     self.logger.info('ShedObservatory: open everything....')
