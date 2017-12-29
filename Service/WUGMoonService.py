@@ -1,22 +1,15 @@
 #Basic stuff
 import logging
 import json
-
+import datetime
 
 # Local stuff
 from Service.WUGService import WUGService
 
 class WUGMoonService(WUGService):
   """ WUGMoon Service:
-  moon_phase:
-    precentIlluminated
-    ageOfMoon
-    current_time.hour
-    current_time.minute
-    sunrise.hour
-    sunrise.minute
-    sunset.hour
-    sunset.minute"""
+    https://www.wunderground.com/weather/api/d/docs?d=data/astronomy&MR=1
+  """
 
   def __init__(self, configFileName=None, logger=None):
     WUGService.__init__(self,configFileName, logger)
@@ -24,4 +17,26 @@ class WUGMoonService(WUGService):
 
   def printEverything(self):
    res = self.sendRequest(self.APIFuncLink)
-   print(str(res))   
+   print(str(res))
+
+  def getPercentIlluminated(self):
+   res = self.sendRequest(self.APIFuncLink)
+   return int(res['moon_phase']['percentIlluminated'])
+
+  def getAgeOfMoon(self):
+   res = self.sendRequest(self.APIFuncLink)
+   return int(res['moon_phase']['ageOfMoon'])
+
+  def isMoonRisen(self):
+   res = self.sendRequest(self.APIFuncLink)
+   curTime = datetime.time(hour=int(res['moon_phase']['current_time']['hour']),\
+     minute=int(res['moon_phase']['current_time']['minute']))
+   moonRise = datetime.time(hour=int(res['moon_phase']['moonrise']['hour']),\
+     minute=int(res['moon_phase']['moonrise']['minute']))
+   moonSet = datetime.time(hour=int(res['moon_phase']['moonset']['hour']),\
+     minute=int(res['moon_phase']['moonset']['minute']))
+
+   if curTime>moonRise and curTime < moonSet:
+     return True
+   else:
+     return False
