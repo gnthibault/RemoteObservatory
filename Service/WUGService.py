@@ -16,7 +16,7 @@ class WUGService(object):
     if configFileName is None:
       # Default file is ~/.wug
       home = Path.home()
-      config = home / '.wug'
+      config = home / '.wug.json'
       self.configFileName = str(config)
     else:
       self.configFileName = configFileName
@@ -38,6 +38,7 @@ class WUGService(object):
     try:
       pass
       #req = urllib.request.Request('http://api.wunderground.com/api/Your_Key/geolookup/conditions/q/IA/Cedar_Rapids.json')
+      #http://api.wunderground.com/api/33c725c475ee1f3a/conditions/q/10.9838099,-74.853037,13.json
       #res = urllib.request.urlopen(req)
       #jsonString = res.read()
       #parsed_json = json.loads(json_string)
