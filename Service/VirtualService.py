@@ -6,7 +6,7 @@ class VirtualService(object):
   """ Virtual Service """
   #name = 'service'    # class variable shared by all instances
 
-  def __init__(self, configFileName, logger=None):
+  def __init__(self, configFileName=None, logger=None):
     self.logger = logger or logging.getLogger(__name__)
     self.configFileName = configFileName  # instance variable
     self.logger.info('Configuring object with file %s',self.configFileName)
@@ -16,13 +16,13 @@ class VirtualService(object):
 
   def connect(self):
     self.logger.info('Connecting service...')
-    self.logger.info('Service connected')
     pass
+    self.logger.info('Service connected')
 
   def disconnect(self):
     self.logger.info('Disconnecting service...')
-    self.logger.info('Service disconnected')
     pass
+    self.logger.info('Service disconnected')
 
   def onEmergency(self):
     self.logger.info('Service: on emergency routine started...')
