@@ -3,9 +3,9 @@ import json
 import logging
 from pathlib import Path
 
-# Service stuff
-import urllib.request
-import urllib.error
+#Cached requests
+import requests
+import requests_cache
 
 class WUGService(object):
   """ WUG Service """
@@ -13,7 +13,13 @@ class WUGService(object):
   def __init__(self, configFileName=None, logger=None):
     self.logger = logger or logging.getLogger(__name__)
     self.gpsCoordinates = {'latitude': '0.0', 'longitude': '0.0'}
+
+    # API request engine
     self.baseAPIURL = 'http://api.wunderground.com/api'
+    #update request only once every 3 min 
+    self.cacheTimeSec = 3*60
+    requests_cache.install_cache('wug_cache', backend='sqlite',\
+    expire_after=self.cacheTimeSec) 
 
     if configFileName is None:
       # Default file is ~/.wug.json
@@ -44,14 +50,10 @@ class WUGService(object):
       url = self.baseAPIURL+'/'+self.key+'/'+APIFuncLink+'/'+\
       self.gpsCoordinates['latitude']+','+self.gpsCoordinates['longitude']+\
       '.json'
-
+      # Sending request
       self.logger.debug("WUGService about to send request: %s",url)
-
-      req = urllib.request.Request(url)
-      with urllib.request.urlopen(req) as res:
-        jsonString = res.read()
-        data = json.loads(jsonString)
-    except urllib.error.URLError as e:
-      logger.error("WUGService error is ",e.reason)
-
-    return data
+      data = requests.get(url).json()
+      return data
+    except requests.exceptions.RequestException as e:
+      self.logger.error("WUGService error is %s",e)
+      return None
