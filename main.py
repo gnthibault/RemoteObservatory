@@ -32,6 +32,14 @@ if __name__ == '__main__':
   # test Weather service
   servWeather = WUGWeatherService(logger=logger)
   servWeather.setGpsCoordinates(obs.getGpsCoordinates())
-  servWeather.printEverything()
+  #servWeather.printEverything()
+  #print('Temperature is ',str(servWeather.getTemp_c()))
+  #print('relative humidity is ',str(servWeather.getRelative_humidity()))
+  #print('Wind is ',str(servWeather.getWind_kph()))
+  #print('Wind gust is',str(servWeather.getWind_gust_kph()))
+  #print('Pressure is ',str(servWeather.getPressure_mb()))
+  #print('dewpoint is ',str(servWeather.getDewpoint_c()))
+  #print('visibility is ',str(servWeather.getVisibility_km()))
+  #print('Weather quality is ',str(servWeather.getWeatherQuality()))
 
   
