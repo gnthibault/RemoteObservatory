@@ -3,13 +3,19 @@ import logging
 import logging.config
 
 
-# Local stuff
+# Local stuff : Observatory
 from Observatory.VirtualObservatory import VirtualObservatory
 from Observatory.ShedObservatory import ShedObservatory
+
+# Local stuff : Observatory
 from Service.VirtualService import VirtualService
 from Service.WUGSunService import WUGSunService
 from Service.WUGMoonService import WUGMoonService
 from Service.WUGWeatherService import WUGWeatherService
+
+# Local stuff : Observatory
+from Camera.IndiVirtualCamera import IndiVirtualCamera
+
 
 
 if __name__ == '__main__':
@@ -52,4 +58,6 @@ if __name__ == '__main__':
   #print('visibility is ',str(servWeather.getVisibility_km()))
   #print('Weather quality is ',str(servWeather.getWeatherQuality()))
 
-  
+  # test indi camera class
+  cam = IndiVirtualCamera(logger=logger)
+  cam.connect()

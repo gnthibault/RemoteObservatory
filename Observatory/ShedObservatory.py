@@ -17,7 +17,7 @@ class ShedObservatory(object):
     self.logger.info('Configuring ShedObservatory with file %s',self.configFileName)
 
     # Get key from json
-    with open(self.configFileName) as jsonFile:  
+    with open(self.configFileName) as jsonFile:
       data = json.load(jsonFile)
       self.gpsCoordinates = data['gpsCoordinates']
       self.logger.info('ShedObservatory gps coordinates are: %s',\
