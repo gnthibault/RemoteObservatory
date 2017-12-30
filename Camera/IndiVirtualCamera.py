@@ -1,6 +1,7 @@
 #Basic stuff
 import logging
 import json
+import io
 
 #Indi stuff
 import PyIndi
@@ -37,7 +38,10 @@ class IndiVirtualCamera(PyIndi.BaseClient):
       self.cameraName)
     self.logger.info('Indi Virtual camera, remote host is: '+\
       self.getHost()+':'+str(self.getPort()))
-   
+  
+    # Frame acquisition related stuff
+    self.acquisitionReady = False
+
     # Finished configuring
     self.logger.info('Configured Indi Virtual Camera successfully')
     
@@ -55,6 +59,20 @@ class IndiVirtualCamera(PyIndi.BaseClient):
       self.logger.info('Indi Virtual Camera: new device '+d.getDeviceName())
       self.cameraDevice = d
 
+  def newProperty(self, p):
+    self.logger.info("new property "+ p.getName() +
+      " for device "+ p.getDeviceName())
+    if (self.cameraDevice is not None 
+        and p.getName() == "CONNECTION" 
+        and p.getDeviceName() == self.cameraDevice.getDeviceName()):
+      self.logger.info('Indi Virtual Camera: Got property CONNECTION for \
+        device '+p.getDeviceName())
+      # connect to device
+      self.connectDevice(self.cameraDevice.getDeviceName())
+      # set BLOB mode to BLOB_ALSO
+      self.setBLOBMode(1, self.cameraDevice.getDeviceName(), None)
+      self.acquisitionReady = True
+
   def removeProperty(self, p):
     if p.getDeviceName() == self.cameraName:
       self.logger.info('Indi Virtual Camera: remove property '+ p.getName())
@@ -66,11 +84,7 @@ class IndiVirtualCamera(PyIndi.BaseClient):
       img = bp.getblobdata()
       # write image data to BytesIO buffer
       blobfile = io.BytesIO(img)
-      # open a file and save buffer to disk
-      #with open('frame.fits', 'wb') as f:
-      #  f.write(blobfile.getvalue())
-      # start new exposure for timelapse images!
-      #self.takeExposure()
+      self.acquisitionReady = False
 
   def newSwitch(self, svp):
     if svp.getDeviceName() == self.cameraName:
@@ -117,13 +131,21 @@ class IndiVirtualCamera(PyIndi.BaseClient):
         self.getHost()+':'+str(self.getPort())+' - Try to run '+\
         'indiserver indi_simulator_telescope indi_simulator_ccd')
 
-  def takeExposure(self):
-    pass
-    #self.logger.info('<<<<<<<< Exposure >>>>>>>>>')
-    # get current exposure time
-    #exp = self.device.getNumber('CCD_EXPOSURE')
-    # set exposure time to 5 seconds
-    #exp[0].value = 50
-    # send new exposure time to server/device
-    #self.sendNewNumber(exp)
+  def launchAcquisition(self, expTimeSec=1):
+    if self.acquisitionReady:
+      # get current exposure feature ?
+      exposure = self.cameraDevice.getNumber('CCD_EXPOSURE')
+      # set exposure time in seconds
+      exposure[0].value = expTimeSec
+      self.logger.info('Indi Virtual Camera: launching acquisition with '+\
+        str(expTimeSec)+' sec exposure time')
+      self.acquisitionReady = False
+      self.sendNewNumber(exposure)
+    else:
+      self.logger.error('Indi Virtual Camera: cannot launch acquisition '+\
+        'because device is not ready')
+
+# open a file and save buffer to disk
+#with open('frame.fits', 'wb') as f:
+#  f.write(blobfile.getvalue())
 

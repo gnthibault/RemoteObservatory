@@ -61,3 +61,4 @@ if __name__ == '__main__':
   # test indi camera class
   cam = IndiVirtualCamera(logger=logger)
   cam.connect()
+  cam.launchAcquisition()
