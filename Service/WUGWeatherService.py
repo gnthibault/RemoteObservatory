@@ -8,6 +8,7 @@ from Service.WUGService import WUGService
 
 class WUGWeatherService(WUGService):
   """ WUGWeather Service:
+    weather
     temp_c
     relative_humidity
     wind_kph

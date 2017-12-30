@@ -7,6 +7,7 @@ import logging.config
 from Observatory.VirtualObservatory import VirtualObservatory
 from Observatory.ShedObservatory import ShedObservatory
 from Service.VirtualService import VirtualService
+from Service.WUGSunService import WUGSunService
 from Service.WUGMoonService import WUGMoonService
 from Service.WUGWeatherService import WUGWeatherService
 
@@ -28,6 +29,15 @@ if __name__ == '__main__':
   #print('illuminated moon is '+str(servMoon.getPercentIlluminated()))
   #print('Age of moon is '+str(servMoon.getAgeOfMoon()))
   #print('has moon rose '+str(servMoon.hasMoonRose()))
+
+  # test sun service
+  servSun = WUGSunService(logger=logger)
+  servSun.setGpsCoordinates(obs.getGpsCoordinates())
+  #servSun.printEverything()
+  #print('Current time is '+str(servSun.getCurrentTime()))
+  #print('Sun rise time is '+str(servSun.getSunRiseTime()))
+  #print('Sun set time is '+str(servSun.getSunSetTime()))
+  #print('has sun rose '+str(servSun.hasSunRose()))
 
   # test Weather service
   servWeather = WUGWeatherService(logger=logger)
