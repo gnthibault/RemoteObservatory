@@ -60,13 +60,11 @@ class IndiVirtualCamera(PyIndi.BaseClient):
       self.cameraDevice = d
 
   def newProperty(self, p):
-    self.logger.info("new property "+ p.getName() +
-      " for device "+ p.getDeviceName())
     if (self.cameraDevice is not None 
         and p.getName() == "CONNECTION" 
         and p.getDeviceName() == self.cameraDevice.getDeviceName()):
-      self.logger.info('Indi Virtual Camera: Got property CONNECTION for \
-        device '+p.getDeviceName())
+      self.logger.info('Indi Virtual Camera: Got property CONNECTION for '+\
+        'device '+p.getDeviceName())
       # connect to device
       self.connectDevice(self.cameraDevice.getDeviceName())
       # set BLOB mode to BLOB_ALSO
@@ -87,9 +85,8 @@ class IndiVirtualCamera(PyIndi.BaseClient):
       self.acquisitionReady = False
 
   def newSwitch(self, svp):
-    if svp.getDeviceName() == self.cameraName:
+    if svp.device == self.cameraName:
       self.logger.info ('Indi Virtual Camera: new Switch '+svp.name)
-      #svp.device
 
   def newNumber(self, nvp):
     if nvp.getDeviceName() == self.cameraName:
