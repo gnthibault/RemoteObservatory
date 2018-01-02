@@ -15,6 +15,7 @@ from Service.WUGWeatherService import WUGWeatherService
 
 # Local stuff : IndiClient
 from helper.IndiClient import IndiClient
+from helper.IndiDevice import IndiDevice
 
 # Local stuff : Camera
 from Camera.IndiVirtualCamera import IndiVirtualCamera
@@ -66,9 +67,12 @@ if __name__ == '__main__':
   indiCli.connect()
   time.sleep(5)
 
+  # test indi Device
+  #indiDevice = IndiDevice(logger=logger,deviceName='CCD Simulator',\
+  #  indiClient=indiCli)
+
   # test indi camera class
-  #cam = IndiVirtualCamera(logger=logger)
-  #cam.connect()
-  #time.sleep(5)
-  #cam.launchAcquisition()
-  #time.sleep(5)
+  cam = IndiVirtualCamera(logger=logger, indiClient=indiCli,\
+    configFileName=None, connectOnCreate=False)
+  cam.connect()
+  cam.shoot(5)

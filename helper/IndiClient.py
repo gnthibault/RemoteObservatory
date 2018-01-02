@@ -21,7 +21,7 @@ class IndiClient(PyIndi.BaseClient):
       self.configFileName = configFileName
 
     # Now configuring class
-    self.logger.info('Configuring Indiclient with file %s',\
+    self.logger.debug('Configuring Indiclient with file %s',\
       self.configFileName)
     # Get key from json
     with open(self.configFileName) as jsonFile:
@@ -30,19 +30,21 @@ class IndiClient(PyIndi.BaseClient):
       self.remotePort = int(data['remotePort'])
 
     self.setServer(self.remoteHost,self.remotePort)  
-    self.logger.info('Indi Client, remote host is: '+\
+    self.logger.debug('Indi Client, remote host is: '+\
       self.getHost()+':'+str(self.getPort()))
   
     # Finished configuring
-    self.logger.info('Configured Indi Client successfully')
+    self.logger.debug('Configured Indi Client successfully')
 
   def onEmergency(self):
-    self.logger.info('Indi Client: on emergency routine started...')
+    self.logger.debug('Indi Client: on emergency routine started...')
     pass
-    self.logger.info('Indi Client: on emergency routine finished')
+    self.logger.debug('Indi Client: on emergency routine finished')
 
   def connect(self):
-    self.logger.info('Indi Client: Connecting to server')
+    self.logger.info('Indi Client: Connecting to server at '+\
+      self.getHost()+':'+str(self.getPort()))
+
     if not self.connectServer():
       self.logger.error('Indi Client: No indiserver running on '+\
         self.getHost()+':'+str(self.getPort())+' - Try to run '+\

@@ -30,7 +30,7 @@ class WUGService(object):
       self.configFileName = configFileName
 
     # Now configuring
-    self.logger.info('Configuring WUG Service with file %s',\
+    self.logger.debug('Configuring WUG Service with file %s',\
     self.configFileName)
 
     # Get key from json
@@ -39,7 +39,7 @@ class WUGService(object):
       self.key = data['key']
     
     # Finished configuring
-    self.logger.info('Configured WUG service successfully')
+    self.logger.debug('Configured WUG service successfully')
 
   def setGpsCoordinates(self,gpsCoordinates):
     self.gpsCoordinates = gpsCoordinates

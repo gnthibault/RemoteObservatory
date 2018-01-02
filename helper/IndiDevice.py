@@ -1,5 +1,9 @@
-import PyIndi
+# Basic stuff
 import time
+
+# Indi stuff
+import PyIndi
+from helper.IndiClient import IndiClient
 
 class IndiDevice:
     defaultTimeout = 30
@@ -9,25 +13,40 @@ class IndiDevice:
       'text': 'getText',
       'blob': 'getBlob' }
 
-    def __init__(self, deviceName, indiClient):
+    def __init__(self, logger, deviceName, indiClient):
       self.logger = logger or logging.getLogger(__name__)
   
-      self.deviceName = name
+      self.deviceName = deviceName
       self.indiClient = indiClient
       self.timeout = IndiDevice.defaultTimeout
 
       # Ask indiClient for device
+      self.logger.debug('IndiDevice: looking for device '+self.deviceName)
       self.__findDevice()
+      self.logger.debug('IndiDevice: found device '+self.deviceName)
 
-    def __findDevice(self):
+    def __findDevice(self, timeout=None):
       self.device = None
+      
+      started = time.time()
+      if timeout is None:
+        timeout = self.timeout
       while not self.device:
         self.device = self.indiClient.getDevice(self.deviceName)
+        if 0 < timeout < time.time() - started:
+          self.logger.error('IndiDevice: Timeout while waiting for '+\
+            ' device '+self.deviceName)
+          raise RuntimeError('IndiDevice Timeout while waiting for'+\
+            ' device '+self.deviceName)
+        time.sleep(0.01)
 
     def connect(self):
       if self.device.isConnected():
+        self.logger.warn('IndiDevice: already connected to device '+\
+          self.deviceName)
         return
-      self.set_switch('CONNECTION', ['CONNECT'])
+      self.logger.info('IndiDevice: connecting to device '+self.deviceName)
+      self.setSwitch('CONNECTION', ['CONNECT'])
 
     def getPropertyValueVector(self, propName, propType):
       ''''''
@@ -81,14 +100,13 @@ class IndiDevice:
       started = time.time()
       if timeout is None:
         timeout = self.timeout
-        while prop.s not in statuses:
-          if 0 < timeout < time.time() - started:
-            self.logger.debug('IndiDevice: Timeout while waiting for '+\
-              'property status '+name+' of type '+propType+' for device '\
-              +self.deviceName)
-            raise RuntimeError('Timeout error while changing property'+\
-              ' {}'.format(prop.name))
-         time.sleep(0.01)
+      while prop.s not in statuses:
+        if 0 < timeout < time.time() - started:
+          self.logger.debug('IndiDevice: Timeout while waiting for '+\
+            'property status '+prop.name+' for device '+self.deviceName)
+          raise RuntimeError('Timeout error while changing property'+\
+            ' {}'.format(prop.name))
+        time.sleep(0.01)
 
     def __getPropVectIndicesHavingValues(self, propertyVector, values):
       ''' return dict of name-index of prop that are in values'''
