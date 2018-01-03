@@ -9,20 +9,20 @@ class VirtualObservatory(object):
   def __init__(self, configFileName=None, logger=None):
     self.logger = logger or logging.getLogger(__name__)
     self.configFileName = configFileName  # instance variable
-    self.logger.info('Configuring object with file %s',self.configFileName)
+    self.logger.debug('Configuring object with file %s',self.configFileName)
 
   def openEverything(self):
-    self.logger.info('Observatory: open everything....')
+    self.logger.debug('Observatory: open everything....')
     pass
-    self.logger.info('Observatory: everything opened')
+    self.logger.debug('Observatory: everything opened')
  
   def closeEverything(self):
-    self.logger.info('Observatory: close everything....')
+    self.logger.debug('Observatory: close everything....')
     pass
-    self.logger.info('Observatory: everything closed')
+    self.logger.debug('Observatory: everything closed')
 
   def onEmergency(self):
-    self.logger.info('Observatory: on emergency routine started...')
+    self.logger.debug('Observatory: on emergency routine started...')
     self.closeEverything()
-    self.logger.info('Observatory: on emergency routine finished')
+    self.logger.debug('Observatory: on emergency routine finished')
 

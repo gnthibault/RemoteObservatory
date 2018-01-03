@@ -97,7 +97,18 @@ class IndiVirtualCamera(IndiDevice):
   '''
     Indi CCD related stuff
   '''
-  def shoot(self, expTimeSec):
+  def shoot(self, expTimeSec, coord=None):
+    '''
+      Just in case one uses a virtual camera, you should provide 'ra' and 'dec'
+      coordinates in the following format:
+      RA:  hh:mm:ss as 0.12345 or 23.999
+      DEC: dd:mm:ss as -89.999 or +89.999
+    '''
+    if coord is not None:
+      self.setNumber(\
+        'EQUATORIAL_PE', {'RA_PE': coord['ra'], 'DEC_PE': coord['dec']},\
+        timeout=5)
+    
     self.setNumber('CCD_EXPOSURE', {'CCD_EXPOSURE_VALUE': expTimeSec},\
       timeout=5+expTimeSec*1.5)
 

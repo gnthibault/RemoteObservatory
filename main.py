@@ -30,7 +30,7 @@ if __name__ == '__main__':
   logger = logging.getLogger('mainLogger')
 
   # Instanciate object of interest
-  #obs = VirtualObservatory(logger=logger)
+  vObs = VirtualObservatory(logger=logger)
   obs = ShedObservatory(logger=logger)
 
   # test moon service
@@ -74,11 +74,11 @@ if __name__ == '__main__':
   time.sleep(5)
 
   # test indi Device
-  #indiDevice = IndiDevice(logger=logger,deviceName='CCD Simulator',\
-  #  indiClient=indiCli)
+  indiDevice = IndiDevice(logger=logger,deviceName='CCD Simulator',\
+    indiClient=indiCli)
 
   # test indi camera class
   cam = IndiVirtualCamera(logger=logger, indiClient=indiCli,\
     configFileName=None, connectOnCreate=False)
   cam.connect()
-  #cam.shoot(5)
+  cam.shoot(5,coord={'ra':12.0, 'dec':45.0})

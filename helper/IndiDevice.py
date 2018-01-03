@@ -128,7 +128,7 @@ class IndiDevice:
         if not prop and 0 < timeout < time.time() - started:
           self.logger.debug('IndiDevice: Timeout while waiting for property '+\
             propName+' of type '+propType+' for device '+self.deviceName)
-          raise RuntimeError('Timeout finding property {}'.format(name))
+          raise RuntimeError('Timeout finding property {}'.format(propName))
         time.sleep(0.01)
       return prop
 
