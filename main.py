@@ -7,11 +7,12 @@ import time
 from Observatory.VirtualObservatory import VirtualObservatory
 from Observatory.ShedObservatory import ShedObservatory
 
-# Local stuff : Observatory
+# Local stuff : Service
 from Service.VirtualService import VirtualService
 from Service.WUGSunService import WUGSunService
 from Service.WUGMoonService import WUGMoonService
 from Service.WUGWeatherService import WUGWeatherService
+from Service.NTPTimeService import NTPTimeService
 
 # Local stuff : IndiClient
 from helper.IndiClient import IndiClient
@@ -49,6 +50,11 @@ if __name__ == '__main__':
   #print('Sun set time is '+str(servSun.getSunSetTime()))
   #print('has sun rose '+str(servSun.hasSunRose()))
 
+  #test ntp time server
+  servTime = NTPTimeService(logger=logger)
+  ntpTime = servTime.getUTCFromNTP()
+  #print('Current Time from NTP is : ',str(ntpTime))
+
   # test Weather service
   servWeather = WUGWeatherService(logger=logger)
   servWeather.setGpsCoordinates(obs.getGpsCoordinates())
@@ -75,4 +81,4 @@ if __name__ == '__main__':
   cam = IndiVirtualCamera(logger=logger, indiClient=indiCli,\
     configFileName=None, connectOnCreate=False)
   cam.connect()
-  cam.shoot(5)
+  #cam.shoot(5)

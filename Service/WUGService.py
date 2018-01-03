@@ -31,7 +31,7 @@ class WUGService(object):
 
     # Now configuring
     self.logger.debug('Configuring WUG Service with file %s',\
-    self.configFileName)
+      self.configFileName)
 
     # Get key from json
     with open(self.configFileName) as jsonFile:  
