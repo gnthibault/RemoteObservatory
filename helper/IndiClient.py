@@ -1,11 +1,23 @@
 # Basic stuff
 import json
+import threading
 
 # Indi stuff
 import PyIndi
 
+# configure global variables
+global indiClientGlobalBlobEvent
+indiClientGlobalBlobEvent = threading.Event()
+
 class IndiClient(PyIndi.BaseClient):
-  ''' Our Base Indi Client '''
+  '''
+    This Indi Client class can be used as a singleton, so that it can be used
+    to interact with multiple devices, instead of declaring one client per
+    device to manage.
+
+    Every virtual function instanciated is called asynchronously by an external
+    C++ thread, and not by the python main thread, so be careful.
+  '''
 
   def __init__(self, configFileName=None, logger=None):
     self.logger = logger or logging.getLogger(__name__)
@@ -32,7 +44,7 @@ class IndiClient(PyIndi.BaseClient):
     self.setServer(self.remoteHost,self.remotePort)  
     self.logger.debug('Indi Client, remote host is: '+\
       self.getHost()+':'+str(self.getPort()))
-  
+
     # Finished configuring
     self.logger.debug('Configured Indi Client successfully')
 
@@ -69,7 +81,10 @@ class IndiClient(PyIndi.BaseClient):
     pass
 
   def newBLOB(self, bp):
-    pass
+    # this threading.Event is used for sync purpose in other part of the code 
+    self.logger.debug("Indi Client: new BLOB received: "+bp.name)
+    global indiClientGlobalBlobEvent
+    indiClientGlobalBlobEvent.set()
 
   def newSwitch(self, svp):
     pass

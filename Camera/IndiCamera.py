@@ -1,12 +1,12 @@
-#Basic stuff
+# Basic stuff
 import io
 import json
 import logging
-import threading
 
-#Indi stuff
+# Indi stuff
 import PyIndi
 from helper.IndiDevice import IndiDevice
+from helper.IndiClient import indiClientGlobalBlobEvent
 
 class CameraSettingsRunner:
   def __init__(self, camera, roi=None, binning=None,\
@@ -87,6 +87,9 @@ class IndiCamera(IndiDevice):
     if connectOnCreate:
       self.connect()
 
+    # Frame Blob: reference that will be used to receive binary
+    self.frameBlob = None
+
     # Finished configuring
     self.logger.debug('Configured Indi Camera successfully')
 
@@ -104,12 +107,44 @@ class IndiCamera(IndiDevice):
       "CCD1" blob from this device
     '''
     self.indiClient.setBLOBMode(PyIndi.B_ALSO, self.deviceName, 'CCD1')
+    self.frameBlob=self.getPropertyVector(propName='CCD1', propType='blob')
+
+  def synchronizeWithImageReception(self):
+    #try:
+      global indiClientGlobalBlobEvent
+      indiClientGlobalBlobEvent.wait()
+      indiClientGlobalBlobEvent.clear()
+    #except Exception as e:
+    #  self.logger.error('Indi Camera Error in synchronizeWithImageReception: '\
+    #    +str(e))
+
+  def getReceivedImage(self):
+    try:
+      ret = []
+      for blob in self.frameBlob:
+        self.logger.debug("Indi camera, processing blob with name: "+\
+          blob.name+" size: "+str(blob.size)+" format: "+str(blob.format))
+        # pyindi-client adds a getblobdata() method to IBLOB item
+        # for accessing the contents of the blob, which is a bytearray in Python
+        blobObj=blob.getblobdata()
+        # write image data to BytesIO buffer
+        byteStream = io.BytesIO(blobObj)
+        #astropy.io.fits
+        # open a file and save buffer to disk
+        #with open("frame"+str(self.imgIdx)+".fit", "wb") as f:
+        #  f.write(blobfile.getvalue())
+        #  print("fits data type: ", type(fits))
+    except Exception as e:
+      self.logger.error('Indi Camera Error in getReceivedImage: '+str(e))
 
   def shoot(self, expTimeSec):
-    self.logger.info('Indi Camera: launching acquisition with '+\
-      str(expTimeSec)+' sec exposure time')
-    self.setNumber('CCD_EXPOSURE', {'CCD_EXPOSURE_VALUE': expTimeSec},\
-      timeout=5+expTimeSec*1.5)
+    try:
+      self.logger.info('Indi Camera: launching acquisition with '+\
+        str(expTimeSec)+' sec exposure time')
+      self.setNumber('CCD_EXPOSURE', {'CCD_EXPOSURE_VALUE': expTimeSec},\
+        timeout=5+expTimeSec*1.5)
+    except Exception as e:
+      self.logger.error('Indi Camera Error in shoot: '+str(e))
 
   def setUploadPath(self, path, prefix = 'IMAGE_XXX'):
     self.setText('UPLOAD_SETTINGS', {'UPLOAD_DIR': path,\
@@ -163,90 +198,4 @@ class IndiCamera(IndiDevice):
   def __repr__(self):
     return self.__str__()
 
-  '''
-  def newDevice(self, d):
-    if d.getDeviceName() == self.cameraName:
-      self.logger.info('Indi Camera: new device '+d.getDeviceName())
-      self.cameraDevice = d
-
-  def newProperty(self, p):
-    if (self.cameraDevice is not None 
-        and p.getName() == "CONNECTION" 
-        and p.getDeviceName() == self.cameraDevice.getDeviceName()):
-      self.logger.info('Indi Camera: Got property CONNECTION for '+\
-        'device '+p.getDeviceName())
-      # connect to device
-      self.connectDevice(self.cameraDevice.getDeviceName())
-      # set BLOB mode to BLOB_ALSO
-      self.setBLOBMode(1, self.cameraDevice.getDeviceName(), None)
-      self.acquisitionReady = True
-
-  def removeProperty(self, p):
-    if p.getDeviceName() == self.cameraName:
-      self.logger.info('Indi Camera: remove property '+ p.getName())
-
-  def newBLOB(self, bp):
-    if bp.getDeviceName() == self.cameraName:
-      self.logger.info('Indi Camera: new BLOB received '+ bp.name)
-      # get image data
-      img = bp.getblobdata()
-      # write image data to BytesIO buffer
-      blobfile = io.BytesIO(img)
-      self.acquisitionReady = False
-
-  def newSwitch(self, svp):
-    if svp.device == self.cameraName:
-      self.logger.info ('Indi Camera: new Switch '+svp.name)
-
-  def newNumber(self, nvp):
-    if nvp.getDeviceName() == self.cameraName:
-      self.logger.info('Indi Camera: new Number '+ nvp.name)
-      #nvp.device)
-
-  def newText(self, tvp):
-    if tvp.getDeviceName() == self.cameraName:
-      self.logger.info('Indi Camera: new Text '+ tvp.name +\
-        ' label is '+tvp.label+', group is '+tvp.group+\
-        ' and timestamp is'+tvp.timestamp)
-        #tvp.device)
-
-  def newLight(self, lvp):
-    if lvp.getDeviceName() == self.cameraName:
-      self.logger.info('Indi Camera: new Light '+ lvp.name)
-      #lvp.device)
-
-  def newMessage(self, d, m):
-    if d.getDeviceName() == self.cameraName:
-      self.logger.info('Indi Camera: new Message '+ d.messageQueue(m))
-
-  def serverConnected(self):
-    self.logger.info('Indi Camera: Server connected ('\
-      +self.getHost()+':'+str(self.getPort())+')')
-
-  def serverDisconnected(self, code):
-    self.logger.info('Indi Camera: Server disconnected (\
-      exit code = '+str(code)+', '+\
-      str(self.getHost())+':'+str(self.getPort())+')')
-  '''
-  ''' 
-    Now application related methods
-  '''
-  '''
-  def launchAcquisition(self, expTimeSec=1):
-    if self.acquisitionReady:
-      # get current exposure feature ?
-      exposure = self.cameraDevice.getNumber('CCD_EXPOSURE')
-      # set exposure time in seconds
-      exposure[0].value = expTimeSec
-      self.logger.info('Indi Camera: launching acquisition with '+\
-        str(expTimeSec)+' sec exposure time')
-      self.acquisitionReady = False
-      self.sendNewNumber(exposure)
-    else:
-      self.logger.error('Indi Camera: cannot launch acquisition '+\
-        'because device is not ready')
-  '''
-# open a file and save buffer to disk
-#with open('frame.fits', 'wb') as f:
-#  f.write(blobfile.getvalue())
 

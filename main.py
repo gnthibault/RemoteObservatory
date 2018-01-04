@@ -83,3 +83,5 @@ if __name__ == '__main__':
   cam.connect()
   cam.prepareShoot()
   cam.shoot(5,coord={'ra':12.0, 'dec':45.0})
+  cam.synchronizeWithImageReception()
+  cam.getReceivedImage()

@@ -11,7 +11,7 @@ class IndiDevice:
       'number': 'getNumber',
       'switch': 'getSwitch',
       'text': 'getText',
-      'blob': 'getBlob' }
+      'blob': 'getBLOB' }
 
     def __init__(self, logger, deviceName, indiClient):
       self.logger = logger or logging.getLogger(__name__)
@@ -21,13 +21,12 @@ class IndiDevice:
       self.timeout = IndiDevice.defaultTimeout
 
       # Ask indiClient for device
-      self.logger.debug('IndiDevice: looking for device '+self.deviceName)
       self.__findDevice()
-      self.logger.debug('IndiDevice: found device '+self.deviceName)
 
     def __findDevice(self, timeout=None):
-      self.device = None
-      
+      self.logger.debug('IndiDevice: asking indiClient to look for device '\
+        +self.deviceName)
+      self.device = None      
       started = time.time()
       if timeout is None:
         timeout = self.timeout
@@ -39,6 +38,8 @@ class IndiDevice:
           raise RuntimeError('IndiDevice Timeout while waiting for'+\
             ' device '+self.deviceName)
         time.sleep(0.01)
+      self.logger.debug('Indi Device: indiClient has found device '\
+        +self.deviceName) 
 
     def connect(self):
       if self.device.isConnected():
@@ -47,12 +48,6 @@ class IndiDevice:
         return
       self.logger.info('IndiDevice: connecting to device '+self.deviceName)
       self.setSwitch('CONNECTION', ['CONNECT'])
-
-    def getPropertyValueVector(self, propName, propType):
-      ''''''
-      return dict(map(\
-        lambda c: (c.name, c.value),\
-        self.getPropertyVector(propName, propType)))
 
     def getOnSwitchValueVector(self, switchName):
       return dict(map(\
@@ -115,6 +110,12 @@ class IndiDevice:
         if p.name in values:
           result[p.name] = i
       return result
+
+    def getPropertyValueVector(self, propName, propType):
+      ''''''
+      return dict(map(\
+        lambda c: (c.name, c.value),\
+        self.getPropertyVector(propName, propType)))
 
     def getPropertyVector(self, propName, propType, timeout=None):
       ''' Return the value corresponding to the given '''
