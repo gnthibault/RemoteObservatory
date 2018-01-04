@@ -99,7 +99,11 @@ class IndiCamera(IndiDevice):
     Indi CCD related stuff
   '''
   def prepareShoot(self):
-    self.indiClient.setBLOBMode(PyIndi.B_ALSO, ccd, "CCD1")
+    '''
+      We should inform the indi server that we want to receive the
+      "CCD1" blob from this device
+    '''
+    self.indiClient.setBLOBMode(PyIndi.B_ALSO, self.deviceName, 'CCD1')
 
   def shoot(self, expTimeSec):
     self.logger.info('Indi Camera: launching acquisition with '+\
