@@ -81,4 +81,5 @@ if __name__ == '__main__':
   cam = IndiVirtualCamera(logger=logger, indiClient=indiCli,\
     configFileName=None, connectOnCreate=False)
   cam.connect()
+  cam.prepareShoot()
   cam.shoot(5,coord={'ra':12.0, 'dec':45.0})

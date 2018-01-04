@@ -1,7 +1,8 @@
 #Basic stuff
-import logging
-import json
 import io
+import json
+import logging
+import threading
 
 #Indi stuff
 import PyIndi
@@ -97,7 +98,12 @@ class IndiCamera(IndiDevice):
   '''
     Indi CCD related stuff
   '''
+  def prepareShoot(self):
+    self.indiClient.setBLOBMode(PyIndi.B_ALSO, ccd, "CCD1")
+
   def shoot(self, expTimeSec):
+    self.logger.info('Indi Camera: launching acquisition with '+\
+      str(expTimeSec)+' sec exposure time')
     self.setNumber('CCD_EXPOSURE', {'CCD_EXPOSURE_VALUE': expTimeSec},\
       timeout=5+expTimeSec*1.5)
 
