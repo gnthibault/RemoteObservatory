@@ -8,6 +8,10 @@ import PyIndi
 from helper.IndiDevice import IndiDevice
 from helper.IndiClient import indiClientGlobalBlobEvent
 
+# Imaging and Fits stuff
+from astropy.io import fits
+import matplotlib.pyplot as plt
+
 class CameraSettingsRunner:
   def __init__(self, camera, roi=None, binning=None,\
       compressionFormat=None, frameType=None, properties=None, numbers=None,
@@ -110,13 +114,13 @@ class IndiCamera(IndiDevice):
     self.frameBlob=self.getPropertyVector(propName='CCD1', propType='blob')
 
   def synchronizeWithImageReception(self):
-    #try:
+    try:
       global indiClientGlobalBlobEvent
       indiClientGlobalBlobEvent.wait()
       indiClientGlobalBlobEvent.clear()
-    #except Exception as e:
-    #  self.logger.error('Indi Camera Error in synchronizeWithImageReception: '\
-    #    +str(e))
+    except Exception as e:
+      self.logger.error('Indi Camera Error in synchronizeWithImageReception: '\
+        +str(e))
 
   def getReceivedImage(self):
     try:
@@ -129,7 +133,11 @@ class IndiCamera(IndiDevice):
         blobObj=blob.getblobdata()
         # write image data to BytesIO buffer
         byteStream = io.BytesIO(blobObj)
-        #astropy.io.fits
+        hdulist = fits.open(byteStream)
+        plt.imshow(hdulist[0].data)
+        plt.show()
+        del hdul[0].data
+        hdulist.close
         # open a file and save buffer to disk
         #with open("frame"+str(self.imgIdx)+".fit", "wb") as f:
         #  f.write(blobfile.getvalue())
