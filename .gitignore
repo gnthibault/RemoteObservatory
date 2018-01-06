@@ -1,11 +1,11 @@
 __pycache__
 
+*.fits
 *.sqlite
 *.swp
 
 /IndiClient.json
 /ShedObservatory.json
-
 /IndiCCDSimulatorCamera.json
 /ntp.json
 /IndiEos350DCamera.json

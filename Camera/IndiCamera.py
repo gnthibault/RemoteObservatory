@@ -134,11 +134,11 @@ class IndiCamera(IndiDevice):
         blobObj=blob.getblobdata()
         # write image data to BytesIO buffer
         byteStream = io.BytesIO(blobObj)
-        hdulist = fits.open(byteStream)
-        plt.imshow(hdulist[0].data)
-        plt.show()
-        del hdul[0].data
-        hdulist.close
+        return fits.open(byteStream)
+        #plt.imshow(hdulist[0].data)
+        #plt.show()
+        #del hdul[0].data
+        #hdulist.close
         # open a file and save buffer to disk
         #with open("frame"+str(self.imgIdx)+".fit", "wb") as f:
         #  f.write(blobfile.getvalue())

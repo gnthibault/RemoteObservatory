@@ -41,9 +41,10 @@ class NTPTimeService():
       self.logger.debug('NTP Time Service got UTC from server '+self.ntpserver+\
         ' : '+str(utc))
       return utc
-    except:
+    except Exception as e:
       #return UTC from local computer
       utc=datetime.utcnow()
       self.logger.error('NTP Time Service cannot get UTC from server '+
-        self.ntpserver+', got UTC from local clock instead: '+str(utc))
+        self.ntpserver+', because of error : '+str(e)+\
+        ' got UTC from local clock instead: '+str(utc))
       return utc

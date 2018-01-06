@@ -23,6 +23,8 @@ from Camera.IndiVirtualCamera import IndiVirtualCamera
 from Camera.IndiEos350DCamera import IndiEos350DCamera
 
 
+# Local stuff : Imaging tools
+from Imaging.FitsWriter import FitsWriter
 
 if __name__ == '__main__':
 
@@ -72,27 +74,30 @@ if __name__ == '__main__':
   # test indi client
   indiCli = IndiClient(logger=logger)
   indiCli.connect()
-  time.sleep(5)
 
   # test indi Device
   #indiDevice = IndiDevice(logger=logger,deviceName='CCD Simulator',\
   #  indiClient=indiCli)
 
   # test indi virtual camera class
-  #cam = IndiVirtualCamera(logger=logger, indiClient=indiCli,\
-  #  configFileName=None, connectOnCreate=False)
-  #cam.connect()
-  #cam.prepareShoot()
-  #cam.shoot(5,coord={'ra':12.0, 'dec':45.0})
-  #cam.synchronizeWithImageReception()
-  #cam.getReceivedImage()
-
-  # test indi camera class on a old EOS350D
-  cam = IndiEos350DCamera(logger=logger, indiClient=indiCli,\
-    configFileName='IndiEos350DCamera.json', connectOnCreate=False)
+  cam = IndiVirtualCamera(logger=logger, indiClient=indiCli,\
+    configFileName=None, connectOnCreate=False)
   cam.connect()
   cam.prepareShoot()
-  cam.shoot(5)
+  cam.shoot(5,coord={'ra':12.0, 'dec':45.0})
   cam.synchronizeWithImageReception()
-  cam.getReceivedImage()
+  fits=cam.getReceivedImage()
 
+  # test indi camera class on a old EOS350D
+  #cam = IndiEos350DCamera(logger=logger, indiClient=indiCli,\
+  #  configFileName='IndiEos350DCamera.json', connectOnCreate=False)
+  #cam.connect()
+  #cam.prepareShoot()
+  #cam.shoot(60)
+  #cam.synchronizeWithImageReception()
+  #fits=cam.getReceivedImage()
+
+  # Write fits file with all interesting metadata:
+  writer = FitsWriter(logger=logger, observatory=obs, servWeather=servWeather,
+    servSun=servSun, servMoon=servMoon,servTime=servTime)
+  writer.writeWithTag(fits)
