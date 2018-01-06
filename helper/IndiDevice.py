@@ -23,16 +23,14 @@ class IndiDevice:
       # Ask indiClient for device
       self.__findDevice()
 
-    def __findDevice(self, timeout=None):
+    def __findDevice(self):
       self.logger.debug('IndiDevice: asking indiClient to look for device '\
         +self.deviceName)
       self.device = None      
       started = time.time()
-      if timeout is None:
-        timeout = self.timeout
       while not self.device:
         self.device = self.indiClient.getDevice(self.deviceName)
-        if 0 < timeout < time.time() - started:
+        if 0 < self.timeout < time.time() - started:
           self.logger.error('IndiDevice: Timeout while waiting for '+\
             ' device '+self.deviceName)
           raise RuntimeError('IndiDevice Timeout while waiting for'+\
@@ -61,7 +59,8 @@ class IndiDevice:
         onSwitches = onSwitches[0:1]
         offSwitches = [s.name for s in pv if s.name not in onSwitches]
       for index in range(0, len(pv)):
-        pv[index].s = PyIndi.ISS_ON if pv[index].name in onSwitches else PyIndi.ISS_OFF
+        pv[index].s = PyIndi.ISS_ON if pv[index].name in onSwitches\
+          else PyIndi.ISS_OFF
       self.indiClient.sendNewSwitch(pv)
       if sync:
         self.__waitPropStatus(pv, statuses=[PyIndi.IPS_IDLE, PyIndi.IPS_OK],\
@@ -86,7 +85,7 @@ class IndiDevice:
       self.indiClient.sendNewText(pv)
       if sync:
         self.__waitPropStatus(pv, timeout=timeout)
-      return c
+      return pv
 
     def __waitPropStatus(self, prop,\
       statuses=[PyIndi.IPS_OK, PyIndi.IPS_IDLE], timeout=None):

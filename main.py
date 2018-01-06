@@ -20,6 +20,7 @@ from helper.IndiDevice import IndiDevice
 
 # Local stuff : Camera
 from Camera.IndiVirtualCamera import IndiVirtualCamera
+from Camera.IndiEos350DCamera import IndiEos350DCamera
 
 
 
@@ -74,14 +75,24 @@ if __name__ == '__main__':
   time.sleep(5)
 
   # test indi Device
-  indiDevice = IndiDevice(logger=logger,deviceName='CCD Simulator',\
-    indiClient=indiCli)
+  #indiDevice = IndiDevice(logger=logger,deviceName='CCD Simulator',\
+  #  indiClient=indiCli)
 
-  # test indi camera class
-  cam = IndiVirtualCamera(logger=logger, indiClient=indiCli,\
-    configFileName=None, connectOnCreate=False)
+  # test indi virtual camera class
+  #cam = IndiVirtualCamera(logger=logger, indiClient=indiCli,\
+  #  configFileName=None, connectOnCreate=False)
+  #cam.connect()
+  #cam.prepareShoot()
+  #cam.shoot(5,coord={'ra':12.0, 'dec':45.0})
+  #cam.synchronizeWithImageReception()
+  #cam.getReceivedImage()
+
+  # test indi camera class on a old EOS350D
+  cam = IndiEos350DCamera(logger=logger, indiClient=indiCli,\
+    configFileName='IndiEos350DCamera.json', connectOnCreate=False)
   cam.connect()
   cam.prepareShoot()
-  cam.shoot(5,coord={'ra':12.0, 'dec':45.0})
+  cam.shoot(5)
   cam.synchronizeWithImageReception()
   cam.getReceivedImage()
+

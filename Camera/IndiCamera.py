@@ -71,22 +71,23 @@ class IndiCamera(IndiDevice):
     logger = logger or logging.getLogger(__name__)
     
     if configFileName is None:
-      self.cameraName = 'CCD Simulator'
+      self.configFileName = 'IndiCCDSimulatorCamera.json'
     else:
       self.configFileName = configFileName
-      # Now configuring class
-      logger.debug('Configuring Indi Camera with file %s',\
-        self.configFileName)
-      # Get key from json
-      with open(self.configFileName) as jsonFile:
-        data = json.load(jsonFile)
-        self.cameraName = data['cameraName']
+
+    # Now configuring class
+    logger.debug('Configuring Indi Camera with file %s',\
+      self.configFileName)
+    # Get key from json
+    with open(self.configFileName) as jsonFile:
+      data = json.load(jsonFile)
+      deviceName = data['cameraName']
 
     logger.debug('Indi camera, camera name is: '+\
-      self.cameraName)
+      deviceName)
   
     # device related intialization
-    IndiDevice.__init__(self, logger=logger, deviceName=self.cameraName,\
+    IndiDevice.__init__(self, logger=logger, deviceName=deviceName,\
       indiClient=indiClient)
     if connectOnCreate:
       self.connect()
