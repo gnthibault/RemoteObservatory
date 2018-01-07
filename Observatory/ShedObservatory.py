@@ -21,13 +21,21 @@ class ShedObservatory(object):
       data = json.load(jsonFile)
       self.gpsCoordinates = data['gpsCoordinates']
       self.logger.debug('ShedObservatory gps coordinates are: %s',\
-      str(self.gpsCoordinates))
+        str(self.gpsCoordinates))
+      self.altitudeMeter=int(data['altitudeMeter'])
+      self.ownerName=data['ownerName']
     
     # Finished configuring
     self.logger.debug('Configured ShedObservatory successfully')
     
   def getGpsCoordinates(self):
     return self.gpsCoordinates
+
+  def getAltitudeMeter(self):
+    return self.altitudeMeter
+
+  def getOwnerName(self):
+    return self.ownerName
 
   def openEverything(self):
     self.logger.debug('ShedObservatory: open everything....')

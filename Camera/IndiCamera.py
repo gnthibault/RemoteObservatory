@@ -95,6 +95,10 @@ class IndiCamera(IndiDevice):
     # Frame Blob: reference that will be used to receive binary
     self.frameBlob = None
 
+    # Default exposureTime, gain
+    self.expTimeSec=5
+    self.gain=400
+
     # Finished configuring
     self.logger.debug('Configured Indi Camera successfully')
 
@@ -146,12 +150,12 @@ class IndiCamera(IndiDevice):
     except Exception as e:
       self.logger.error('Indi Camera Error in getReceivedImage: '+str(e))
 
-  def shoot(self, expTimeSec):
+  def shoot(self):
     try:
       self.logger.info('Indi Camera: launching acquisition with '+\
-        str(expTimeSec)+' sec exposure time')
-      self.setNumber('CCD_EXPOSURE', {'CCD_EXPOSURE_VALUE': expTimeSec},\
-        timeout=5+expTimeSec*1.5)
+        str(self.expTimeSec)+' sec exposure time')
+      self.setNumber('CCD_EXPOSURE', {'CCD_EXPOSURE_VALUE': self.expTimeSec},\
+        timeout=5+self.expTimeSec*1.5)
     except Exception as e:
       self.logger.error('Indi Camera Error in shoot: '+str(e))
 
@@ -200,6 +204,18 @@ class IndiCamera(IndiDevice):
     return { 'minimum': pv.min,
       'maximum': pv.max,
       'step': pv.step }
+
+  def getExpTimeSec(self):
+    return self.expTimeSec
+
+  def setExpTimeSec(self, expTimeSec):
+    self.expTimeSec = expTimeSec
+
+  def getGain(self):
+    return self.gain
+
+  def setGain(self):
+    return self.gain
 
   def __str__(self):
     return 'INDI Camera "{0}"'.format(self.name)

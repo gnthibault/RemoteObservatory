@@ -2,5 +2,7 @@
   "gpsCoordinates":  {
     "latitude": "46.1944",
     "longitude": "6.2377"
-  }
+  },
+  "altitudeMeter": "400",
+  "ownerName": "John Doe"
 }

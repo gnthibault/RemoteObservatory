@@ -29,6 +29,3 @@ class IndiEos350DCamera(IndiCamera):
     self.setText("DEVICE_PORT",{"PORT":"/dev/ttyUSB0"})
     IndiCamera.prepareShoot(self)
 
-  def shoot(self, expTimeSec, coord=None):
-    IndiCamera.shoot(self,expTimeSec)
-

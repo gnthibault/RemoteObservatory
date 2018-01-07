@@ -56,7 +56,10 @@ class WUGWeatherService(WUGService):
 
   def getWeatherQuality(self):
     res = self.sendRequest(self.APIFuncLink)
-    weather = res['current_observation']['weather']
+    return res['current_observation']['weather']
+
+  def getWeatherQualityIndex(self):
+    weather = self.getWeatherQuality()
     if weather == "Clear":
       return 0
     elif weather in ["Scattered Clouds","Partly Cloudy","Overcast",\

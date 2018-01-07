@@ -84,7 +84,8 @@ if __name__ == '__main__':
     configFileName=None, connectOnCreate=False)
   cam.connect()
   cam.prepareShoot()
-  cam.shoot(5,coord={'ra':12.0, 'dec':45.0})
+  cam.setExpTimeSec(5)
+  cam.shoot(coord={'ra':12.0, 'dec':45.0})
   cam.synchronizeWithImageReception()
   fits=cam.getReceivedImage()
 
@@ -93,11 +94,12 @@ if __name__ == '__main__':
   #  configFileName='IndiEos350DCamera.json', connectOnCreate=False)
   #cam.connect()
   #cam.prepareShoot()
+  #cam.setExpTimeSec(5)
   #cam.shoot(60)
   #cam.synchronizeWithImageReception()
   #fits=cam.getReceivedImage()
 
   # Write fits file with all interesting metadata:
   writer = FitsWriter(logger=logger, observatory=obs, servWeather=servWeather,
-    servSun=servSun, servMoon=servMoon,servTime=servTime)
+    servSun=servSun, servMoon=servMoon, servTime=servTime)
   writer.writeWithTag(fits)
