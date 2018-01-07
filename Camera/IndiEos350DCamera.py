@@ -29,3 +29,4 @@ class IndiEos350DCamera(IndiCamera):
     self.setText("DEVICE_PORT",{"PORT":"/dev/ttyUSB0"})
     IndiCamera.prepareShoot(self)
 
+  #3456 × 2304

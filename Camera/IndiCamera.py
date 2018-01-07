@@ -155,7 +155,7 @@ class IndiCamera(IndiDevice):
       self.logger.info('Indi Camera: launching acquisition with '+\
         str(self.expTimeSec)+' sec exposure time')
       self.setNumber('CCD_EXPOSURE', {'CCD_EXPOSURE_VALUE': self.expTimeSec},\
-        timeout=5+self.expTimeSec*1.5)
+        sync=False)
     except Exception as e:
       self.logger.error('Indi Camera Error in shoot: '+str(e))
 
