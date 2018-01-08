@@ -104,19 +104,19 @@ class NovaAstrometryService(object):
         def clone(self, fp):
           return MyGenerator(fp, root=False)
 
-        fp = StringIO()
-        g = MyGenerator(fp)
-        g.flatten(mp)
-        data = fp.getvalue()
-        headers = {'Content-type': mp.get('Content-type')}
+      fp = StringIO()
+      g = MyGenerator(fp)
+      g.flatten(mp)
+      data = fp.getvalue()
+      headers = {'Content-type': mp.get('Content-type')}
 
     else:
-        # Else send x-www-form-encoded
-        data = {'request-json': json}
-        print('Sending form data:', data)
-        data = urlencode(data)
-        print('Sending data:', data)
-        headers = {}
+      # Else send x-www-form-encoded
+      data = {'request-json': json}
+      print('Sending form data:', data)
+      data = urlencode(data)
+      print('Sending data:', data)
+      headers = {}
 
     request = Request(url=url, headers=headers, data=data)
 
