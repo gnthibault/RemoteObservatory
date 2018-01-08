@@ -13,6 +13,8 @@ pip install Pillow
 
 ## Web service
 
-For now, RemoteObservatory only uses WUG, so, ensure that you have a json file containing your wug key in your home directory inside a .wug.json file
+For now, RemoteObservatory uses some web service to acquire data, so ensure that you have a json file containing the key for each API in your home directory:
+  * For WUG, get your key [here](https://www.wunderground.com/weather/api/) and store it in your home directory inside a .wug.json file
+  * For nova (astrometry.net), get your key at [here](http://nova.astrometry.net/api_help) and store it in your home directory inside a .nova.json file
 
 

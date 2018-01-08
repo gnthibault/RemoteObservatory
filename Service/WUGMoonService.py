@@ -2,6 +2,7 @@
 import logging
 import json
 import datetime
+import traceback
 
 # Local stuff
 from Service.WUGService import WUGService
@@ -16,25 +17,66 @@ class WUGMoonService(WUGService):
     self.APIFuncLink = 'astronomy/q'
 
   def printEverything(self):
-   res = self.sendRequest(self.APIFuncLink)
-   print(str(res))
+   try:
+     res = self.sendRequest(self.APIFuncLink)
+     print(str(res))
+   except Exception as e:
+     self.logger.error('WUGMoonService error while retrieving data: '\
+       +str(e)+', error stack is '+traceback.format_exc())
 
   def getPercentIlluminated(self):
-   res = self.sendRequest(self.APIFuncLink)
-   return int(res['moon_phase']['percentIlluminated'])
+   try:
+     res = self.sendRequest(self.APIFuncLink)
+     return int(res['moon_phase']['percentIlluminated'])
+   except Exception as e:
+     self.logger.error('WUGMoonService error while retrieving data: '\
+       +str(e)+', error stack is '+traceback.format_exc())
+     return 0
 
   def getAgeOfMoon(self):
-   res = self.sendRequest(self.APIFuncLink)
-   return int(res['moon_phase']['ageOfMoon'])
+   try:
+     res = self.sendRequest(self.APIFuncLink)
+     return int(res['moon_phase']['ageOfMoon'])
+   except Exception as e:
+     self.logger.error('WUGMoonService error while retrieving data: '\
+       +str(e)+', error stack is '+traceback.format_exc())
+     return 0
+
+  def getMoonRiseTime(self):
+   try:
+    res = self.sendRequest(self.APIFuncLink)
+    return datetime.time(hour=int(res['moon_phase']['moonrise']['hour']),\
+      minute=int(res['moon_phase']['moonrise']['minute']))
+   except Exception as e:
+     self.logger.error('WUGMoonService error while retrieving data: '\
+       +str(e)+', error stack is '+traceback.format_exc())
+     return datetime.datetime.now().time()
+
+  def getMoonSetTime(self):
+   try:
+    res = self.sendRequest(self.APIFuncLink)
+    return datetime.time(hour=int(res['moon_phase']['moonset']['hour']),\
+      minute=int(res['moon_phase']['moonset']['minute']))
+   except Exception as e:
+     self.logger.error('WUGMoonService error while retrieving data: '\
+       +str(e)+', error stack is '+traceback.format_exc())
+     return datetime.datetime.now().time()
+
+  def getCurrentTime(self):
+   try:
+    res = self.sendRequest(self.APIFuncLink)
+    return datetime.time(hour=int(res['moon_phase']['current_time']['hour']),\
+     minute=int(res['moon_phase']['current_time']['minute']))
+   except Exception as e:
+     self.logger.error('WUGMoonService error while retrieving data: '\
+       +str(e)+', error stack is '+traceback.format_exc())
+     return datetime.datetime.now().time()
 
   def hasMoonRose(self):
    res = self.sendRequest(self.APIFuncLink)
-   curTime = datetime.time(hour=int(res['moon_phase']['current_time']['hour']),\
-     minute=int(res['moon_phase']['current_time']['minute']))
-   moonRise = datetime.time(hour=int(res['moon_phase']['moonrise']['hour']),\
-     minute=int(res['moon_phase']['moonrise']['minute']))
-   moonSet = datetime.time(hour=int(res['moon_phase']['moonset']['hour']),\
-     minute=int(res['moon_phase']['moonset']['minute']))
+   curTime = self.getCurrentTime() 
+   moonRise = self.getMoonRiseTime()
+   moonSet = self.getMoonSetTime()
  
    # First check wether the rise/set is within the current day
    isWithin = moonRise<moonSet

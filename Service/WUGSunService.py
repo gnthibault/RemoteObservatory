@@ -2,6 +2,7 @@
 import logging
 import json
 import datetime
+import traceback
 
 # Local stuff
 from Service.WUGService import WUGService
@@ -16,33 +17,49 @@ class WUGSunService(WUGService):
     self.APIFuncLink = 'astronomy/q'
 
   def printEverything(self):
-   res = self.sendRequest(self.APIFuncLink)
-   print(str(res))
+   try:
+     res = self.sendRequest(self.APIFuncLink)
+     print(str(res))
+   except Exception as e:
+     self.logger.error('WUGSunService error while retrieving data: '\
+       +str(e)+', error stack is '+traceback.format_exc())
 
   def getCurrentTime(self):
+   try:
     res = self.sendRequest(self.APIFuncLink)
     return datetime.time(hour=int(res['moon_phase']['current_time']['hour']),\
       minute=int(res['moon_phase']['current_time']['minute']))
+   except Exception as e:
+     self.logger.error('WUGSunService error while retrieving data: '\
+       +str(e)+', error stack is '+traceback.format_exc())
+     return datetime.datetime.now().time()
 
   def getSunRiseTime(self):
+   try:
     res = self.sendRequest(self.APIFuncLink)
     return datetime.time(hour=int(res['sun_phase']['sunrise']['hour']),\
       minute=int(res['sun_phase']['sunrise']['minute']))
+   except Exception as e:
+     self.logger.error('WUGSunService error while retrieving data: '\
+       +str(e)+', error stack is '+traceback.format_exc())
+     return datetime.datetime.now().time()
 
   def getSunSetTime(self):
+   try:
     res = self.sendRequest(self.APIFuncLink)
     return datetime.time(hour=int(res['sun_phase']['sunset']['hour']),\
       minute=int(res['sun_phase']['sunset']['minute']))
+   except Exception as e:
+     self.logger.error('WUGSunService error while retrieving data: '\
+       +str(e)+', error stack is '+traceback.format_exc())
+     return datetime.datetime.now().time()
 
 
   def hasSunRose(self):
    res = self.sendRequest(self.APIFuncLink)
-   curTime = datetime.time(hour=int(res['moon_phase']['current_time']['hour']),\
-     minute=int(res['moon_phase']['current_time']['minute']))
-   sunRise = datetime.time(hour=int(res['sun_phase']['sunrise']['hour']),\
-     minute=int(res['sun_phase']['sunrise']['minute']))
-   sunSet = datetime.time(hour=int(res['sun_phase']['sunset']['hour']),\
-     minute=int(res['sun_phase']['sunset']['minute']))
+   curTime = self.getCurrentTime()
+   sunRise = self.getSunRiseTime()
+   sunSet = self.getSunSetTime()
 
    if curTime>sunRise and curTime<sunSet:
      return True

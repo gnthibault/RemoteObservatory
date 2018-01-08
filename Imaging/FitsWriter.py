@@ -1,6 +1,7 @@
 #Basic stuff
 import logging
 import datetime
+import traceback
 
 # Astropy for handling FITS
 from astropy.io import fits
@@ -79,7 +80,7 @@ class FitsWriter():
       hdr['COMMENT'] = 'No generic comment, life is beautiful'
     except Exception as e:
       self.logger.error('FitsWriter error while tagging fit with index '+\
-        str(self.imgIdx)+' : '+str(e))
+        str(self.imgIdx)+' : '+str(e)+traceback.format_exc())
 
     filename="frame"+str(self.imgIdx)+".fits"
     try:

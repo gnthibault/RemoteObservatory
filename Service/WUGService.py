@@ -9,17 +9,17 @@ import requests_cache
 
 class WUGService(object):
   """ WUG Service """
+  # API request engine
+  defaultBaseAPIURL = 'http://api.wunderground.com/api'
+  #update request only once every 3 min 
+  defaultCacheTimeSec = 3*60
 
   def __init__(self, configFileName=None, logger=None):
     self.logger = logger or logging.getLogger(__name__)
     self.gpsCoordinates = {'latitude': '0.0', 'longitude': '0.0'}
 
-    # API request engine
-    self.baseAPIURL = 'http://api.wunderground.com/api'
-    #update request only once every 3 min 
-    self.cacheTimeSec = 3*60
     requests_cache.install_cache('wug_cache', backend='sqlite',\
-    expire_after=self.cacheTimeSec) 
+    expire_after=self.defaultCacheTimeSec) 
 
     if configFileName is None:
       # Default file is ~/.wug.json
@@ -47,7 +47,7 @@ class WUGService(object):
   def sendRequest(self,APIFuncLink):
     try:
       # Forging the URL
-      url = self.baseAPIURL+'/'+self.key+'/'+APIFuncLink+'/'+\
+      url = self.defaultBaseAPIURL+'/'+self.key+'/'+APIFuncLink+'/'+\
       self.gpsCoordinates['latitude']+','+self.gpsCoordinates['longitude']+\
       '.json'
       # Sending request

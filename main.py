@@ -13,6 +13,7 @@ from Service.WUGSunService import WUGSunService
 from Service.WUGMoonService import WUGMoonService
 from Service.WUGWeatherService import WUGWeatherService
 from Service.NTPTimeService import NTPTimeService
+from Service.NovaAstrometryService import NovaAstrometryService
 
 # Local stuff : IndiClient
 from helper.IndiClient import IndiClient
@@ -80,24 +81,27 @@ if __name__ == '__main__':
   #  indiClient=indiCli)
 
   # test indi virtual camera class
-  #cam = IndiVirtualCamera(logger=logger, indiClient=indiCli,\
-  #  configFileName=None, connectOnCreate=False)
-  #cam.connect()
-  #cam.prepareShoot()
-  #cam.setExpTimeSec(5)
-  #cam.shoot(coord={'ra':12.0, 'dec':45.0})
-  #cam.synchronizeWithImageReception()
-  #fits=cam.getReceivedImage()
-
-  # test indi camera class on a old EOS350D
-  cam = IndiEos350DCamera(logger=logger, indiClient=indiCli,\
-    configFileName='IndiEos350DCamera.json', connectOnCreate=False)
+  cam = IndiVirtualCamera(logger=logger, indiClient=indiCli,\
+    configFileName=None, connectOnCreate=False)
   cam.connect()
   cam.prepareShoot()
   cam.setExpTimeSec(5)
-  cam.shoot()
+  cam.shootAsync(coord={'ra':12.0, 'dec':45.0})
   cam.synchronizeWithImageReception()
   fits=cam.getReceivedImage()
+
+  # test indi camera class on a old EOS350D
+  #cam = IndiEos350DCamera(logger=logger, indiClient=indiCli,\
+  #  configFileName='IndiEos350DCamera.json', connectOnCreate=False)
+  #cam.connect()
+  #cam.prepareShoot()
+  #cam.setExpTimeSec(5)
+  #cam.shootAsync()
+  #cam.synchronizeWithImageReception()
+  #fits=cam.getReceivedImage()
+
+  # test nova Astrometry service
+  nova = NovaAstrometryService()
 
   # Write fits file with all interesting metadata:
   writer = FitsWriter(logger=logger, observatory=obs, servWeather=servWeather,

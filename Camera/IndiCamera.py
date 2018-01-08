@@ -150,7 +150,7 @@ class IndiCamera(IndiDevice):
     except Exception as e:
       self.logger.error('Indi Camera Error in getReceivedImage: '+str(e))
 
-  def shoot(self):
+  def shootAsync(self):
     try:
       self.logger.info('Indi Camera: launching acquisition with '+\
         str(self.expTimeSec)+' sec exposure time')

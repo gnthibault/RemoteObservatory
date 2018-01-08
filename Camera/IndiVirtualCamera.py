@@ -26,7 +26,7 @@ class IndiVirtualCamera(IndiCamera):
   '''
     Indi CCD related stuff
   '''
-  def shoot(self, coord=None):
+  def shootAsync(self, coord=None):
     '''
       Just in case one uses a virtual camera, you should provide 'ra' and 'dec'
       coordinates in the following format:
@@ -36,7 +36,7 @@ class IndiVirtualCamera(IndiCamera):
     if coord is not None:
       self.setNumber(\
         'EQUATORIAL_PE', {'RA_PE': coord['ra'], 'DEC_PE': coord['dec']},\
-        timeout=5)
+        sync=False)
     
-    IndiCamera.shoot(self)
+    IndiCamera.shootAsync(self)
 
