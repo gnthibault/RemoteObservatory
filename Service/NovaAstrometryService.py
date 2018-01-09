@@ -117,7 +117,7 @@ class NovaAstrometryService(object):
       data = {'request-json': json}
       data = urlencode(data)
       self.logger.debug('Nova Astrometry Service, sending text only data:'+\
-        str(data)+' ,json version : '+str(json)))
+        str(data)+' ,json version : '+str(json))
       headers = {}
 
     request = Request(url=url, headers=headers, data=data)
@@ -177,16 +177,16 @@ class NovaAstrometryService(object):
 
     def upload(self, fn=None, **kwargs):
       args = self._getUploadArgs(**kwargs)
-      file_args = None
+      fileArgs = None
       if fn is not None:
         try:
           f = open(fn, 'rb')
-            file_args = (fn, f.read())
+          fileArgs = (fn, f.read())
         except IOError:
           self.logger.error('Nova Astrometry Service, File '+str(fn)+\
-             ' does not exist')
+            ' does not exist')
           raise
-        return self.sendRequest('upload', args, file_args)
+        return self.sendRequest('upload', args, fileArgs)
 
     def submission_images(self, subid):
       result = self.sendRequest('submission_images', {'subid':subid})
@@ -239,8 +239,7 @@ class NovaAstrometryService(object):
         self.logger.debug('Nova Astrometry Service, Annotations:', result)
         result = self.sendRequest('jobs/%s/info' % job_id)
         self.logger.debug('Nova Astrometry Service, Calibration:', result)
-
-return stat
+      return stat
 
     def annotateData(self,job_id):
       """
