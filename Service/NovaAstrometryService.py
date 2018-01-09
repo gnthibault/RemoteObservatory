@@ -110,13 +110,14 @@ class NovaAstrometryService(object):
       g.flatten(mp)
       data = fp.getvalue()
       headers = {'Content-type': mp.get('Content-type')}
-
+      self.logger.debug('Nova Astrometry Service, sending binary file data:')
+ 
     else:
       # Else send x-www-form-encoded
       data = {'request-json': json}
-      print('Sending form data:', data)
       data = urlencode(data)
-      print('Sending data:', data)
+      self.logger.debug('Nova Astrometry Service, sending text only data:'+\
+        str(data)+' ,json version : '+str(json)))
       headers = {}
 
     request = Request(url=url, headers=headers, data=data)
@@ -124,18 +125,141 @@ class NovaAstrometryService(object):
     try:
         f = urlopen(request)
         txt = f.read()
-        print('Got json:', txt)
+        self.logger.debug('Nova Astrometry Service, Got json:', txt)
         result = json2python(txt)
-        print('Got result:', result)
+        self.logger.debug('Nova Astrometry Service, Got result:', result)
         stat = result.get('status')
-        print('Got status:', stat)
+        self.logger.debug('Nova Astrometry Service, Got status:', stat)
         if stat == 'error':
             errstr = result.get('errormessage', '(none)')
             raise RequestError('server error message: ' + errstr)
         return result
     except HTTPError as e:
-        print('HTTPError', e)
+        self.logger.debug('Nova Astrometry Service, HTTPError', e)
         txt = e.read()
         open('err.html', 'wb').write(txt)
-        print('Wrote error text to err.html')
+        self.logger.debug('Nova Astrometry Service, Wrote error text to err.html')
+
+  def _getUploadArgs(self, **kwargs):
+    args = {}
+    for key,default,typ in [('allow_commercial_use', 'd', str),
+        ('allow_modifications', 'd', str),
+        ('publicly_visible', 'y', str),
+        ('scale_units', None, str),
+        ('scale_type', None, str),
+        ('scale_lower', None, float),
+        ('scale_upper', None, float),
+        ('scale_est', None, float),
+        ('scale_err', None, float),
+        ('center_ra', None, float),
+        ('center_dec', None, float),
+        ('radius', None, float),
+        ('downsample_factor', None, int),
+        ('tweak_order', None, int),
+        ('crpix_center', None, bool),
+        ('x', None, list),
+        ('y', None, list)]:
+        # image_width, image_height
+      if key in kwargs:
+        val = kwargs.pop(key)
+        val = typ(val)
+        args.update({key: val})
+      elif default is not None:
+        args.update({key: default})
+    self.logger.debug('Nova Astrometry service: upload args are:', args)
+    return args
+
+    def urlUpload(self, url, **kwargs):
+      args = dict(url=url)
+      args.update(self._getUploadArgs(**kwargs))
+      result = self.sendRequest('url_upload', args)
+      return result
+
+    def upload(self, fn=None, **kwargs):
+      args = self._getUploadArgs(**kwargs)
+      file_args = None
+      if fn is not None:
+        try:
+          f = open(fn, 'rb')
+            file_args = (fn, f.read())
+        except IOError:
+          self.logger.error('Nova Astrometry Service, File '+str(fn)+\
+             ' does not exist')
+          raise
+        return self.sendRequest('upload', args, file_args)
+
+    def submission_images(self, subid):
+      result = self.sendRequest('submission_images', {'subid':subid})
+      return result.get('image_ids')
+
+    def overlay_plot(self, service, outfn, wcsfn, wcsext=0):
+      from astrometry.util import util as anutil
+      wcs = anutil.Tan(wcsfn, wcsext)
+      params = dict(crval1 = wcs.crval[0], crval2 = wcs.crval[1],
+        crpix1 = wcs.crpix[0], crpix2 = wcs.crpix[1],
+        cd11 = wcs.cd[0], cd12 = wcs.cd[1],
+        cd21 = wcs.cd[2], cd22 = wcs.cd[3],
+        imagew = wcs.imagew, imageh = wcs.imageh)
+      result = self.sendRequest(service, {'wcs':params})
+      self.logger.debug('Nova Astrometry Service, Result status:',\
+        result['status'])
+      plotdata = result['plot']
+      plotdata = base64.b64decode(plotdata)
+      open(outfn, 'wb').write(plotdata)
+      self.logger.debug('Nova Astrometry Service, Wrote', outfn)
+
+    def sdss_plot(self, outfn, wcsfn, wcsext=0):
+      return self.overlay_plot('sdss_image_for_wcs', outfn,
+                                 wcsfn, wcsext)
+
+    def galex_plot(self, outfn, wcsfn, wcsext=0):
+      return self.overlay_plot('galex_image_for_wcs', outfn,
+        wcsfn, wcsext)
+
+    def myjobs(self):
+      result = self.sendRequest('myjobs/')
+      return result['jobs']
+
+    def job_status(self, job_id, justdict=False):
+      result = self.sendRequest('jobs/%s' % job_id)
+      if justdict:
+        return result
+      stat = result.get('status')
+      if stat == 'success':
+        result = self.sendRequest('jobs/%s/calibration' % job_id)
+        self.logger.debug('Nova Astrometry Service, Calibration result:',
+          result)
+        result = self.sendRequest('jobs/%s/tags' % job_id)
+        self.logger.debug('Nova Astrometry Service, Tags:', result)
+        result = self.sendRequest('jobs/%s/machine_tags' % job_id)
+        self.logger.debug('Nova Astrometry Service, Machine Tags:', result)
+        result = self.sendRequest('jobs/%s/objects_in_field' % job_id)
+        self.logger.debug('Nova Astrometry Service, Objects in field:', result)
+        result = self.sendRequest('jobs/%s/annotations' % job_id)
+        self.logger.debug('Nova Astrometry Service, Annotations:', result)
+        result = self.sendRequest('jobs/%s/info' % job_id)
+        self.logger.debug('Nova Astrometry Service, Calibration:', result)
+
+return stat
+
+    def annotateData(self,job_id):
+      """
+        :param job_id: id of job
+        :return: return data for annotations
+       """
+      result = self.sendRequest('jobs/%s/annotations' % job_id)
+      return result
+
+    def sub_status(self, sub_id, justdict=False):
+      result = self.sendRequest('submissions/%s' % sub_id)
+      if justdict:
+        return result
+      return result.get('status')
+
+    def jobs_by_tag(self, tag, exact):
+      exact_option = 'exact=yes' if exact else ''
+      result = self.sendRequest(
+        'jobs_by_tag?query=%s&%s' % (quote(tag.strip()), exact_option),{}, )
+      return result
+
 
