@@ -1,4 +1,4 @@
-#Basic stuff
+# Basic stuff
 import json
 import logging
 import traceback
@@ -7,9 +7,12 @@ import traceback
 from datetime import datetime
 import ntplib
 
+# Local stuff
+from Service.BaseService import BaseService
 
-class NTPTimeService():
-  ''' NTPTime Service:
+class NTPTimeService(BaseService):
+  '''
+    NTPTime Service:
   '''
   
   def __init__(self, configFileName=None, logger=None):
@@ -47,6 +50,5 @@ class NTPTimeService():
       utc=datetime.utcnow()
       self.logger.error('NTP Time Service cannot get UTC from server '+
         self.ntpserver+', because of error : '+str(e)+\
-        ' - '+traceback.format_exc()+\
         ' got UTC from local clock instead: '+str(utc))
       return utc

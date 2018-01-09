@@ -1,6 +1,7 @@
 #Basic stuff
 import logging
 import json
+import traceback
 
 
 # Local stuff
@@ -23,40 +24,84 @@ class WUGWeatherService(WUGService):
     self.APIFuncLink = 'conditions/q'
 
   def printEverything(self):
-    res = self.sendRequest(self.APIFuncLink)
-    print(str(res))
+    try:
+      res = self.sendRequest(self.APIFuncLink)
+      print(str(res))
+    except Exception as e:
+      self.logger.error('WUGWeatherService error while retrieving data: '\
+        +str(e))#+', error stack is '+traceback.format_exc())
 
   def getTemp_c(self):
-    res = self.sendRequest(self.APIFuncLink)
-    return float(res['current_observation']['temp_c'])
+    try:
+      res = self.sendRequest(self.APIFuncLink)
+      return float(res['current_observation']['temp_c'])
+    except Exception as e:
+      self.logger.error('WUGWeatherService error while retrieving data: '\
+        +str(e))#+', error stack is '+traceback.format_exc())
+      return self.defaultFloat
 
   def getRelative_humidity(self):
-    res = self.sendRequest(self.APIFuncLink)
-    return float(res['current_observation']['relative_humidity'].split('%')[0])
+    try:
+      res = self.sendRequest(self.APIFuncLink)
+      return float(res['current_observation']['relative_humidity'].split('%')[0])
+    except Exception as e:
+      self.logger.error('WUGWeatherService error while retrieving data: '\
+        +str(e))#+', error stack is '+traceback.format_exc())
+      return self.defaultFloat
 
   def getWind_kph(self):
-    res = self.sendRequest(self.APIFuncLink)
-    return float(res['current_observation']['wind_kph'])
-  
+    try:
+      res = self.sendRequest(self.APIFuncLink)
+      return float(res['current_observation']['wind_kph'])
+    except Exception as e:
+      self.logger.error('WUGWeatherService error while retrieving data: '\
+        +str(e))#+', error stack is '+traceback.format_exc())
+    return self.defaultFloat
+
   def getWind_gust_kph(self):
-    res = self.sendRequest(self.APIFuncLink)
-    return float(res['current_observation']['wind_gust_kph'])
-  
+    try:
+      res = self.sendRequest(self.APIFuncLink)
+      return float(res['current_observation']['wind_gust_kph'])
+    except Exception as e:
+      self.logger.error('WUGWeatherService error while retrieving data: '\
+        +str(e))#+', error stack is '+traceback.format_exc())
+      return self.defaultFloat
+
   def getPressure_mb(self):
-    res = self.sendRequest(self.APIFuncLink)
-    return float(res['current_observation']['pressure_mb'])
-  
+    try:
+      res = self.sendRequest(self.APIFuncLink)
+      return float(res['current_observation']['pressure_mb'])
+    except Exception as e:
+      self.logger.error('WUGWeatherService error while retrieving data: '\
+        +str(e))#+', error stack is '+traceback.format_exc())
+      return self.defaultFloat
+
   def getDewpoint_c(self):
-    res = self.sendRequest(self.APIFuncLink)
-    return float(res['current_observation']['dewpoint_c'])
-  
+    try:
+      res = self.sendRequest(self.APIFuncLink)
+      return float(res['current_observation']['dewpoint_c'])
+    except Exception as e:
+      self.logger.error('WUGWeatherService error while retrieving data: '\
+        +str(e))#+', error stack is '+traceback.format_exc())
+      return self.defaultFloat
+
   def getVisibility_km(self):
-    res = self.sendRequest(self.APIFuncLink)
-    return float(res['current_observation']['visibility_km'])
+    try:
+      res = self.sendRequest(self.APIFuncLink)
+      return float(res['current_observation']['visibility_km'])
+    except Exception as e:
+      self.logger.error('WUGWeatherService error while retrieving data: '\
+        +str(e))#+', error stack is '+traceback.format_exc())
+      return self.defaultFloat
 
   def getWeatherQuality(self):
-    res = self.sendRequest(self.APIFuncLink)
-    return res['current_observation']['weather']
+    try:
+      res = self.sendRequest(self.APIFuncLink)
+      return res['current_observation']['weather']
+    except Exception as e:
+      self.logger.error('WUGWeatherService error while retrieving data: '\
+        +str(e))#+', error stack is '+traceback.format_exc())
+      return self.defaultString
 
   def getWeatherQualityIndex(self):
     weather = self.getWeatherQuality()

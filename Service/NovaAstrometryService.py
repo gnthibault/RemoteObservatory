@@ -38,7 +38,7 @@ class NovaAstrometryService(object):
       self.key = data['key']
 
     # Api URL
-    self.apiURL=apiRUL
+    self.apiURL=apiURL
     # Manage persistent session with cookie like ID
     self.session = None
 
@@ -61,6 +61,7 @@ class NovaAstrometryService(object):
     '''
       service: string
       args: dict
+      fileArgs: tuple with filename, data
     '''
     if self.session is not None:
       args['session']=self.session

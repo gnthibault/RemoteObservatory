@@ -7,7 +7,10 @@ from pathlib import Path
 import requests
 import requests_cache
 
-class WUGService(object):
+#Local stuff
+from Service.BaseService import BaseService
+
+class WUGService(BaseService):
   """ WUG Service """
   # API request engine
   defaultBaseAPIURL = 'http://api.wunderground.com/api'

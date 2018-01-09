@@ -22,7 +22,7 @@ class WUGMoonService(WUGService):
      print(str(res))
    except Exception as e:
      self.logger.error('WUGMoonService error while retrieving data: '\
-       +str(e)+', error stack is '+traceback.format_exc())
+       +str(e))#+', error stack is '+traceback.format_exc())
 
   def getPercentIlluminated(self):
    try:
@@ -30,8 +30,8 @@ class WUGMoonService(WUGService):
      return int(res['moon_phase']['percentIlluminated'])
    except Exception as e:
      self.logger.error('WUGMoonService error while retrieving data: '\
-       +str(e)+', error stack is '+traceback.format_exc())
-     return 0
+       +str(e))#+', error stack is '+traceback.format_exc())
+     return self.defaultInt
 
   def getAgeOfMoon(self):
    try:
@@ -39,8 +39,8 @@ class WUGMoonService(WUGService):
      return int(res['moon_phase']['ageOfMoon'])
    except Exception as e:
      self.logger.error('WUGMoonService error while retrieving data: '\
-       +str(e)+', error stack is '+traceback.format_exc())
-     return 0
+       +str(e))#+', error stack is '+traceback.format_exc())
+     return self.defaultInt
 
   def getMoonRiseTime(self):
    try:
@@ -49,7 +49,7 @@ class WUGMoonService(WUGService):
       minute=int(res['moon_phase']['moonrise']['minute']))
    except Exception as e:
      self.logger.error('WUGMoonService error while retrieving data: '\
-       +str(e)+', error stack is '+traceback.format_exc())
+       +str(e))#+', error stack is '+traceback.format_exc())
      return datetime.datetime.now().time()
 
   def getMoonSetTime(self):
@@ -59,7 +59,7 @@ class WUGMoonService(WUGService):
       minute=int(res['moon_phase']['moonset']['minute']))
    except Exception as e:
      self.logger.error('WUGMoonService error while retrieving data: '\
-       +str(e)+', error stack is '+traceback.format_exc())
+       +str(e))#+', error stack is '+traceback.format_exc())
      return datetime.datetime.now().time()
 
   def getCurrentTime(self):
@@ -69,7 +69,7 @@ class WUGMoonService(WUGService):
      minute=int(res['moon_phase']['current_time']['minute']))
    except Exception as e:
      self.logger.error('WUGMoonService error while retrieving data: '\
-       +str(e)+', error stack is '+traceback.format_exc())
+       +str(e))#+', error stack is '+traceback.format_exc())
      return datetime.datetime.now().time()
 
   def hasMoonRose(self):

@@ -101,7 +101,7 @@ if __name__ == '__main__':
   #fits=cam.getReceivedImage()
 
   # test nova Astrometry service
-  nova = NovaAstrometryService()
+  nova = NovaAstrometryService(logger=logger)
 
   # Write fits file with all interesting metadata:
   writer = FitsWriter(logger=logger, observatory=obs, servWeather=servWeather,

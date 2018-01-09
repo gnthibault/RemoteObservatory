@@ -22,7 +22,7 @@ class WUGSunService(WUGService):
      print(str(res))
    except Exception as e:
      self.logger.error('WUGSunService error while retrieving data: '\
-       +str(e)+', error stack is '+traceback.format_exc())
+       +str(e))#+', error stack is '+traceback.format_exc())
 
   def getCurrentTime(self):
    try:
@@ -31,7 +31,7 @@ class WUGSunService(WUGService):
       minute=int(res['moon_phase']['current_time']['minute']))
    except Exception as e:
      self.logger.error('WUGSunService error while retrieving data: '\
-       +str(e)+', error stack is '+traceback.format_exc())
+       +str(e))#+', error stack is '+traceback.format_exc())
      return datetime.datetime.now().time()
 
   def getSunRiseTime(self):
@@ -41,7 +41,7 @@ class WUGSunService(WUGService):
       minute=int(res['sun_phase']['sunrise']['minute']))
    except Exception as e:
      self.logger.error('WUGSunService error while retrieving data: '\
-       +str(e)+', error stack is '+traceback.format_exc())
+       +str(e))#+', error stack is '+traceback.format_exc())
      return datetime.datetime.now().time()
 
   def getSunSetTime(self):
@@ -51,7 +51,7 @@ class WUGSunService(WUGService):
       minute=int(res['sun_phase']['sunset']['minute']))
    except Exception as e:
      self.logger.error('WUGSunService error while retrieving data: '\
-       +str(e)+', error stack is '+traceback.format_exc())
+       +str(e))#+', error stack is '+traceback.format_exc())
      return datetime.datetime.now().time()
 
 
