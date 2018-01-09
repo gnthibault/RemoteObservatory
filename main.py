@@ -102,6 +102,7 @@ if __name__ == '__main__':
 
   # test nova Astrometry service
   nova = NovaAstrometryService(logger=logger)
+  nova.login()
 
   # Write fits file with all interesting metadata:
   writer = FitsWriter(logger=logger, observatory=obs, servWeather=servWeather,

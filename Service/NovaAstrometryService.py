@@ -39,8 +39,11 @@ class NovaAstrometryService(object):
 
     # Api URL
     self.apiURL=apiURL
-    # Manage persistent session with cookie like ID
+    # Manage persistent session/submissions/jobs with cookie like ID
     self.session = None
+    self.submissionId = None
+    self.jobId = None
+    self.solvedId = None
 
     # Finished configuring
     self.logger.debug('Configured Nova Astrometry service successfully')
@@ -56,6 +59,70 @@ class NovaAstrometryService(object):
     if not sess:
       self.logger.error('Nova Astrometry Service: No session in result')
     self.session = session
+
+  def solveImage(self, fitsFile, coordSky, confidence):
+    kwargs = dict(
+      allow_commercial_use='y', # license stuff
+      allow_modifications='y', # license stuff
+      publicly_visible='y', # other can see request and data
+      scale_units='degwidth', # unit for field size estimation
+      scale_type='ev', # from target value+error instead of bounds
+      scale_est=10, # estimated field scale in deg
+      scale_err=10, #[0, 100] percentage of error on field
+      center_ra=coordSky['ra'], #[0, 360] coordinate of image center
+      center_dec=coordSky['dec'], #[-90, 90] coordinate of image center on
+                                  #right ascencion
+      radius=10.5, # float in degrees around center_[ra,dec]
+      downsample_factor=4, # Ease star detection on images
+      tweak_order=2, # use order-2 polynomial for distortion correction
+      use_sextractor=False, # Alternative star extractor method
+      crpix_center=True, #Set the WCS  referenceto be the center pixel in image
+      parity=2) #geometric indication that can make detection faster (unused)
+ 
+    # Now upload image
+    upres = self.upload(opt.upload, **kwargs)
+    stat = upres['status']
+    if stat != 'success':
+      self.logger.error('Nova Astrometry Service, upload failed: status'+\
+        str(stat)+' and server response: '+str(upres))
+
+    self.submissionId = upres['subid']
+    if self.solved_id is None:
+      if self.submissionId is None:
+        self.logger.error('Nova Astrometry Service : Can\'t --wait without '+\
+          'a submission id or job id!')
+       while True:
+         stat = self.subStatus(self.submissionId, justdict=True)
+         self.logger.debug('Nova Astrometry service: Got status:'+str(stat))
+         jobs = stat.get('jobs', [])
+         if len(jobs):
+           for j in jobs:
+             if j is not None:
+               break
+           if j is not None:
+             self.logger.debug('Nova Astrometry Service: Selecting job id'+\
+               str(j))
+             self.solvedId = j
+             break
+          time.sleep(1)
+
+        while True:
+          stat = c.job_status(self.solvedId, justdict=True)
+          self.logger.debug('Nova Astrometry Service: Got job status:'+\
+            str(stat))
+          if stat.get('status','') in ['success']:
+            success = (stat['status'] == 'success')
+            break
+          time.sleep(5)
+
+    if self.solved_id:
+      # we have a jobId for retrieving results
+      retrieveurls = []
+      if opt.wcs:
+        # We don't need the API for this, just construct URL
+        url = self.server.replace('/api/', '/wcs_file/%i' % self.solved_id)
+        retrieveurls.append((url, self.wcs))
+
 
   def sendRequest(self, service, args={}, fileArgs=None):
     '''

@@ -8,7 +8,7 @@ sudo apt-get install libcfitsio-dev libnova-dev swig indi-full kstars-bleeding l
 pip install requests pyindi-client requests-cache watchdog astropy ntplib
 
 If you want to run the astrometry server locally, use:
-sudo apt-get install python-django-auth-openid python-django-south python-simplejson
+pip install django
 pip install Pillow
 
 ## Web service
