@@ -88,7 +88,7 @@ if __name__ == '__main__':
   cam.setExpTimeSec(1)
   cam.shootAsync(coord={'ra':12.0, 'dec':45.0})
   cam.synchronizeWithImageReception()
-  fits=cam.getReceivedImage()
+  byteStream, fits = cam.getReceivedImage()
 
   # test indi camera class on a old EOS350D
   #cam = IndiEos350DCamera(logger=logger, indiClient=indiCli,\
@@ -103,6 +103,7 @@ if __name__ == '__main__':
   # test nova Astrometry service
   nova = NovaAstrometryService(logger=logger)
   nova.login()
+  nova.solveImage(byteStream)
 
   # Write fits file with all interesting metadata:
   writer = FitsWriter(logger=logger, observatory=obs, servWeather=servWeather,

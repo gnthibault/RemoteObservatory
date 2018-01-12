@@ -138,7 +138,7 @@ class IndiCamera(IndiDevice):
         blobObj=blob.getblobdata()
         # write image data to BytesIO buffer
         byteStream = io.BytesIO(blobObj)
-        return fits.open(byteStream)
+        return blobObj, fits.open(byteStream)
         #plt.imshow(hdulist[0].data)
         #plt.show()
         #del hdul[0].data

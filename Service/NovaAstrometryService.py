@@ -5,10 +5,11 @@ from pathlib import Path
 
 #webservice stuff
 import urllib
-import requests
 
 # Forging request
 import base64
+from io import StringIO
+from email.generator import Generator
 from email.mime.multipart import MIMEMultipart
 from email.mime.base import MIMEBase
 from email.mime.application  import MIMEApplication
@@ -71,7 +72,7 @@ class NovaAstrometryService(object):
     Pixel scale:  1.19 arcsec/pixel
     Orientation:  Up is 90 degrees E of N
     '''
-    kwargs = dict(
+    args = dict(
       allow_commercial_use='y', # license stuff
       allow_modifications='y', # license stuff
       publicly_visible='y', # other can see request and data
@@ -90,10 +91,10 @@ class NovaAstrometryService(object):
       parity=2) #geometric indication that can make detection faster (unused)
  
     # Now upload image
-    upres = self.upload(fitsFile)
+    upres = self.sendRequest('upload', args, fitsFile)#(fn, f.read())
     stat = upres['status']
     if stat != 'success':
-      self.logger.error('Nova Astrometry Service, upload failed: status'+\
+      self.logger.error('Nova Astrometry Service, upload failed: status '+\
         str(stat)+' and server response: '+str(upres))
 
     self.submissionId = upres['subid']
@@ -133,9 +134,6 @@ class NovaAstrometryService(object):
         url = self.server.replace('/api/', '/wcs_file/%i' % self.solved_id)
         retrieveurls.append((url, self.wcs))
 
-  def sanitizeString(self, string):
-    return ''.join(e for e in string if (e.isalnum() or e==' '))
-
   def sendRequest(self, service, args={}, fileArgs=None):
     '''
       service: string
@@ -153,15 +151,13 @@ class NovaAstrometryService(object):
       m1.add_header('Content-disposition', 'form-data; name="request-json"')
       m1.set_payload(argJson)
 
-      m2 = MIMEApplication(fileArgs[1],'octet-stream',encode_noop)
+      #m2 = MIMEApplication(fileArgs,'octet-stream',encode_noop)
+      m2 = MIMEApplication(open('frame0.fits','rb').read(),'octet-stream',encode_noop)
       m2.add_header('Content-disposition',
-                    'form-data; name="file"; filename="%s"' % fileArgs[0])
+                    'form-data; name="file"; filename="file.fits"')
       mp = MIMEMultipart('form-data', None, [m1, m2])
 
       # Make a custom generator to format it the way we need.
-      from cStringIO import StringIO
-      from email.generator import Generator
-
       class MyGenerator(Generator):
         def __init__(self, fp, root=True):
           Generator.__init__(self, fp, mangle_from_=False, maxheaderlen=0)
@@ -176,7 +172,7 @@ class NovaAstrometryService(object):
           # have to copy-n-paste-n-modify.
           for h, v in msg.items():
             print(('%s: %s\r\n' % (h,v)), end='', file=self._fp)
-          # A blank line always separates headers from body
+            # A blank line always separates headers from body
             print('\r\n', end='', file=self._fp)
 
         # The _write_multipart method calls "clone" for the
@@ -187,7 +183,7 @@ class NovaAstrometryService(object):
       fp = StringIO()
       g = MyGenerator(fp)
       g.flatten(mp)
-      data = fp.getvalue()
+      data = fp.getvalue().encode()
       headers = {'Content-type': mp.get('Content-type')}
       self.logger.debug('Nova Astrometry Service, sending binary file data:')
  
@@ -201,7 +197,7 @@ class NovaAstrometryService(object):
         ' ,encoded version : '+str(data))
       headers = {}
 
-      req = urllib.request.Request(url=url, headers=headers, data=data)
+    req = urllib.request.Request(url=url, headers=headers, data=data)
 
     try:
       with urllib.request.urlopen(req) as response:
@@ -214,7 +210,7 @@ class NovaAstrometryService(object):
         #self.logger.debug('Nova Astrometry Service, Got status:'+str(stat))
         if stat == 'error':
           errstr = result.get('errormessage', '(none)')
-          self.logger.error('Nova Astrometry Server error message: ' + errstr)
+          self.logger.error('Nova Astrometry Service error message: ' + errstr)
         return result
     except urllib.error.HTTPError as e:
       self.logger.debug('Nova Astrometry Service, HTTPError', e)
@@ -222,81 +218,10 @@ class NovaAstrometryService(object):
       open('err.html', 'wb').write(txt)
       self.logger.debug('Nova Astrometry Service, Wrote error text to err.html')
 
-  def _getUploadArgs(self, **kwargs):
-    args = {}
-    for key,default,typ in [('allow_commercial_use', 'd', str),
-        ('allow_modifications', 'd', str),
-        ('publicly_visible', 'y', str),
-        ('scale_units', None, str),
-        ('scale_type', None, str),
-        ('scale_lower', None, float),
-        ('scale_upper', None, float),
-        ('scale_est', None, float),
-        ('scale_err', None, float),
-        ('center_ra', None, float),
-        ('center_dec', None, float),
-        ('radius', None, float),
-        ('downsample_factor', None, int),
-        ('tweak_order', None, int),
-        ('crpix_center', None, bool),
-        ('x', None, list),
-        ('y', None, list)]:
-        # image_width, image_height
-      if key in kwargs:
-        val = kwargs.pop(key)
-        val = typ(val)
-        args.update({key: val})
-      elif default is not None:
-        args.update({key: default})
-    self.logger.debug('Nova Astrometry service: upload args are:', args)
-    return args
-
-    def urlUpload(self, url, **kwargs):
-      args = dict(url=url)
-      args.update(self._getUploadArgs(**kwargs))
-      result = self.sendRequest('url_upload', args)
-      return result
-
-    def upload(self, fn=None, **kwargs):
-      args = self._getUploadArgs(**kwargs)
-      fileArgs = None
-      if fn is not None:
-        try:
-          f = open(fn, 'rb')
-          fileArgs = (fn, f.read())
-        except IOError:
-          self.logger.error('Nova Astrometry Service, File '+str(fn)+\
-            ' does not exist')
-          raise
-        return self.sendRequest('upload', args, fileArgs)
 
     def submission_images(self, subid):
       result = self.sendRequest('submission_images', {'subid':subid})
       return result.get('image_ids')
-
-    def overlay_plot(self, service, outfn, wcsfn, wcsext=0):
-      from astrometry.util import util as anutil
-      wcs = anutil.Tan(wcsfn, wcsext)
-      params = dict(crval1 = wcs.crval[0], crval2 = wcs.crval[1],
-        crpix1 = wcs.crpix[0], crpix2 = wcs.crpix[1],
-        cd11 = wcs.cd[0], cd12 = wcs.cd[1],
-        cd21 = wcs.cd[2], cd22 = wcs.cd[3],
-        imagew = wcs.imagew, imageh = wcs.imageh)
-      result = self.sendRequest(service, {'wcs':params})
-      self.logger.debug('Nova Astrometry Service, Result status:',\
-        result['status'])
-      plotdata = result['plot']
-      plotdata = base64.b64decode(plotdata)
-      open(outfn, 'wb').write(plotdata)
-      self.logger.debug('Nova Astrometry Service, Wrote', outfn)
-
-    def sdss_plot(self, outfn, wcsfn, wcsext=0):
-      return self.overlay_plot('sdss_image_for_wcs', outfn,
-                                 wcsfn, wcsext)
-
-    def galex_plot(self, outfn, wcsfn, wcsext=0):
-      return self.overlay_plot('galex_image_for_wcs', outfn,
-        wcsfn, wcsext)
 
     def myjobs(self):
       result = self.sendRequest('myjobs/')
