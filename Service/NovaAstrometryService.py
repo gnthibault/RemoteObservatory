@@ -4,6 +4,8 @@ import logging
 from pathlib import Path
 
 #webservice stuff
+import urllib
+import requests
 
 # Forging request
 import base64
@@ -54,25 +56,33 @@ class NovaAstrometryService(object):
   def login(self):
     args = { 'apikey' : self.key }
     result = self.sendRequest('login', args)
-    session = result.get('session')
-    logger.debug('Nova Astrometry Service: Got session ', sess)
-    if not sess:
+    session = result['session']
+    self.logger.debug('Nova Astrometry Service: Got session '+str(session))
+    if not session:
       self.logger.error('Nova Astrometry Service: No session in result')
     self.session = session
 
-  def solveImage(self, fitsFile, coordSky, confidence):
+  def solveImage(self, fitsFile, coordSky=None, confidence=None):
+    '''Center (RA, Dec):  (179.769, 45.100)
+    Center (RA, hms): 11h 59m 04.623s
+    Center (Dec, dms):  +45° 06' 01.339"
+    Size: 25.4 x 20.3 arcmin
+    Radius: 0.271 deg
+    Pixel scale:  1.19 arcsec/pixel
+    Orientation:  Up is 90 degrees E of N
+    '''
     kwargs = dict(
       allow_commercial_use='y', # license stuff
       allow_modifications='y', # license stuff
       publicly_visible='y', # other can see request and data
-      scale_units='degwidth', # unit for field size estimation
+      scale_units='arcsecperpix', # unit for field size estimation
       scale_type='ev', # from target value+error instead of bounds
-      scale_est=10, # estimated field scale in deg
-      scale_err=10, #[0, 100] percentage of error on field
-      center_ra=coordSky['ra'], #[0, 360] coordinate of image center
-      center_dec=coordSky['dec'], #[-90, 90] coordinate of image center on
-                                  #right ascencion
-      radius=10.5, # float in degrees around center_[ra,dec]
+      scale_est=1.19, # estimated field scale in deg TODO Get from camera+scope
+      scale_err=2, #[0, 100] percentage of error on field
+      center_ra=180,#coordSky['ra']#float [0, 360] coordinate of image center TODO
+      center_dec=45,#coordSky['dec']#float [-90, 90] coordinate of image center on
+                                  #right ascencion TODO
+      radius=1.0, # float in degrees around center_[ra,dec] TODO confidence
       downsample_factor=4, # Ease star detection on images
       tweak_order=2, # use order-2 polynomial for distortion correction
       use_sextractor=False, # Alternative star extractor method
@@ -80,7 +90,7 @@ class NovaAstrometryService(object):
       parity=2) #geometric indication that can make detection faster (unused)
  
     # Now upload image
-    upres = self.upload(opt.upload, **kwargs)
+    upres = self.upload(fitsFile)
     stat = upres['status']
     if stat != 'success':
       self.logger.error('Nova Astrometry Service, upload failed: status'+\
@@ -91,20 +101,20 @@ class NovaAstrometryService(object):
       if self.submissionId is None:
         self.logger.error('Nova Astrometry Service : Can\'t --wait without '+\
           'a submission id or job id!')
-       while True:
-         stat = self.subStatus(self.submissionId, justdict=True)
-         self.logger.debug('Nova Astrometry service: Got status:'+str(stat))
-         jobs = stat.get('jobs', [])
-         if len(jobs):
-           for j in jobs:
-             if j is not None:
-               break
-           if j is not None:
-             self.logger.debug('Nova Astrometry Service: Selecting job id'+\
-               str(j))
-             self.solvedId = j
-             break
-          time.sleep(1)
+      while True:
+        stat = self.subStatus(self.submissionId, justdict=True)
+        self.logger.debug('Nova Astrometry service: Got status:'+str(stat))
+        jobs = stat.get('jobs', [])
+        if len(jobs):
+          for j in jobs:
+            if j is not None:
+              break
+          if j is not None:
+            self.logger.debug('Nova Astrometry Service: Selecting job id'+\
+              str(j))
+            self.solvedId = j
+            break
+        time.sleep(1)
 
         while True:
           stat = c.job_status(self.solvedId, justdict=True)
@@ -123,6 +133,8 @@ class NovaAstrometryService(object):
         url = self.server.replace('/api/', '/wcs_file/%i' % self.solved_id)
         retrieveurls.append((url, self.wcs))
 
+  def sanitizeString(self, string):
+    return ''.join(e for e in string if (e.isalnum() or e==' '))
 
   def sendRequest(self, service, args={}, fileArgs=None):
     '''
@@ -132,14 +144,14 @@ class NovaAstrometryService(object):
     '''
     if self.session is not None:
       args['session']=self.session
-    json = json.dumps(args)
+    argJson = json.dumps(args)
     url = self.getAPIUrl(service)
 
     # If we're sending a file, format a multipart/form-data
     if fileArgs is not None:
       m1 = MIMEBase('text', 'plain')
       m1.add_header('Content-disposition', 'form-data; name="request-json"')
-      m1.set_payload(json.dumps(args))
+      m1.set_payload(argJson)
 
       m2 = MIMEApplication(fileArgs[1],'octet-stream',encode_noop)
       m2.add_header('Content-disposition',
@@ -181,31 +193,34 @@ class NovaAstrometryService(object):
  
     else:
       # Else send x-www-form-encoded
-      data = {'request-json': json}
-      data = urlencode(data)
+      data = {'request-json': argJson}
       self.logger.debug('Nova Astrometry Service, sending text only data:'+\
-        str(data)+' ,json version : '+str(json))
+        ' ,json version : '+str(argJson))
+      data = urllib.parse.urlencode(data).encode("utf-8")
+      self.logger.debug('Nova Astrometry Service, sending text only data:'+\
+        ' ,encoded version : '+str(data))
       headers = {}
 
-    request = Request(url=url, headers=headers, data=data)
+      req = urllib.request.Request(url=url, headers=headers, data=data)
 
     try:
-        f = urlopen(request)
-        txt = f.read()
-        self.logger.debug('Nova Astrometry Service, Got json:', txt)
-        result = json2python(txt)
-        self.logger.debug('Nova Astrometry Service, Got result:', result)
+      with urllib.request.urlopen(req) as response:
+        txt = response.read()
+        self.logger.debug('Nova Astrometry Service, Got json:'+
+          str(txt))
+        result = json.loads(txt)
+        #self.logger.debug('Nova Astrometry Service, Got result:'+str(result))
         stat = result.get('status')
-        self.logger.debug('Nova Astrometry Service, Got status:', stat)
+        #self.logger.debug('Nova Astrometry Service, Got status:'+str(stat))
         if stat == 'error':
-            errstr = result.get('errormessage', '(none)')
-            raise RequestError('server error message: ' + errstr)
+          errstr = result.get('errormessage', '(none)')
+          self.logger.error('Nova Astrometry Server error message: ' + errstr)
         return result
-    except HTTPError as e:
-        self.logger.debug('Nova Astrometry Service, HTTPError', e)
-        txt = e.read()
-        open('err.html', 'wb').write(txt)
-        self.logger.debug('Nova Astrometry Service, Wrote error text to err.html')
+    except urllib.error.HTTPError as e:
+      self.logger.debug('Nova Astrometry Service, HTTPError', e)
+      txt = e.read()
+      open('err.html', 'wb').write(txt)
+      self.logger.debug('Nova Astrometry Service, Wrote error text to err.html')
 
   def _getUploadArgs(self, **kwargs):
     args = {}
@@ -325,7 +340,8 @@ class NovaAstrometryService(object):
     def jobs_by_tag(self, tag, exact):
       exact_option = 'exact=yes' if exact else ''
       result = self.sendRequest(
-        'jobs_by_tag?query=%s&%s' % (quote(tag.strip()), exact_option),{}, )
+        'jobs_by_tag?query=%s&%s' % (urllib.quote(tag.strip()), exact_option),
+        {}, )
       return result
 
 

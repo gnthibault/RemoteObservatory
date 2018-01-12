@@ -85,7 +85,7 @@ if __name__ == '__main__':
     configFileName=None, connectOnCreate=False)
   cam.connect()
   cam.prepareShoot()
-  cam.setExpTimeSec(5)
+  cam.setExpTimeSec(1)
   cam.shootAsync(coord={'ra':12.0, 'dec':45.0})
   cam.synchronizeWithImageReception()
   fits=cam.getReceivedImage()
