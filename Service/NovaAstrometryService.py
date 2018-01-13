@@ -73,22 +73,22 @@ class NovaAstrometryService(object):
     Orientation:  Up is 90 degrees E of N
     '''
     args = dict(
-      allow_commercial_use='y', # license stuff
-      allow_modifications='y', # license stuff
-      publicly_visible='y', # other can see request and data
-      scale_units='arcsecperpix', # unit for field size estimation
-      scale_type='ev', # from target value+error instead of bounds
-      scale_est=1.19, # estimated field scale in deg TODO Get from camera+scope
-      scale_err=2, #[0, 100] percentage of error on field
-      center_ra=180,#coordSky['ra']#float [0, 360] coordinate of image center TODO
-      center_dec=45,#coordSky['dec']#float [-90, 90] coordinate of image center on
+      allow_commercial_use='d', # license stuff
+      allow_modifications='d', # license stuff
+      publicly_visible='y')#, # other can see request and data
+      #scale_units='arcsecperpix', # unit for field size estimation
+      #scale_type='ev', # from target value+error instead of bounds
+      #scale_est=1.19, # estimated field scale in deg TODO Get from camera+scope
+      #scale_err=2, #[0, 100] percentage of error on field
+      #center_ra=180,#coordSky['ra']#float [0, 360] coordinate of image center TODO
+      #center_dec=45,#coordSky['dec']#float [-90, 90] coordinate of image center on
                                   #right ascencion TODO
-      radius=1.0, # float in degrees around center_[ra,dec] TODO confidence
-      downsample_factor=4, # Ease star detection on images
-      tweak_order=2, # use order-2 polynomial for distortion correction
-      use_sextractor=False, # Alternative star extractor method
-      crpix_center=True, #Set the WCS  referenceto be the center pixel in image
-      parity=2) #geometric indication that can make detection faster (unused)
+      #radius=1.0, # float in degrees around center_[ra,dec] TODO confidence
+      #downsample_factor=4, # Ease star detection on images
+      #tweak_order=2, # use order-2 polynomial for distortion correction
+      #use_sextractor=False, # Alternative star extractor method
+      #crpix_center=True, #Set the WCS  referenceto be the center pixel in image
+      #parity=2) #geometric indication that can make detection faster (unused)
  
     # Now upload image
     upres = self.sendRequest('upload', args, fitsFile)#(fn, f.read())
@@ -144,6 +144,7 @@ class NovaAstrometryService(object):
       args['session']=self.session
     argJson = json.dumps(args)
     url = self.getAPIUrl(service)
+    self.logger.debug('Nova Astrometry Service, sending json: '+str(argJson))
 
     # If we're sending a file, format a multipart/form-data
     if fileArgs is not None:
@@ -154,7 +155,7 @@ class NovaAstrometryService(object):
       #m2 = MIMEApplication(fileArgs,'octet-stream',encode_noop)
       m2 = MIMEApplication(open('frame0.fits','rb').read(),'octet-stream',encode_noop)
       m2.add_header('Content-disposition',
-                    'form-data; name="file"; filename="file.fits"')
+                    'form-data; name="file"; filename="frame0.fits"')
       mp = MIMEMultipart('form-data', None, [m1, m2])
 
       # Make a custom generator to format it the way we need.
@@ -172,8 +173,8 @@ class NovaAstrometryService(object):
           # have to copy-n-paste-n-modify.
           for h, v in msg.items():
             print(('%s: %s\r\n' % (h,v)), end='', file=self._fp)
-            # A blank line always separates headers from body
-            print('\r\n', end='', file=self._fp)
+          # A blank line always separates headers from body
+          print('\r\n', end='', file=self._fp)
 
         # The _write_multipart method calls "clone" for the
         # subparts.  We hijack that, setting root=False
@@ -184,9 +185,9 @@ class NovaAstrometryService(object):
       g = MyGenerator(fp)
       g.flatten(mp)
       data = fp.getvalue().encode()
-      headers = {'Content-type': mp.get('Content-type')}
-      self.logger.debug('Nova Astrometry Service, sending binary file data:')
- 
+      headers = {'Content-type': mp['Content-type']}
+      self.logger.debug('Nova Astrometry Service, sending binary file data'+\
+        ' with headers: '+str(headers))
     else:
       # Else send x-www-form-encoded
       data = {'request-json': argJson}
