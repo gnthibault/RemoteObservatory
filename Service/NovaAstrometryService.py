@@ -9,8 +9,9 @@ import urllib
 
 # Forging request
 import base64
-from io import StringIO
+from io import BytesIO
 from email.generator import Generator
+from email.generator import BytesGenerator
 from email.mime.multipart import MIMEMultipart
 from email.mime.base import MIMEBase
 from email.mime.application  import MIMEApplication
@@ -71,18 +72,14 @@ class NovaAstrometryService(object):
       return result
     return result['status']
 
-  def getJobStatus(self, job_id, justdict=False):
+  def getJobStatus(self, job_id):
     result = self.sendRequest('jobs/%s' % job_id)
-    if justdict:
-      return result
-    stat = result.get('status')
+    stat = result['status']
     if stat == 'success':
       result = self.sendRequest('jobs/%s/calibration' % job_id)
-      self.logger.debug('Nova Astrometry Service, Calibration result:',
-        result)
-      result = self.sendRequest('jobs/%s/info' % job_id)
-      self.logger.debug('Nova Astrometry Service, Calibration:', result)
-    return stat
+      self.logger.debug('Nova Astrometry Service, Calibration result: '+\
+        str(result))
+    return stat, result
 
   def solveImage(self, fitsFile, coordSky=None, confidence=None):
     '''Center (RA, Dec):  (179.769, 45.100)
@@ -94,22 +91,21 @@ class NovaAstrometryService(object):
     Orientation:  Up is 90 degrees E of N
     '''
     args = dict(
-      allow_commercial_use='d', # license stuff
-      allow_modifications='d', # license stuff
-      publicly_visible='y')#, # other can see request and data
-      #scale_units='arcsecperpix', # unit for field size estimation
-      #scale_type='ev', # from target value+error instead of bounds
-      #scale_est=1.19, # estimated field scale in deg TODO Get from camera+scope
-      #scale_err=2, #[0, 100] percentage of error on field
-      #center_ra=180,#coordSky['ra']#float [0, 360] coordinate of image center TODO
-      #center_dec=45,#coordSky['dec']#float [-90, 90] coordinate of image center on
+      allow_commercial_use='d',   # license stuff
+      allow_modifications='d',    # license stuff
+      publicly_visible='y',       # other can see request and data
+      scale_units='arcsecperpix', # unit for field size estimation
+      scale_type='ev',            # from target value+error instead of bounds
+      scale_est=1.19, # estimated field scale in deg TODO Get from camera+scope
+      scale_err=2,                #[0, 100] percentage of error on field
+      center_ra=180,#coordSky['ra']#float [0, 360] coordinate of image center TODO
+      center_dec=45,#coordSky['dec']#float [-90, 90] coordinate of image center on
                                   #right ascencion TODO
-      #radius=1.0, # float in degrees around center_[ra,dec] TODO confidence
-      #downsample_factor=4, # Ease star detection on images
-      #tweak_order=2, # use order-2 polynomial for distortion correction
-      #use_sextractor=False, # Alternative star extractor method
-      #crpix_center=True, #Set the WCS  referenceto be the center pixel in image
-      #parity=2) #geometric indication that can make detection faster (unused)
+      radius=1.0,    # float in degrees around center_[ra,dec] TODO confidence
+      downsample_factor=2,        # Ease star detection on images
+      tweak_order=2,        # use order-2 polynomial for distortion correction
+      use_sextractor=False, # Alternative star extractor method
+      parity=2)   #geometric indication that can make detection faster (unused)
  
     # Now upload image
     upres = self.sendRequest('upload', args, fitsFile)
@@ -139,18 +135,18 @@ class NovaAstrometryService(object):
               str(j))
             self.solvedId = j
             break
-        time.sleep(1)
+        time.sleep(5)
 
     while True:
-      stat = self.getJobStatus(self.solvedId, justdict=True)
+      stat, solution = self.getJobStatus(self.solvedId)
       self.logger.debug('Nova Astrometry Service, status update for job ID '+\
         str(self.solvedId)+' : '+str(stat))
-      if stat['status'] in ['success']:
+      if stat in ['success']:
         success = True
         self.logger.debug('Nova Astrometry Service: server successfully '+\
           'solved job ID '+str(self.solvedId))
         break
-      elif stat['status'] in ['failure']:
+      elif stat in ['failure']:
         success = False
         self.logger.debug('Nova Astrometry Service: server failed to solve '+\
           'job ID '+str(self.solvedId))
@@ -158,8 +154,7 @@ class NovaAstrometryService(object):
       time.sleep(5)
 
     if self.solvedId:
-      print('Yep, everything should be alright now')
-      # we have a jobId for retrieving results
+      self.logger.debug('Image has been solved: '+str(solution))
 
   def sendRequest(self, service, args={}, fileArgs=None):
     '''
@@ -171,7 +166,8 @@ class NovaAstrometryService(object):
       args['session']=self.session
     argJson = json.dumps(args)
     url = self.getAPIUrl(service)
-    self.logger.debug('Nova Astrometry Service, sending json: '+str(argJson))
+    self.logger.debug('Nova Astrometry Service, sending json: '+str(argJson)+\
+      ' to url: '+str(url))
 
     # If we're sending a file, format a multipart/form-data
     if fileArgs is not None:
@@ -186,7 +182,7 @@ class NovaAstrometryService(object):
       mp = MIMEMultipart('form-data', None, [m1, m2])
 
       # Make a custom generator to format it the way we need.
-      class MyGenerator(Generator):
+      class MyGenerator(BytesGenerator):
         def __init__(self, fp, root=True):
           Generator.__init__(self, fp, mangle_from_=False, maxheaderlen=0)
           self.root = root
@@ -199,19 +195,19 @@ class NovaAstrometryService(object):
           # doesn't provide the flexibility to override, so we
           # have to copy-n-paste-n-modify.
           for h, v in msg.items():
-            print(('%s: %s\r\n' % (h,v)), end='', file=self._fp)
+              self._fp.write(('%s: %s\r\n' % (h,v)).encode())
           # A blank line always separates headers from body
-          print('\r\n', end='', file=self._fp)
+          self._fp.write('\r\n'.encode())
 
         # The _write_multipart method calls "clone" for the
         # subparts.  We hijack that, setting root=False
         def clone(self, fp):
           return MyGenerator(fp, root=False)
 
-      fp = StringIO()
+      fp = BytesIO()
       g = MyGenerator(fp)
       g.flatten(mp)
-      data = fp.getvalue().encode()
+      data = fp.getvalue()
       headers = {'Content-type': mp['Content-type']}
       self.logger.debug('Nova Astrometry Service, sending binary file data'+\
         ' with headers: '+str(headers))
@@ -230,38 +226,16 @@ class NovaAstrometryService(object):
     try:
       with urllib.request.urlopen(req) as response:
         txt = response.read()
-        self.logger.debug('Nova Astrometry Service, Got json:'+
-          str(txt))
+        self.logger.debug('Nova Astrometry Service, got response: '+str(txt))
         result = json.loads(txt)
-        #self.logger.debug('Nova Astrometry Service, Got result:'+str(result))
+        self.logger.debug('Nova Astrometry Service, got response2: '+str(result))
         stat = result.get('status')
-        #self.logger.debug('Nova Astrometry Service, Got status:'+str(stat))
         if stat == 'error':
           errstr = result.get('errormessage', '(none)')
           self.logger.error('Nova Astrometry Service error message: ' + errstr)
         return result
     except urllib.error.HTTPError as e:
-      self.logger.error('Nova Astrometry Service, HTTPError', e)
+      self.logger.error('Nova Astrometry Service, HTTPError: '+str(e))
       txt = e.read()
       open('err.html', 'wb').write(txt)
       self.logger.error('Nova Astrometry Service, Wrote error text to err.html')
-
-
-    def submission_images(self, subid):
-      result = self.sendRequest('submission_images', {'subid':subid})
-      return result.get('image_ids')
-
-    def myjobs(self):
-      result = self.sendRequest('myjobs/')
-      return result['jobs']
-
-
-    def annotateData(self,job_id):
-      """
-        :param job_id: id of job
-        :return: return data for annotations
-       """
-      result = self.sendRequest('jobs/%s/annotations' % job_id)
-      return result
-
-
