@@ -2,6 +2,7 @@
 import json
 import logging
 from pathlib import Path
+import time
 
 #webservice stuff
 import urllib
@@ -54,6 +55,7 @@ class NovaAstrometryService(object):
   def getAPIUrl(self, service):
     return self.apiURL + service
 
+
   def login(self):
     args = { 'apikey' : self.key }
     result = self.sendRequest('login', args)
@@ -62,6 +64,25 @@ class NovaAstrometryService(object):
     if not session:
       self.logger.error('Nova Astrometry Service: No session in result')
     self.session = session
+
+  def getSubmissionStatus(self, subId, justdict=False):
+    result = self.sendRequest('submissions/%s' % subId)
+    if justdict:
+      return result
+    return result['status']
+
+  def getJobStatus(self, job_id, justdict=False):
+    result = self.sendRequest('jobs/%s' % job_id)
+    if justdict:
+      return result
+    stat = result.get('status')
+    if stat == 'success':
+      result = self.sendRequest('jobs/%s/calibration' % job_id)
+      self.logger.debug('Nova Astrometry Service, Calibration result:',
+        result)
+      result = self.sendRequest('jobs/%s/info' % job_id)
+      self.logger.debug('Nova Astrometry Service, Calibration:', result)
+    return stat
 
   def solveImage(self, fitsFile, coordSky=None, confidence=None):
     '''Center (RA, Dec):  (179.769, 45.100)
@@ -91,48 +112,54 @@ class NovaAstrometryService(object):
       #parity=2) #geometric indication that can make detection faster (unused)
  
     # Now upload image
-    upres = self.sendRequest('upload', args, fitsFile)#(fn, f.read())
+    upres = self.sendRequest('upload', args, fitsFile)
     stat = upres['status']
     if stat != 'success':
       self.logger.error('Nova Astrometry Service, upload failed: status '+\
         str(stat)+' and server response: '+str(upres))
 
     self.submissionId = upres['subid']
-    if self.solved_id is None:
+    self.logger.debug('Nova Astrometry Service, uploaded file successfully '+\
+      ', got status '+str(stat)+' submission ID: '+str(self.submissionId))
+    if self.solvedId is None:
       if self.submissionId is None:
         self.logger.error('Nova Astrometry Service : Can\'t --wait without '+\
           'a submission id or job id!')
       while True:
-        stat = self.subStatus(self.submissionId, justdict=True)
-        self.logger.debug('Nova Astrometry service: Got status:'+str(stat))
+        stat = self.getSubmissionStatus(self.submissionId, justdict=True)
+        self.logger.debug('Nova Astrometry service, status update for '+\
+          ' submission ID '+str(self.submissionId)+' : '+str(stat))
         jobs = stat.get('jobs', [])
         if len(jobs):
           for j in jobs:
             if j is not None:
               break
           if j is not None:
-            self.logger.debug('Nova Astrometry Service: Selecting job id'+\
+            self.logger.debug('Nova Astrometry Service: got a solved job id '+\
               str(j))
             self.solvedId = j
             break
         time.sleep(1)
 
-        while True:
-          stat = c.job_status(self.solvedId, justdict=True)
-          self.logger.debug('Nova Astrometry Service: Got job status:'+\
-            str(stat))
-          if stat.get('status','') in ['success']:
-            success = (stat['status'] == 'success')
-            break
-          time.sleep(5)
+    while True:
+      stat = self.getJobStatus(self.solvedId, justdict=True)
+      self.logger.debug('Nova Astrometry Service, status update for job ID '+\
+        str(self.solvedId)+' : '+str(stat))
+      if stat['status'] in ['success']:
+        success = True
+        self.logger.debug('Nova Astrometry Service: server successfully '+\
+          'solved job ID '+str(self.solvedId))
+        break
+      elif stat['status'] in ['failure']:
+        success = False
+        self.logger.debug('Nova Astrometry Service: server failed to solve '+\
+          'job ID '+str(self.solvedId))
+        break
+      time.sleep(5)
 
-    if self.solved_id:
+    if self.solvedId:
+      print('Yep, everything should be alright now')
       # we have a jobId for retrieving results
-      retrieveurls = []
-      if opt.wcs:
-        # We don't need the API for this, just construct URL
-        url = self.server.replace('/api/', '/wcs_file/%i' % self.solved_id)
-        retrieveurls.append((url, self.wcs))
 
   def sendRequest(self, service, args={}, fileArgs=None):
     '''
@@ -214,10 +241,10 @@ class NovaAstrometryService(object):
           self.logger.error('Nova Astrometry Service error message: ' + errstr)
         return result
     except urllib.error.HTTPError as e:
-      self.logger.debug('Nova Astrometry Service, HTTPError', e)
+      self.logger.error('Nova Astrometry Service, HTTPError', e)
       txt = e.read()
       open('err.html', 'wb').write(txt)
-      self.logger.debug('Nova Astrometry Service, Wrote error text to err.html')
+      self.logger.error('Nova Astrometry Service, Wrote error text to err.html')
 
 
     def submission_images(self, subid):
@@ -228,26 +255,6 @@ class NovaAstrometryService(object):
       result = self.sendRequest('myjobs/')
       return result['jobs']
 
-    def job_status(self, job_id, justdict=False):
-      result = self.sendRequest('jobs/%s' % job_id)
-      if justdict:
-        return result
-      stat = result.get('status')
-      if stat == 'success':
-        result = self.sendRequest('jobs/%s/calibration' % job_id)
-        self.logger.debug('Nova Astrometry Service, Calibration result:',
-          result)
-        result = self.sendRequest('jobs/%s/tags' % job_id)
-        self.logger.debug('Nova Astrometry Service, Tags:', result)
-        result = self.sendRequest('jobs/%s/machine_tags' % job_id)
-        self.logger.debug('Nova Astrometry Service, Machine Tags:', result)
-        result = self.sendRequest('jobs/%s/objects_in_field' % job_id)
-        self.logger.debug('Nova Astrometry Service, Objects in field:', result)
-        result = self.sendRequest('jobs/%s/annotations' % job_id)
-        self.logger.debug('Nova Astrometry Service, Annotations:', result)
-        result = self.sendRequest('jobs/%s/info' % job_id)
-        self.logger.debug('Nova Astrometry Service, Calibration:', result)
-      return stat
 
     def annotateData(self,job_id):
       """
@@ -255,19 +262,6 @@ class NovaAstrometryService(object):
         :return: return data for annotations
        """
       result = self.sendRequest('jobs/%s/annotations' % job_id)
-      return result
-
-    def sub_status(self, sub_id, justdict=False):
-      result = self.sendRequest('submissions/%s' % sub_id)
-      if justdict:
-        return result
-      return result.get('status')
-
-    def jobs_by_tag(self, tag, exact):
-      exact_option = 'exact=yes' if exact else ''
-      result = self.sendRequest(
-        'jobs_by_tag?query=%s&%s' % (urllib.quote(tag.strip()), exact_option),
-        {}, )
       return result
 
 
