@@ -96,6 +96,7 @@ class NovaAstrometryService(object):
     Pixel scale:  1.19 arcsec/pixel
     Orientation:  Up is 90 degrees E of N
     '''
+
     args = dict(
       allow_commercial_use='d',   # license stuff
       allow_modifications='d',    # license stuff
@@ -234,7 +235,6 @@ class NovaAstrometryService(object):
         txt = response.read()
         self.logger.debug('Nova Astrometry Service, got response: '+str(txt))
         result = json.loads(txt)
-        self.logger.debug('Nova Astrometry Service, got response2: '+str(result))
         stat = result.get('status')
         if stat == 'error':
           errstr = result.get('errormessage', '(none)')
