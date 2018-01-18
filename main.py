@@ -85,7 +85,7 @@ if __name__ == '__main__':
     configFileName=None, connectOnCreate=False)
   cam.connect()
   cam.prepareShoot()
-  cam.setExpTimeSec(10)
+  cam.setExpTimeSec(20)
   cam.shootAsync(coord={'ra':12.0, 'dec':45.0})
   cam.synchronizeWithImageReception()
   byteStream, fits = cam.getReceivedImage()
@@ -101,7 +101,7 @@ if __name__ == '__main__':
   #fits=cam.getReceivedImage()
 
   # test nova Astrometry service
-  nova = NovaAstrometryService(logger=logger)
+  nova = NovaAstrometryService(logger=logger,configFileName='local')
   nova.login()
   nova.solveImage(byteStream)
 

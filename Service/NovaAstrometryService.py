@@ -21,26 +21,32 @@ class NovaAstrometryService(object):
   """ Nova Astrometry Service """
   # API request engine
   defaultAPIURL = 'http://nova.astrometry.net/api/'
+  defaultLocalAPIURL = 'http://localhost/api/'
+  defaultLocalKey = 'XXXXXXXX'
 
   def __init__(self, configFileName=None, logger=None, apiURL=defaultAPIURL):
     self.logger = logger or logging.getLogger(__name__)
 
-    if configFileName is None:
-      # Default file is ~/.nova.json
-      home = Path.home()
-      config = home / '.nova.json'
-      self.configFileName = str(config)
+    if configFileName is 'local':
+      apiURL=NovaAstrometryService.defaultLocalAPIURL
+      self.key = NovaAstrometryService.defaultLocalKey
     else:
-      self.configFileName = configFileName
+      if configFileName is None:
+        # Default file is ~/.nova.json
+        home = Path.home()
+        config = home / '.nova.json'
+        self.configFileName = str(config)
+      else:
+        self.configFileName = configFileName
 
-    # Now configuring
-    self.logger.debug('Configuring Nova Astrometry Service with file %s',\
-      self.configFileName)
+      # Now configuring
+      self.logger.debug('Configuring Nova Astrometry Service with file %s',\
+        self.configFileName)
 
-    # Get key from json
-    with open(self.configFileName) as jsonFile:  
-      data = json.load(jsonFile)
-      self.key = data['key']
+      # Get key from json
+      with open(self.configFileName) as jsonFile:  
+        data = json.load(jsonFile)
+        self.key = data['key']
 
     # Api URL
     self.apiURL=apiURL
