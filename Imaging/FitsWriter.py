@@ -1,6 +1,7 @@
 #Basic stuff
-import logging
 import datetime
+import io
+import logging
 import traceback
 
 # Astropy for handling FITS
@@ -15,8 +16,9 @@ class FitsWriter():
   """
 
   def __init__(self, logger=None, observatory=None, servWeather=None,
-      servSun=None, servMoon=None, servTime=None, filtWheel=None,
-      telescope=None, camera=None, target=None):
+      servSun=None, servMoon=None, servTime=None, servAstrometry=None,
+      filtWheel=None, telescope=None, camera=None,
+      target=None):
     self.logger = logger or logging.getLogger(__name__)
     self.logger.debug('Configuring FitsWriter')
     self.imgIdx=0
@@ -26,6 +28,7 @@ class FitsWriter():
     self.servSun=servSun
     self.servMoon=servMoon
     self.servTime=servTime
+    self.servAstrometry=servAstrometry
     self.filtWheel=filtWheel
     self.telescope=telescope
     self.camera=camera
@@ -66,10 +69,28 @@ class FitsWriter():
         hdr['MOONHASROSE'] = (str(self.servMoon.hasMoonRose()), 'NC')
       if self.servTime is not None:
         hdr['UTCTIME'] = (str(self.servTime.getUTCFromNTP()), 'NC')
+      if self.servAstrometry is not None:
+        t=io.BytesIO()
+        fits.writeto(t)
+        self.servAstrometry.solveImage(t.getvalue())
+        hdr['PARITY'] = (str(self.servAstrometry.getCalib()['parity']), 'NC')
+        hdr['ORIENTATION'] = (str(self.servAstrometry.getCalib()['orientation'\
+          ]), 'NC')
+        hdr['PIXSCALE'] = (str(self.servAstrometry.getCalib()['pixscale']),\
+          'NC')
+        hdr['RADIUS'] = (str(self.servAstrometry.getCalib()['radius']), 'NC')
+        hdr['RA'] = (str(self.servAstrometry.getCalib()['ra']), 'NC')
+        hdr['DEC'] = (str(self.servAstrometry.getCalib()['dec']), 'NC')
       if self.filtWheel is not None:
         hdr['FILTER'] = (self.filtWheel.getCurrentFilterName(), 'NC')
       if self.telescope is not None:
-        hdr['SKYCOORD'] = (str(self.telescope.getCurrentSkyCoord()), 'NC')
+        hdr['TELESCOPE'] = (str(self.telescope.getName()), 'NC')
+        hdr['FOCALLENGHT'] = (str(self.telescope.getFocale()), 'NC')
+        hdr['DIAMETER'] = (str(self.telescope.getDiameter()), 'NC')
+        hdr['TELESCOPERA'] = (str(self.telescope.getCurrentSkyCoord()['RA']),\
+          'NC')
+        hdr['TELESCOPEDEC'] = (str(self.telescope.getCurrentSkyCoord()['DEC'])\
+          , 'NC')
       if self.camera is not None:
         hdr['EXPOSURETIMESEC'] = (str(self.camera.getExposureTimeSec()), 'NC')
         hdr['GAIN'] = (str(self.camera.getGain()), 'NC')

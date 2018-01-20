@@ -3,6 +3,10 @@ import logging
 import logging.config
 import time
 
+# Miscellaneous
+import io
+from astropy.io import fits
+
 # Local stuff : Observatory
 from Observatory.VirtualObservatory import VirtualObservatory
 from Observatory.ShedObservatory import ShedObservatory
@@ -22,7 +26,6 @@ from helper.IndiDevice import IndiDevice
 # Local stuff : Camera
 from Camera.IndiVirtualCamera import IndiVirtualCamera
 from Camera.IndiEos350DCamera import IndiEos350DCamera
-
 
 # Local stuff : Imaging tools
 from Imaging.FitsWriter import FitsWriter
@@ -88,7 +91,7 @@ if __name__ == '__main__':
   cam.setExpTimeSec(5)
   cam.shootAsync(coord={'ra':12.0, 'dec':45.0})
   cam.synchronizeWithImageReception()
-  byteStream, fits = cam.getReceivedImage()
+  fits = cam.getReceivedImage()
 
   # test indi camera class on a old EOS350D
   #cam = IndiEos350DCamera(logger=logger, indiClient=indiCli,\
@@ -98,14 +101,17 @@ if __name__ == '__main__':
   #cam.setExpTimeSec(5)
   #cam.shootAsync()
   #cam.synchronizeWithImageReception()
-  #fits=cam.getReceivedImage()
+  #fits = cam.getReceivedImage()
 
   # test nova Astrometry service
   nova = NovaAstrometryService(logger=logger,configFileName='local')
   nova.login()
-  nova.solveImage(byteStream)
+  t=io.BytesIO()
+  fits.writeto(t)
+  astrometry = nova.solveImage(t.getvalue())
 
   # Write fits file with all interesting metadata:
   writer = FitsWriter(logger=logger, observatory=obs, servWeather=servWeather,
-    servSun=servSun, servMoon=servMoon, servTime=servTime)
+    servSun=servSun, servMoon=servMoon, servTime=servTime,
+    servAstrometry=nova)
   writer.writeWithTag(fits)

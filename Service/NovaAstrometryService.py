@@ -56,6 +56,10 @@ class NovaAstrometryService(object):
     self.jobId = None
     self.solvedId = None
 
+    # Keep solution objects
+    self.calibration = None
+    self.wcs = None
+
     # Finished configuring
     self.logger.debug('Configured Nova Astrometry service successfully')
 
@@ -109,7 +113,7 @@ class NovaAstrometryService(object):
       center_dec=45,#coordSky['dec']#float [-90, 90] coordinate of image center on
                                   #right ascencion TODO
       radius=1.0,    # float in degrees around center_[ra,dec] TODO confidence
-      downsample_factor=2,        # Ease star detection on images
+      downsample_factor=4,        # Ease star detection on images
       tweak_order=2,        # use order-2 polynomial for distortion correction
       use_sextractor=False, # Alternative star extractor method
       parity=2)   #geometric indication that can make detection faster (unused)
@@ -161,7 +165,59 @@ class NovaAstrometryService(object):
       time.sleep(5)
 
     if self.solvedId:
-      self.logger.debug('Image has been solved: '+str(solution))
+      self.logger.debug('Nova Astrometry Service: Image has been solved: '+\
+        str(solution))
+    else:
+      self.logger.error('Nova Astrometry Service: Image solving failed')
+ 
+    self.calibration = solution
+    return solution
+
+  def getCalib(self):
+    return self.calibration
+
+  def sdssPlot(self, outfn, wcsfn, wcsext=0):
+    return self.overlayPlot('sdss_image_for_wcs', outfn,\
+      wcsfn, wcsext)
+
+  def galexPlot(self, outfn, wcsfn, wcsext=0):
+    return self.overlayPlot('galex_image_for_wcs', outfn,\
+      wcsfn, wcsext)
+
+  def getWcs(self):
+    if self.solvedId:
+      url = self.apiURL.replace('/api/', '/wcs_file/%i' % self.solvedId)
+      return urlopen(url).read()
+    else:
+      self.logger.error('Nova Astrometry Service: can\'t get wcs, need to '+\
+        'obtain solvedId from solveImage first')
+      return None
+
+  def getKml(self):
+    if self.solvedId:
+      url = self.apiURL.replace('/api/', '/kml_file/%i/' % self.solvedId)
+      return urlopen(url).read()
+    else:
+      self.logger.error('Nova Astrometry Service: can\'t get kml, need to '+\
+        'obtain solvedId from solveImage first')
+      return None
+
+  def getNewFits(self):
+    if self.solvedId:
+      url = self.apiURL.replace('/api/', '/new_fits_file/%i/' % self.solvedId)
+      return urlopen(url).read()
+    else:
+      self.logger.error('Nova Astrometry Service: can\'t get new fit, need '+\
+        'to obtain solvedId from solveImage first')
+      return None
+ 
+  def annotateData(self,job_id):
+    """
+      :param job_id: id of job
+      :return: return data for annotations
+    """
+    result = self.sendRequest('jobs/%s/annotations' % job_id)
+    return result
 
   def sendRequest(self, service, args={}, fileArgs=None):
     '''
@@ -182,8 +238,7 @@ class NovaAstrometryService(object):
       m1.add_header('Content-disposition', 'form-data; name="request-json"')
       m1.set_payload(argJson)
 
-      #m2 = MIMEApplication(fileArgs,'octet-stream',encode_noop)
-      m2 = MIMEApplication(open('frame0.fits','rb').read(),'octet-stream',encode_noop)
+      m2 = MIMEApplication(fileArgs,'octet-stream',encode_noop)
       m2.add_header('Content-disposition',
                     'form-data; name="file"; filename="frame0.fits"')
       mp = MIMEMultipart('form-data', None, [m1, m2])

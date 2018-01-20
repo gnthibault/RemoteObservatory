@@ -135,10 +135,11 @@ class IndiCamera(IndiDevice):
           blob.name+" size: "+str(blob.size)+" format: "+str(blob.format))
         # pyindi-client adds a getblobdata() method to IBLOB item
         # for accessing the contents of the blob, which is a bytearray in Python
-        blobObj=blob.getblobdata()
+        return fits.open(io.BytesIO(blob.getblobdata()))
+        #blobObj = blob.getblobdata()
         # write image data to BytesIO buffer
-        byteStream = io.BytesIO(blobObj)
-        return blobObj, fits.open(byteStream)
+        #byteStream = io.BytesIO(blobObj)
+        #, fits.open(byteStream)
         #plt.imshow(hdulist[0].data)
         #plt.show()
         #del hdul[0].data
