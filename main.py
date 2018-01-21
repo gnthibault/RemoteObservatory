@@ -109,6 +109,12 @@ if __name__ == '__main__':
   t=io.BytesIO()
   fits.writeto(t)
   astrometry = nova.solveImage(t.getvalue())
+  corrected = nova.getNewFits()
+  print('fits content is '+str(corrected))
+  wcs=nova.getWcs()
+  print('wcs content is '+str(wcs))
+  kml=nova.getKml()
+  print('kml content is '+str(kml))
 
   # Write fits file with all interesting metadata:
   writer = FitsWriter(logger=logger, observatory=obs, servWeather=servWeather,

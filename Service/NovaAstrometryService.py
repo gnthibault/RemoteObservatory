@@ -1,11 +1,15 @@
-#Basic stuff
+# Basic stuff
 import json
 import logging
 from pathlib import Path
 import time
 
-#webservice stuff
+# Webservice stuff
 import urllib
+
+# Handle fits file
+import io
+from astropy.io import fits
 
 # Forging request
 import base64
@@ -174,7 +178,12 @@ class NovaAstrometryService(object):
     return solution
 
   def getCalib(self):
-    return self.calibration
+    if self.calibration:
+      return self.calibration
+    else:
+      self.logger.error('Nova Astrometry Service: No actual calibration')
+      return {'parity': 0.0, 'orientation': 0.0, 'pixscale': 0.0,
+        'radius': 0.0, 'ra': 0.0, 'dec': 0.0}
 
   def sdssPlot(self, outfn, wcsfn, wcsext=0):
     return self.overlayPlot('sdss_image_for_wcs', outfn,\
@@ -187,7 +196,7 @@ class NovaAstrometryService(object):
   def getWcs(self):
     if self.solvedId:
       url = self.apiURL.replace('/api/', '/wcs_file/%i' % self.solvedId)
-      return urlopen(url).read()
+      return urllib.request.urlopen(url).read()
     else:
       self.logger.error('Nova Astrometry Service: can\'t get wcs, need to '+\
         'obtain solvedId from solveImage first')
@@ -196,7 +205,7 @@ class NovaAstrometryService(object):
   def getKml(self):
     if self.solvedId:
       url = self.apiURL.replace('/api/', '/kml_file/%i/' % self.solvedId)
-      return urlopen(url).read()
+      return urllib.request.urlopen(url).read()
     else:
       self.logger.error('Nova Astrometry Service: can\'t get kml, need to '+\
         'obtain solvedId from solveImage first')
@@ -205,7 +214,7 @@ class NovaAstrometryService(object):
   def getNewFits(self):
     if self.solvedId:
       url = self.apiURL.replace('/api/', '/new_fits_file/%i/' % self.solvedId)
-      return urlopen(url).read()
+      return fits.open(io.BytesIO(urllib.request.urlopen(url).read()))
     else:
       self.logger.error('Nova Astrometry Service: can\'t get new fit, need '+\
         'to obtain solvedId from solveImage first')
@@ -240,7 +249,7 @@ class NovaAstrometryService(object):
 
       m2 = MIMEApplication(fileArgs,'octet-stream',encode_noop)
       m2.add_header('Content-disposition',
-                    'form-data; name="file"; filename="frame0.fits"')
+                    'form-data; name="file"; filename="frame.fits"')
       mp = MIMEMultipart('form-data', None, [m1, m2])
 
       # Make a custom generator to format it the way we need.
