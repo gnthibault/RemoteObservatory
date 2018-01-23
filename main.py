@@ -115,6 +115,7 @@ if __name__ == '__main__':
   print('wcs content is '+str(wcs))
   kml=nova.getKml()
   print('kml content is '+str(kml))
+  nova.getSIPCorrectedImage()
 
   # Write fits file with all interesting metadata:
   writer = FitsWriter(logger=logger, observatory=obs, servWeather=servWeather,

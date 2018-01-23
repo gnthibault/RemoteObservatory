@@ -11,6 +11,10 @@ import urllib
 import io
 from astropy.io import fits
 
+# Correcting for optical distortions
+import matplotlib.pyplot as plt
+from scipy.interpolate import griddata
+
 # Forging request
 import base64
 from io import BytesIO
@@ -219,7 +223,32 @@ class NovaAstrometryService(object):
       self.logger.error('Nova Astrometry Service: can\'t get new fit, need '+\
         'to obtain solvedId from solveImage first')
       return None
- 
+
+  def getSIPCorrectedImage(self):
+    '''
+      see http://docs.astropy.org/en/stable/wcs/ for more
+    '''
+    fitsWithSIP = self.getNewFits()
+    if fitsWithSIP is not None:
+      # Getting Data
+      header, im = fitsWithSIP[0].header, fitsWithSIP[0].data
+      w = WCS(header) 
+      # Making Indices
+      xpx = np.arange(im.shape[1]+1)-0.5
+      ypx = np.arange(im.shape[0]+1)-0.5
+      xlist, ylist = np.meshgrid(xpx, ypx)
+      ralist, declist = w.sip_pix2foc(xlist, ylist, 0) #sip_foc2pix:
+      # Resampling to corrected grid
+      corrected = griddata((xlist,ylist), im, (grid_x, grid_y), method='cubic')
+      plt.imshow(corrected)
+      plt.show()
+    else:
+      self.logger.error('Nova Astrometry Service: can\'t get new fit, need '+\
+        'to obtain solvedId from solveImage first')
+      return None
+
+
+
   def annotateData(self,job_id):
     """
       :param job_id: id of job
