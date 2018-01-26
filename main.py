@@ -88,7 +88,7 @@ if __name__ == '__main__':
     configFileName=None, connectOnCreate=False)
   cam.connect()
   cam.prepareShoot()
-  cam.setExpTimeSec(5)
+  cam.setExpTimeSec(10)
   cam.shootAsync(coord={'ra':12.0, 'dec':45.0})
   cam.synchronizeWithImageReception()
   fits = cam.getReceivedImage()
@@ -115,7 +115,7 @@ if __name__ == '__main__':
   print('wcs content is '+str(wcs))
   kml=nova.getKml()
   print('kml content is '+str(kml))
-  nova.getSIPCorrectedImage()
+  nova.printRaDecWCSwithSIPCorrectedImage('radec.png')
 
   # Write fits file with all interesting metadata:
   writer = FitsWriter(logger=logger, observatory=obs, servWeather=servWeather,

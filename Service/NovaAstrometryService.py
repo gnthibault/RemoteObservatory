@@ -10,9 +10,11 @@ import urllib
 # Handle fits file
 import io
 from astropy.io import fits
+from astropy import wcs
 
 # Correcting for optical distortions
 import matplotlib.pyplot as plt
+import numpy as np
 from scipy.interpolate import griddata
 
 # Forging request
@@ -78,26 +80,44 @@ class NovaAstrometryService(object):
   def login(self):
     args = { 'apikey' : self.key }
     result = self.sendRequest('login', args)
-    session = result['session']
-    self.logger.debug('Nova Astrometry Service: Got session '+str(session))
-    if not session:
-      self.logger.error('Nova Astrometry Service: No session in result')
+    if result is not None:
+      try:
+        session = result['session']
+        self.logger.debug('Nova Astrometry Service: Got session '+str(session))
+      except Exception as e:
+        self.logger.error('Nova Astrometry Service: No session in result, '+\
+          'error is: '+str(e))
+        session = None
+    else:
+      session = None
     self.session = session
 
   def getSubmissionStatus(self, subId, justdict=False):
     result = self.sendRequest('submissions/%s' % subId)
     if justdict:
       return result
-    return result['status']
+    try:
+      res = result['status']
+    except Exception as e:
+      res = None
+      self.logger.error('Nova Astrometry Service: impossible to get '+\
+        'submission status, error is: '+str(e))
+    return res
 
   def getJobStatus(self, job_id):
     result = self.sendRequest('jobs/%s' % job_id)
-    stat = result['status']
-    if stat == 'success':
-      result = self.sendRequest('jobs/%s/calibration' % job_id)
-      self.logger.debug('Nova Astrometry Service, Calibration result: '+\
-        str(result))
-    return stat, result
+    try:
+      stat = result['status']
+      if stat == 'success':
+        result = self.sendRequest('jobs/%s/calibration' % job_id)
+        self.logger.debug('Nova Astrometry Service, Calibration result: '+\
+          str(result))
+      return stat, result
+    except Exception as e:
+      self.logger.error('Nova Astrometry Service: impossible to get '+\
+        'job status, error is: '+str(e))
+      return None, None
+
 
   def solveImage(self, fitsFile, coordSky=None, confidence=None):
     '''Center (RA, Dec):  (179.769, 45.100)
@@ -124,37 +144,50 @@ class NovaAstrometryService(object):
       downsample_factor=4,        # Ease star detection on images
       tweak_order=2,        # use order-2 polynomial for distortion correction
       use_sextractor=False, # Alternative star extractor method
-      parity=2)   #geometric indication that can make detection faster (unused)
+      parity=2,   #geometric indication that can make detection faster (unused)
+      crpix_center=True)
  
     # Now upload image
     upres = self.sendRequest('upload', args, fitsFile)
-    stat = upres['status']
-    if stat != 'success':
-      self.logger.error('Nova Astrometry Service, upload failed: status '+\
-        str(stat)+' and server response: '+str(upres))
+    try:
+      stat = upres['status']
+      if stat != 'success':
+        self.logger.error('Nova Astrometry Service, upload failed: status '+\
+          str(stat)+' and server response: '+str(upres))
 
-    self.submissionId = upres['subid']
-    self.logger.debug('Nova Astrometry Service, uploaded file successfully '+\
-      ', got status '+str(stat)+' submission ID: '+str(self.submissionId))
+      self.submissionId = upres['subid']
+      self.logger.debug('Nova Astrometry Service, uploaded file successfully '+\
+        ', got status '+str(stat)+' submission ID: '+str(self.submissionId))
+    except Exception as e:
+      self.logger.error('Nova Astrometry Service, upload failed :'+str(e))
+      return None
+
     if self.solvedId is None:
       if self.submissionId is None:
         self.logger.error('Nova Astrometry Service : Can\'t --wait without '+\
           'a submission id or job id!')
+        return None
+        
       while True:
-        stat = self.getSubmissionStatus(self.submissionId, justdict=True)
-        self.logger.debug('Nova Astrometry service, status update for '+\
-          ' submission ID '+str(self.submissionId)+' : '+str(stat))
-        jobs = stat.get('jobs', [])
-        if len(jobs):
-          for j in jobs:
+        try:
+          stat = self.getSubmissionStatus(self.submissionId, justdict=True)
+          self.logger.debug('Nova Astrometry service, status update for '+\
+            ' submission ID '+str(self.submissionId)+' : '+str(stat))
+          jobs = stat.get('jobs', [])
+          if len(jobs):
+            for j in jobs:
+              if j is not None:
+                break
             if j is not None:
+              self.logger.debug('Nova Astrometry Service: got a solved job '\
+                'id : '+str(j))
+              self.solvedId = j
               break
-          if j is not None:
-            self.logger.debug('Nova Astrometry Service: got a solved job id '+\
-              str(j))
-            self.solvedId = j
-            break
-        time.sleep(5)
+          time.sleep(5)
+        except Exception as e:
+          self.logger.error('Nova Astrometry Service, for some reason, failed '\
+            'while waiting for sbumission status: '+str(e))
+          return None
 
     while True:
       stat, solution = self.getJobStatus(self.solvedId)
@@ -170,12 +203,15 @@ class NovaAstrometryService(object):
         self.logger.debug('Nova Astrometry Service: server failed to solve '+\
           'job ID '+str(self.solvedId))
         break
+      elif stat is None:
+        break
       time.sleep(5)
 
-    if self.solvedId:
+    if success and self.solvedId:
       self.logger.debug('Nova Astrometry Service: Image has been solved: '+\
         str(solution))
     else:
+      self.solvedId = None
       self.logger.error('Nova Astrometry Service: Image solving failed')
  
     self.calibration = solution
@@ -224,6 +260,29 @@ class NovaAstrometryService(object):
         'to obtain solvedId from solveImage first')
       return None
 
+  def printRaDecWCSwithSIPCorrectedImage(self, savepath):
+    '''
+      see http://docs.astropy.org/en/stable/wcs/ for more
+    '''
+    fitsWithSIP = self.getNewFits()
+    if fitsWithSIP is not None:
+      # Getting Data
+      header, im = fitsWithSIP[0].header, fitsWithSIP[0].data
+      w = wcs.WCS(header) 
+      # Making Indices
+      xpx = np.arange(im.shape[1]+1)-0.5
+      ypx = np.arange(im.shape[0]+1)-0.5
+      xlist, ylist = np.meshgrid(xpx, ypx)
+      ralist, declist = w.all_pix2world(xlist, ylist, 0)
+      # Resampling to corrected grid
+      plt.pcolormesh(ralist,declist, im, vmin=min, vmax=max)
+      plt.savefig(savepath)
+      self.logger.info('Nova Astrometry Service: writing ra/dec tagged image '\
+        'to '+savepath)
+    else:
+      self.logger.error('Nova Astrometry Service: can\'t get new fit, need '+\
+        'to obtain solvedId from solveImage first')
+
   def getSIPCorrectedImage(self):
     '''
       see http://docs.astropy.org/en/stable/wcs/ for more
@@ -232,21 +291,24 @@ class NovaAstrometryService(object):
     if fitsWithSIP is not None:
       # Getting Data
       header, im = fitsWithSIP[0].header, fitsWithSIP[0].data
-      w = WCS(header) 
+      w = wcs.WCS(header) 
       # Making Indices
-      xpx = np.arange(im.shape[1]+1)-0.5
-      ypx = np.arange(im.shape[0]+1)-0.5
-      xlist, ylist = np.meshgrid(xpx, ypx)
-      ralist, declist = w.sip_pix2foc(xlist, ylist, 0) #sip_foc2pix:
+      xpx = np.arange(im.shape[1])+0.5
+      ypx = np.arange(im.shape[0])+0.5
+      refx, refy = np.meshgrid(xpx, ypx)
+      x_correction, y_correction = w.sip_pix2foc(refx, refy, 0)
+      newx = refx + x_correction
+      newy = refy + y_correction
       # Resampling to corrected grid
-      corrected = griddata((xlist,ylist), im, (grid_x, grid_y), method='cubic')
-      plt.imshow(corrected)
-      plt.show()
+      corrected=griddata((refx.flatten(),refy.flatten()), im.flatten(),
+        (newx,newy), method='cubic')
+      self.logger.info('Nova Astrometry Service: Corrected for SIP')
+      return None
     else:
       self.logger.error('Nova Astrometry Service: can\'t get new fit, need '+\
         'to obtain solvedId from solveImage first')
       return None
-
+    
 
 
   def annotateData(self,job_id):
@@ -321,9 +383,9 @@ class NovaAstrometryService(object):
         ' ,encoded version : '+str(data))
       headers = {}
 
-    req = urllib.request.Request(url=url, headers=headers, data=data)
 
     try:
+      req = urllib.request.Request(url=url, headers=headers, data=data)
       with urllib.request.urlopen(req) as response:
         txt = response.read()
         self.logger.debug('Nova Astrometry Service, got response: '+str(txt))
@@ -336,5 +398,10 @@ class NovaAstrometryService(object):
     except urllib.error.HTTPError as e:
       self.logger.error('Nova Astrometry Service, HTTPError: '+str(e))
       txt = e.read()
-      open('err.html', 'wb').write(txt)
+      with open('err.html', 'wb') as fout:
+        fout.write(txt)
       self.logger.error('Nova Astrometry Service, Wrote error text to err.html')
+      return None
+    except Exception  as e:
+      self.logger.error('Nova Astrometry Service, Error in sendRequest')
+      return None
