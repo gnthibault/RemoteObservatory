@@ -275,7 +275,9 @@ class NovaAstrometryService(object):
       xlist, ylist = np.meshgrid(xpx, ypx)
       ralist, declist = w.all_pix2world(xlist, ylist, 0)
       # Resampling to corrected grid
-      plt.pcolormesh(ralist,declist, im, vmin=min, vmax=max)
+      plt.xlabel('Ra axis (deg)')
+      plt.ylabel('Dec axis (deg)')
+      plt.pcolormesh(ralist,declist, im, vmin=im.min(), vmax=im.max())
       plt.savefig(savepath)
       self.logger.info('Nova Astrometry Service: writing ra/dec tagged image '\
         'to '+savepath)
@@ -403,5 +405,6 @@ class NovaAstrometryService(object):
       self.logger.error('Nova Astrometry Service, Wrote error text to err.html')
       return None
     except Exception  as e:
-      self.logger.error('Nova Astrometry Service, Error in sendRequest')
+      self.logger.error('Nova Astrometry Service, Error in sendRequest: '+\
+        str(e))
       return None

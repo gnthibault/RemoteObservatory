@@ -122,3 +122,5 @@ if __name__ == '__main__':
     servSun=servSun, servMoon=servMoon, servTime=servTime,
     servAstrometry=nova)
   writer.writeWithTag(fits)
+
+
