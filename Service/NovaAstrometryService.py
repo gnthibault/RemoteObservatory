@@ -275,6 +275,8 @@ class NovaAstrometryService(object):
       xlist, ylist = np.meshgrid(xpx, ypx)
       ralist, declist = w.all_pix2world(xlist, ylist, 0)
       # Resampling to corrected grid
+      plt.title('Field center: Ra:'+format(header['CRVAL1'],'.3f')+' , Dec: '+\
+                format(header['CRVAL2'],'.3f'))
       plt.xlabel('Ra axis (deg)')
       plt.ylabel('Dec axis (deg)')
       plt.pcolormesh(ralist,declist, im, vmin=im.min(), vmax=im.max())
