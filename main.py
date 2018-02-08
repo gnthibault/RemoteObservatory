@@ -1,6 +1,7 @@
 # Basic stuff
 import logging
 import logging.config
+import threading
 import time
 
 # Miscellaneous
@@ -80,8 +81,8 @@ if __name__ == '__main__':
   indiCli.connect()
 
   # test indi Device
-  #indiDevice = IndiDevice(logger=logger,deviceName='CCD Simulator',\
-  #  indiClient=indiCli)
+  indiDevice = IndiDevice(logger=logger,deviceName='CCD Simulator',\
+    indiClient=indiCli)
 
   # test indi virtual camera class
   cam = IndiVirtualCamera(logger=logger, indiClient=indiCli,\
@@ -121,6 +122,7 @@ if __name__ == '__main__':
   writer = FitsWriter(logger=logger, observatory=obs, servWeather=servWeather,
     servSun=servSun, servMoon=servMoon, servTime=servTime,
     servAstrometry=nova)
-  writer.writeWithTag(fits)
-
+  f = lambda : writer.writeWithTag(fits)
+  t = threading.Thread(target=f, args=())
+  t.start()
 
