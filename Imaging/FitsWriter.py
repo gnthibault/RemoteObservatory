@@ -42,7 +42,7 @@ class FitsWriter():
       Secnd step: Write fits to disk
     '''
     try:
-      hdr = fits[0].header
+      hdr = fits.header
       
       if self.observatory is not None:
         hdr['OBSERVER'] = (self.observatory.getOwnerName(), 'NC')

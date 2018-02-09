@@ -122,7 +122,7 @@ if __name__ == '__main__':
   writer = FitsWriter(logger=logger, observatory=obs, servWeather=servWeather,
     servSun=servSun, servMoon=servMoon, servTime=servTime,
     servAstrometry=nova)
-  f = lambda : writer.writeWithTag(fits)
-  t = threading.Thread(target=f, args=())
-  t.start()
+  hwriter = lambda f : writer.writeWithTag(f)
+  w = threading.Thread(target=hwriter, args=(fits))
+  w.start()
 
