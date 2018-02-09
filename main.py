@@ -31,6 +31,12 @@ from Camera.IndiEos350DCamera import IndiEos350DCamera
 # Local stuff : Imaging tools
 from Imaging.FitsWriter import FitsWriter
 
+# Local stuff: Sequencer
+from Sequencer.ShootingSequence import ShootingSequence
+from Sequencer.SequenceBuilder import SequenceBuilder
+from Sequencer.SequenceRunner import SequenceRunner
+
+
 if __name__ == '__main__':
 
   # load the logging configuration
@@ -126,3 +132,7 @@ if __name__ == '__main__':
   w = threading.Thread(target=hwriter, args=(fits))
   w.start()
 
+  # Test a Shooting Sequence
+  seq = ShootingSequence(cam, target='M51', exposure=10, count=3, )
+
+  seqBuilder = SequenceBuilder(camera=cam)
