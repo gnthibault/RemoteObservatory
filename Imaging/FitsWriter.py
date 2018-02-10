@@ -21,7 +21,6 @@ class FitsWriter():
       target=None):
     self.logger = logger or logging.getLogger(__name__)
     self.logger.debug('Configuring FitsWriter')
-    self.imgIdx=0
 
     self.observatory=observatory
     self.servWeather=servWeather
@@ -36,13 +35,13 @@ class FitsWriter():
 
     self.logger.debug('FitsWriter configured successfully')
 
-  def writeWithTag(self, fits):
+  def writeWithTag(self, fits, imgIdx):
     '''
       First step: tag with every possible information
       Secnd step: Write fits to disk
     '''
     try:
-      hdr = fits.header
+      hdr = fits[0].header
       
       if self.observatory is not None:
         hdr['OBSERVER'] = (self.observatory.getOwnerName(), 'NC')
@@ -101,9 +100,9 @@ class FitsWriter():
       hdr['COMMENT'] = 'No generic comment, life is beautiful'
     except Exception as e:
       self.logger.error('FitsWriter error while tagging fit with index '+\
-        str(self.imgIdx)+' : '+str(e)+traceback.format_exc())
+        str(imgIdx)+' : '+str(e)+traceback.format_exc())
 
-    filename="frame"+str(self.imgIdx)+".fits"
+    filename="frame"+str(imgIdx)+".fits"
     try:
       with open(filename, "wb") as f:
         fits.writeto(f, overwrite=True)
@@ -111,4 +110,3 @@ class FitsWriter():
       self.logger.error('FitsWriter error while writing file '+filename+\
         ' : '+str(e))
 
-    self.imgIdx=self.imgIdx+1

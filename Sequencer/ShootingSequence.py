@@ -26,12 +26,12 @@ class ShootingSequence:
     def run(self):
         self.callbacks.run('onStarted', self)
         for index in range(0, self.count):
-            self.callbacks.run('onEachStarted', self)
+            self.callbacks.run('onEachStarted', self, index)
             self.camera.setExpTimeSec(self.exposure)
             self.camera.shootAsync()
             self.camera.synchronizeWithImageReception()
             self.finished += 1
-            self.callbacks.run('onEachFinished', self)
+            self.callbacks.run('onEachFinished', self, index)
         self.callbacks.run('onFinished', self)
 
     @property

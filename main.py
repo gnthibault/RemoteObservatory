@@ -128,22 +128,23 @@ if __name__ == '__main__':
   writer = FitsWriter(logger=logger, observatory=obs, servWeather=servWeather,
     servSun=servSun, servMoon=servMoon, servTime=servTime,
     servAstrometry=nova)
-  hwriter = lambda f : writer.writeWithTag(f)
-  w = threading.Thread(target=hwriter, args=(fits))
+  hwriter = lambda f,i : writer.writeWithTag(f,i)
+  w = threading.Thread(target=hwriter, args=(fits,0))
   w.start()
 
   # Test a Shooting Sequence
-  def AsyncWriteImageFromSequence(shootingSequence):
+  def AsyncWriteImageFromSequence(shootingSequence, index):
       w = threading.Thread(target=hwriter,
-                           args=(shootingSequence.camera.getReceivedImage()))
+                           args=(shootingSequence.camera.getReceivedImage(),
+                                 index))
       w.start()
     
-  seq = ShootingSequence(camera=cam, target='M51', exposure=10, count=3,
+  seq = ShootingSequence(camera=cam, target='M51', exposure=10, count=5,
       onStarted=[lambda x : print('On Started')],
-      onEachStarted=[lambda x : print('On Each Started')],
-      onEachFinished=[lambda x : print('On Each Finished')],
-      onFinished=[lambda x : print('On Finished'),
-                  AsyncWriteImageFromSequence])
+      onEachStarted=[lambda x,i : print('On Each Started')],
+      onEachFinished=[lambda x,i : print('On Each Finished'),
+                      AsyncWriteImageFromSequence],
+      onFinished=[lambda x : print('On Finished')])
   seq.run()
-
+  sleep(30)
   #seqBuilder = SequenceBuilder(camera=cam)
