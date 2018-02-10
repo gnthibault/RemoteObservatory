@@ -133,6 +133,17 @@ if __name__ == '__main__':
   w.start()
 
   # Test a Shooting Sequence
-  seq = ShootingSequence(cam, target='M51', exposure=10, count=3, )
+  def AsyncWriteImageFromSequence(shootingSequence):
+      w = threading.Thread(target=hwriter,
+                           args=(shootingSequence.camera.getReceivedImage()))
+      w.start()
+    
+  seq = ShootingSequence(camera=cam, target='M51', exposure=10, count=3,
+      onStarted=[lambda x : print('On Started')],
+      onEachStarted=[lambda x : print('On Each Started')],
+      onEachFinished=[lambda x : print('On Each Finished')],
+      onFinished=[lambda x : print('On Finished'),
+                  AsyncWriteImageFromSequence])
+  seq.run()
 
-  seqBuilder = SequenceBuilder(camera=cam)
+  #seqBuilder = SequenceBuilder(camera=cam)

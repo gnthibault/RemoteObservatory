@@ -14,7 +14,6 @@ class SequenceCallbacks:
         for callback in self.callbacks[name]:
             callback(*args, **kwargs)
 
-
 class ShootingSequence:
     def __init__(self, camera, target, exposure, count, **kwargs):
         self.camera = camera
@@ -25,17 +24,15 @@ class ShootingSequence:
         self.finished = 0
 
     def run(self):
-
-        self.callbacks.run('on_started', self)
-
-        for sequence in range(0, self.count):
-
-            self.callbacks.run('on_each_started', self, sequence)
-            #self.camera.shoot(self.exposure)
+        self.callbacks.run('onStarted', self)
+        for index in range(0, self.count):
+            self.callbacks.run('onEachStarted', self)
+            self.camera.setExpTimeSec(self.exposure)
+            self.camera.shootAsync()
+            self.camera.synchronizeWithImageReception()
             self.finished += 1
-            self.callbacks.run('on_each_finished', self, sequence, file_name)
-
-        self.callbacks.run('on_finished', self)
+            self.callbacks.run('onEachFinished', self)
+        self.callbacks.run('onFinished', self)
 
     @property
     def totalSeconds(self):

@@ -41,7 +41,7 @@ class SequenceBuilder:
     #    return self.__append(AutoDarkSequence(self.camera,
     #                                          self.autoDarkCalculator,count)) 
 
-    def add_function(self, f):
+    def addFunction(self, f):
         return self.__append(RunFunctionStep(f))
 
     def start(self):
