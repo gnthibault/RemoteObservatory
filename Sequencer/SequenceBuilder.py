@@ -4,6 +4,7 @@ from Sequencer.CommonSteps import RunFunctionStep
 from Sequencer.CommonSteps import ShellCommandStep
 from Sequencer.CommonSteps import UserInputStep
 from Sequencer.SequenceRunner import SequenceRunner
+from Sequencer.FilterWheelStep import FilterWheelStep
 
 class SequenceBuilder:
     def __init__(self):

@@ -7,6 +7,7 @@ __pycache__
 /IndiClient.json
 /ShedObservatory.json
 /IndiCCDSimulatorCamera.json
+/IndiSimulatorFilterWheel.json
 /ntp.json
 /IndiEos350DCamera.json
 *.html

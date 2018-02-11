@@ -28,13 +28,15 @@ from helper.IndiDevice import IndiDevice
 from Camera.IndiVirtualCamera import IndiVirtualCamera
 from Camera.IndiEos350DCamera import IndiEos350DCamera
 
+# Local stuff : FilterWheel
+from FilterWheel.IndiVirtualFilterWheel import IndiVirtualFilterWheel
+
 # Local stuff : Imaging tools
 from Imaging.FitsWriter import FitsWriter
 
 # Local stuff: Sequencer
 from Sequencer.ShootingSequence import ShootingSequence
 from Sequencer.SequenceBuilder import SequenceBuilder
-
 
 if __name__ == '__main__':
 
@@ -109,24 +111,30 @@ if __name__ == '__main__':
   #cam.synchronizeWithImageReception()
   #fits = cam.getReceivedImage()
 
+  # Now test filterWheel
+  filterWheel = IndiVirtualFilterWheel(logger=logger, indiClient=indiCli,\
+    configFileName=None, connectOnCreate=True)
+  print('Filterwheel is {}'.format(filterWheel))
+
   # test nova Astrometry service
-  nova = NovaAstrometryService(logger=logger,configFileName='local')
-  nova.login()
-  t=io.BytesIO()
-  fits.writeto(t)
-  astrometry = nova.solveImage(t.getvalue())
-  corrected = nova.getNewFits()
-  print('fits content is '+str(corrected))
-  wcs=nova.getWcs()
-  print('wcs content is '+str(wcs))
-  kml=nova.getKml()
-  print('kml content is '+str(kml))
-  nova.printRaDecWCSwithSIPCorrectedImage('radec.png')
+  #nova = NovaAstrometryService(logger=logger,configFileName='local')
+  #nova.login()
+  #t=io.BytesIO()
+  #fits.writeto(t)
+  #astrometry = nova.solveImage(t.getvalue())
+  #corrected = nova.getNewFits()
+  #print('fits content is '+str(corrected))
+  #wcs=nova.getWcs()
+  #print('wcs content is '+str(wcs))
+  #kml=nova.getKml()
+  #print('kml content is '+str(kml))
+  #nova.printRaDecWCSwithSIPCorrectedImage('radec.png')
 
   # Write fits file with all interesting metadata:
-  writer = FitsWriter(logger=logger, observatory=obs, servWeather=servWeather,
-    servSun=servSun, servMoon=servMoon, servTime=servTime,
-    servAstrometry=nova)
+  #writer = FitsWriter(logger=logger, observatory=obs, servWeather=servWeather,
+  #  servSun=servSun, servMoon=servMoon, servTime=servTime,
+  #  servAstrometry=nova)
+  writer = FitsWriter(logger=logger, observatory=obs)
   hwriter = lambda f,i : writer.writeWithTag(f,i)
   w = threading.Thread(target=hwriter, args=(fits,0))
   w.start()
@@ -138,7 +146,7 @@ if __name__ == '__main__':
                                  index))
       w.start()
     
-  seq = ShootingSequence(camera=cam, target='M51', exposure=10, count=5,
+  seq = ShootingSequence(camera=cam, target='M51', exposure=1, count=5,
       onStarted=[lambda x : print('On Started')],
       onEachStarted=[lambda x,i : print('On Each Started')],
       onEachFinished=[lambda x,i : print('On Each Finished'),
@@ -146,8 +154,14 @@ if __name__ == '__main__':
       onFinished=[lambda x : print('On Finished')])
   #seq.run()
 
+  #Sequence Builder
   seqB = SequenceBuilder()
   seqB.addUserConfirmationPrompt('Please press enter if you wish to proceed')
+  #Red Green Blue Luminance LPR OIII SII H_Alpha
+  seqB.addFilterWheelStep(filterWheel,filterName='Luminance')
+  seqB.addShootingSequence(seq)
+  seqB.addFilterWheelStep(filterWheel,filterName='H_Alpha')
+  seqB.addShootingSequence(seq)
   seqB.addMessageStep(message='Add Message')
   seqB.addShellCommand(command='ls')
   seqB.addFunction(lambda : print("Add Function Step"))

@@ -12,52 +12,6 @@ from helper.IndiClient import indiClientGlobalBlobEvent
 from astropy.io import fits
 import matplotlib.pyplot as plt
 
-class CameraSettingsRunner:
-  def __init__(self, camera, roi=None, binning=None,\
-      compressionFormat=None, frameType=None, properties=None, numbers=None,
-      switches=None):
-    self.camera = camera
-    self.roi = roi
-    self.binning = binning
-    self.compressionFormat = compressionFormat
-    self.frameType = frameType
-    self.properties = properties
-    self.numbers = numbers
-    self.switches = switches
-
-  def run(self):
-    if self.roi:
-      self.camera.setRoi(self.roi)
-    if self.binning:
-      self.camera.setBinning(self.binning)
-    if self.compressionFormat:
-      self.camera.setCompressionFormat(self.compressionFormat)
-    if self.frameType:
-      self.camera.setFrameType(self.frameType)
-    if self.properties:
-      self.camera.setProperties(self.properties)
-    if self.numbers:
-      for propName, valueVector in self.numbers.items():
-        self.camera.setNumber(propName, valueVector)
-    if self.switches:
-      for propName, valueVector in self.switches.items():
-        self.camera.setSwitch(propName, valuesVector['on']\
-          if 'on' in valueVector else [], valueVector['off']\
-          if 'off' in valueVector else [])
-
-  def __str__(self):
-    values = [['roi', self.roi],\
-      ['bin', self.binning],\
-      ['compressionFormat', self.compressionFormat],\
-      ['frameType', self.frameType],\
-      ['properties', self.properties],\
-      ['numbers', self.numbers],\
-      ['switches', self.switches]]
-    values = [': '.join([x[0], str(x[1])]) for x in values if x[1]]
-    return 'Change camera settings: {0}'.format(', '.join(values))
-
-  def __repr__(self):
-      return self.__str__()
 
 class IndiCamera(IndiDevice):
   ''' Indi Camera '''
