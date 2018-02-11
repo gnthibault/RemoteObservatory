@@ -92,29 +92,29 @@ if __name__ == '__main__':
     indiClient=indiCli)
 
   # test indi virtual camera class
-  cam = IndiVirtualCamera(logger=logger, indiClient=indiCli,\
-    configFileName=None, connectOnCreate=False)
-  cam.connect()
-  cam.prepareShoot()
-  cam.setExpTimeSec(10)
-  cam.shootAsync(coord={'ra':12.0, 'dec':45.0})
-  cam.synchronizeWithImageReception()
-  fits = cam.getReceivedImage()
-
-  # test indi camera class on a old EOS350D
-  #cam = IndiEos350DCamera(logger=logger, indiClient=indiCli,\
-  #  configFileName='IndiEos350DCamera.json', connectOnCreate=False)
+  #cam = IndiVirtualCamera(logger=logger, indiClient=indiCli,\
+  #  configFileName=None, connectOnCreate=False)
   #cam.connect()
   #cam.prepareShoot()
-  #cam.setExpTimeSec(5)
-  #cam.shootAsync()
+  #cam.setExpTimeSec(10)
+  #cam.shootAsync(coord={'ra':12.0, 'dec':45.0})
   #cam.synchronizeWithImageReception()
   #fits = cam.getReceivedImage()
 
+  # test indi camera class on a old EOS350D
+  cam = IndiEos350DCamera(logger=logger, indiClient=indiCli,\
+    configFileName='IndiEos350DCamera.json', connectOnCreate=False)
+  cam.connect()
+  cam.prepareShoot()
+  cam.setExpTimeSec(5)
+  cam.shootAsync()
+  cam.synchronizeWithImageReception()
+  fits = cam.getReceivedImage()
+
   # Now test filterWheel
-  filterWheel = IndiVirtualFilterWheel(logger=logger, indiClient=indiCli,\
-    configFileName=None, connectOnCreate=True)
-  print('Filterwheel is {}'.format(filterWheel))
+  #filterWheel = IndiVirtualFilterWheel(logger=logger, indiClient=indiCli,\
+  #  configFileName=None, connectOnCreate=True)
+  #print('Filterwheel is {}'.format(filterWheel))
 
   # test nova Astrometry service
   #nova = NovaAstrometryService(logger=logger,configFileName='local')
@@ -156,13 +156,13 @@ if __name__ == '__main__':
 
   #Sequence Builder
   seqB = SequenceBuilder()
-  seqB.addUserConfirmationPrompt('Please press enter if you wish to proceed')
+  #seqB.addUserConfirmationPrompt('Please press enter if you wish to proceed')
   #Red Green Blue Luminance LPR OIII SII H_Alpha
-  seqB.addFilterWheelStep(filterWheel,filterName='Luminance')
+  #seqB.addFilterWheelStep(filterWheel,filterName='Luminance')
   seqB.addShootingSequence(seq)
-  seqB.addFilterWheelStep(filterWheel,filterName='H_Alpha')
-  seqB.addShootingSequence(seq)
-  seqB.addMessageStep(message='Add Message')
-  seqB.addShellCommand(command='ls')
-  seqB.addFunction(lambda : print("Add Function Step"))
+  #seqB.addFilterWheelStep(filterWheel,filterName='H_Alpha')
+  #seqB.addShootingSequence(seq)
+  #seqB.addMessageStep(message='Add Message')
+  #seqB.addShellCommand(command='ls')
+  #seqB.addFunction(lambda : print("Add Function Step"))
   seqB.start()
