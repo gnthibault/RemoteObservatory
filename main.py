@@ -34,7 +34,6 @@ from Imaging.FitsWriter import FitsWriter
 # Local stuff: Sequencer
 from Sequencer.ShootingSequence import ShootingSequence
 from Sequencer.SequenceBuilder import SequenceBuilder
-from Sequencer.SequenceRunner import SequenceRunner
 
 
 if __name__ == '__main__':
@@ -145,6 +144,11 @@ if __name__ == '__main__':
       onEachFinished=[lambda x,i : print('On Each Finished'),
                       AsyncWriteImageFromSequence],
       onFinished=[lambda x : print('On Finished')])
-  seq.run()
-  sleep(30)
-  #seqBuilder = SequenceBuilder(camera=cam)
+  #seq.run()
+
+  seqB = SequenceBuilder()
+  seqB.addUserConfirmationPrompt('Please press enter if you wish to proceed')
+  seqB.addMessageStep(message='Add Message')
+  seqB.addShellCommand(command='ls')
+  seqB.addFunction(lambda : print("Add Function Step"))
+  seqB.start()

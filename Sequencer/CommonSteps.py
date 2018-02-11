@@ -40,7 +40,7 @@ class ShellCommandStep:
     def __init__(self, arguments, shell=False, abortOnFailure=False):
         self.arguments = arguments
         self.shell = shell
-        self.abortOnFailure = abort_on_failure
+        self.abortOnFailure = abortOnFailure
 
     def run(self):
         print('Running shell command {0}'.format(self.arguments))

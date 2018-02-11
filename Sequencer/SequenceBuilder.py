@@ -3,32 +3,25 @@ from Sequencer.CommonSteps import MessageStep
 from Sequencer.CommonSteps import RunFunctionStep
 from Sequencer.CommonSteps import ShellCommandStep
 from Sequencer.CommonSteps import UserInputStep
+from Sequencer.SequenceRunner import SequenceRunner
 
 class SequenceBuilder:
-    def __init__(self, camera=None, filterWheel=None):
+    def __init__(self):
         self.sequences = []
         #self.autoDarkCalculator = AutoDarkCalculator()
-        self.camera = camera
-        self.filterWheel = filterWheel
 
 
-    def addShootingSequence(self, target, exposure, count, autoDark=True):
-        return self.__append(
-            ShootingSequence(
-                camera=self.camera,
-                target=target,
-                exposure=exposure,
-                count=count)) #,
-                #on_finished=([self.autoDarkCalculator.sequenceFinished] 
-                #             if autoDark else [])))
+    def addShootingSequence(self, shootingSeq):
+        return self.__append(shootingSeq)
 
-    def addFilterWheelStep(self, filterName=None, filterNumber=None):
-        return self.__append(FilterWheelStep(self.filterWheel,
+    def addFilterWheelStep(self, filterWheel, filterName=None,
+                           filterNumber=None):
+        return self.__append(FilterWheelStep(filterWheel,
                                              filterName=filterName,
                                              filterNumber=filterNumber))
 
     def addUserConfirmationPrompt(self, message=UserInputStep.DEFAULT_PROMPT,
-                                     onInput = None):
+                                  onInput = None):
         return self.__append(UserInputStep(message, onInput))
 
     def addMessageStep(self, message, sleepTime=0):
