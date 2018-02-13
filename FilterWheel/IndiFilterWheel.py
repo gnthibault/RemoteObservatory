@@ -8,7 +8,7 @@ import PyIndi
 from helper.IndiDevice import IndiDevice
 
 class IndiFilterWheel(IndiDevice):
-    def __init__(self, indiClient, logger=None, configFileName=None,\
+    def __init__(self, indiClient, logger=None, configFileName=None,
                  connectOnCreate=True):
         logger = logger or logging.getLogger(__name__)
         
@@ -18,24 +18,24 @@ class IndiFilterWheel(IndiDevice):
           self.configFileName = configFileName
 
         # Now configuring class
-        logger.debug('Configuring Indi FilterWheel with file %s',\
-          self.configFileName)
+        logger.debug('Indi FilterWheel, configuring with file {}'.format(
+          self.configFileName))
         # Get key from json
         with open(self.configFileName) as jsonFile:
           data = json.load(jsonFile)
           deviceName = data['FilterWheelName']
 
-        logger.debug('Indi FilterWheel, filterwheel name is: '+\
-          deviceName)
+        logger.debug('Indi FilterWheel, filterwheel name is: {}'.format(
+          deviceName))
       
         # device related intialization
-        IndiDevice.__init__(self, logger=logger, deviceName=deviceName,\
+        IndiDevice.__init__(self, logger=logger, deviceName=deviceName,
           indiClient=indiClient)
         if connectOnCreate:
           self.connect()
 
         # Finished configuring
-        self.logger.debug('Configured Indi FilterWheel successfully')
+        self.logger.debug('Indi FilterWheel configured successfully')
 
     def onEmergency(self):
         self.logger.debug('Indi FilterWheel: on emergency routine started...')
@@ -47,8 +47,8 @@ class IndiFilterWheel(IndiDevice):
         self.setFilterNumber(self.filters()[name])
 
     def setFilterNumber(self, number):
-        self.logger.debug('Indi FilterWheel setting filter number {}'\
-            .format(number)) 
+        self.logger.debug('Indi FilterWheel setting filter number {}'.format(
+                          number)) 
         self.setNumber('FILTER_SLOT', {'FILTER_SLOT_VALUE': number})
 
     def filters(self):
@@ -76,8 +76,8 @@ class IndiFilterWheel(IndiDevice):
         filters = [(n, i) for n, i in self.filters().items()]
         filters.sort(key=lambda x: x[1])
         filters = ['{0} ({1})'.format(i[0], i[1]) for i in filters]
-        return 'FilterWheel, current filter: {}, available: {}' \
-            .format(self.currentFilter(), ', '.join(filters))
+        return 'FilterWheel, current filter: {}, available: {}'.format(
+            self.currentFilter(), ', '.join(filters))
 
     def __repr__(self):
         return self.__str__()
