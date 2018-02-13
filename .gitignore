@@ -1,14 +1,15 @@
 __pycache__
 
 *.fits
+*.html
+*.png*
 *.sqlite
 *.swp
 
-/IndiClient.json
-/ShedObservatory.json
 /IndiCCDSimulatorCamera.json
+/IndiClient.json
+/IndiEos350DCamera.json
 /IndiSimulatorFilterWheel.json
 /ntp.json
-/IndiEos350DCamera.json
-*.html
-*.png
+/ShedObservatory.json
+/test.py
