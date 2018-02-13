@@ -12,4 +12,5 @@ __pycache__
 /IndiSimulatorFilterWheel.json
 /ntp.json
 /ShedObservatory.json
+/TargetList.json
 /test.py

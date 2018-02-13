@@ -29,5 +29,5 @@ coordinate = { "gpsCoordinates":  {
                "horizon": horizon.horizon,
                "ownerName": "John Doe"
              }
-with open('result.json', 'w') as fp:
+with open('ShedObservatory.json', 'w') as fp:
     json.dump(coordinate, fp)

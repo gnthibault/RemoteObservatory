@@ -1,0 +1,30 @@
+import json
+import numpy as np
+
+
+class TargetListDefinition:
+    """ assign a list of acquisition parameter for each target
+    """
+    def __init__(self):
+        self.targetList = dict()
+
+    def addTarget(self, name, **kwargs):
+        """ adds a Target
+         
+           A target is defined by its name and a dictionary where each key
+           is a filterName, and each value is a tuple with nb of pose
+           and duration of pose in seconds
+           filters: Red Green Blue Luminance LPR OIII SII H_Alpha
+        """
+        self.targetList[name] = kwargs
+
+# Define your own TargetList by adding targets
+targetList = TargetListDefinition()
+targetList.addTarget('M33',
+                     Luminance=(180,60),
+                     Red=(10,300),
+                     Green=(10,300),
+                     Blue=(10,300),)
+
+with open('TargetList.json', 'w') as fp:
+    json.dump(targetList.targetList, fp)
