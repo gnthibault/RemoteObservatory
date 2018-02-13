@@ -68,7 +68,7 @@ if __name__ == '__main__':
   #test ntp time server
   servTime = NTPTimeService(logger=logger)
   ntpTime = servTime.getUTCFromNTP()
-  #print('Current Time from NTP is : ',str(ntpTime))
+  #print('Current Time from NTP is : {}'.format(ntpTime))
 
   # test Weather service
   servWeather = WUGWeatherService(logger=logger)

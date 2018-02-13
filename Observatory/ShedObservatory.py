@@ -1,6 +1,7 @@
-#Basic stuff
+# Basic stuff
 import logging
 import json
+
 
 class ShedObservatory(object):
     """Shed Observatory 
