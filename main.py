@@ -110,9 +110,9 @@ if __name__ == '__main__':
   cam.connect()
   cam.prepareShoot()
   cam.setExpTimeSec(10)
-  cam.shootAsync()
-  cam.synchronizeWithImageReception()
-  fits = cam.getReceivedImage()
+  #cam.shootAsync()
+  #cam.synchronizeWithImageReception()
+  #fits = cam.getReceivedImage()
 
   # Now test filterWheel
   filterWheel = IndiVirtualFilterWheel(logger=logger, indiClient=indiCli,
@@ -141,7 +141,7 @@ if __name__ == '__main__':
   writer = FitsWriter(logger=logger, observatory=obs)
   hwriter = lambda f,i : writer.writeWithTag(f,i)
   w = threading.Thread(target=hwriter, args=(fits,0))
-  w.start()
+  #w.start()
 
   # Test a Shooting Sequence
   def AsyncWriteImageFromSequence(shootingSequence, index):
@@ -150,24 +150,42 @@ if __name__ == '__main__':
                                  index))
       w.start()
     
-  seq = ShootingSequence(camera=cam, target='M51', exposure=1, count=5,
-      onStarted=[lambda x : print('On Started')],
-      onEachStarted=[lambda x,i : print('On Each Started')],
-      onEachFinished=[lambda x,i : print('On Each Finished'),
-                      AsyncWriteImageFromSequence],
-      onFinished=[lambda x : print('On Finished')])
+  #seq = ShootingSequence(camera=cam, target='M51', exposure=1, count=5,
+  #    onStarted=[lambda x : print('On Started')],
+  #    onEachStarted=[lambda x,i : print('On Each Started')],
+  #    onEachFinished=[lambda x,i : print('On Each Finished'),
+  #                    AsyncWriteImageFromSequence],
+  #    onFinished=[lambda x : print('On Finished')])
   #seq.run()
 
   #Sequence Builder
-  seqB = SequenceBuilder()
+  #seqB = SequenceBuilder()
   #seqB.addUserConfirmationPrompt('Please press enter if you wish to proceed')
   #Red Green Blue Luminance LPR OIII SII H_Alpha
-  seqB.addFilterWheelStep(filterWheel,filterName='Luminance')
-  seqB.addShootingSequence(seq)
-  seqB.addFilterWheelStep(filterWheel,filterName='H_Alpha')
-  seqB.addShootingSequence(seq)
-  seqB.addMessageStep(message='Add Message')
-  seqB.addShellCommand(command='ls')
-  seqB.addFunction(lambda : print("Add Function Step"))
+  #seqB.addFilterWheelStep(filterWheel,filterName='Luminance')
+  #seqB.addShootingSequence(seq)
+  #seqB.addFilterWheelStep(filterWheel,filterName='H_Alpha')
+  #seqB.addShootingSequence(seq)
+  #seqB.addMessageStep(message='Add Message')
+  #seqB.addShellCommand(command='ls')
+  #seqB.addFunction(lambda : print("Add Function Step"))
+  #seqB.start()
+
+  #Sequence Builder along with target list
+  seqB = SequenceBuilder()
+
+  for targetName, config in targetList.getTargetList().items():
+      for filterName, (count, expTimeSec) in config.items():
+          seqB.addMessageStep(message='Target {}, setting filter {}'.format(
+              targetName,filterName))
+          seqB.addFilterWheelStep(filterWheel,filterName=filterName)
+          seq = ShootingSequence(camera=cam, target=targetName,
+              exposure=expTimeSec, count=count,
+              onStarted=[lambda x : print('On Started')],
+              onEachStarted=[lambda x,i : print('On Each Started')],
+              onEachFinished=[lambda x,i : print('On Each Finished'),
+                              AsyncWriteImageFromSequence],
+              onFinished=[lambda x : print('On Finished')])
+          seqB.addShootingSequence(seq)
   seqB.start()
 

@@ -44,3 +44,5 @@ class TargetList:
                              lon=gpsCoord['longitude']*u.deg,
                              height=altitude*u.m)
 
+    def getTargetList(self):
+        return self.targetList
