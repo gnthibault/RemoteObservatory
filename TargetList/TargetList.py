@@ -10,7 +10,7 @@ from astropy.coordinates import EarthLocation
 class TargetList:
 
     def __init__(self, ntpServ, obs, configFileName=None, logger=None):
-        self.netServ = ntpServ
+        self.ntpServ = ntpServ
         self.obs = obs
         self.logger = logger or logging.getLogger(__name__)
         
@@ -25,13 +25,11 @@ class TargetList:
 
         # Get key from json
         with open(self.configFileName) as jsonFile:
-            data = json.load(jsonFile)
-            self.gpsCoordinates = data['TargetList']
-            self.logger.debug('TargetList gps coordinates are: {}'.format(
-                              self.gpsCoordinates))
+            self.targetList = json.load(jsonFile)
+            self.logger.debug('TargetList is: {}'.format(self.targetList))
         
         # Finished configuring
-        self.logger.debug('Configured TargetList successfully')
+        self.logger.debug('TargetList configured successfully')
 
 
     def getAstropyTimeFromUTC(self):

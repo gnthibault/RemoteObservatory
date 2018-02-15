@@ -38,6 +38,9 @@ from Imaging.FitsWriter import FitsWriter
 from Sequencer.ShootingSequence import ShootingSequence
 from Sequencer.SequenceBuilder import SequenceBuilder
 
+# Target list
+from TargetList.TargetList import TargetList
+
 if __name__ == '__main__':
 
   # load the logging configuration
@@ -82,6 +85,11 @@ if __name__ == '__main__':
   #print('dewpoint is ',str(servWeather.getDewpoint_c()))
   #print('visibility is ',str(servWeather.getVisibility_km()))
   #print('Weather quality is ',str(servWeather.getWeatherQuality()))
+
+  # TargetList
+  targetList = TargetList(logger=logger, ntpServ=servTime, obs=obs)
+  aspyTime = targetList.getAstropyTimeFromUTC()
+  aspyLoc = targetList.getAstropyEarthLocation()
 
   # test indi client
   indiCli = IndiClient(logger=logger)
