@@ -32,11 +32,13 @@ from Camera.IndiEos350DCamera import IndiEos350DCamera
 from FilterWheel.IndiVirtualFilterWheel import IndiVirtualFilterWheel
 
 # Local stuff : Imaging tools
+from Imaging.AsyncWriter import AsyncWriter
 from Imaging.FitsWriter import FitsWriter
 
 # Local stuff: Sequencer
 from Sequencer.ShootingSequence import ShootingSequence
 from Sequencer.SequenceBuilder import SequenceBuilder
+from Sequencer.AutoDarkStep import AutoDarkCalculator, AutoDarkSequence
 
 # Target list
 from TargetList.TargetList import TargetList
@@ -139,40 +141,54 @@ if __name__ == '__main__':
   #  servSun=servSun, servMoon=servMoon, servTime=servTime,
   #  servAstrometry=nova)
   writer = FitsWriter(logger=logger, observatory=obs)
-  hwriter = lambda f,i : writer.writeWithTag(f,i)
-  w = threading.Thread(target=hwriter, args=(fits,0))
+ 
+  #Basic way to define async writing
+  #hwriter = lambda f,i : writer.writeWithTag(f,i)
+  #w = threading.Thread(target=hwriter, args=(fits,0))
   #w.start()
 
+  #Second way to define async writing
+  aWriter = AsyncWriter(writer)
+
+  #Define an autoDarkCalculator
+  autoDark = AutoDarkCalculator()
+
   # Test a Shooting Sequence
-  def AsyncWriteImageFromSequence(shootingSequence, index):
-      w = threading.Thread(target=hwriter,
-                           args=(shootingSequence.camera.getReceivedImage(),
-                                 index))
-      w.start()
-    
-  #seq = ShootingSequence(camera=cam, target='M51', exposure=1, count=5,
+  #seq = ShootingSequence(logger=logger, camera=cam, target='M51', exposure=1,
+  #    count=5,
   #    onStarted=[lambda x : print('On Started')],
   #    onEachStarted=[lambda x,i : print('On Each Started')],
   #    onEachFinished=[lambda x,i : print('On Each Finished'),
-  #                    AsyncWriteImageFromSequence],
-  #    onFinished=[lambda x : print('On Finished')])
+  #                    aWriter.AsyncWriteImage,
+  #                    autoDark.onEachFinished],
+  #    onFinished=[lambda x : print('On Finished'),])
   #seq.run()
 
-  #Sequence Builder
-  #seqB = SequenceBuilder()
+  # Test a Dark sequence
+  #darkSeq = AutoDarkSequence(logger=logger, camera=cam,
+  #                           autoDarkCalculator=autoDark, count=5,
+  #                           onEachFinished=[aWriter.AsyncWriteImage])
+  #darkSeq.run()
+
+  # More basic shooting sequence
+  #seq2 = ShootingSequence(logger=logger, camera=cam, target='M51', exposure=1,
+  #    count=5,onEachFinished=[aWriter.AsyncWriteImage])
+
+  # Sequence Builder
+  seqB = SequenceBuilder()
   #seqB.addUserConfirmationPrompt('Please press enter if you wish to proceed')
   #Red Green Blue Luminance LPR OIII SII H_Alpha
   #seqB.addFilterWheelStep(filterWheel,filterName='Luminance')
-  #seqB.addShootingSequence(seq)
+  #seqB.addShootingSequence(seq2)
   #seqB.addFilterWheelStep(filterWheel,filterName='H_Alpha')
-  #seqB.addShootingSequence(seq)
+  #seqB.addShootingSequence(seq2)
   #seqB.addMessageStep(message='Add Message')
   #seqB.addShellCommand(command='ls')
   #seqB.addFunction(lambda : print("Add Function Step"))
+  #seqB.addAutoDark(cam, count=5)
   #seqB.start()
 
-  #Sequence Builder along with target list
-  seqB = SequenceBuilder()
+  #Sequence Builder along with target list, dark calculator, ...
 
   for targetName, config in targetList.getTargetList().items():
       for filterName, (count, expTimeSec) in config.items():
@@ -181,11 +197,8 @@ if __name__ == '__main__':
           seqB.addFilterWheelStep(filterWheel,filterName=filterName)
           seq = ShootingSequence(camera=cam, target=targetName,
               exposure=expTimeSec, count=count,
-              onStarted=[lambda x : print('On Started')],
-              onEachStarted=[lambda x,i : print('On Each Started')],
-              onEachFinished=[lambda x,i : print('On Each Finished'),
-                              AsyncWriteImageFromSequence],
-              onFinished=[lambda x : print('On Finished')])
+              onEachFinished=[aWriter.AsyncWriteImage])
           seqB.addShootingSequence(seq)
+  seqB.addAutoDark(cam, count=5)
   seqB.start()
 

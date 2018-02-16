@@ -1,18 +1,29 @@
-from Sequencer.ShootingSequence import ShootingSequence
+# Basic stuff
+import logging
+
+# Local Stuff, import Sequence related objects
+from Sequencer.AutoDarkStep import AutoDarkCalculator, AutoDarkSequence
 from Sequencer.CommonSteps import MessageStep
 from Sequencer.CommonSteps import RunFunctionStep
 from Sequencer.CommonSteps import ShellCommandStep
 from Sequencer.CommonSteps import UserInputStep
-from Sequencer.SequenceRunner import SequenceRunner
 from Sequencer.FilterWheelStep import FilterWheelStep
+from Sequencer.ShootingSequence import ShootingSequence
+from Sequencer.SequenceRunner import SequenceRunner
+
 
 class SequenceBuilder:
-    def __init__(self):
+    def __init__(self, logger=None, useAutoDark=True):
+        self.logger = logger or logging.getLogger(__name__)
         self.sequences = []
-        #self.autoDarkCalculator = AutoDarkCalculator()
+        self.useAutoDark = useAutoDark
+        self.autoDarkCalculator = AutoDarkCalculator()
 
 
     def addShootingSequence(self, shootingSeq):
+        if self.useAutoDark:
+            shootingSeq.callbacks.add(name="onEachFinished",
+                callback=self.autoDarkCalculator.onEachFinished)
         return self.__append(shootingSeq)
 
     def addFilterWheelStep(self, filterWheel, filterName=None,
@@ -31,9 +42,11 @@ class SequenceBuilder:
     def addShellCommand(self, command, shell=False, abortOnFailure=False):
         return self.__append(ShellCommandStep(command, shell, abortOnFailure))
 
-    #def addAutoDark(self, count=10):
-    #    return self.__append(AutoDarkSequence(self.camera,
-    #                                          self.autoDarkCalculator,count)) 
+    def addAutoDark(self, camera, name='Dark', count=None):
+        return self.__append(AutoDarkSequence(camera,
+                                              self.autoDarkCalculator,
+                                              name=name, logger=self.logger,
+                                              count=count)) 
 
     def addFunction(self, f):
         return self.__append(RunFunctionStep(f))

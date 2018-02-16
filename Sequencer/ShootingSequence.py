@@ -1,3 +1,6 @@
+# Basic stuff
+import logging
+
 
 class SequenceCallbacks:
     def __init__(self, **kwargs):
@@ -15,7 +18,11 @@ class SequenceCallbacks:
             callback(*args, **kwargs)
 
 class ShootingSequence:
-    def __init__(self, camera, target, exposure, count, **kwargs):
+    """ Defines a set of acquisition with the same duration
+    """
+
+    def __init__(self, camera, target, exposure, count, logger=None, **kwargs):
+        self.logger = logger or logging.getLogger(__name__)
         self.camera = camera
         self.target = target
         self.count = count
@@ -24,6 +31,7 @@ class ShootingSequence:
         self.finished = 0
 
     def run(self):
+        self.logger.debug('Shooting Sequence is going to run')
         self.callbacks.run('onStarted', self)
         for index in range(0, self.count):
             self.callbacks.run('onEachStarted', self, index)
@@ -39,15 +47,15 @@ class ShootingSequence:
         return self.exposure * self.count
 
     @property
-    def shot_seconds(self):
+    def shotSeconds(self):
         return self.finished * self.exposure
 
     @property
-    def remaining_seconds(self):
-        return self.remaining_shots * self.exposure
+    def remainingSeconds(self):
+        return self.remainingShots * self.exposure
 
     @property
-    def remaining_shots(self):
+    def remainingShots(self):
         return self.count - self.finished
 
     @property

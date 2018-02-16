@@ -2,6 +2,7 @@
 import datetime
 import io
 import logging
+import threading
 import traceback
 
 # Astropy for handling FITS
@@ -17,31 +18,33 @@ class FitsWriter():
 
   def __init__(self, logger=None, observatory=None, servWeather=None,
       servSun=None, servMoon=None, servTime=None, servAstrometry=None,
-      filtWheel=None, telescope=None, camera=None,
-      target=None):
+      filtWheel=None, telescope=None, camera=None, target=None):
     self.logger = logger or logging.getLogger(__name__)
     self.logger.debug('Configuring FitsWriter')
 
-    self.observatory=observatory
-    self.servWeather=servWeather
-    self.servSun=servSun
-    self.servMoon=servMoon
-    self.servTime=servTime
-    self.servAstrometry=servAstrometry
-    self.filtWheel=filtWheel
-    self.telescope=telescope
-    self.camera=camera
-    self.target=target
+    self.imgIdx = 0
+    self.observatory = observatory
+    self.servWeather = servWeather
+    self.servSun = servSun
+    self.servMoon = servMoon
+    self.servTime = servTime
+    self.servAstrometry = servAstrometry
+    self.filtWheel = filtWheel
+    self.telescope = telescope
+    self.camera = camera
+    self.target = target
+
+    self.threadLock = threading.Lock()
 
     self.logger.debug('FitsWriter configured successfully')
 
-  def writeWithTag(self, fits, imgIdx):
+  def writeWithTag(self, fits):
     '''
       First step: tag with every possible information
       Secnd step: Write fits to disk
     '''
     try:
-      hdr = fits[0].header
+      hdr = fits.header
       
       if self.observatory is not None:
         hdr['OBSERVER'] = (self.observatory.getOwnerName(), 'NC')
@@ -100,12 +103,14 @@ class FitsWriter():
       hdr['COMMENT'] = 'No generic comment, life is beautiful'
     except Exception as e:
       self.logger.error('FitsWriter error while tagging fit with index '+\
-        str(imgIdx)+' : '+str(e)+traceback.format_exc())
+        str(self.imgIdx)+' : '+str(e)+traceback.format_exc())
 
-    filename="frame"+str(imgIdx)+".fits"
+    filename="frame"+str(self.imgIdx)+".fits"
     try:
       with open(filename, "wb") as f:
         fits.writeto(f, overwrite=True)
+        with self.threadLock:
+          self.imgIdx += 1
     except Exception as e:
       self.logger.error('FitsWriter error while writing file '+filename+\
         ' : '+str(e))
