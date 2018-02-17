@@ -1,21 +1,8 @@
 # Basic stuff
 import logging
 
-
-class SequenceCallbacks:
-    def __init__(self, **kwargs):
-        self.callbacks = kwargs
-
-    def add(self, name, callback):
-        if name not in self.callbacks:
-            self.callbacks[name] = []
-        self.callbacks[name].append(callback)
-
-    def run(self, name, *args, **kwargs):
-        if name not in self.callbacks:
-            return
-        for callback in self.callbacks[name]:
-            callback(*args, **kwargs)
+# Local stuff
+from Sequencer.CommonSteps import SequenceCallbacks
 
 class ShootingSequence:
     """ Defines a set of acquisition with the same duration

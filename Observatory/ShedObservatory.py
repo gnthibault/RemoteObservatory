@@ -59,3 +59,7 @@ class ShedObservatory(object):
         self.closeEverything()
         self.logger.debug('ShedObservatory: on emergency routine finished')
 
+    def switchOnFlatPannel(self):
+        self.logger.debug('ShedObservatory: Switching on flat pannel')
+        pass
+        self.logger.debug('ShedObservatory: Flat pannel switched on')

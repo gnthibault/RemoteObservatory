@@ -3,6 +3,21 @@ import subprocess
 import sys
 import time
 
+class SequenceCallbacks:
+    def __init__(self, **kwargs):
+        self.callbacks = kwargs
+
+    def add(self, name, callback):
+        if name not in self.callbacks:
+            self.callbacks[name] = []
+        self.callbacks[name].append(callback)
+
+    def run(self, name, *args, **kwargs):
+        if name not in self.callbacks:
+            return
+        for callback in self.callbacks[name]:
+            callback(*args, **kwargs)
+
 class MessageStep:
     # message can be either a string, or a function returning a string
 

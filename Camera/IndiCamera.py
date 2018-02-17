@@ -160,6 +160,11 @@ class IndiCamera(IndiDevice):
       'maximum': pv.max,
       'step': pv.step }
 
+  def getRelevantFlatDuration(self, filterName):
+      #expRange = self.getExposureRange()
+      #return int(expRange['minimum']+2*expRange['step'])
+      return 1
+
   def getExpTimeSec(self):
     return self.expTimeSec
 

@@ -3,34 +3,51 @@ import logging
 
 # Local Stuff, import Sequence related objects
 from Sequencer.AutoDarkStep import AutoDarkCalculator, AutoDarkSequence
-from Sequencer.CommonSteps import MessageStep
-from Sequencer.CommonSteps import RunFunctionStep
-from Sequencer.CommonSteps import ShellCommandStep
-from Sequencer.CommonSteps import UserInputStep
+from Sequencer.AutoFlatStep import AutoFlatCalculator, AutoFlatSequence
+from Sequencer.CommonSteps import MessageStep, RunFunctionStep, ShellCommandStep
+from Sequencer.CommonSteps import UserInputStep, SequenceCallbacks
 from Sequencer.FilterWheelStep import FilterWheelStep
 from Sequencer.ShootingSequence import ShootingSequence
 from Sequencer.SequenceRunner import SequenceRunner
 
 
 class SequenceBuilder:
-    def __init__(self, logger=None, useAutoDark=True):
+    def __init__(self, camera, filterWheel=None, observatory=None, mount=None,
+                 focuser=None, logger=None, useAutoDark=True,
+                 useAutoFlat=False):
         self.logger = logger or logging.getLogger(__name__)
+        self.camera = camera
+        self.filterWheel = filterWheel
+        self.observatory = observatory
+        self.mount = mount
+        self.focuser = focuser
         self.sequences = []
         self.useAutoDark = useAutoDark
         self.autoDarkCalculator = AutoDarkCalculator()
+        self.autoFlatCalculator = AutoFlatCalculator()
 
 
-    def addShootingSequence(self, shootingSeq):
+    def addShootingSequence(self, target, exposure, count, **kwargs):
+        s = ShootingSequence(logger=self.logger, camera=self.camera,
+                             target=target, exposure=exposure, count=count,
+                             **kwargs)
         if self.useAutoDark:
-            shootingSeq.callbacks.add(name="onEachFinished",
-                callback=self.autoDarkCalculator.onEachFinished)
-        return self.__append(shootingSeq)
+            s.callbacks.add(name="onEachFinished",
+                          callback=self.autoDarkCalculator.onEachFinished)
+        return self.__append(s)
 
-    def addFilterWheelStep(self, filterWheel, filterName=None,
+    def addFilterWheelStep(self, filterName=None,
                            filterNumber=None):
-        return self.__append(FilterWheelStep(filterWheel,
-                                             filterName=filterName,
-                                             filterNumber=filterNumber))
+        f = FilterWheelStep(self.filterWheel,
+                            filterName=filterName,
+                            filterNumber=filterNumber)
+#                           onFinished=[
+#                           self.focuser.autoFocusSequence]))
+
+        if self.autoFlatCalculator:
+            f.callbacks.add(name='onFinished',
+                            callback=self.autoFlatCalculator.onFinished)
+        return self.__append(f)
 
     def addUserConfirmationPrompt(self, message=UserInputStep.DEFAULT_PROMPT,
                                   onInput = None):
@@ -42,11 +59,31 @@ class SequenceBuilder:
     def addShellCommand(self, command, shell=False, abortOnFailure=False):
         return self.__append(ShellCommandStep(command, shell, abortOnFailure))
 
-    def addAutoDark(self, camera, name='Dark', count=None):
-        return self.__append(AutoDarkSequence(camera,
+    def addAutoDark(self, name='Dark', count=None):
+        return self.__append(AutoDarkSequence(self.camera,
                                               self.autoDarkCalculator,
                                               name=name, logger=self.logger,
                                               count=count)) 
+
+    def addAutoFlat(self, name='Flat', count=16, exposure=None):
+        
+        def execBeforeFlat(shootingSequence):
+            self.logger.debug('SequenceBuilder: Now preparing setup for flat')
+            #if not mount.isParked():
+            #    self.mount.gotoParkPosition()
+            self.observatory.switchOnFlatPannel()
+        if not self.autoFlatCalculator:
+            self.logger.error('SequenceBuilder: addAutoFlat should be used '
+                              'along with autoFlatCalculator')
+            self.autoFlatCalculator = AutoFlatCalculator()
+        return self.__append(AutoFlatSequence(camera=self.camera,
+                                              filterWheel=self.filterWheel,
+                                              autoFlatCalculator=
+                                                  self.autoFlatCalculator,
+                                              logger=self.logger, name=name,
+                                              count=count,
+                                              exposure=exposure,
+                                              onStarted=[execBeforeFlat])) 
 
     def addFunction(self, f):
         return self.__append(RunFunctionStep(f))

@@ -11,8 +11,6 @@ class AutoDarkCalculator:
 
     Using a callback, it allows to keep track of the various exposure time
     so that one can perform the corresponding dark.
-
-    One can use the set such that there are no duplicate in the container
     """
 
     def __init__(self):
