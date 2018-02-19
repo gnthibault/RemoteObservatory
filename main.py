@@ -176,7 +176,8 @@ if __name__ == '__main__':
 
   # Sequence Builder
   seqB = SequenceBuilder(logger=logger, camera=cam, filterWheel=filterWheel,
-                         observatory=obs, useAutoDark=True, useAutoFlat=True)
+                         observatory=obs, asyncWriter=aWriter, useAutoDark=True,
+                         useAutoFlat=True)
   #seqB.addUserConfirmationPrompt('Please press enter if you wish to proceed')
   #Red Green Blue Luminance LPR OIII SII H_Alpha
   seqB.addFilterWheelStep(filterName='Luminance')

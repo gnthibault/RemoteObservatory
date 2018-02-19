@@ -10,6 +10,7 @@ class AsyncWriter:
 
     def AsyncWriteImage(self, shooter, index):
         w = threading.Thread(target=self.writer.writeWithTag,
-                             args=(shooter.camera.getReceivedImage()))
+                             args=(shooter.camera.getReceivedImage(),
+                                   shooter.target))
         w.start()
 

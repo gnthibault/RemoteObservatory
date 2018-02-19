@@ -18,7 +18,8 @@ class ShootingSequence:
         self.finished = 0
 
     def run(self):
-        self.logger.debug('Shooting Sequence is going to run')
+        self.logger.debug('Shooting Sequence is going to run for target {}'
+                          ''.format(self.target))
         self.callbacks.run('onStarted', self)
         for index in range(0, self.count):
             self.callbacks.run('onEachStarted', self, index)

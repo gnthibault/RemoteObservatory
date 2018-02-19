@@ -13,7 +13,7 @@ from Sequencer.SequenceRunner import SequenceRunner
 
 class SequenceBuilder:
     def __init__(self, camera, filterWheel=None, observatory=None, mount=None,
-                 focuser=None, logger=None, useAutoDark=True,
+                 focuser=None, logger=None, asyncWriter=None, useAutoDark=True,
                  useAutoFlat=False):
         self.logger = logger or logging.getLogger(__name__)
         self.camera = camera
@@ -21,8 +21,10 @@ class SequenceBuilder:
         self.observatory = observatory
         self.mount = mount
         self.focuser = focuser
+        self.asyncWriter = asyncWriter
         self.sequences = []
         self.useAutoDark = useAutoDark
+        self.useAutoFlat = useAutoFlat
         self.autoDarkCalculator = AutoDarkCalculator()
         self.autoFlatCalculator = AutoFlatCalculator()
 
@@ -31,9 +33,12 @@ class SequenceBuilder:
         s = ShootingSequence(logger=self.logger, camera=self.camera,
                              target=target, exposure=exposure, count=count,
                              **kwargs)
-        if self.useAutoDark:
+        if self.useAutoDark and self.autoDarkCalculator is not None:
             s.callbacks.add(name="onEachFinished",
                           callback=self.autoDarkCalculator.onEachFinished)
+        if self.asyncWriter is not None:
+            s.callbacks.add(name="onEachFinished",
+                            callback=self.asyncWriter.AsyncWriteImage)
         return self.__append(s)
 
     def addFilterWheelStep(self, filterName=None,
@@ -44,7 +49,7 @@ class SequenceBuilder:
 #                           onFinished=[
 #                           self.focuser.autoFocusSequence]))
 
-        if self.autoFlatCalculator:
+        if self.useAutoFlat and self.autoFlatCalculator is not None:
             f.callbacks.add(name='onFinished',
                             callback=self.autoFlatCalculator.onFinished)
         return self.__append(f)
@@ -60,10 +65,14 @@ class SequenceBuilder:
         return self.__append(ShellCommandStep(command, shell, abortOnFailure))
 
     def addAutoDark(self, name='Dark', count=None):
-        return self.__append(AutoDarkSequence(self.camera,
-                                              self.autoDarkCalculator,
-                                              name=name, logger=self.logger,
-                                              count=count)) 
+        s = AutoDarkSequence(self.camera,
+                             self.autoDarkCalculator,
+                             name=name, logger=self.logger,
+                             count=count) 
+        if self.asyncWriter is not None:
+            s.callbacks.add(name="onEachFinished",
+                            callback=self.asyncWriter.AsyncWriteImage)
+        return self.__append(s)
 
     def addAutoFlat(self, name='Flat', count=16, exposure=None):
         
@@ -76,14 +85,17 @@ class SequenceBuilder:
             self.logger.error('SequenceBuilder: addAutoFlat should be used '
                               'along with autoFlatCalculator')
             self.autoFlatCalculator = AutoFlatCalculator()
-        return self.__append(AutoFlatSequence(camera=self.camera,
-                                              filterWheel=self.filterWheel,
-                                              autoFlatCalculator=
-                                                  self.autoFlatCalculator,
-                                              logger=self.logger, name=name,
-                                              count=count,
-                                              exposure=exposure,
-                                              onStarted=[execBeforeFlat])) 
+        s = AutoFlatSequence(camera=self.camera,
+                             filterWheel=self.filterWheel,
+                             autoFlatCalculator=self.autoFlatCalculator,
+                             logger=self.logger, name=name,
+                             count=count,
+                             exposure=exposure,
+                             onStarted=[execBeforeFlat]) 
+        if self.asyncWriter is not None:
+            s.callbacks.add(name="onEachFinished",
+                            callback=self.asyncWriter.AsyncWriteImage)
+        return self.__append(s)
 
     def addFunction(self, f):
         return self.__append(RunFunctionStep(f))
