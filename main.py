@@ -31,6 +31,9 @@ from Camera.IndiEos350DCamera import IndiEos350DCamera
 # Local stuff : FilterWheel
 from FilterWheel.IndiVirtualFilterWheel import IndiVirtualFilterWheel
 
+# Local stuff : Mount
+from Mount.IndiVirtualMount import IndiVirtualMount
+
 # Local stuff : Imaging tools
 from Imaging.AsyncWriter import AsyncWriter
 from Imaging.FitsWriter import FitsWriter
@@ -121,6 +124,10 @@ if __name__ == '__main__':
                                        configFileName=None,
                                        connectOnCreate=True)
   print('Filterwheel is {}'.format(filterWheel))
+
+  # Now test Mount
+  mount = IndiVirtualMount(logger=logger, indiClient=indiCli,
+                           configFileName=None, connectOnCreate=True)
 
   # test nova Astrometry service
   #nova = NovaAstrometryService(logger=logger,configFileName='local')
