@@ -140,7 +140,7 @@ if __name__ == '__main__':
   #writer = FitsWriter(logger=logger, observatory=obs, servWeather=servWeather,
   #  servSun=servSun, servMoon=servMoon, servTime=servTime,
   #  servAstrometry=nova)
-  writer = FitsWriter(logger=logger, observatory=obs)
+  writer = FitsWriter(logger=logger, observatory=obs, filterWheel=filterWheel)
  
   #Basic way to define async writing
   #hwriter = lambda f,i : writer.writeWithTag(f,i)

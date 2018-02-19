@@ -18,7 +18,7 @@ class FitsWriter():
 
     def __init__(self, logger=None, observatory=None, servWeather=None,
                  servSun=None, servMoon=None, servTime=None,
-                 servAstrometry=None, filtWheel=None, telescope=None,
+                 servAstrometry=None, filterWheel=None, telescope=None,
                  camera=None):
         self.logger = logger or logging.getLogger(__name__)
         self.logger.debug('Configuring FitsWriter')
@@ -30,7 +30,7 @@ class FitsWriter():
         self.servMoon = servMoon
         self.servTime = servTime
         self.servAstrometry = servAstrometry
-        self.filtWheel = filtWheel
+        self.filterWheel = filterWheel
         self.telescope = telescope
         self.camera = camera
 
@@ -94,8 +94,10 @@ class FitsWriter():
                                  'NC')
                 hdr['RA'] = (str(self.servAstrometry.getCalib()['ra']), 'NC')
                 hdr['DEC'] = (str(self.servAstrometry.getCalib()['dec']), 'NC')
-            if self.filtWheel is not None:
-                hdr['FILTER'] = (self.filtWheel.getCurrentFilterName(), 'NC')
+            if self.filterWheel is not None:
+                filterName = self.filterWheel.currentFilter()[1]
+                hdr['FILTER'] = (filterName, 'NC')
+                targetName += '-{}'.format(filterName)
             if self.telescope is not None:
                 hdr['TELESCOPE'] = (str(self.telescope.getName()), 'NC')
                 hdr['FOCALLENGHT'] = (str(self.telescope.getFocale()), 'NC')
@@ -117,7 +119,7 @@ class FitsWriter():
             self.logger.error('FitsWriter error while tagging fit with index '
                               ' {} : {}'.format(self.imgIdx,e))
 
-        filename='{}_{}.fits'.format(targetName,self.imgIdx)
+        filename='{}-{}.fits'.format(targetName,self.imgIdx)
         try:
             with open(filename, "wb") as f:
                 fits.writeto(f, overwrite=True)
