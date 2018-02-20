@@ -24,6 +24,7 @@ class IndiFilterWheel(IndiDevice):
         with open(self.configFileName) as jsonFile:
           data = json.load(jsonFile)
           deviceName = data['FilterWheelName']
+          self.filterList = data['FilterList']
 
         logger.debug('Indi FilterWheel, filterwheel name is: {}'.format(
           deviceName))
@@ -32,7 +33,8 @@ class IndiFilterWheel(IndiDevice):
         IndiDevice.__init__(self, logger=logger, deviceName=deviceName,
           indiClient=indiClient)
         if connectOnCreate:
-          self.connect()
+            self.connect()
+            self.initFilterWheelConfiguration()
 
         # Finished configuring
         self.logger.debug('Indi FilterWheel configured successfully')
@@ -41,6 +43,9 @@ class IndiFilterWheel(IndiDevice):
         self.logger.debug('Indi FilterWheel: on emergency routine started...')
         pass
         self.logger.debug('Indi FilterWheel: on emergency routine finished')
+
+    def initFilterWheelConfiguration(self):
+        pass
 
     def setFilter(self, name):
         self.logger.debug('Indi FilterWheel setting filter {}'.format(name)) 
