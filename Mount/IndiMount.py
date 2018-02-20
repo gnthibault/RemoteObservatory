@@ -37,12 +37,8 @@ class IndiMount(IndiDevice):
         # Finished configuring
         self.logger.debug('Indi Mount configured successfully')
 
-    def onEmergency(self):
-        self.logger.debug('Indi Mount: on emergency routine started...')
-        self.park()
-        self.logger.debug('Indi Mount: on emergency routine finished')
 
-    def slewToCoord(self, coord):
+    def slewToCoordAndTrack(self, coord):
         self.logger.debug('Indi Mount slewing to coord {}'.format(
                           coord)) 
         #self.setNumber('FILTER_SLOT', {'FILTER_SLOT_VALUE': number})
@@ -53,13 +49,36 @@ class IndiMount(IndiDevice):
         #return number, self.filterName(number)
         return 0
 
+    def setTrackingMode(self, trackingMode='Sideral');
+        self.logger.debug('Indi Mount: Setting tracking mode: {}'.format(
+                          trackingMode))
+        pass
+
+    def setTrackingOn(self);
+        self.logger.debug('Indi Mount: Setting tracking on')
+        pass
+
+    def setTrackingOff(self);
+        self.logger.debug('Indi Mount: Setting tracking off')
+        pass
+
     def park(self):
+        self.logger.debug('Indi Mount: Park')
+        pass
+
+    def unPark(self):
+        self.logger.debug('Indi Mount: unPark')
         pass
 
     def isParked(self):
         return false
 
-    def __str__(self):
+    def onEmergency(self):
+        self.logger.debug('Indi Mount: on emergency routine started...')
+        self.park()
+        self.logger.debug('Indi Mount: on emergency routine finished')
+
+def __str__(self):
         return 'Mount: {}, current position: {}'.format(
             self.name, self.getCurrentCoord())
 

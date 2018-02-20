@@ -1,3 +1,12 @@
 {
-  "FilterWheelName": "Filter Simulator"
+    "FilterWheelName": "Filter Simulator",
+    "FilterList" : {
+          "Luminance" : 0,
+          "Red" : 1,
+          "Green" : 2,
+          "Blue" : 3,
+          "H_alpha" : 4,
+          "OIII" : 5,
+          "SII" : 6
+        }
 }
