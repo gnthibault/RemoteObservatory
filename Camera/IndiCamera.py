@@ -58,7 +58,7 @@ class IndiCamera(IndiDevice):
 
   def onEmergency(self):
     self.logger.debug('Indi Camera: on emergency routine started...')
-    pass
+    self.abortShoot(sync=False)
     self.logger.debug('Indi Camera: on emergency routine finished')
 
   '''
@@ -113,6 +113,9 @@ class IndiCamera(IndiDevice):
         sync=False)
     except Exception as e:
       self.logger.error('Indi Camera Error in shoot: '+str(e))
+
+  def abortShoot(self, sync=True):
+    self.setNumber('CCD_ABORT_EXPOSURE', {'ABORT': 1}, sync=sync)
 
   def setUploadPath(self, path, prefix = 'IMAGE_XXX'):
     self.setText('UPLOAD_SETTINGS', {'UPLOAD_DIR': path,\

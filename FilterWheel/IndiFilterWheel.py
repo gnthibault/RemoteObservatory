@@ -41,11 +41,14 @@ class IndiFilterWheel(IndiDevice):
 
     def onEmergency(self):
         self.logger.debug('Indi FilterWheel: on emergency routine started...')
-        pass
+        setFilterNumber(1)
         self.logger.debug('Indi FilterWheel: on emergency routine finished')
 
     def initFilterWheelConfiguration(self):
         for filterName, filterNumber in self.filterList.items():
+            self.logger.debug('IndiFilterWheel: Initializing filter number {}'
+                              ' to filter name {}'.format(filterNumber,
+                              filterName))
             self.setText('FILTER_NAME',{'FILTER_SLOT_NAME_{}'.format(
                                          filterNumber):filterName})
 
@@ -58,15 +61,15 @@ class IndiFilterWheel(IndiDevice):
                           number)) 
         self.setNumber('FILTER_SLOT', {'FILTER_SLOT_VALUE': number})
 
-    def filters(self):
-        ctl = self.getPropertyVector('FILTER_NAME', 'text')
-        filters = [(x.text, IndiFilterWheel.__name2number(x.name)) for x in ctl]
-        return dict(filters)
-
     def currentFilter(self):
         ctl = self.getPropertyVector('FILTER_SLOT', 'number')
         number = int(ctl[0].value)
         return number, self.filterName(number)
+
+    def filters(self):
+        ctl = self.getPropertyVector('FILTER_NAME', 'text')
+        filters = [(x.text, IndiFilterWheel.__name2number(x.name)) for x in ctl]
+        return dict(filters)
 
     def filterName(self, number):
         return [a for a, b in self.filters().items() if b == number][0]

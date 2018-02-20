@@ -5,8 +5,9 @@
           "Red" : 2,
           "Green" : 3,
           "Blue" : 4,
-          "H_alpha" : 5,
+          "H_Alpha" : 5,
           "OIII" : 6,
-          "SII" : 7
+          "SII" : 7,
+          "LPR" : 8
         }
 }
