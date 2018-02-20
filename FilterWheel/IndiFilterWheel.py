@@ -45,7 +45,9 @@ class IndiFilterWheel(IndiDevice):
         self.logger.debug('Indi FilterWheel: on emergency routine finished')
 
     def initFilterWheelConfiguration(self):
-        pass
+        for filterName, filterNumber in self.filterList.items():
+            self.setText('FILTER_NAME',{'FILTER_SLOT_NAME_{}'.format(
+                                         filterNumber):filterName})
 
     def setFilter(self, name):
         self.logger.debug('Indi FilterWheel setting filter {}'.format(name)) 
