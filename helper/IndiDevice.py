@@ -114,12 +114,12 @@ class IndiDevice:
 
     def getPropertyValueVector(self, propName, propType):
       """"""
-      return dict(map(\
-        lambda c: (c.name, c.value),\
+      return dict(map(
+        lambda c: (c.name, c.value),
         self.getPropertyVector(propName, propType)))
 
     def getPropertyVector(self, propName, propType, timeout=None):
-        """ Return the value corresponding to the given """
+        """ Return the value corresponding to the given propName"""
         prop = None
         attr = IndiDevice.propTypeToGetterMap[propType]
         if timeout is None:
