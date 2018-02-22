@@ -33,9 +33,22 @@ if __name__ == '__main__':
     cam.connect()
 
     # Play with camera configuration
-    print('Current camera ROI is: {}'.format(cam.getRoi()))
     cam.setRoi({'X':256, 'Y':480, 'WIDTH':512, 'HEIGHT':640})
     print('Current camera ROI is: {}'.format(cam.getRoi()))
+    cam.setRoi({'X':0, 'Y':0, 'WIDTH':1280, 'HEIGHT':1024})
+    print('Current camera ROI is: {}'.format(cam.getRoi()))
+
+    cam.setTemperature(-22.22)
+    print('Current camera temperature is: {}'.format(cam.getTemperature()))
+    cam.setTemperature(-1)
+    print('Current camera temperature is: {}'.format(cam.getTemperature()))
+
+    #cam.setCoolingOn()
+    #cam.setCoolingOff()
+    cam.setFrameType('FRAME_LIGHT')
+    cam.setFrameType('FRAME_DARK')
+    cam.setFrameType('FRAME_FLAT')
+    cam.setFrameType('FRAME_BIAS')
 
     # Acquire data
     cam.prepareShoot()

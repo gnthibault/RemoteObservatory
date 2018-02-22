@@ -53,19 +53,19 @@ class IndiDevice:
             lambda sw: (sw.name, sw.s == PyIndi.ISS_ON),
             self.getPropertyVector(switchName,'switch')))
 
-    def setSwitch(self, name, onSwitches = [], offSwitches = [], \
-        sync=True, timeout=None):
+    def setSwitch(self, name, onSwitches = [], offSwitches = [],
+                  sync=True, timeout=None):
         pv = self.getPropertyVector(name, 'switch')
         if pv.r == PyIndi.ISR_ATMOST1 or pv.r == PyIndi.ISR_1OFMANY:
             onSwitches = onSwitches[0:1]
             offSwitches = [s.name for s in pv if s.name not in onSwitches]
         for index in range(0, len(pv)):
-            pv[index].s = PyIndi.ISS_ON if pv[index].name in onSwitches\
-                else PyIndi.ISS_OFF
+            pv[index].s = (PyIndi.ISS_ON if pv[index].name in onSwitches
+                else PyIndi.ISS_OFF)
         self.indiClient.sendNewSwitch(pv)
         if sync:
             self.__waitPropStatus(pv, statuses=[PyIndi.IPS_IDLE, PyIndi.IPS_OK],
-                timeout=timeout)
+                                  timeout=timeout)
         return pv
         
     def setNumber(self, name, valueVector, sync = True, timeout=None):
@@ -138,7 +138,7 @@ class IndiDevice:
 
     def hasProperty(self, propName, propType):
         try:
-            self.getPropertyVector(propName, propType, timeout=0.1)
+            self.getPropertyVector(propName, propType, timeout=1)
             return True
         except:
             return False

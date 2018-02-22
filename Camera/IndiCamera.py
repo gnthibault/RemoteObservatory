@@ -130,14 +130,36 @@ class IndiCamera(IndiDevice):
             Y: Top-most pixel position
             WIDTH: Frame width in pixels
             HEIGHT: Frame width in pixels
-
+            ex: cam.setRoi({'X':256, 'Y':480, 'WIDTH':512, 'HEIGHT':640})
         """
         self.setNumber('CCD_FRAME', roi)
+   
+    def getTemperature(self):
+        return self.getPropertyValueVector('CCD_TEMPERATURE',
+                                           'number')['CCD_TEMPERATURE_VALUE']
 
-    def getFrameType(self):
-        return self.getPropertyVector('CCD_FRAME_TYPE','switch')
+    def setTemperature(self, temperature):
+        """ It may take time to lower the temperature of a ccd """
+        self.setNumber('CCD_TEMPERATURE',
+                       { 'CCD_TEMPERATURE_VALUE' : temperature },
+                       timeout=1200)
+
+    #def setCoolingOn(self):
+    #    self.setSwitch('CCD_COOLER',['COOLER_ON'])
+
+    #def setCoolingOff(self):
+    #    self.setSwitch('CCD_COOLER',['COOLER_OFF'])
+
+    #def getFrameType(self):
+    #    return self.getPropertyVector('CCD_FRAME_TYPE','switch')
 
     def setFrameType(self, frame_type):
+        """
+        FRAME_LIGHT Take a light frame exposure
+        FRAME_BIAS Take a bias frame exposure
+        FRAME_DARK Take a dark frame exposure
+        FRAME_FLAT Take a flat field frame exposure
+        """
         self.setSwitch('CCD_FRAME_TYPE', [frame_type])
 
     def getCCDControls(self):

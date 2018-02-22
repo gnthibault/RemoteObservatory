@@ -73,7 +73,8 @@ class IndiMount(IndiDevice):
         self.logger.info('Indi Mount slewing to coord RA: {}, DEC: {}'.format(
                           coord.ra.hour, coord.dec.degree)) 
         self.setNumber('EQUATORIAL_EOD_COORD', {'RA': coord.ra.hour, 
-                                            'DEC': coord.dec.degree})
+                                            'DEC': coord.dec.degree},
+                       timeout=120)
 
     def getCurrentCoord(self):
         #ctl = self.getPropertyVector('FILTER_SLOT', 'number')
