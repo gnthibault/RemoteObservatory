@@ -7,7 +7,7 @@ from astropy import units as u
 from astropy.time import Time as aspyTime
 from astropy.coordinates import EarthLocation
 
-class TargetList:
+class ObservationPlanner:
 
     def __init__(self, ntpServ, obs, configFileName=None, logger=None):
         self.ntpServ = ntpServ
@@ -20,16 +20,17 @@ class TargetList:
             self.configFileName = configFileName
 
         # Now configuring class
-        self.logger.debug('Configuring TargetList with file {}'.format(
+        self.logger.debug('Configuring ObservationPlanner with file {}'.format(
                           self.configFileName))
 
         # Get key from json
         with open(self.configFileName) as jsonFile:
             self.targetList = json.load(jsonFile)
-            self.logger.debug('TargetList is: {}'.format(self.targetList))
+            self.logger.debug('ObservationPlanner, targetList is: {}'.format(
+                              self.targetList))
         
         # Finished configuring
-        self.logger.debug('TargetList configured successfully')
+        self.logger.debug('ObservationPlanner configured successfully')
 
 
     def getAstropyTimeFromUTC(self):

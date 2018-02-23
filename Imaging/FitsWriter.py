@@ -41,7 +41,7 @@ class FitsWriter():
     def writeWithTag(self, fits, targetName='frame'):
         '''
           First step: tag with every possible information
-          Secnd step: Write fits to disk
+          Seconnd step: Write fits to disk
         '''
         try:
             try:
@@ -49,6 +49,16 @@ class FitsWriter():
             except:
                 hdr = fits[0].header
             
+            if self.servTime is not None:
+                hdr['UTCTIME'] = (str(self.servTime.getUTCFromNTP()), 'NC')
+            if self.filterWheel is not None:
+                filterName = self.filterWheel.currentFilter()[1]
+                hdr['FILTER'] = (filterName, 'NC')
+                targetName += '-{}'.format(filterName)
+            if self.camera is not None:
+                hdr['EXPOSURETIMESEC'] = (str(self.camera.getExposureTimeSec()),
+                                          'NC')
+                hdr['GAIN'] = (str(self.camera.getGain()), 'NC')
             if self.observatory is not None:
                 hdr['OBSERVER'] = (self.observatory.getOwnerName(), 'NC')
                 hdr['GPSCOORD'] = (str(self.observatory.getGpsCoordinates()),
@@ -78,8 +88,6 @@ class FitsWriter():
                                               getPercentIlluminated()), 'NC')
                 hdr['MOONAGEDAY'] = (str(self.servMoon.getAgeOfMoon()), 'NC')
                 hdr['MOONHASROSE'] = (str(self.servMoon.hasMoonRose()), 'NC')
-            if self.servTime is not None:
-                hdr['UTCTIME'] = (str(self.servTime.getUTCFromNTP()), 'NC')
             if self.servAstrometry is not None:
                 t=io.BytesIO()
                 fits.writeto(t)
@@ -94,10 +102,6 @@ class FitsWriter():
                                  'NC')
                 hdr['RA'] = (str(self.servAstrometry.getCalib()['ra']), 'NC')
                 hdr['DEC'] = (str(self.servAstrometry.getCalib()['dec']), 'NC')
-            if self.filterWheel is not None:
-                filterName = self.filterWheel.currentFilter()[1]
-                hdr['FILTER'] = (filterName, 'NC')
-                targetName += '-{}'.format(filterName)
             if self.telescope is not None:
                 hdr['TELESCOPE'] = (str(self.telescope.getName()), 'NC')
                 hdr['FOCALLENGHT'] = (str(self.telescope.getFocale()), 'NC')
@@ -106,10 +110,6 @@ class FitsWriter():
                                           'RA']), 'NC')
                 hdr['TELESCOPEDEC'] = (str(self.telescope.getCurrentSkyCoord()[
                                            'DEC']), 'NC')
-            if self.camera is not None:
-                hdr['EXPOSURETIMESEC'] = (str(self.camera.getExposureTimeSec()),
-                                          'NC')
-                hdr['GAIN'] = (str(self.camera.getGain()), 'NC')
             if targetName is not None:
                 hdr['TARGETNAME'] = (targetName, 'NC')
 

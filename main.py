@@ -44,7 +44,7 @@ from Sequencer.SequenceBuilder import SequenceBuilder
 from Sequencer.AutoDarkStep import AutoDarkCalculator, AutoDarkSequence
 
 # Target list
-from TargetList.TargetList import TargetList
+from ObservationPlanner.ObservationPlanner import ObservationPlanner
 
 if __name__ == '__main__':
 
@@ -91,10 +91,10 @@ if __name__ == '__main__':
   #print('visibility is ',str(servWeather.getVisibility_km()))
   #print('Weather quality is ',str(servWeather.getWeatherQuality()))
 
-  # TargetList
-  targetList = TargetList(logger=logger, ntpServ=servTime, obs=obs)
-  aspyTime = targetList.getAstropyTimeFromUTC()
-  aspyLoc = targetList.getAstropyEarthLocation()
+  # ObservationPlanner
+  obsPlanner = ObservationPlanner(logger=logger, ntpServ=servTime, obs=obs)
+  aspyTime = obsPlanner.getAstropyTimeFromUTC()
+  aspyLoc = obsPlanner.getAstropyEarthLocation()
 
   # test indi client
   indiCli = IndiClient(logger=logger)
@@ -187,28 +187,27 @@ if __name__ == '__main__':
                          useAutoFlat=True)
   #seqB.addUserConfirmationPrompt('Please press enter if you wish to proceed')
   #Red Green Blue Luminance LPR OIII SII H_Alpha
-  seqB.addFilterWheelStep(filterName='Luminance')
-  seqB.addShootingSequence(target='M51', exposure=2, count=5)
-  seqB.addFilterWheelStep(filterName='H_Alpha')
-  seqB.addShootingSequence(target='M51', exposure=2, count=5)
+  #seqB.addFilterWheelStep(filterName='Luminance')
+  #seqB.addShootingSequence(target='M51', exposure=2, count=5)
+  #seqB.addFilterWheelStep(filterName='H_Alpha')
+  #seqB.addShootingSequence(target='M51', exposure=2, count=5)
   #seqB.addMessageStep(message='Add Message')
   #seqB.addShellCommand(command='ls')
   #seqB.addFunction(lambda : print("Add Function Step"))
-  seqB.addAutoDark(count=5)
-  seqB.addAutoFlat(count=5, exposure=1)
-  seqB.start()
+  #seqB.addAutoDark(count=5)
+  #seqB.addAutoFlat(count=5, exposure=1)
+  #seqB.start()
 
   #Sequence Builder along with target list, dark calculator, ...
 
-  #for targetName, config in targetList.getTargetList().items():
-  #    for filterName, (count, expTimeSec) in config.items():
-  #        seqB.addMessageStep(message='Target {}, setting filter {}'.format(
-  #            targetName,filterName))
-  #        seqB.addFilterWheelStep(filterName=filterName)
-  #        seq = ShootingSequence(camera=cam, target=targetName,
-  #            exposure=expTimeSec, count=count,
-  #            onEachFinished=[aWriter.AsyncWriteImage])
-  #        seqB.addShootingSequence(seq)
-  #seqB.addAutoDark(count=5)
-  #seqB.start()
+  for targetName, config in obsPlanner.getTargetList().items():
+      for filterName, (count, expTimeSec) in config.items():
+          seqB.addMessageStep(message='Target {}, setting filter {}'.format(
+              targetName,filterName))
+          seqB.addFilterWheelStep(filterName=filterName)
+          seqB.addShootingSequence(target=targetName, exposure=expTimeSec,
+                                   count=count)
+  seqB.addAutoDark(count=5)
+  seqB.addAutoFlat(count=5, exposure=1)
+  seqB.start()
 

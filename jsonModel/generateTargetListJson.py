@@ -21,10 +21,15 @@ class TargetListDefinition:
 # Define your own TargetList by adding targets
 targetList = TargetListDefinition()
 targetList.addTarget('M33',
-                     Luminance=(180,60),
-                     Red=(10,300),
-                     Green=(10,300),
-                     Blue=(10,300),)
+                     Luminance=(3,2), #(count ,exposure time in seconde)
+                     Red=(4,2),
+                     Green=(4,2),
+                     Blue=(4,2),)
+targetList.addTarget('M51',
+                     Luminance=(3,2),
+                     Red=(4,2),
+                     Green=(4,2),
+                     Blue=(4,2),)
 
 with open('TargetList.json', 'w') as fp:
     json.dump(targetList.targetList, fp)
