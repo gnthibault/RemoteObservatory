@@ -2,12 +2,18 @@
 import logging
 import json
 
+# Astropy stuff
+import astropy.units as u
+from astropy.coordinates import EarthLocation
+
+# Astroplan stuff
+from astroplan import Observer
 
 class ShedObservatory(object):
     """Shed Observatory 
     """
 
-    def __init__(self, configFileName=None, logger=None):
+    def __init__(self, configFileName=None, logger=None, servWeather=None):
         self.logger = logger or logging.getLogger(__name__)
         
         if configFileName is None:
@@ -63,3 +69,27 @@ class ShedObservatory(object):
         self.logger.debug('ShedObservatory: Switching on flat pannel')
         pass
         self.logger.debug('ShedObservatory: Flat pannel switched on')
+
+    def getAstropyEarthLocation(self):
+        return EarthLocation(lat=self.gpsCoordinates['latitude']*u.deg,
+                             lon=self.gpsCoordinates['longitude']*u.deg,
+                             height=self.altitudeMeter*u.m)
+
+    def getAstroplanObserver(self):
+        location = self.getAstropyEarthLocation()
+        pressure = 0.9 * u.bar,
+        relative_humidity = 0.20,
+        temperature = 15 * u.deg_C,
+        if not (self.servWeather is None):
+            pressure = self.servWeather.getPressure_mb() * u.bar,#TODO TN
+            relative_humidity = self.servWeather.getRelative_humidity(),
+            temperature = self.servWeather.getTemp_c() * u.deg_C,
+
+        observer = Observer(name=self.ownerName,
+            location=location,
+            pressure=0.615 * u.bar,
+            relative_humidity=0.11,
+            temperature=0 * u.deg_C,
+            timezone=timezone('US/Hawaii'),
+            description="Description goes here")
+
