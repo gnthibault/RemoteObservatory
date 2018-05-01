@@ -9,6 +9,10 @@ from astropy.coordinates import EarthLocation
 # Astroplan stuff
 from astroplan import Observer
 
+#Time stuff
+import pytz
+from tzwhere import tzwhere
+
 class ShedObservatory(object):
     """Shed Observatory 
     """
@@ -35,11 +39,22 @@ class ShedObservatory(object):
             self.horizon = data['horizon']
             self.ownerName = data['ownerName']
         
+        # Now find the timezone from the gps coordinate
+        tzw = tzwhere.tzwhere()
+        timezone_str = tzw.tzNameAt(self.gpsCoordinates['latitude'],
+                                    self.gpsCoordinates['longitude'])
+        self.timezone = pytz.timezone(timezone_str)
+        self.logger.debug('Found timezone for observatory: {}'.format(
+                          self.timezone.zone))
+
         # Finished configuring
         self.logger.debug('Configured ShedObservatory successfully')
     
     def getGpsCoordinates(self):
         return self.gpsCoordinates
+
+    def get_time_zone(self):
+        return self.timezone
 
     def getAltitudeMeter(self):
         return self.altitudeMeter
@@ -81,15 +96,15 @@ class ShedObservatory(object):
         relative_humidity = 0.20,
         temperature = 15 * u.deg_C,
         if not (self.servWeather is None):
-            pressure = self.servWeather.getPressure_mb() * u.bar,#TODO TN
+            pressure = self.servWeather.getPressure_mb() * 1000 * u.bar
             relative_humidity = self.servWeather.getRelative_humidity(),
             temperature = self.servWeather.getTemp_c() * u.deg_C,
 
         observer = Observer(name=self.ownerName,
             location=location,
-            pressure=0.615 * u.bar,
-            relative_humidity=0.11,
-            temperature=0 * u.deg_C,
-            timezone=timezone('US/Hawaii'),
+            pressure=pressure,
+            relative_humidity=relative_humidity,
+            temperature=temperature,
+            timezone=self.timezone,
             description="Description goes here")
 

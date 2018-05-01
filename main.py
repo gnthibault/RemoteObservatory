@@ -93,8 +93,6 @@ if __name__ == '__main__':
 
     # ObservationPlanner
     obsPlanner = ObservationPlanner(logger=logger, ntpServ=servTime, obs=obs)
-    aspyTime = obsPlanner.getAstropyTimeFromUTC()
-    aspyLoc = obsPlanner.getAstropyEarthLocation()
 
     # test indi client
     indiCli = IndiClient(logger=logger)
