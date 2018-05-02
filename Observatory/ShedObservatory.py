@@ -59,7 +59,7 @@ class ShedObservatory(object):
     def getAltitudeMeter(self):
         return self.altitudeMeter
 
-    def getHorizon(self):
+    def get_horizon(self):
         return self.horizon
 
     def getOwnerName(self):

@@ -114,45 +114,57 @@ class ObservationPlanner:
         pol_ax = plt.gca(projection='polar')
         #pol_ax = pfig.add_axes([0.1, 0.1, 0.8, 0.8], polar=True)
 
-
         #First axis, azimut, MUST be in RAD (not deg)
         pol_ax.set_xlim(0, np.deg2rad(360))
         pol_ax.set_theta_direction(-1)
-
-        # Second axis (altitude) must be inverted
-        # For positively-increasing range (e.g., range(1, 90, 15)),
-        # labels go from middle to outside.
         degree_sign = u'\N{DEGREE SIGN}'
-        r_labels = [str(angle)+degree_sign for angle in range(90,-1,-15)]
-        r_labels[-1] += ' Altitude [deg]'
-
         theta_labels = []
         for chunk in range(0, 8):
             label_angle = chunk*45.0
-            if chunk == 0:
+            if label_angle == 0:
                 theta_labels.append('N ' + '\n' + str(label_angle) + degree_sign
                                     + ' Azimuth [deg]')
-            elif chunk == 1:
+            elif label_angle == 45:
                 theta_labels.append('') #Let some space for r axis labels
-            elif chunk == 2:
+            elif label_angle == 90:
                 theta_labels.append('E' + '\n' + str(label_angle) + degree_sign)
-            elif chunk == 4:
+            elif label_angle == 180:
                 theta_labels.append('S' + '\n' + str(label_angle) + degree_sign)
-            elif chunk == 6:
+            elif label_angle == 270:
                 theta_labels.append('W' + '\n' + str(label_angle) + degree_sign)
             else:
                 theta_labels.append(str(label_angle) + degree_sign)
-
-        # Set ticks and labels for altitude
-        pol_ax.set_rlim(0, 90)
-        pol_ax.set_rgrids(np.arange(0, 91, 15), r_labels, angle=45)
 
         # Set ticks and labels for azimuth
         pol_ax.set_theta_zero_location('N')
         pol_ax.set_thetagrids(np.arange(0, 360, 45),
                               theta_labels)
 
+        # Second axis (altitude) must be inverted
+        # For positively-increasing range (e.g., range(1, 90, 15)),
+        # labels go from middle to outside.
+        r_labels = [str(angle)+degree_sign for angle in range(90,-1,-15)]
+        r_labels[-1] += ' Altitude [deg]'
 
+        # Set ticks and labels for altitude
+        pol_ax.set_rlim(0, 90)
+        pol_ax.set_rgrids(np.arange(0, 91, 15), r_labels, angle=45)
+
+        # Now plot observatory horizon
+        hor_az = np.sort(list(map(int,self.obs.get_horizon().keys())))
+        hor_alt = np.array([int(self.obs.get_horizon()[str(i)]) for i in
+                            hor_az])
+        # Now add virtual point to cover the circle
+        hor_az = np.concatenate((hor_az,[360]))
+        hor_alt = np.concatenate((hor_alt,[hor_alt[-1]]))
+        pol_ax.fill_between(np.deg2rad(hor_az), np.ones_like(hor_alt)*90,
+                            90-hor_alt, color='darkseagreen', alpha=0.5)
+
+        #Now show sun and moon
+        pol_ax.plot(np.deg2rad(np.array(sun_altazs.az)),
+            90-np.array(sun_altazs.alt), color='gold', label='Sun')
+        pol_ax.plot(np.deg2rad(np.array(sun_altazs.az)),
+            90-np.array(moon_altazs.alt), color='silver', label=moon_label)
 
         #Setup various colors for the different targets
         nb_target = len(self.targetList)
@@ -161,8 +173,8 @@ class ObservationPlanner:
 
         for (target_name, imaging_program), color in zip(
                 self.targetList.items(),colors):
-            #target_coord = SkyCoord.from_name(target_name)
-            target_coord = SkyCoord(70.839125*AU.deg, 47.357167*AU.deg)
+            target_coord = SkyCoord.from_name(target_name)
+            #target_coord = SkyCoord(70.839125*AU.deg, 47.357167*AU.deg)
 
             # Compute altazs for target
             target_altazs = target_coord.transform_to(altaz_frame)
@@ -178,10 +190,8 @@ class ObservationPlanner:
                         color=color)
 
             # Then plot environment aware polar altaz map
-            #https://astroplan.readthedocs.io/en/latest/api/astroplan.Observer.html#astroplan.Observer.altaz
-            #fig = plt.figure(figsize=(15,15))
-            #ax = fig.add_subplot()
-            #plot_sky(altair, observer, absolute_time_frame)
+            pol_ax.plot(np.deg2rad(np.array(target_altazs.az)),
+                90-np.array(target_altazs.alt), color=color, label=target_name)
 
         # Configure airmass plot, both utc and regular time
         air_ax.legend(loc='upper left')
@@ -216,5 +226,8 @@ class ObservationPlanner:
         alt_ax.set_ylabel('Altitude [deg]')
 
         afig.tight_layout()
+
+        # Configure airmass plot, both utc and regular time
+        pol_ax.legend(loc='upper left')
 
         plt.show()  
