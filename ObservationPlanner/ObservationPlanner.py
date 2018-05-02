@@ -109,14 +109,60 @@ class ObservationPlanner:
             grey_moon_range, color='{number:.{digits}f}'.format(
             number=grey_moon_intensity, digits=2), zorder=0)
 
+        #Now setup the polar chart
+        pfig = plt.figure(1, figsize=(25,15))
+        pol_ax = plt.gca(projection='polar')
+        #pol_ax = pfig.add_axes([0.1, 0.1, 0.8, 0.8], polar=True)
 
+
+        #First axis, azimut, MUST be in RAD (not deg)
+        pol_ax.set_xlim(0, np.deg2rad(360))
+        pol_ax.set_theta_direction(-1)
+
+        # Second axis (altitude) must be inverted
+        # For positively-increasing range (e.g., range(1, 90, 15)),
+        # labels go from middle to outside.
+        degree_sign = u'\N{DEGREE SIGN}'
+        r_labels = [str(angle)+degree_sign for angle in range(90,-1,-15)]
+        r_labels[-1] += ' Altitude [deg]'
+
+        theta_labels = []
+        for chunk in range(0, 8):
+            label_angle = chunk*45.0
+            if chunk == 0:
+                theta_labels.append('N ' + '\n' + str(label_angle) + degree_sign
+                                    + ' Azimuth [deg]')
+            elif chunk == 1:
+                theta_labels.append('') #Let some space for r axis labels
+            elif chunk == 2:
+                theta_labels.append('E' + '\n' + str(label_angle) + degree_sign)
+            elif chunk == 4:
+                theta_labels.append('S' + '\n' + str(label_angle) + degree_sign)
+            elif chunk == 6:
+                theta_labels.append('W' + '\n' + str(label_angle) + degree_sign)
+            else:
+                theta_labels.append(str(label_angle) + degree_sign)
+
+        # Set ticks and labels for altitude
+        pol_ax.set_rlim(0, 90)
+        pol_ax.set_rgrids(np.arange(0, 91, 15), r_labels, angle=45)
+
+        # Set ticks and labels for azimuth
+        pol_ax.set_theta_zero_location('N')
+        pol_ax.set_thetagrids(np.arange(0, 360, 45),
+                              theta_labels)
+
+
+
+        #Setup various colors for the different targets
         nb_target = len(self.targetList)
         cm = plt.get_cmap('gist_rainbow')
         colors = [cm(1.*i/nb_target) for i in range(nb_target)]
 
         for (target_name, imaging_program), color in zip(
                 self.targetList.items(),colors):
-            target_coord = SkyCoord.from_name(target_name)
+            #target_coord = SkyCoord.from_name(target_name)
+            target_coord = SkyCoord(70.839125*AU.deg, 47.357167*AU.deg)
 
             # Compute altazs for target
             target_altazs = target_coord.transform_to(altaz_frame)
