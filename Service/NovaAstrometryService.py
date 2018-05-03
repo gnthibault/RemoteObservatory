@@ -9,6 +9,9 @@ import urllib
 
 # Handle fits file
 import io
+
+# Astropy stuff
+from astropy.coordinates import SkyCoord
 from astropy.io import fits
 from astropy import wcs
 
@@ -154,8 +157,8 @@ class NovaAstrometryService():
             args['scale_est']=scale_est
             args['scale_err']=5
         if not (coordSky is None):
-            args['center_ra']=coordSky['ra']
-            args['center_dec']=coordSky['dec']
+            args['center_ra']=coordSky.ra.degree
+            args['center_dec']=coordSky.dec.degree
 
         # Now upload image
         upres = self.sendRequest('upload', args, fitsFile)

@@ -28,7 +28,6 @@ if __name__ == '__main__':
 
     # First get a sky image from astropy
     coord = SkyCoord.from_name("M1")
-    coord_dict = {'ra':coord.ra.degree, 'dec':coord.dec.degree}
     position = coord.icrs
     coordinates = 'icrs'
     hdu = SkyView.get_images(position=position, coordinates=coordinates,
@@ -43,10 +42,10 @@ if __name__ == '__main__':
     nova.login()
     t=io.BytesIO()
     f.writeto(t)
-    astrometry = nova.solveImage(t.getvalue(), coordSky=coord_dict,
+    astrometry = nova.solveImage(t.getvalue(), coordSky=coord,
                                  downsample_factor=1)
     print('Found RA of {} instead of ground truth: {}'.format(
-          astrometry['ra'], coord_dict['ra']))
+          astrometry['ra'], coord.ra.degree))
     print('Found DEC of {} instead of ground truth: {}'.format(
-          astrometry['dec'], coord_dict['dec']))
+          astrometry['dec'], coord.dec.degree))
 
