@@ -14,8 +14,6 @@ from Observatory.ShedObservatory import ShedObservatory
 
 # Local stuff : Service
 from Service.VirtualService import VirtualService
-from Service.WUGSunService import WUGSunService
-from Service.WUGMoonService import WUGMoonService
 from Service.WUGWeatherService import WUGWeatherService
 from Service.NTPTimeService import NTPTimeService
 from Service.NovaAstrometryService import NovaAstrometryService
@@ -53,25 +51,7 @@ if __name__ == '__main__':
     logger = logging.getLogger('mainLogger')
 
     # Instanciate object of interest
-    vObs = VirtualObservatory(logger=logger)
     obs = ShedObservatory(logger=logger)
-
-    # test moon service
-    servMoon = WUGMoonService(logger=logger)
-    servMoon.setGpsCoordinates(obs.getGpsCoordinates())
-    #servMoon.printEverything()
-    #print('illuminated moon is '+str(servMoon.getPercentIlluminated()))
-    #print('Age of moon is '+str(servMoon.getAgeOfMoon()))
-    #print('has moon rose '+str(servMoon.hasMoonRose()))
-
-    # test sun service
-    servSun = WUGSunService(logger=logger)
-    servSun.setGpsCoordinates(obs.getGpsCoordinates())
-    #servSun.printEverything()
-    #print('Current time is '+str(servSun.getCurrentTime()))
-    #print('Sun rise time is '+str(servSun.getSunRiseTime()))
-    #print('Sun set time is '+str(servSun.getSunSetTime()))
-    #print('has sun rose '+str(servSun.hasSunRose()))
 
     #test ntp time server
     servTime = NTPTimeService(logger=logger)

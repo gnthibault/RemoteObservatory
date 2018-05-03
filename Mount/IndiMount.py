@@ -69,33 +69,52 @@ class IndiMount(IndiDevice):
         self.logger.debug('Indi Mount: on emergency routine finished')
 
 
-    def slewToCoordAndTrack(self, coord):
-        self.logger.info('Indi Mount slewing to coord RA: {}, DEC: {}'.format(
-                          coord.ra.hour, coord.dec.degree)) 
-        self.setNumber('EQUATORIAL_EOD_COORD', {'RA': coord.ra.hour, 
-                                            'DEC': coord.dec.degree},
-                       timeout=120)
+    def slew_to_coord_and_stop(self, coord):
+        self.on_coord_set('SLEW')
+        self.set_coord(coord)
 
-    def getCurrentCoord(self):
-        #ctl = self.getPropertyVector('FILTER_SLOT', 'number')
-        #number = int(ctl[0].value)
-        #return number, self.filterName(number)
-        return 0
+    def slew_to_coord_and_track(self, coord):
+        self.on_coord_set('TRACK')
+        self.set_coord(coord)
 
-    def setTrackingMode(self, trackingMode='Sideral'):
-        self.logger.debug('Indi Mount: Setting tracking mode: {}'.format(
-                          trackingMode))
-        pass
+    def sync_to_coord(self, coord):
+        self.on_coord_set('SYNC')
+        self.set_coord(coord)
 
-    def setTrackingOn(self):
-        self.logger.debug('Indi Mount: Setting tracking on')
-        pass
+    def set_coord(self, coord):
+        rahour_decdeg = {'RA': coord.ra.hour, 
+                         'DEC': coord.dec.degree}
+        self.logger.info('Indi Mount setting coord: {}'.format(rahour_decdeg)) 
+        self.setNumber('EQUATORIAL_EOD_COORD', rahour_decdeg)
 
-    def setTrackingOff(self):
-        self.logger.debug('Indi Mount: Setting tracking off')
-        pass
+        try:
+            #Read Only property set once requested EQUATORIAL_EOD_COORD is
+            #accepted by driver.
+            res = self.getNumber('TARGET_EOD_COORD')
+            self.logger.info('Indi Mount, coordinates accepted by driver, '
+                'Mount driver TARGET_EOD_COORD are: {} and '
+                'sent EQUATORIAL_EOD_COORD are: {}'.format(rahour_decdeg,res))
+        except Exception as e:
+            self.logger.error('Indi Mount, coordinates not accepted by driver '
+                              ': {}'.format(e))
+
+    def on_coord_set(self, what_to_do='TRACK'):
+        """ What do to with the new set of given coordinates
+            Can be either:
+            SLEW: Slew to a coordinate and stop upon receiving coordinates.
+            TRACK: Slew to a coordinate and track upon receiving coordinates.
+            SYNC: Accept current coordinate as correct upon recving coordinates
+        """
+        self.setSwitch('ON_COORD_SET', [what_to_do])
+
+    # This does not work with simulator
+    #def setTrackingMode(self, tracking_mode='TRACK_SIDEREAL'):
+    #    self.logger.debug('Indi Mount: Setting tracking mode: {}'.format(
+    #                      tracking_mode))
+    #    self.setSwitch('TELESCOPE_TRACK_RATE', [tracking_mode])
 
     def abortMotion(self):
+        self.logger.debug('Indi Mount: Abort Motion')
         self.setSwitch('TELESCOPE_ABORT_MOTION', ['ABORT_MOTION'])
 
     def park(self):
@@ -106,8 +125,17 @@ class IndiMount(IndiDevice):
         self.logger.debug('Indi Mount: unPark')
         self.setSwitch('TELESCOPE_PARK', ['UNPARK'])
 
+    def set_slew_rate(self, slew_rate='SLEW_FIND'):
+        self.logger.debug('Indi Mount: Setting slewing rate: {}'.format(
+                          slew_rate))
+        self.setSwitch('TELESCOPE_SLEW_RATE', [slew_rate])
+
     def isParked(self):
-        return false
+        status = self.getOnSwitchValueVector('TELESCOPE_PARK') 
+        if status['PARK']:
+            return true
+        else:
+            return false
 
     def __str__(self):
         return 'Mount: {}, current position: {}'.format(

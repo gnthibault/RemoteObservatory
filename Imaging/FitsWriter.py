@@ -17,22 +17,20 @@ class FitsWriter():
     """
 
     def __init__(self, logger=None, observatory=None, servWeather=None,
-                 servSun=None, servMoon=None, servTime=None,
-                 servAstrometry=None, filterWheel=None, telescope=None,
-                 camera=None):
+                 servTime=None, servAstrometry=None, filterWheel=None,
+                 telescope=None, camera=None):
         self.logger = logger or logging.getLogger(__name__)
         self.logger.debug('Configuring FitsWriter')
 
         self.imgIdx = 0
         self.observatory = observatory
         self.servWeather = servWeather
-        self.servSun = servSun
-        self.servMoon = servMoon
         self.servTime = servTime
         self.servAstrometry = servAstrometry
         self.filterWheel = filterWheel
         self.telescope = telescope
         self.camera = camera
+        self.ephem = None #TODO TN to be improved
 
         self.threadLock = threading.Lock()
 
@@ -79,15 +77,14 @@ class FitsWriter():
                 hdr['VISIBILITYKM'] = (str(self.servWeather.getVisibility_km()),
                                        'NC')
                 hdr['WEATHER'] = (self.servWeather.getWeatherQuality(), 'NC')
-            if self.servSun is not None:
-                hdr['SUNRISE'] = (str(self.servSun.getSunRiseTime()), 'NC')
-                hdr['SUNSET'] = (str(self.servSun.getSunSetTime()), 'NC')
-                hdr['SUNHASROSE'] = (str(self.servSun.hasSunRose()), 'NC')
-            if self.servMoon is not None:
-                hdr['MOONILLUMINATEDPERC'] = (str(self.servMoon.
+            if self.ephem is not None:
+                hdr['SUNRISE'] = (str(self.ephem.getSunRiseTime()), 'NC')
+                hdr['SUNSET'] = (str(self.ephem.getSunSetTime()), 'NC')
+                hdr['SUNHASROSE'] = (str(self.ephem.hasSunRose()), 'NC')
+                hdr['MOONILLUMINATEDPERC'] = (str(self.ephem.
                                               getPercentIlluminated()), 'NC')
-                hdr['MOONAGEDAY'] = (str(self.servMoon.getAgeOfMoon()), 'NC')
-                hdr['MOONHASROSE'] = (str(self.servMoon.hasMoonRose()), 'NC')
+                hdr['MOONAGEDAY'] = (str(self.ephem.getAgeOfMoon()), 'NC')
+                hdr['MOONHASROSE'] = (str(self.ephem.hasMoonRose()), 'NC')
             if self.servAstrometry is not None:
                 t=io.BytesIO()
                 fits.writeto(t)

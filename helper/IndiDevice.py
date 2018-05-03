@@ -68,8 +68,12 @@ class IndiDevice:
                                   timeout=timeout)
         return pv
         
+    def getNumber(self, numbName, timeout=None):
+        pv = self.getPropertyVector(numbName, 'number', timeout=300)
+        return dict(map(lambda x: (x.name, x.value), pv))
+
     def setNumber(self, name, valueVector, sync = True, timeout=None):
-        pv = self.getPropertyVector(name, 'number')
+        pv = self.getPropertyVector(name, 'number', timeout)
         for propertyName, index in self.__getPropVectIndicesHavingValues(
                                    pv, valueVector.keys()).items():
             pv[index].value = valueVector[propertyName]
