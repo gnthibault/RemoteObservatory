@@ -42,19 +42,21 @@ class AutoFlatSequence:
         self.callbacks = SequenceCallbacks(**kwargs)
 
     def run(self):
-        self.logger.debug('AutoFlatSequence: Flat Sequence is going to run')
-        print('autoFlat is {}'.format(self.autoFlatCalculator.filterNames))
+        self.logger.debug('AutoFlatSequence: Flat Sequence is going to run '
+                          'for the following set of filters {}'.format(
+                          self.autoFlatCalculator.filterNames))
         self.camera.setFrameType('FRAME_FLAT')
         for filterName in self.autoFlatCalculator.filterNames:
             self.logger.debug('AutoFlatSequence: processing filter {}'.format(
                               filterName))
+            self.filterWheel.setFilter(filterName)
             if self.exposure is None:
                 exposure = self.camera.getRelevantFlatDuration(filterName)
             else:
                 exposure = self.exposure
-            self.filterWheel.setFilter(filterName)
+            target_name = self.name+'-'+filterName
             seq = ShootingSequence(logger=self.logger, camera=self.camera,
-                target=self.name, exposure=exposure, count=self.count)
+                seq_name=target_name, exposure=exposure, count=self.count)
             seq.callbacks = self.callbacks
             seq.run()
         self.autoFlatCalculator.reset() 

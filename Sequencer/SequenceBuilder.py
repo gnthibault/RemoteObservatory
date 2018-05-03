@@ -29,24 +29,29 @@ class SequenceBuilder:
         self.autoFlatCalculator = AutoFlatCalculator()
 
 
-    def addShootingSequence(self, target, exposure, count, **kwargs):
+    def add_object_shooting_sequence(self, target, seq_name, exposure, count,
+                                     **kwargs):
+        """
+            
+        """
+
         s = ShootingSequence(logger=self.logger, camera=self.camera,
-                             target=target, exposure=exposure, count=count,
+                             seq_name=seq_name, exposure=exposure, count=count,
                              **kwargs)
-        if self.useAutoDark and self.autoDarkCalculator is not None:
+        if self.useAutoDark and not (self.autoDarkCalculator is None):
             s.callbacks.add(name="onEachFinished",
                           callback=self.autoDarkCalculator.onEachFinished)
-        if self.asyncWriter is not None:
+        if not (self.asyncWriter is None):
             s.callbacks.add(name="onEachFinished",
                             callback=self.asyncWriter.AsyncWriteImage)
         return self.__append(s)
 
-    def addFilterWheelStep(self, filterName=None,
-                           filterNumber=None):
+    def add_filterwheel_step(self, filterName=None,
+                             filterNumber=None):
         f = FilterWheelStep(self.filterWheel,
                             filterName=filterName,
                             filterNumber=filterNumber)
-#                           onFinished=[
+#TODO TN                    onFinished=[
 #                           self.focuser.autoFocusSequence]))
 
         if self.useAutoFlat and self.autoFlatCalculator is not None:
@@ -54,17 +59,18 @@ class SequenceBuilder:
                             callback=self.autoFlatCalculator.onFinished)
         return self.__append(f)
 
-    def addUserConfirmationPrompt(self, message=UserInputStep.DEFAULT_PROMPT,
-                                  onInput = None):
+    def add_user_confirmation_prompt(self,
+                                     message=UserInputStep.DEFAULT_PROMPT,
+                                     onInput=None):
         return self.__append(UserInputStep(message, onInput))
 
-    def addMessageStep(self, message, sleepTime=0):
+    def add_message_print(self, message, sleepTime=0):
         return self.__append(MessageStep(message, sleepTime))
 
-    def addShellCommand(self, command, shell=False, abortOnFailure=False):
+    def add_shell_command(self, command, shell=False, abortOnFailure=False):
         return self.__append(ShellCommandStep(command, shell, abortOnFailure))
 
-    def addAutoDark(self, name='Dark', count=None):
+    def add_auto_dark(self, name='Dark', count=None):
         s = AutoDarkSequence(self.camera,
                              self.autoDarkCalculator,
                              name=name, logger=self.logger,
@@ -74,16 +80,17 @@ class SequenceBuilder:
                             callback=self.asyncWriter.AsyncWriteImage)
         return self.__append(s)
 
-    def addAutoFlat(self, name='Flat', count=16, exposure=None):
+    def add_auto_flat(self, name='Flat', count=16, exposure=None):
         
         def execBeforeFlat(shootingSequence):
             self.logger.debug('SequenceBuilder: Now preparing setup for flat')
-            #if not mount.isParked():
-            #    self.mount.gotoParkPosition()
+            if not (self.mount is None):
+                self.mount.park()
             self.observatory.switchOnFlatPannel()
         if not self.autoFlatCalculator:
-            self.logger.error('SequenceBuilder: addAutoFlat should be used '
-                              'along with autoFlatCalculator')
+            self.logger.warning('SequenceBuilder: addAutoFlat should be used '
+                                 'along with autoFlatCalculator, default one '
+                                 'is assigned')
             self.autoFlatCalculator = AutoFlatCalculator()
         s = AutoFlatSequence(camera=self.camera,
                              filterWheel=self.filterWheel,
@@ -97,7 +104,7 @@ class SequenceBuilder:
                             callback=self.asyncWriter.AsyncWriteImage)
         return self.__append(s)
 
-    def addFunction(self, f):
+    def add_function(self, f):
         return self.__append(RunFunctionStep(f))
 
     def start(self):

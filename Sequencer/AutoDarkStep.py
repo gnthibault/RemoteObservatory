@@ -52,8 +52,10 @@ class AutoDarkSequence:
                 count = self.autoDarkCalculator.getRelevantCount(exposure)
             else:
                 count = self.count
+            #TODO TN duration or camera gain should apear in the name
+            seq_name = self.name+'-'+str(exposure)+'s'
             seq = ShootingSequence(logger=self.logger, camera=self.camera,
-                target=self.name, exposure=exposure, count=count)
+                seq_name=seq_name, exposure=exposure, count=count)
             seq.callbacks = self.callbacks
             seq.run()
         self.autoDarkCalculator.reset() 

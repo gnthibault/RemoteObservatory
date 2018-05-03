@@ -58,9 +58,9 @@ class ShellCommandStep:
         self.abortOnFailure = abortOnFailure
 
     def run(self):
-        print('Running shell command {0}'.format(self.arguments))
+        print('Running shell command {}'.format(self.arguments))
         exit_code = subprocess.call(self.arguments, shell=self.shell)
-        message = 'Shell command exited with status {0}'.format(exit_code)
+        message = 'Shell command exited with status {}'.format(exit_code)
         if exit_code != 0 and self.abortOnFailure:
             raise RuntimeError(message)
         else:
@@ -75,7 +75,8 @@ class ShellCommandStep:
 class UserInputStep:
     DEFAULT_PROMPT = 'Press Enter to continue'
 
-    # the onInput callback, if specified, will be called with the user entered input
+    # the onInput callback, if specified, will be called with the user
+    # entered input
     def __init__(self, prompt=DEFAULT_PROMPT, onInput=None):
         self.prompt = prompt
         self.onInput = onInput

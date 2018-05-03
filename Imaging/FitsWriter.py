@@ -52,7 +52,6 @@ class FitsWriter():
             if self.filterWheel is not None:
                 filterName = self.filterWheel.currentFilter()[1]
                 hdr['FILTER'] = (filterName, 'NC')
-                targetName += '-{}'.format(filterName)
             if self.camera is not None:
                 hdr['EXPOSURETIMESEC'] = (str(self.camera.getExposureTimeSec()),
                                           'NC')
@@ -88,6 +87,7 @@ class FitsWriter():
             if self.servAstrometry is not None:
                 t=io.BytesIO()
                 fits.writeto(t)
+                #TODO TN try to input some more informations for solving
                 self.servAstrometry.solveImage(t.getvalue())
                 hdr['PARITY'] = (str(self.servAstrometry.getCalib()['parity']),
                                  'NC')

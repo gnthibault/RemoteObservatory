@@ -30,7 +30,7 @@ from Camera.IndiEos350DCamera import IndiEos350DCamera
 from FilterWheel.IndiVirtualFilterWheel import IndiVirtualFilterWheel
 
 # Local stuff : Mount
-from Mount.IndiVirtualMount import IndiVirtualMount
+from Mount.IndiMount import IndiMount
 
 # Local stuff : Imaging tools
 from Imaging.AsyncWriter import AsyncWriter
@@ -104,8 +104,8 @@ if __name__ == '__main__':
     print('Filterwheel is {}'.format(filterWheel))
 
     # Now test Mount
-    mount = IndiVirtualMount(logger=logger, indiClient=indiCli,
-                             configFileName=None, connectOnCreate=True)
+    mount = IndiMount(logger=logger, indiClient=indiCli,
+                      configFileName=None, connectOnCreate=True)
 
     # test nova Astrometry service
     #nova = NovaAstrometryService(logger=logger,configFileName='local')
@@ -156,36 +156,39 @@ if __name__ == '__main__':
     #darkSeq.run()
 
     # More basic shooting sequence
-    #seq2 = ShootingSequence(logger=logger, camera=cam, target='M51', exposure=1,
+    #seq2 = ShootingSequence(logger=logger, camera=cam, target='M51',
+    #                        exposure=1,
     #    count=5,onEachFinished=[aWriter.AsyncWriteImage])
 
     # Sequence Builder
     seqB = SequenceBuilder(logger=logger, camera=cam, filterWheel=filterWheel,
-                           observatory=obs, asyncWriter=aWriter, useAutoDark=True,
-                           useAutoFlat=True)
+                           observatory=obs, mount=mount, asyncWriter=aWriter,
+                           useAutoDark=True, useAutoFlat=True)
+
     #seqB.addUserConfirmationPrompt('Please press enter if you wish to proceed')
     #Red Green Blue Luminance LPR OIII SII H_Alpha
-    #seqB.addFilterWheelStep(filterName='Luminance')
-    #seqB.addShootingSequence(target='M51', exposure=2, count=5)
-    #seqB.addFilterWheelStep(filterName='H_Alpha')
-    #seqB.addShootingSequence(target='M51', exposure=2, count=5)
-    #seqB.addMessageStep(message='Add Message')
-    #seqB.addShellCommand(command='ls')
-    #seqB.addFunction(lambda : print("Add Function Step"))
-    #seqB.addAutoDark(count=5)
-    #seqB.addAutoFlat(count=5, exposure=1)
+    #seqB.add_filterwheel_step(filterName='Luminance')
+    #seqB.add_shooting_sequence(target='M51', exposure=2, count=5)
+    #seqB.add_filterwheel_step(filterName='H_Alpha')
+    #seqB.add_shooting_sequence(target='M51', exposure=2, count=5)
+    #seqB.add_message_print(message='Add Message')
+    #seqB.add_shell_command(command='ls')
+    #seqB.add_function(lambda : print("Add Function Step"))
+    #seqB.add_auto_dark(count=5)
+    #seqB.add_auto_flat(count=5, exposure=1)
     #seqB.start()
 
     #Sequence Builder along with target list, dark calculator, ...
 
-    for targetName, config in obsPlanner.getTargetList().items():
-        for filterName, (count, expTimeSec) in config.items():
-            seqB.addMessageStep(message='Target {}, setting filter {}'.format(
-                targetName,filterName))
-            seqB.addFilterWheelStep(filterName=filterName)
-            seqB.addShootingSequence(target=targetName, exposure=expTimeSec,
-                                     count=count)
-    seqB.addAutoDark(count=5)
-    seqB.addAutoFlat(count=5, exposure=1)
+    for target, config in obsPlanner.getTargetList().items():
+        for filter_name, (count, expTimeSec) in config.items():
+            seqB.add_message_print(message='Target {}, setting filter '
+                                   '{}'.format(target,filter_name))
+            seqB.add_filterwheel_step(filterName=filter_name)
+            seq_name = target+'-'+filter_name
+            seqB.add_object_shooting_sequence(target, seq_name=seq_name,
+                                              exposure=expTimeSec, count=count)
+    seqB.add_auto_dark(count=5)
+    seqB.add_auto_flat(count=5, exposure=1)
     seqB.start()
 

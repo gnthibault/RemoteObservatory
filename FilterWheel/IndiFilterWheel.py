@@ -13,25 +13,25 @@ class IndiFilterWheel(IndiDevice):
         logger = logger or logging.getLogger(__name__)
         
         if configFileName is None:
-          self.configFileName = 'IndiSimulatorFilterWheel.json'
+            self.configFileName = 'IndiSimulatorFilterWheel.json'
         else:
-          self.configFileName = configFileName
+            self.configFileName = configFileName
 
         # Now configuring class
         logger.debug('Indi FilterWheel, configuring with file {}'.format(
-          self.configFileName))
+                     self.configFileName))
         # Get key from json
         with open(self.configFileName) as jsonFile:
-          data = json.load(jsonFile)
-          deviceName = data['FilterWheelName']
-          self.filterList = data['FilterList']
+            data = json.load(jsonFile)
+            deviceName = data['FilterWheelName']
+            self.filterList = data['FilterList']
 
         logger.debug('Indi FilterWheel, filterwheel name is: {}'.format(
-          deviceName))
+                     deviceName))
       
         # device related intialization
         IndiDevice.__init__(self, logger=logger, deviceName=deviceName,
-          indiClient=indiClient)
+                            indiClient=indiClient)
         if connectOnCreate:
             self.connect()
             self.initFilterWheelConfiguration()
