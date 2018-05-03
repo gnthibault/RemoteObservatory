@@ -96,3 +96,19 @@ class UserInputStep:
     def __repr__(self):
         return self.__str__()
 
+class TelescopeSlewingStep:
+    def __init__(self, mount, coord):
+        self.mount = mount
+        self.coord = coord
+
+    def run(self):
+        self.mount.slew_to_coord_and_track(self.coord)
+ 
+
+    def __str__(self):
+        return 'Telescope mount {} slewing to coordinates {}'.format(
+                self.mount, self.coord)
+
+    def __repr__(self):
+        return self.__str__()
+

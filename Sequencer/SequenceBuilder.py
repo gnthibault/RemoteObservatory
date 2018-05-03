@@ -1,10 +1,14 @@
 # Basic stuff
 import logging
 
+# Astropy stuff
+from astropy.coordinates import SkyCoord
+
 # Local Stuff, import Sequence related objects
 from Sequencer.AutoDarkStep import AutoDarkCalculator, AutoDarkSequence
 from Sequencer.AutoFlatStep import AutoFlatCalculator, AutoFlatSequence
 from Sequencer.CommonSteps import MessageStep, RunFunctionStep, ShellCommandStep
+from Sequencer.CommonSteps import TelescopeSlewingStep
 from Sequencer.CommonSteps import UserInputStep, SequenceCallbacks
 from Sequencer.FilterWheelStep import FilterWheelStep
 from Sequencer.ShootingSequence import ShootingSequence
@@ -28,12 +32,19 @@ class SequenceBuilder:
         self.autoDarkCalculator = AutoDarkCalculator()
         self.autoFlatCalculator = AutoFlatCalculator()
 
+    def add_telescope_target_slewing(self, target):
+        if not (self.mount is None):
+            #coord = SkyCoord.from_name(target)
+            coord = SkyCoord('19h50m47.6s', '+08d52m12.0s', frame='icrs')
+            self.__append(TelescopeSlewingStep(self.mount, coord))
 
     def add_object_shooting_sequence(self, target, seq_name, exposure, count,
                                      **kwargs):
         """
             
         """
+        # First, slew to target
+        self.add_telescope_target_slewing(target)
 
         s = ShootingSequence(logger=self.logger, camera=self.camera,
                              seq_name=seq_name, exposure=exposure, count=count,

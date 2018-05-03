@@ -2,6 +2,7 @@
 import datetime
 import io
 import logging
+import os
 import threading
 import traceback
 
@@ -18,7 +19,7 @@ class FitsWriter():
 
     def __init__(self, logger=None, observatory=None, servWeather=None,
                  servTime=None, servAstrometry=None, filterWheel=None,
-                 telescope=None, camera=None):
+                 telescope=None, camera=None, path='./images'):
         self.logger = logger or logging.getLogger(__name__)
         self.logger.debug('Configuring FitsWriter')
 
@@ -31,6 +32,18 @@ class FitsWriter():
         self.telescope = telescope
         self.camera = camera
         self.ephem = None #TODO TN to be improved
+
+        path_idx = 0
+
+        #Create a new path, whatever the input is
+        path = os.path.realpath(path)
+        test_path = path
+        while os.path.exists(test_path):
+            test_path = (path+'-'+str(datetime.datetime.now().date())+'-'+
+                         str(path_idx))
+            path_idx += 1
+        os.makedirs(test_path, exist_ok=False)
+        self.path = test_path
 
         self.threadLock = threading.Lock()
 
@@ -118,7 +131,7 @@ class FitsWriter():
 
         filename='{}-{}.fits'.format(targetName,self.imgIdx)
         try:
-            with open(filename, "wb") as f:
+            with open(os.path.join(self.path,filename), "wb") as f:
                 fits.writeto(f, overwrite=True)
                 with self.threadLock:
                     self.imgIdx += 1

@@ -138,8 +138,7 @@ class IndiMount(IndiDevice):
             return false
 
     def __str__(self):
-        return 'Mount: {}, current position: {}'.format(
-            self.name, self.getCurrentCoord())
+        return 'Mount: {}'.format(self.name)
 
     def __repr__(self):
         return self.__str__()
