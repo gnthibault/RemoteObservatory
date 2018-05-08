@@ -22,6 +22,7 @@ from astroplan import ObservingBlock
 from astroplan.constraints import AtNightConstraint
 from astroplan.constraints import AirmassConstraint
 from astroplan.constraints import TimeConstraint
+from astroplan.constraints import MoonSeparationConstraint
 from astroplan.plots import plot_sky
 from astroplan.scheduling import PriorityScheduler
 from astroplan.scheduling import SequentialScheduler
@@ -62,8 +63,9 @@ class ObservationPlanner:
 
     def gen_schedule(self):
         # create the list of constraints that all targets must satisfy
-        constr = [AirmassConstraint(max=3, boolean_constraint=False),
-                  AtNightConstraint.twilight_civil()]
+        constr = [AirmassConstraint(max=3.5, boolean_constraint=False),
+                  AtNightConstraint.twilight_civil(),
+                  MoonSeparationConstraint(min=30*AU.deg)]
 
         # Initialize a transitioner object with the slew rate and/or the
         # duration of other transitions (e.g. filter changes)
@@ -85,16 +87,15 @@ class ObservationPlanner:
                 
                 #TODO TN retrieve priority from the file
                 priority = 0
-
                 b = ObservingBlock.from_exposures(
                         target, priority, exp_time, count, camera_time,
-                        configuration = {'filter': filter_name},
-                        constraints = constr)
+                        configuration = {'filter': filter_name}) #,
+                        #constraints = constr)
 
                 obs_blocks.append(b)
 
         # Initialize the priority scheduler with constraints and transitioner
-        prior_scheduler = PriorityScheduler(
+        priority_scheduler = PriorityScheduler(
             constraints=constr,
             observer=self.obs.getAstroplanObserver(),
             transitioner=trans)
@@ -105,7 +106,7 @@ class ObservationPlanner:
         priority_schedule = Schedule(now, tomorrow_noon)
         # Call the schedule with the observing blocks and schedule to schedule
         # the blocks
-        self.schedule = prior_scheduler(obs_blocks, priority_schedule)
+        self.schedule = priority_scheduler(obs_blocks, priority_schedule)
 
         #TODO TN Remove
         for el in self.schedule:
