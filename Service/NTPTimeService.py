@@ -100,3 +100,8 @@ class NTPTimeService(BaseService):
                          timedelta(days=1))
         return self.convert_to_utc_time(next_midnight)
 
+    def getNextNoonAfterNextMidnightInUTC(self):
+        next_midnight = self.getNextMidnightInUTC()
+        next_noon = next_midnight + timedelta(hours=12)
+        return self.convert_to_utc_time(next_noon)
+

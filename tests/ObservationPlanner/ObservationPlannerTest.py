@@ -32,8 +32,11 @@ if __name__ == '__main__':
     servTime = NTPTimeService(logger=logger)
     
     # ObservationPlanner
-    obsPlanner = ObservationPlanner(logger=logger, ntpServ=servTime, obs=obs)
+    obs_planner = ObservationPlanner(logger=logger, ntpServ=servTime, obs=obs)
     #configFileName='test.json')
-    print('Target list is {}'.format(obsPlanner.getTargetList()))
-    obsPlanner.showObservationPlan()
+    print('Target list is {}'.format(obs_planner.getTargetList()))
+    #obs_planner.showObservationPlan()
+
+    # Now schedule with astroplan
+    obs_planner.gen_schedule()
 

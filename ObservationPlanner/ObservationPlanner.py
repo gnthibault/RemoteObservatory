@@ -16,8 +16,17 @@ from astropy.coordinates import SkyCoord
 from astropy.time import Time as ATime
 
 # Astroplan stuff
-from astroplan.plots import plot_sky
+from astroplan import FixedTarget
 from astroplan import moon_illumination
+from astroplan import ObservingBlock
+from astroplan.constraints import AtNightConstraint
+from astroplan.constraints import AirmassConstraint
+from astroplan.constraints import TimeConstraint
+from astroplan.plots import plot_sky
+from astroplan.scheduling import PriorityScheduler
+from astroplan.scheduling import SequentialScheduler
+from astroplan.scheduling import Schedule
+from astroplan.scheduling import Transitioner
 
 # Plotting stuff
 import matplotlib.pyplot as plt
@@ -50,6 +59,57 @@ class ObservationPlanner:
       
     def getTargetList(self):
         return self.targetList
+
+    def gen_schedule(self):
+        # create the list of constraints that all targets must satisfy
+        constr = [AirmassConstraint(max=3, boolean_constraint=False),
+                  AtNightConstraint.twilight_civil()]
+
+        # Initialize a transitioner object with the slew rate and/or the
+        # duration of other transitions (e.g. filter changes)
+        # TODO TN do that from mount or filterwheel info
+        slew_rate = 1.5*AU.deg/AU.second
+        trans = Transitioner(slew_rate,{'filter':{'default': 10*AU.second}})
+
+        # Create ObservingBlocks for each filter and target with our time
+        # constraint, and durations determined by the exposures needed
+        obs_blocks = []
+
+        for target_name, config in self.targetList.items():
+            target = FixedTarget.from_name(target_name)
+            #target = FixedTarget(SkyCoord(70.839125*AU.deg, 47.357167*AU.deg))
+            for filter_name, (count, exp_time_sec) in config.items():
+                #TODO TN get that info from camera
+                camera_time = 1*AU.second
+                exp_time = exp_time_sec*AU.second
+                
+                #TODO TN retrieve priority from the file
+                priority = 0
+
+                b = ObservingBlock.from_exposures(
+                        target, priority, exp_time, count, camera_time,
+                        configuration = {'filter': filter_name},
+                        constraints = constr)
+
+                obs_blocks.append(b)
+
+        # Initialize the priority scheduler with constraints and transitioner
+        prior_scheduler = PriorityScheduler(
+            constraints=constr,
+            observer=self.obs.getAstroplanObserver(),
+            transitioner=trans)
+
+        # Initialize a Schedule object, to contain the new schedule
+        now = self.ntpServ.getAstropyTimeFromUTC()
+        tomorrow_noon = ATime(self.ntpServ.getNextNoonAfterNextMidnightInUTC())
+        priority_schedule = Schedule(now, tomorrow_noon)
+        # Call the schedule with the observing blocks and schedule to schedule
+        # the blocks
+        self.schedule = prior_scheduler(obs_blocks, priority_schedule)
+
+        #TODO TN Remove
+        for el in self.schedule:
+            print('Element in schedule: {}'.format(el))
 
     def showObservationPlan(self):
         #Time margin, in hour

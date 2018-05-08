@@ -3,7 +3,7 @@ import logging
 import json
 
 # Astropy stuff
-import astropy.units as u
+import astropy.units as AU
 from astropy.coordinates import EarthLocation
 
 # Astroplan stuff
@@ -47,6 +47,9 @@ class ShedObservatory(object):
         self.logger.debug('Found timezone for observatory: {}'.format(
                           self.timezone.zone))
 
+        # Other services
+        self.servWeather = servWeather
+
         # Finished configuring
         self.logger.debug('Configured ShedObservatory successfully')
     
@@ -86,19 +89,19 @@ class ShedObservatory(object):
         self.logger.debug('ShedObservatory: Flat pannel switched on')
 
     def getAstropyEarthLocation(self):
-        return EarthLocation(lat=self.gpsCoordinates['latitude']*u.deg,
-                             lon=self.gpsCoordinates['longitude']*u.deg,
-                             height=self.altitudeMeter*u.m)
+        return EarthLocation(lat=self.gpsCoordinates['latitude']*AU.deg,
+                             lon=self.gpsCoordinates['longitude']*AU.deg,
+                             height=self.altitudeMeter*AU.m)
 
     def getAstroplanObserver(self):
         location = self.getAstropyEarthLocation()
-        pressure = 0.9 * u.bar,
-        relative_humidity = 0.20,
-        temperature = 15 * u.deg_C,
+        pressure = 0.85 * AU.bar
+        relative_humidity = 0.20
+        temperature = 15 * AU.deg_C
         if not (self.servWeather is None):
-            pressure = self.servWeather.getPressure_mb() * 1000 * u.bar
-            relative_humidity = self.servWeather.getRelative_humidity(),
-            temperature = self.servWeather.getTemp_c() * u.deg_C,
+            pressure = (self.servWeather.getPressure_mb() / 1000) * AU.bar
+            relative_humidity = self.servWeather.getRelative_humidity()
+            temperature = self.servWeather.getTemp_c() * AU.deg_C
 
         observer = Observer(name=self.ownerName,
             location=location,
@@ -108,3 +111,4 @@ class ShedObservatory(object):
             timezone=self.timezone,
             description="Description goes here")
 
+        return observer 
