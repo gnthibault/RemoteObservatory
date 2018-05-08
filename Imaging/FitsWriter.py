@@ -90,13 +90,14 @@ class FitsWriter():
                                        'NC')
                 hdr['WEATHER'] = (self.servWeather.getWeatherQuality(), 'NC')
             if self.ephem is not None:
-                hdr['SUNRISE'] = (str(self.ephem.getSunRiseTime()), 'NC')
-                hdr['SUNSET'] = (str(self.ephem.getSunSetTime()), 'NC')
-                hdr['SUNHASROSE'] = (str(self.ephem.hasSunRose()), 'NC')
-                hdr['MOONILLUMINATEDPERC'] = (str(self.ephem.
-                                              getPercentIlluminated()), 'NC')
-                hdr['MOONAGEDAY'] = (str(self.ephem.getAgeOfMoon()), 'NC')
-                hdr['MOONHASROSE'] = (str(self.ephem.hasMoonRose()), 'NC')
+                hdr['SUNSEPARATION'] = (str(self.ephem.getSunSeparation(
+                    target_name)), 'NC')
+                hdr['MOONSEPARATION'] = (str(self.ephem.getMoonSeparation(
+                    target_name)), 'NC')
+                hdr['MOONILLUMINATEDPERC'] = (str(
+                    self.ephem.getMoonPercentIlluminated()), 'NC')
+                hdr['AIRMASS'] = (str(
+                    self.ephem.getAirMass(target_name)), 'NC')
             if self.servAstrometry is not None:
                 t=io.BytesIO()
                 fits.writeto(t)
