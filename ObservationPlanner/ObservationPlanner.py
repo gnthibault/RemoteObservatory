@@ -86,9 +86,9 @@ class ObservationPlanner:
                 exp_time = exp_time_sec*AU.second
                 
                 #TODO TN retrieve priority from the file
-                priority = 0
+                priority = 0 if (filter_name=='Luminance') else 1
                 b = ObservingBlock.from_exposures(
-                        target, priority, exp_time, count, camera_time,
+                        target, priority, exp_time, 10*count, camera_time,
                         configuration = {'filter': filter_name}) #,
                         #constraints = constr)
 
@@ -107,10 +107,16 @@ class ObservationPlanner:
         # Call the schedule with the observing blocks and schedule to schedule
         # the blocks
         self.schedule = priority_scheduler(obs_blocks, priority_schedule)
-
-        #TODO TN Remove
-        for el in self.schedule:
-            print('Element in schedule: {}'.format(el))
+        print(self.schedule.to_table())
+        convenient = [{'slot':sl,'block':bl} for (sl,bl) in zip(
+            self.schedule.slots,
+            self.schedule.observing_blocks)]
+        for i, el in enumerate(convenient):
+            print('Element {} in schedule: start at {}, target is {}, '
+                  'filter is {}, count is {}, and duration is {}'.format(
+                  i, el['slot'].start.to_datetime(), el['block'].target, 
+                  el['block'].configuration['filter'],
+                  el['block'].number_exposures, el['block'].time_per_exposure))
 
     def showObservationPlan(self):
         #Time margin, in hour
