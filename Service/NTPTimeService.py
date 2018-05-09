@@ -62,17 +62,19 @@ class NTPTimeService(BaseService):
             utc = datetime.utcfromtimestamp(res)
             self.logger.debug('NTP Time Service got UTC from server {} : {}'
                               .format(self.ntpserver,utc))
-            return utc
         except Exception as e:
             #return UTC from local computer
             utc=datetime.utcnow()
             self.logger.error('NTP Time Service cannot get UTC from server {}'
                 ', because of error : {}, got UTC from local clock instead: {}'
                 .format(self.ntpserver,e,utc))
-            return utc
+        return pytz.utc.localize(utc, is_dst=None)
 
-    def getTimeFromNTP(self):
+    def getLocalTimeFromNTP(self):
         return self.convert_to_local_time(self.getUTCFromNTP())
+
+    def getLocalDateFromNTP(self):
+        return self.getLocalTimeFromNTP().date()
 
     def getAstropyTimeFromUTC(self):
         return ATime(self.getUTCFromNTP())
@@ -93,15 +95,16 @@ class NTPTimeService(BaseService):
             local_dt = copy.deepcopy(local_time)
         return local_dt.astimezone(pytz.utc)
 
-    def getNextMidnightInUTC(self):
-        now = self.getTimeFromNTP()
+    def getNextMidnightInUTC(self, target_date=None):
+        if target_date is None:
+            target_date = self.getTimeFromNTP().date()
         midnight = datetime(2000,1,1).time()
-        next_midnight = (datetime.combine(now.date(), midnight) +
+        next_midnight = (datetime.combine(target_date, midnight) +
                          timedelta(days=1))
         return self.convert_to_utc_time(next_midnight)
 
-    def getNextNoonAfterNextMidnightInUTC(self):
-        next_midnight = self.getNextMidnightInUTC()
+    def getNextNoonAfterNextMidnightInUTC(self, target_date=None):
+        next_midnight = self.getNextMidnightInUTC(target_date)
         next_noon = next_midnight + timedelta(hours=12)
         return self.convert_to_utc_time(next_noon)
 

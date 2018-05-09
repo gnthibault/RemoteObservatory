@@ -2,6 +2,7 @@
 import datetime
 import json
 import logging
+import os.path
 
 # Numerical stuff
 import numpy as np
@@ -30,11 +31,24 @@ from astroplan.scheduling import Schedule
 from astroplan.scheduling import Transitioner
 
 # Plotting stuff
+import matplotlib
 import matplotlib.pyplot as plt
 
 class ObservationPlanner:
 
-    def __init__(self, ntpServ, obs, configFileName=None, logger=None):
+    WheelToPltColors = {
+        'Luminance' : 'orchid',
+        'Red' : 'red',
+        'Green' : 'green',
+        'Blue' : 'blue',
+        'H_Alpha' : 'lightcoral',
+        'OIII' : 'mediumaquamarine',
+        'SII' : 'lightskyblue',
+        'LPR' : 'orchid' }
+
+
+    def __init__(self, ntpServ, obs, configFileName=None, path='.',
+                 logger=None):
         self.ntpServ = ntpServ
         self.obs = obs
         self.logger = logger or logging.getLogger(__name__)
@@ -53,6 +67,9 @@ class ObservationPlanner:
             self.targetList = json.load(jsonFile)
             self.logger.debug('ObservationPlanner, targetList is: {}'.format(
                               self.targetList))
+        self.schedule = None
+        self.path = path
+        self.tmh = 8
 
         # Finished configuring
         self.logger.debug('ObservationPlanner configured successfully')
@@ -61,10 +78,13 @@ class ObservationPlanner:
     def getTargetList(self):
         return self.targetList
 
-    def gen_schedule(self):
+    def gen_schedule(self, target_date=None):
+        if target_date is None:
+            target_date = self.ntpServ.getLocalDateFromNTP()
+
         # create the list of constraints that all targets must satisfy
-        constr = [AirmassConstraint(max=3.5, boolean_constraint=False),
-                  AtNightConstraint.twilight_civil(),
+        constr = [AirmassConstraint(max=2.5, boolean_constraint=False),
+                  AtNightConstraint.twilight_astronomical(),
                   MoonSeparationConstraint(min=30*AU.deg)]
 
         # Initialize a transitioner object with the slew rate and/or the
@@ -78,8 +98,8 @@ class ObservationPlanner:
         obs_blocks = []
 
         for target_name, config in self.targetList.items():
-            target = FixedTarget.from_name(target_name)
-            #target = FixedTarget(SkyCoord(70.839125*AU.deg, 47.357167*AU.deg))
+            #target = FixedTarget.from_name(target_name)
+            target = FixedTarget(SkyCoord(179*AU.deg, 49*AU.deg))
             for filter_name, (count, exp_time_sec) in config.items():
                 #TODO TN get that info from camera
                 camera_time = 1*AU.second
@@ -88,7 +108,7 @@ class ObservationPlanner:
                 #TODO TN retrieve priority from the file
                 priority = 0 if (filter_name=='Luminance') else 1
                 b = ObservingBlock.from_exposures(
-                        target, priority, exp_time, 10*count, camera_time,
+                        target, priority, 50*exp_time, 10*count, camera_time,
                         configuration = {'filter': filter_name}) #,
                         #constraints = constr)
 
@@ -101,13 +121,15 @@ class ObservationPlanner:
             transitioner=trans)
 
         # Initialize a Schedule object, to contain the new schedule
-        now = self.ntpServ.getAstropyTimeFromUTC()
-        tomorrow_noon = ATime(self.ntpServ.getNextNoonAfterNextMidnightInUTC())
-        priority_schedule = Schedule(now, tomorrow_noon)
+        midnight = self.ntpServ.getNextMidnightInUTC(target_date)
+        midnight = ATime(midnight)
+        start = midnight - self.tmh * AU.hour
+        stop = midnight + self.tmh * AU.hour
+        priority_schedule = Schedule(start, stop)
         # Call the schedule with the observing blocks and schedule to schedule
         # the blocks
         self.schedule = priority_scheduler(obs_blocks, priority_schedule)
-        print(self.schedule.to_table())
+        #print(self.schedule.to_table())
         convenient = [{'slot':sl,'block':bl} for (sl,bl) in zip(
             self.schedule.slots,
             self.schedule.observing_blocks)]
@@ -118,15 +140,17 @@ class ObservationPlanner:
                   el['block'].configuration['filter'],
                   el['block'].number_exposures, el['block'].time_per_exposure))
 
-    def showObservationPlan(self):
+
+    def showObservationPlan(self, target_date=None):
+        if target_date is None:
+            target_date = self.ntpServ.getLocalDateFromNTP()
         #Time margin, in hour
-        tmh = 8
-        tmh_range = np.arange(tmh+1, dtype=float)*2 -tmh
+        tmh_range = np.arange(self.tmh+1, dtype=float)*2 -self.tmh
         date_font_size = 8
         resolution = 400
 
         #time stuff
-        midnight = self.ntpServ.getNextMidnightInUTC()
+        midnight = self.ntpServ.getNextMidnightInUTC(target_date)
 
         #UTC range
         utc_tmh_range = [midnight+datetime.timedelta(hours=i) for i in
@@ -134,12 +158,17 @@ class ObservationPlanner:
         #local time range
         local_tmh_range = [self.ntpServ.convert_to_local_time(i) for i in
                            utc_tmh_range]
-        #Astropy ranges
+        #Astropy ranges (everything in UTC)
         midnight = ATime(midnight)
-        relative_time_frame = np.linspace(-tmh, tmh, resolution)*AU.hour
+        relative_time_frame = np.linspace(-self.tmh, self.tmh,
+                                          resolution) * AU.hour
         absolute_time_frame = midnight + relative_time_frame
         altaz_frame = AltAz(obstime=absolute_time_frame,
                             location=self.obs.getAstropyEarthLocation())
+        #Matplotlib friendly versions
+        m_absolute_time_frame = matplotlib.dates.date2num(
+            absolute_time_frame.to_datetime())
+        m_tmh_range = matplotlib.dates.date2num(utc_tmh_range)
 
         afig = plt.figure(0, figsize=(25,15))
         # Configure airmass subplot
@@ -152,27 +181,30 @@ class ObservationPlanner:
         moon_altazs = get_moon(absolute_time_frame).transform_to(altaz_frame)
          
         # Plot Sun
-        alt_ax.plot(relative_time_frame, sun_altazs.alt, color='gold',
-                    label='Sun')
+        alt_ax.plot(m_absolute_time_frame, sun_altazs.alt,
+                         color='gold', label='Sun')
         #Plot Moon
         moon_label = 'Moon {number:.{digits}f} %'.format(
             number=moon_illumination(midnight)*100.0, digits=0)
-        alt_ax.plot(relative_time_frame, moon_altazs.alt, color='silver',
-                 label=moon_label)
+        alt_ax.plot(m_absolute_time_frame, moon_altazs.alt,
+                         color='silver', label=moon_label)
 
         #grey sky when sun lower than -0 deg
         grey_sun_range = sun_altazs.alt < -0*AU.deg
-        alt_ax.fill_between(relative_time_frame, 0, 90,
+        alt_ax.fill_between(matplotlib.dates.date2num(
+                            absolute_time_frame.to_datetime()), 0, 90,
                             grey_sun_range, color='0.5', zorder=0)
         #Dark sky when sun is below -18 deg
         dark_sun_range = sun_altazs.alt < -18*AU.deg
-        alt_ax.fill_between(relative_time_frame, 0, 90,
+        alt_ax.fill_between(matplotlib.dates.date2num(
+                            absolute_time_frame.to_datetime()), 0, 90,
                             dark_sun_range, color='0', zorder=0)
         #grey sky when sun is low (<18deg) but moon has risen
         grey_moon_range = np.logical_and(moon_altazs.alt > -5*AU.deg,
                                          sun_altazs.alt < -18*AU.deg)
         grey_moon_intensity = 0.25*moon_illumination(midnight)
-        alt_ax.fill_between(relative_time_frame, 0, 90,
+        alt_ax.fill_between(matplotlib.dates.date2num(
+            absolute_time_frame.to_datetime()), 0, 90,
             grey_moon_range, color='{number:.{digits}f}'.format(
             number=grey_moon_intensity, digits=2), zorder=0)
 
@@ -189,16 +221,19 @@ class ObservationPlanner:
         for chunk in range(0, 8):
             label_angle = chunk*45.0
             if label_angle == 0:
-                theta_labels.append('N ' + '\n' + str(label_angle) + degree_sign
-                                    + ' Azimuth [deg]')
+                theta_labels.append('N ' + '\n' + str(label_angle) +
+                                    degree_sign + ' Azimuth [deg]')
             elif label_angle == 45:
                 theta_labels.append('') #Let some space for r axis labels
             elif label_angle == 90:
-                theta_labels.append('E' + '\n' + str(label_angle) + degree_sign)
+                theta_labels.append('E' + '\n' + str(label_angle) +
+                                    degree_sign)
             elif label_angle == 180:
-                theta_labels.append('S' + '\n' + str(label_angle) + degree_sign)
+                theta_labels.append('S' + '\n' + str(label_angle) +
+                                    degree_sign)
             elif label_angle == 270:
-                theta_labels.append('W' + '\n' + str(label_angle) + degree_sign)
+                theta_labels.append('W' + '\n' + str(label_angle) +
+                                    degree_sign)
             else:
                 theta_labels.append(str(label_angle) + degree_sign)
 
@@ -239,37 +274,73 @@ class ObservationPlanner:
         colors = [cm(1.*i/nb_target) for i in range(nb_target)]
 
         for (target_name, imaging_program), color in zip(
-                self.targetList.items(),colors):
-            target_coord = SkyCoord.from_name(target_name)
-            #target_coord = SkyCoord(70.839125*AU.deg, 47.357167*AU.deg)
+                self.targetList.items(), colors):
+            #target_coord = SkyCoord.from_name(target_name)
+            target_coord = SkyCoord(179*AU.deg, 49*AU.deg)
 
             # Compute altazs for target
             target_altazs = target_coord.transform_to(altaz_frame)
 
             # First plot airmass
-            air_ax.plot(relative_time_frame, target_altazs.secz,
-                        label=target_name,
-                        color=color)
+            air_ax.plot(m_absolute_time_frame, target_altazs.secz,
+                        label=target_name, color=color, alpha=0.4)
 
             # Then plot altitude along with sun/moon
-            alt_ax.scatter(relative_time_frame, target_altazs.alt,
-                        label=target_name, lw=0, s=8,
-                        color=color)
+            alt_ax.plot(m_absolute_time_frame, target_altazs.alt,
+                        label=target_name, color=color, alpha=0.4)
 
             # Then plot environment aware polar altaz map
             pol_ax.plot(np.deg2rad(np.array(target_altazs.az)),
-                90-np.array(target_altazs.alt), color=color, label=target_name)
+                90-np.array(target_altazs.alt), color=color, label=target_name,
+                alpha=0.4)
+
+        if not (self.schedule is None):
+            for sl, bl in zip(self.schedule.slots,
+                              self.schedule.observing_blocks):
+                # get target
+                target_coord = bl.target.coord
+
+                # compute slot absolute time frame
+                start = sl.start
+                l_resolution = bl.number_exposures
+                l_rel_time_frame = (np.linspace(0, 1, l_resolution) *
+                                    sl.duration)
+                l_abs_time_frame = start + l_rel_time_frame
+                l_altaz_frame = AltAz(obstime=l_abs_time_frame,
+                    location=self.obs.getAstropyEarthLocation())
+                # get matplotlib compatible absolute time frame
+                l_m_abs_time_frame = matplotlib.dates.date2num(
+                    l_abs_time_frame.to_datetime())
+                # Compute altazs for target
+                l_targ_altazs = target_coord.transform_to(l_altaz_frame)
+
+                #Get color from filter
+                l_color = 'lavenderblush'
+                if 'filter' in bl.configuration:
+                    l_color = self.WheelToPltColors[bl.configuration['filter']]
+
+                # First plot airmass
+                air_ax.scatter(l_m_abs_time_frame, l_targ_altazs.secz,
+                               color=l_color, marker='+')
+
+                # Then plot altitude along with sun/moon
+                alt_ax.scatter(l_m_abs_time_frame, l_targ_altazs.alt,
+                                color=l_color, marker='+')
+
+                # Then plot environment aware polar altaz map
+                pol_ax.scatter(np.deg2rad(np.array(l_targ_altazs.az)),
+                    90-np.array(l_targ_altazs.alt), color=l_color, marker='+')
 
         # Configure airmass plot, both utc and regular time
         air_ax.legend(loc='upper left')
-        air_ax.set_xlim(-tmh, tmh)
-        air_ax.set_xticks(tmh_range)
+        air_ax.set_xlim(m_absolute_time_frame[0], m_absolute_time_frame[-1])
+        air_ax.set_xticks(m_tmh_range)
         air_ax.set_xticklabels(utc_tmh_range, rotation=15,
                                fontsize=date_font_size)
         air_ax.set_xlabel('UTC Time')
         air_ax2 = air_ax.twiny()
-        air_ax2.set_xlim(-tmh, tmh)
-        air_ax2.set_xticks(tmh_range)
+        air_ax2.set_xlim(m_absolute_time_frame[0], m_absolute_time_frame[-1])
+        air_ax2.set_xticks(m_tmh_range)
         air_ax2.set_xticklabels(local_tmh_range, rotation=15,
                                fontsize=date_font_size)
         air_ax2.set_xlabel('Local time ({})'.format(self.ntpServ.timezone.zone))
@@ -278,14 +349,14 @@ class ObservationPlanner:
 
         #Configure altitude plot, both utc and regular time
         alt_ax.legend(loc='upper left')
-        alt_ax.set_xlim(-tmh, tmh)
-        alt_ax.set_xticks(tmh_range)
+        alt_ax.set_xlim(m_absolute_time_frame[0], m_absolute_time_frame[-1])
+        alt_ax.set_xticks(m_tmh_range)
         alt_ax.set_xticklabels(utc_tmh_range, rotation=15,
                                fontsize=date_font_size)
         alt_ax.set_xlabel('UTC Time')
         alt_ax2 = alt_ax.twiny()
-        alt_ax2.set_xlim(-tmh, tmh)
-        alt_ax2.set_xticks(tmh_range)
+        alt_ax2.set_xlim(m_absolute_time_frame[0], m_absolute_time_frame[-1])
+        alt_ax2.set_xticks(m_tmh_range)
         alt_ax2.set_xticklabels(local_tmh_range, rotation=15,
                                 fontsize=date_font_size)
         alt_ax2.set_xlabel('Local time ({})'.format(self.ntpServ.timezone.zone))
@@ -297,4 +368,11 @@ class ObservationPlanner:
         # Configure airmass plot, both utc and regular time
         pol_ax.legend(loc='upper left')
 
-        plt.show()  
+        plt.show()
+        filepath = os.path.join(self.path, str(target_date) +
+                                '-observation-plan-altaz.png')
+        afig.savefig(filepath)
+        filepath = os.path.join(self.path, str(target_date) +
+                                '-observation-plan-polar.png')
+        pfig.savefig(filepath)
+

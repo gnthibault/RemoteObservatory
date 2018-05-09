@@ -34,9 +34,11 @@ if __name__ == '__main__':
     # ObservationPlanner
     obs_planner = ObservationPlanner(logger=logger, ntpServ=servTime, obs=obs)
     #configFileName='test.json')
-    print('Target list is {}'.format(obs_planner.getTargetList()))
-    #obs_planner.showObservationPlan()
+    #print('Target list is {}'.format(obs_planner.getTargetList()))
 
     # Now schedule with astroplan
     obs_planner.gen_schedule()
+
+    # Plot nice stuff
+    obs_planner.showObservationPlan()
 

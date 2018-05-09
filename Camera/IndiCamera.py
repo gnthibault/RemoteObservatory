@@ -10,8 +10,6 @@ from helper.IndiClient import indiClientGlobalBlobEvent
 
 # Imaging and Fits stuff
 from astropy.io import fits
-import matplotlib.pyplot as plt
-
 
 class IndiCamera(IndiDevice):
     """ Indi Camera """
