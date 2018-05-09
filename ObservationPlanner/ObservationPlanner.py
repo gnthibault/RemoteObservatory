@@ -83,7 +83,7 @@ class ObservationPlanner:
             target_date = self.ntpServ.getLocalDateFromNTP()
 
         # create the list of constraints that all targets must satisfy
-        constr = [AirmassConstraint(max=2.5, boolean_constraint=False),
+        constr = [AirmassConstraint(max=3, boolean_constraint=False),
                   AtNightConstraint.twilight_astronomical(),
                   MoonSeparationConstraint(min=30*AU.deg)]
 
@@ -98,8 +98,8 @@ class ObservationPlanner:
         obs_blocks = []
 
         for target_name, config in self.targetList.items():
-            #target = FixedTarget.from_name(target_name)
-            target = FixedTarget(SkyCoord(179*AU.deg, 49*AU.deg))
+            target = FixedTarget.from_name(target_name)
+            #target = FixedTarget(SkyCoord(179*AU.deg, 49*AU.deg))
             for filter_name, (count, exp_time_sec) in config.items():
                 #TODO TN get that info from camera
                 camera_time = 1*AU.second
@@ -129,16 +129,12 @@ class ObservationPlanner:
         # Call the schedule with the observing blocks and schedule to schedule
         # the blocks
         self.schedule = priority_scheduler(obs_blocks, priority_schedule)
-        #print(self.schedule.to_table())
-        convenient = [{'slot':sl,'block':bl} for (sl,bl) in zip(
-            self.schedule.slots,
-            self.schedule.observing_blocks)]
-        for i, el in enumerate(convenient):
+        print(self.schedule.to_table())
+        for i, el in enumerate(self.schedule.observing_blocks):
             print('Element {} in schedule: start at {}, target is {}, '
                   'filter is {}, count is {}, and duration is {}'.format(
-                  i, el['slot'].start.to_datetime(), el['block'].target, 
-                  el['block'].configuration['filter'],
-                  el['block'].number_exposures, el['block'].time_per_exposure))
+                  i, el.start_time, el.target, el.configuration['filter'],
+                  el.number_exposures, el.time_per_exposure))
 
 
     def showObservationPlan(self, target_date=None):
@@ -275,8 +271,8 @@ class ObservationPlanner:
 
         for (target_name, imaging_program), color in zip(
                 self.targetList.items(), colors):
-            #target_coord = SkyCoord.from_name(target_name)
-            target_coord = SkyCoord(179*AU.deg, 49*AU.deg)
+            target_coord = SkyCoord.from_name(target_name)
+            #target_coord = SkyCoord(179*AU.deg, 49*AU.deg)
 
             # Compute altazs for target
             target_altazs = target_coord.transform_to(altaz_frame)
@@ -295,16 +291,15 @@ class ObservationPlanner:
                 alpha=0.4)
 
         if not (self.schedule is None):
-            for sl, bl in zip(self.schedule.slots,
-                              self.schedule.observing_blocks):
+            for bl in self.schedule.observing_blocks:
                 # get target
                 target_coord = bl.target.coord
 
                 # compute slot absolute time frame
-                start = sl.start
+                start = bl.start_time
                 l_resolution = bl.number_exposures
                 l_rel_time_frame = (np.linspace(0, 1, l_resolution) *
-                                    sl.duration)
+                                    bl.duration)
                 l_abs_time_frame = start + l_rel_time_frame
                 l_altaz_frame = AltAz(obstime=l_abs_time_frame,
                     location=self.obs.getAstropyEarthLocation())
