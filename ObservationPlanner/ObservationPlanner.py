@@ -45,6 +45,9 @@ class ObservationPlanner:
         'OIII' : 'mediumaquamarine',
         'SII' : 'lightskyblue',
         'LPR' : 'orchid' }
+    # Max value for which a scheduling slot is programmed, otherwise
+    # we split into smaller slots
+    MaximumSlotDurationSec = 300
 
 
     def __init__(self, ntpServ, obs, configFileName=None, path='.',
@@ -85,13 +88,15 @@ class ObservationPlanner:
         # create the list of constraints that all targets must satisfy
         constr = [AirmassConstraint(max=3, boolean_constraint=False),
                   AtNightConstraint.twilight_astronomical(),
-                  MoonSeparationConstraint(min=30*AU.deg)]
+                  MoonSeparationConstraint(min=45*AU.deg)]
 
         # Initialize a transitioner object with the slew rate and/or the
         # duration of other transitions (e.g. filter changes)
         # TODO TN do that from mount or filterwheel info
         slew_rate = 1.5*AU.deg/AU.second
         trans = Transitioner(slew_rate,{'filter':{'default': 10*AU.second}})
+        #TODO TN readout time, get that info from camera
+        camera_time = 1*AU.second
 
         # Create ObservingBlocks for each filter and target with our time
         # constraint, and durations determined by the exposures needed
@@ -101,18 +106,21 @@ class ObservationPlanner:
             target = FixedTarget.from_name(target_name)
             #target = FixedTarget(SkyCoord(179*AU.deg, 49*AU.deg))
             for filter_name, (count, exp_time_sec) in config.items():
-                #TODO TN get that info from camera
-                camera_time = 1*AU.second
-                exp_time = exp_time_sec*AU.second
+                while count > 0:
+                    l_count = max(1, min(count,
+                        self.MaximumSlotDurationSec//exp_time_sec))
+                    exp_time = exp_time_sec*AU.second
                 
-                #TODO TN retrieve priority from the file
-                priority = 0 if (filter_name=='Luminance') else 1
-                b = ObservingBlock.from_exposures(
-                        target, priority, 50*exp_time, 10*count, camera_time,
-                        configuration = {'filter': filter_name}) #,
-                        #constraints = constr)
+                    #TODO TN retrieve priority from the file
+                    priority = 0 if (filter_name=='Luminance') else 1
+                    b = ObservingBlock.from_exposures(
+                            target, priority, 50*exp_time, 10*count,
+                            camera_time,
+                            configuration={'filter': filter_name},
+                            constraints=constr)
 
-                obs_blocks.append(b)
+                    obs_blocks.append(b)
+                    count -= l_count
 
         # Initialize the priority scheduler with constraints and transitioner
         priority_scheduler = PriorityScheduler(
