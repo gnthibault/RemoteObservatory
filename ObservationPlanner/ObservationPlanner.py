@@ -34,6 +34,10 @@ from astroplan.scheduling import Transitioner
 import matplotlib
 import matplotlib.pyplot as plt
 
+
+# Locally defined constraints
+from ObservationPlanner.LocalHorizonConstraint import LocalHorizonConstraint
+
 class ObservationPlanner:
 
     WheelToPltColors = {
@@ -86,9 +90,16 @@ class ObservationPlanner:
             target_date = self.ntpServ.getLocalDateFromNTP()
 
         # create the list of constraints that all targets must satisfy
-        constr = [AirmassConstraint(max=3, boolean_constraint=False),
+        #
+        # At night constraint: seee http://astroplan.readthedocs.io/en/latest/api/astroplan.AtNightConstraint.html#astroplan.AtNightConstraint
+        # Consider nighttime as time between astronomical twilights (-18 degrees).
+        # 
+        #
+        constr = [AirmassConstraint(max=3, boolean_constraint=True),
                   AtNightConstraint.twilight_astronomical(),
-                  MoonSeparationConstraint(min=45*AU.deg)]
+                  MoonSeparationConstraint(min=45*AU.deg),
+                  LocalHorizonConstraint(horizon=self.obs.get_horizon(),
+                                         boolean_constraint=True)]
 
         # Initialize a transitioner object with the slew rate and/or the
         # duration of other transitions (e.g. filter changes)
@@ -114,7 +125,7 @@ class ObservationPlanner:
                     #TODO TN retrieve priority from the file
                     priority = 0 if (filter_name=='Luminance') else 1
                     b = ObservingBlock.from_exposures(
-                            target, priority, 50*exp_time, 10*count,
+                            target, priority, exp_time, l_count,
                             camera_time,
                             configuration={'filter': filter_name},
                             constraints=constr)
