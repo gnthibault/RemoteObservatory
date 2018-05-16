@@ -159,17 +159,20 @@ class ObservationPlanner:
 
     def gen_schedule(self, obs_blocks, scheduler, start_time=None,
                      duration_hour=None):
-        ''' Initialize a Schedule object, to contain the new schedule '''
+        """ start_time can either be a precise datetime or a datetime.date """
         if duration_hour is None:
             duration_hour = self.tmh * 2 * AU.hour
         else:
             duration_hour = duration_hour * AU.hour
 
-        if start_time is None:
-            target_date = self.ntpServ.getLocalDateFromNTP()
+        if start_time is None or isinstance(start_time, datetime.date):
+            if start_time is None:
+                target_date = self.ntpServ.getLocalDateFromNTP()
+            else:
+                target_date = start_time
             midnight = self.ntpServ.getNextMidnightInUTC(target_date)
             midnight = ATime(midnight)
-            start_time = midnight - self.tmh * AU.hour
+            start_time = midnight - duration_hour / 2
         else:
             start_time = ATime(start_time)
 
@@ -181,15 +184,20 @@ class ObservationPlanner:
 
 
     def showObservationPlan(self, start_time=None, duration_hour=None):
+        """ start_time can either be a precise datetime or a datetime.date """
         if duration_hour is None:
             duration_hour = self.tmh * 2 * AU.hour
         else:
             duration_hour = duration_hour * AU.hour
 
-        if start_time is None:
-            target_date = self.ntpServ.getLocalDateFromNTP()
+        if start_time is None or isinstance(start_time, datetime.date):
+            if start_time is None:
+                target_date = self.ntpServ.getLocalDateFromNTP()
+            else:
+                target_date = start_time
             midnight = self.ntpServ.getNextMidnightInUTC(target_date)
-            start_time = midnight - datetime.timedelta(hours=self.tmh)
+            d_h = float(duration_hour/AU.hour)
+            start_time = midnight - datetime.timedelta(hours=d_h/2)
 
         #Time margin, in hour
         tmh_range = int(np.ceil(float(duration_hour/AU.hour)))

@@ -1,4 +1,5 @@
 # Basic stuff
+import datetime
 import logging
 import logging.config
 import threading
@@ -38,7 +39,22 @@ if __name__ == '__main__':
 
     # Now schedule with astroplan
     obs_planner.init_schedule()
-
     # Plot nice stuff
     obs_planner.showObservationPlan()
+
+    # can also work for specific date
+    obs_planner.init_schedule(start_time=servTime.getUTCFromNTP().date())
+    obs_planner.showObservationPlan(start_time=servTime.getUTCFromNTP().date())
+
+    # specific date + duration
+    obs_planner.init_schedule(start_time=servTime.getUTCFromNTP().date(),
+                              duration_hour=6)
+    obs_planner.showObservationPlan(start_time=servTime.getUTCFromNTP().date(),
+                              duration_hour=6)
+
+    # or even more specific precise time + duration
+    obs_planner.init_schedule(start_time=servTime.getUTCFromNTP(),
+                              duration_hour=24)
+    obs_planner.showObservationPlan(start_time=servTime.getUTCFromNTP().date(),
+                              duration_hour=24)
 
