@@ -85,38 +85,47 @@ class ObservationPlanner:
     def getTargetList(self):
         return self.targetList
 
-    def gen_schedule(self, target_date=None):
-        if target_date is None:
-            target_date = self.ntpServ.getLocalDateFromNTP()
+    def init_schedule(self, start_time=None, duration_hour=None):
 
+        constr = self.gen_constraints()
+        obs_blocks = self.gen_obs_blocks(constr)
+        scheduler = self.gen_scheduler(constr)
+        self.schedule = self.gen_schedule(obs_blocks, scheduler, start_time,
+                                          duration_hour)
+        print(self.schedule.to_table())
+        for i, el in enumerate(self.schedule.observing_blocks):
+            print('Element {} in schedule: start at {}, target is {}, '
+                  'filter is {}, count is {}, and duration is {}'.format(
+                  i, el.start_time, el.target, el.configuration['filter'],
+                  el.number_exposures, el.time_per_exposure))
+
+    def gen_constraints(self):
         # create the list of constraints that all targets must satisfy
         #
         # At night constraint: seee http://astroplan.readthedocs.io/en/latest/api/astroplan.AtNightConstraint.html#astroplan.AtNightConstraint
         # Consider nighttime as time between astronomical twilights (-18 degrees).
         # 
         #
-        constr = [AirmassConstraint(max=3, boolean_constraint=True),
-                  AtNightConstraint.twilight_astronomical(),
-                  MoonSeparationConstraint(min=45*AU.deg),
-                  LocalHorizonConstraint(horizon=self.obs.get_horizon(),
-                                         boolean_constraint=True)]
+        return [AirmassConstraint(max=3, boolean_constraint=True),
+                AtNightConstraint.twilight_astronomical(),
+                MoonSeparationConstraint(min=45*AU.deg),
+                LocalHorizonConstraint(horizon=self.obs.get_horizon(),
+                                       boolean_constraint=True)]
 
-        # Initialize a transitioner object with the slew rate and/or the
-        # duration of other transitions (e.g. filter changes)
-        # TODO TN do that from mount or filterwheel info
-        slew_rate = 1.5*AU.deg/AU.second
-        trans = Transitioner(slew_rate,{'filter':{'default': 10*AU.second}})
+    def gen_obs_blocks(self, constraint):
+
         #TODO TN readout time, get that info from camera
         camera_time = 1*AU.second
-
         # Create ObservingBlocks for each filter and target with our time
         # constraint, and durations determined by the exposures needed
         obs_blocks = []
 
         for target_name, config in self.targetList.items():
-            target = FixedTarget.from_name(target_name)
-            #target = FixedTarget(SkyCoord(179*AU.deg, 49*AU.deg))
+            #target = FixedTarget.from_name(target_name)
+            target = FixedTarget(SkyCoord(239*AU.deg, 49*AU.deg))
             for filter_name, (count, exp_time_sec) in config.items():
+                # We split big observing blocks into smaller blocks for better
+                # granularity
                 while count > 0:
                     l_count = max(1, min(count,
                         self.MaximumSlotDurationSec//exp_time_sec))
@@ -128,56 +137,77 @@ class ObservationPlanner:
                             target, priority, exp_time, l_count,
                             camera_time,
                             configuration={'filter': filter_name},
-                            constraints=constr)
+                            constraints=constraint)
 
                     obs_blocks.append(b)
                     count -= l_count
+        return obs_blocks
+
+    def gen_scheduler(self, constraint):
+        # Initialize a transitioner object with the slew rate and/or the
+        # duration of other transitions (e.g. filter changes)
+        # TODO TN do that from mount or filterwheel info
+        slew_rate = 1.5*AU.deg/AU.second
+        transitions = Transitioner(slew_rate,
+                                   {'filter':{'default': 10*AU.second}})
 
         # Initialize the priority scheduler with constraints and transitioner
-        priority_scheduler = PriorityScheduler(
-            constraints=constr,
+        return PriorityScheduler(
+            constraints=constraint,
             observer=self.obs.getAstroplanObserver(),
-            transitioner=trans)
+            transitioner=transitions)
 
-        # Initialize a Schedule object, to contain the new schedule
-        midnight = self.ntpServ.getNextMidnightInUTC(target_date)
-        midnight = ATime(midnight)
-        start = midnight - self.tmh * AU.hour
-        stop = midnight + self.tmh * AU.hour
-        priority_schedule = Schedule(start, stop)
+    def gen_schedule(self, obs_blocks, scheduler, start_time=None,
+                     duration_hour=None):
+        ''' Initialize a Schedule object, to contain the new schedule '''
+        if duration_hour is None:
+            duration_hour = self.tmh * 2 * AU.hour
+        else:
+            duration_hour = duration_hour * AU.hour
+
+        if start_time is None:
+            target_date = self.ntpServ.getLocalDateFromNTP()
+            midnight = self.ntpServ.getNextMidnightInUTC(target_date)
+            midnight = ATime(midnight)
+            start_time = midnight - self.tmh * AU.hour
+        else:
+            start_time = ATime(start_time)
+
+        stop_time = start_time + duration_hour
+        priority_schedule = Schedule(start_time, stop_time)
         # Call the schedule with the observing blocks and schedule to schedule
         # the blocks
-        self.schedule = priority_scheduler(obs_blocks, priority_schedule)
-        print(self.schedule.to_table())
-        for i, el in enumerate(self.schedule.observing_blocks):
-            print('Element {} in schedule: start at {}, target is {}, '
-                  'filter is {}, count is {}, and duration is {}'.format(
-                  i, el.start_time, el.target, el.configuration['filter'],
-                  el.number_exposures, el.time_per_exposure))
+        return scheduler(obs_blocks, priority_schedule)
 
 
-    def showObservationPlan(self, target_date=None):
-        if target_date is None:
+    def showObservationPlan(self, start_time=None, duration_hour=None):
+        if duration_hour is None:
+            duration_hour = self.tmh * 2 * AU.hour
+        else:
+            duration_hour = duration_hour * AU.hour
+
+        if start_time is None:
             target_date = self.ntpServ.getLocalDateFromNTP()
+            midnight = self.ntpServ.getNextMidnightInUTC(target_date)
+            start_time = midnight - datetime.timedelta(hours=self.tmh)
+
         #Time margin, in hour
-        tmh_range = np.arange(self.tmh+1, dtype=float)*2 -self.tmh
+        tmh_range = int(np.ceil(float(duration_hour/AU.hour)))
+        #tmh_range = np.arange(tmh_range, dtype=float) - tmh_range//2
         date_font_size = 8
         resolution = 400
 
-        #time stuff
-        midnight = self.ntpServ.getNextMidnightInUTC(target_date)
-
         #UTC range
-        utc_tmh_range = [midnight+datetime.timedelta(hours=i) for i in
-                         tmh_range]
+        utc_tmh_range = [start_time+datetime.timedelta(hours=i) for i in
+                         range(tmh_range)]
         #local time range
         local_tmh_range = [self.ntpServ.convert_to_local_time(i) for i in
                            utc_tmh_range]
         #Astropy ranges (everything in UTC)
-        midnight = ATime(midnight)
-        relative_time_frame = np.linspace(-self.tmh, self.tmh,
+        start_time = ATime(start_time)
+        relative_time_frame = np.linspace(0, tmh_range,
                                           resolution) * AU.hour
-        absolute_time_frame = midnight + relative_time_frame
+        absolute_time_frame = start_time + relative_time_frame
         altaz_frame = AltAz(obstime=absolute_time_frame,
                             location=self.obs.getAstropyEarthLocation())
         #Matplotlib friendly versions
@@ -199,8 +229,9 @@ class ObservationPlanner:
         alt_ax.plot(m_absolute_time_frame, sun_altazs.alt,
                          color='gold', label='Sun')
         #Plot Moon
-        moon_label = 'Moon {number:.{digits}f} %'.format(
-            number=moon_illumination(midnight)*100.0, digits=0)
+        moon_ill_perc = moon_illumination(start_time+duration_hour/2)*100.0
+        moon_label = 'Moon {number:.{digits}f} %'.format(number = 
+            moon_ill_perc, digits=0)
         alt_ax.plot(m_absolute_time_frame, moon_altazs.alt,
                          color='silver', label=moon_label)
 
@@ -217,7 +248,7 @@ class ObservationPlanner:
         #grey sky when sun is low (<18deg) but moon has risen
         grey_moon_range = np.logical_and(moon_altazs.alt > -5*AU.deg,
                                          sun_altazs.alt < -18*AU.deg)
-        grey_moon_intensity = 0.25*moon_illumination(midnight)
+        grey_moon_intensity = 0.25*moon_ill_perc
         alt_ax.fill_between(matplotlib.dates.date2num(
             absolute_time_frame.to_datetime()), 0, 90,
             grey_moon_range, color='{number:.{digits}f}'.format(
@@ -290,8 +321,8 @@ class ObservationPlanner:
 
         for (target_name, imaging_program), color in zip(
                 self.targetList.items(), colors):
-            target_coord = SkyCoord.from_name(target_name)
-            #target_coord = SkyCoord(179*AU.deg, 49*AU.deg)
+            #target_coord = SkyCoord.from_name(target_name)
+            target_coord = SkyCoord(239*AU.deg, 49*AU.deg)
 
             # Compute altazs for target
             target_altazs = target_coord.transform_to(altaz_frame)

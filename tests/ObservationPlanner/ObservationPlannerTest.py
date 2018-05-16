@@ -37,7 +37,7 @@ if __name__ == '__main__':
     #print('Target list is {}'.format(obs_planner.getTargetList()))
 
     # Now schedule with astroplan
-    obs_planner.gen_schedule()
+    obs_planner.init_schedule()
 
     # Plot nice stuff
     obs_planner.showObservationPlan()
