@@ -64,7 +64,8 @@ class IndiDevice:
                 else PyIndi.ISS_OFF)
         self.indiClient.sendNewSwitch(pv)
         if sync:
-            self.__waitPropStatus(pv, statuses=[PyIndi.IPS_IDLE, PyIndi.IPS_OK],
+            self.__waitPropStatus(pv, statuses=[PyIndi.IPS_IDLE,
+                                                PyIndi.IPS_OK],
                                   timeout=timeout)
         return pv
         
@@ -72,14 +73,16 @@ class IndiDevice:
         pv = self.getPropertyVector(numbName, 'number', timeout=300)
         return dict(map(lambda x: (x.name, x.value), pv))
 
-    def setNumber(self, name, valueVector, sync = True, timeout=None):
+    def setNumber(self, name, valueVector, sync=True, timeout=None):
         pv = self.getPropertyVector(name, 'number', timeout)
         for propertyName, index in self.__getPropVectIndicesHavingValues(
                                    pv, valueVector.keys()).items():
             pv[index].value = valueVector[propertyName]
         self.indiClient.sendNewNumber(pv)
         if sync:
-            self.__waitPropStatus(pv, timeout=timeout)
+            self.__waitPropStatus(pv, statuses=[PyIndi.IPS_ALERT,
+                                                PyIndi.IPS_OK],
+                                  timeout=timeout)
         return pv
 
     def setText(self, propertyName, valueVector, sync=True, timeout=None):

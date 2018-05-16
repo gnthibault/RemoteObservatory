@@ -85,18 +85,18 @@ class IndiMount(IndiDevice):
         rahour_decdeg = {'RA': coord.ra.hour, 
                          'DEC': coord.dec.degree}
         self.logger.info('Indi Mount setting coord: {}'.format(rahour_decdeg)) 
-        self.setNumber('EQUATORIAL_EOD_COORD', rahour_decdeg)
+        self.setNumber('EQUATORIAL_EOD_COORD', rahour_decdeg, sync=True)
 
-        try:
-            #Read Only property set once requested EQUATORIAL_EOD_COORD is
-            #accepted by driver.
-            res = self.getNumber('TARGET_EOD_COORD')
-            self.logger.info('Indi Mount, coordinates accepted by driver, '
-                'Mount driver TARGET_EOD_COORD are: {} and '
-                'sent EQUATORIAL_EOD_COORD are: {}'.format(rahour_decdeg,res))
-        except Exception as e:
-            self.logger.error('Indi Mount, coordinates not accepted by driver '
-                              ': {}'.format(e))
+        #try:
+        #    #Read Only property set once requested EQUATORIAL_EOD_COORD is
+        #    #accepted by driver.
+        #    res = self.getNumber('TARGET_EOD_COORD')
+        #    self.logger.info('Indi Mount, coordinates accepted by driver, '
+        #        'Mount driver TARGET_EOD_COORD are: {} and '
+        #        'sent EQUATORIAL_EOD_COORD are: {}'.format(rahour_decdeg,res))
+        #except Exception as e:
+        #    self.logger.error('Indi Mount, coordinates not accepted by driver '
+        #                      ': {}'.format(e))
 
     def on_coord_set(self, what_to_do='TRACK'):
         """ What do to with the new set of given coordinates
