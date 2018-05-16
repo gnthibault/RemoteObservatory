@@ -165,12 +165,13 @@ class ObservationPlanner:
         else:
             duration_hour = duration_hour * AU.hour
 
-        if start_time is None or isinstance(start_time, datetime.date):
+        if start_time is None or (isinstance(start_time, datetime.date) and not
+                                  isinstance(start_time, datetime.datetime)):
             if start_time is None:
                 target_date = self.ntpServ.getLocalDateFromNTP()
             else:
                 target_date = start_time
-            midnight = self.ntpServ.getNextMidnightInUTC(target_date)
+            midnight = self.ntpServ.getNextLocalMidnightInUTC(target_date)
             midnight = ATime(midnight)
             start_time = midnight - duration_hour / 2
         else:
@@ -190,14 +191,17 @@ class ObservationPlanner:
         else:
             duration_hour = duration_hour * AU.hour
 
-        if start_time is None or isinstance(start_time, datetime.date):
+        if start_time is None or (isinstance(start_time, datetime.date) and not
+                                  isinstance(start_time, datetime.datetime)):
             if start_time is None:
                 target_date = self.ntpServ.getLocalDateFromNTP()
             else:
                 target_date = start_time
-            midnight = self.ntpServ.getNextMidnightInUTC(target_date)
+            midnight = self.ntpServ.getNextLocalMidnightInUTC(target_date)
             d_h = float(duration_hour/AU.hour)
             start_time = midnight - datetime.timedelta(hours=d_h/2)
+        else:
+            target_date = start_time.date()
 
         #Time margin, in hour
         tmh_range = int(np.ceil(float(duration_hour/AU.hour)))

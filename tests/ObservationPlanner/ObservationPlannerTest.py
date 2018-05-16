@@ -55,6 +55,6 @@ if __name__ == '__main__':
     # or even more specific precise time + duration
     obs_planner.init_schedule(start_time=servTime.getUTCFromNTP(),
                               duration_hour=24)
-    obs_planner.showObservationPlan(start_time=servTime.getUTCFromNTP().date(),
+    obs_planner.showObservationPlan(start_time=servTime.getUTCFromNTP(),
                               duration_hour=24)
 

@@ -95,9 +95,9 @@ class NTPTimeService(BaseService):
             local_dt = copy.deepcopy(local_time)
         return local_dt.astimezone(pytz.utc)
 
-    def getNextMidnightInUTC(self, target_date=None):
+    def getNextLocalMidnightInUTC(self, target_date=None):
         if target_date is None:
-            target_date = self.getTimeFromNTP().date()
+            target_date = self.getLocalTimeFromNTP().date()
         midnight = datetime(2000,1,1).time()
         next_midnight = (datetime.combine(target_date, midnight) +
                          timedelta(days=1))
