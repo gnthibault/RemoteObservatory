@@ -1,5 +1,8 @@
 # Basic stuff
+import datetime
 import logging
+import sched
+import time
 
 # Astropy stuff
 import astropy.units as AU
@@ -10,7 +13,7 @@ from Sequencer.SequenceBuilder import SequenceBuilder
 class ScheduleSequencer:
     def __init__(self, camera, filter_wheel=None, observatory=None, mount=None,
                  focuser=None, logger=None, async_writer=None,
-                 use_auto_dark=True, use_auto_flat=False):
+                 use_auto_dark=True, use_auto_flat=False, schedule=None):
         self.logger = logger or logging.getLogger(__name__)
         self.seq_builder = SequenceBuilder(camera=camera,
                                            filterWheel=filter_wheel,
@@ -19,9 +22,16 @@ class ScheduleSequencer:
                                            asyncWriter=async_writer,
                                            useAutoDark=use_auto_dark,
                                            useAutoFlat=use_auto_flat)
+        # The astroplan schedule
+        self.schedule = schedule
 
-    def build_sequence(self, schedule):
+        # The python schedule that will launch all functions
+        self.scheduler = sched.scheduler(time.time, time.sleep)
 
+    def set_schedule(self, schedule):
+        self.schedule = schedule
+
+    def build_sequence(self):
         # Very first job will be to schedule startup routine of all devices
         #TODO TN URGENT: creer un dict de devices et tous les allumer/connecter
         def startup_device(dev):
@@ -44,11 +54,13 @@ class ScheduleSequencer:
         self.seq_builder.add_function(
             lambda : self.seq_builder.camera.prepareShoot())
         self.seq_builder.add_function(
+            lambda : self.seq_builder.camera.setFrameType('FRAME_LIGHT'))
+        self.seq_builder.add_function(
             lambda : self.seq_builder.filterWheel.\
                      initFilterWheelConfiguration())
 
         curFilter = None
-        for el in schedule.observing_blocks:
+        for el in self.schedule.observing_blocks:
             #print('Element in schedule: start at {}, target is {}, '
             #      'filter is {}, count is {}, and duration is {}'.format(
             #      el.start_time, el.target, el.configuration['filter'],
@@ -81,6 +93,11 @@ class ScheduleSequencer:
         self.seq_builder.add_auto_dark(count=None)
         self.seq_builder.add_auto_flat(count=49, exposure=1)
 
+        # Schedule the first block to run on time
+        self.scheduler.enterabs(
+            self.schedule.scheduled_blocks[0].start_time.datetime.timestamp(),
+            1, self.seq_builder.start)
+
     def start_sequence(self):
-        self.seq_builder.start()
+        self.scheduler.run()
 

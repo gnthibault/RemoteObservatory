@@ -28,6 +28,7 @@ from astroplan.plots import plot_sky
 from astroplan.scheduling import PriorityScheduler
 from astroplan.scheduling import SequentialScheduler
 from astroplan.scheduling import Schedule
+from astroplan import TransitionBlock
 from astroplan.scheduling import Transitioner
 
 # Plotting stuff
@@ -118,6 +119,7 @@ class ObservationPlanner:
         camera_time = 1*AU.second
         # Create ObservingBlocks for each filter and target with our time
         # constraint, and durations determined by the exposures needed
+
         obs_blocks = []
 
         for target_name, config in self.targetList.items():
@@ -402,7 +404,7 @@ class ObservationPlanner:
         air_ax2.set_xticklabels(local_tmh_range, rotation=15,
                                fontsize=date_font_size)
         air_ax2.set_xlabel('Local time ({})'.format(self.ntpServ.timezone.zone))
-        air_ax.set_ylim(1, 4)
+        air_ax.set_ylim(0.9, 4)
         air_ax.set_ylabel('Airmass, [Sec(z)]')
 
         #Configure altitude plot, both utc and regular time
@@ -421,7 +423,9 @@ class ObservationPlanner:
         alt_ax.set_ylim(0, 90)
         alt_ax.set_ylabel('Altitude [deg]')
 
+        # Nice formating, no overlap between subplots
         afig.tight_layout()
+        pfig.tight_layout()
 
         # Configure airmass plot, both utc and regular time
         pol_ax.legend(loc='upper left')

@@ -56,7 +56,7 @@ if __name__ == '__main__':
 
     # Precise time + duration
     start = servTime.getUTCFromNTP().date()
-    duration = 6
+    duration = 12
     obs_planner.init_schedule(start_time=start, duration_hour=duration)
     obs_planner.showObservationPlan(start_time=start, duration_hour=duration,
                                     show_plot=True)
@@ -81,7 +81,7 @@ if __name__ == '__main__':
     s = ScheduleSequencer(camera=camera, filter_wheel=filter_wheel,
                           observatory=obs, mount=mount,
                           async_writer=async_writer, use_auto_dark=True,
-                          use_auto_flat=True)
-    s.build_sequence(obs_planner.schedule)
+                          use_auto_flat=True, schedule=obs_planner.schedule)
+    s.build_sequence()
     s.start_sequence()
 
