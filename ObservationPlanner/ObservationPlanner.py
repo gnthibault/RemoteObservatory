@@ -184,7 +184,8 @@ class ObservationPlanner:
         return scheduler(obs_blocks, priority_schedule)
 
 
-    def showObservationPlan(self, start_time=None, duration_hour=None):
+    def showObservationPlan(self, start_time=None, duration_hour=None,
+                            show_plot=False):
         """ start_time can either be a precise datetime or a datetime.date """
         if duration_hour is None:
             duration_hour = self.tmh * 2 * AU.hour
@@ -260,7 +261,7 @@ class ObservationPlanner:
         #grey sky when sun is low (<18deg) but moon has risen
         grey_moon_range = np.logical_and(moon_altazs.alt > -5*AU.deg,
                                          sun_altazs.alt < -18*AU.deg)
-        grey_moon_intensity = 0.25*moon_ill_perc
+        grey_moon_intensity = 0.0025*moon_ill_perc #hence 0.25 for 100%
         alt_ax.fill_between(matplotlib.dates.date2num(
             absolute_time_frame.to_datetime()), 0, 90,
             grey_moon_range, color='{number:.{digits}f}'.format(
@@ -320,7 +321,7 @@ class ObservationPlanner:
         pol_ax.fill_between(np.deg2rad(hor_az), np.ones_like(hor_alt)*90,
                             90-hor_alt, color='darkseagreen', alpha=0.5)
 
-        #Now show sun and moon
+        # Now show sun and moon
         pol_ax.plot(np.deg2rad(np.array(sun_altazs.az)),
             90-np.array(sun_altazs.alt), color='gold', label='Sun')
         pol_ax.plot(np.deg2rad(np.array(sun_altazs.az)),
@@ -371,8 +372,8 @@ class ObservationPlanner:
                 # Compute altazs for target
                 l_targ_altazs = target_coord.transform_to(l_altaz_frame)
 
-                #Get color from filter
-                l_color = 'lavenderblush'
+                # Get color from filter
+                l_color = 'orchid'
                 if 'filter' in bl.configuration:
                     l_color = self.WheelToPltColors[bl.configuration['filter']]
 
@@ -425,11 +426,13 @@ class ObservationPlanner:
         # Configure airmass plot, both utc and regular time
         pol_ax.legend(loc='upper left')
 
-        plt.show()
+        if show_plot:
+            plt.show()
+
+        # Now save everything to disk
         filepath = os.path.join(self.path, str(target_date) +
                                 '-observation-plan-altaz.png')
         afig.savefig(filepath)
         filepath = os.path.join(self.path, str(target_date) +
                                 '-observation-plan-polar.png')
         pfig.savefig(filepath)
-

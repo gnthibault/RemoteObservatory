@@ -34,15 +34,14 @@ class IndiFilterWheel(IndiDevice):
                             indiClient=indiClient)
         if connectOnCreate:
             self.connect()
-            self.initFilterWheelConfiguration()
 
         # Finished configuring
-        self.logger.debug('Indi FilterWheel configured successfully')
+        self.logger.debug('configured successfully')
 
     def onEmergency(self):
-        self.logger.debug('Indi FilterWheel: on emergency routine started...')
+        self.logger.debug('on emergency routine started...')
         setFilterNumber(1)
-        self.logger.debug('Indi FilterWheel: on emergency routine finished')
+        self.logger.debug('on emergency routine finished')
 
     def initFilterWheelConfiguration(self):
         for filterName, filterNumber in self.filterList.items():
@@ -53,11 +52,11 @@ class IndiFilterWheel(IndiDevice):
                                          filterNumber):filterName})
 
     def setFilter(self, name):
-        self.logger.debug('Indi FilterWheel setting filter {}'.format(name)) 
+        self.logger.debug('setting filter {}'.format(name)) 
         self.setFilterNumber(self.filters()[name])
 
     def setFilterNumber(self, number):
-        self.logger.debug('Indi FilterWheel setting filter number {}'.format(
+        self.logger.debug('setting filter number {}'.format(
                           number)) 
         self.setNumber('FILTER_SLOT', {'FILTER_SLOT_VALUE': number})
 

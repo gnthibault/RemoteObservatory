@@ -23,9 +23,10 @@ class AutoDarkCalculator:
             self.exposures[shootingSequence.exposure] = 1
 
     def getRelevantCount(self, exposure):
-        #2400 sec is 45 minutes
-        maxTimeSec = 2400
-        maxFiles = 200
+        #2400 sec is 45 minutes, 2 for maxFiles
+        #TODO TN reset to a good set of value
+        maxTimeSec = 30
+        maxFiles = 30
         if maxTimeSec//max(exposure,1) > maxFiles:
             return maxFiles
         else:

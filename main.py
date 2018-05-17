@@ -27,7 +27,7 @@ from Camera.IndiVirtualCamera import IndiVirtualCamera
 from Camera.IndiEos350DCamera import IndiEos350DCamera
 
 # Local stuff : FilterWheel
-from FilterWheel.IndiVirtualFilterWheel import IndiVirtualFilterWheel
+from FilterWheel.IndiFilterWheel import IndiFilterWheel
 
 # Local stuff : Mount
 from Mount.IndiMount import IndiMount
@@ -98,9 +98,10 @@ if __name__ == '__main__':
     #fits = cam.getReceivedImage()
 
     # Now test filterWheel
-    filterWheel = IndiVirtualFilterWheel(logger=logger, indiClient=indiCli,
-                                         configFileName=None,
-                                         connectOnCreate=True)
+    filterWheel = IndiFilterWheel(logger=logger, indiClient=indiCli,
+                                  configFileName=None,
+                                  connectOnCreate=True)
+    filterWheel.initFilterWheelConfiguration()
     print('Filterwheel is {}'.format(filterWheel))
 
     # Now test Mount

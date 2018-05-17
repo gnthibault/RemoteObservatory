@@ -1,5 +1,6 @@
 # Basic stuff
 import json
+import logging
 import threading
 
 # Indi stuff

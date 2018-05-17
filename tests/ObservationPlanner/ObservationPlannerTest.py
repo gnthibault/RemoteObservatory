@@ -40,21 +40,22 @@ if __name__ == '__main__':
     # Now schedule with astroplan
     obs_planner.init_schedule()
     # Plot nice stuff
-    obs_planner.showObservationPlan()
+    obs_planner.showObservationPlan(show_plot=True)
 
     # can also work for specific date
     obs_planner.init_schedule(start_time=servTime.getUTCFromNTP().date())
-    obs_planner.showObservationPlan(start_time=servTime.getUTCFromNTP().date())
+    obs_planner.showObservationPlan(start_time=servTime.getUTCFromNTP().date(),
+                                    show_plot=True)
 
     # specific date + duration
     obs_planner.init_schedule(start_time=servTime.getUTCFromNTP().date(),
                               duration_hour=6)
     obs_planner.showObservationPlan(start_time=servTime.getUTCFromNTP().date(),
-                              duration_hour=6)
+                              duration_hour=6, show_plot=True)
 
     # or even more specific precise time + duration
     obs_planner.init_schedule(start_time=servTime.getUTCFromNTP(),
                               duration_hour=24)
     obs_planner.showObservationPlan(start_time=servTime.getUTCFromNTP(),
-                              duration_hour=24)
+                              duration_hour=24, show_plot=True)
 

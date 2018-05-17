@@ -19,27 +19,32 @@ class IndiDevice:
         self.deviceName = deviceName
         self.indiClient = indiClient
         self.timeout = IndiDevice.defaultTimeout
-
-        # Ask indiClient for device
-        self.__findDevice()
+        self.device = None
 
     def __findDevice(self):
         self.logger.debug('IndiDevice: asking indiClient to look for device {}'
                           ''.format(self.deviceName))
-        self.device = None
-        started = time.time()
-        while not self.device:
-            self.device = self.indiClient.getDevice(self.deviceName)
-            if 0 < self.timeout < time.time() - started:
-                self.logger.error('IndiDevice: Timeout while waiting for '
-                                  ' device {}'.format(self.deviceName))
-                raise RuntimeError('IndiDevice Timeout while waiting for '
-                                   'device {}'.format(self.deviceName))
-            time.sleep(0.01)
-        self.logger.debug('Indi Device: indiClient has found device {}'.format(
-                          self.deviceName) )
+        if self.device is None:
+            started = time.time()
+            while not self.device:
+                self.device = self.indiClient.getDevice(self.deviceName)
+                if 0 < self.timeout < time.time() - started:
+                    self.logger.error('IndiDevice: Timeout while waiting for '
+                                      ' device {}'.format(self.deviceName))
+                    raise RuntimeError('IndiDevice Timeout while waiting for '
+                                       'device {}'.format(self.deviceName))
+                time.sleep(0.01)
+            self.logger.debug('Indi Device: indiClient has found device {}'
+                              ''.format(self.deviceName))
+        else:
+            self.logger.warning('Device {} already found'.format(
+                                self.deviceName))
 
     def connect(self):
+        # Try first to ask server to give us the device handle, through client
+        self.__findDevice()
+
+        # Now connect
         if self.device.isConnected():
             self.logger.warn('IndiDevice: already connected to device {}'
                              ''.format(self.deviceName))

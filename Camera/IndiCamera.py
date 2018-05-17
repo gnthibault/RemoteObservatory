@@ -18,6 +18,8 @@ class IndiCamera(IndiDevice):
         'local': 'UPLOAD_LOCAL',
         'client': 'UPLOAD_CLIENT',
         'both': 'UPLOAD_BOTH'}
+    DEFAULT_EXP_TIME_SEC = 5
+    MAXIMUM_EXP_TIME_SEC = 3601
 
     def __init__(self, indiClient, logger=None, configFileName=None,
                  connectOnCreate=True):
@@ -48,16 +50,16 @@ class IndiCamera(IndiDevice):
         self.frameBlob = None
 
         # Default exposureTime, gain
-        self.expTimeSec=5
+        self.exp_time_sec=5
         self.gain=400
 
         # Finished configuring
         self.logger.debug('Configured Indi Camera successfully')
 
     def onEmergency(self):
-        self.logger.debug('Indi Camera: on emergency routine started...')
+        self.logger.debug('on emergency routine started...')
         self.abortShoot(sync=False)
-        self.logger.debug('Indi Camera: on emergency routine finished')
+        self.logger.debug('on emergency routine finished')
 
     '''
       Indi CCD related stuff
@@ -67,6 +69,8 @@ class IndiCamera(IndiDevice):
           We should inform the indi server that we want to receive the
           "CCD1" blob from this device
         '''
+        self.logger.debug('Indi client will register to server in order to '
+                          'receive blob CCD1 when it is ready')
         self.indiClient.setBLOBMode(PyIndi.B_ALSO, self.deviceName, 'CCD1')
         self.frameBlob=self.getPropertyVector(propName='CCD1', propType='blob')
 
@@ -94,10 +98,11 @@ class IndiCamera(IndiDevice):
 
     def shootAsync(self):
         try:
-            self.logger.info('Indi Camera: launching acquisition with {} '
-                             'sec exposure time'.format(self.expTimeSec))
+            self.logger.info('launching acquisition with {} '
+                             'sec exposure time'.format(self.exp_time_sec))
             self.setNumber('CCD_EXPOSURE',
-                           {'CCD_EXPOSURE_VALUE': self.expTimeSec}, sync=False)
+                           {'CCD_EXPOSURE_VALUE': self.sanitize_exp_time(
+                               self.exp_time_sec)}, sync=False)
         except Exception as e:
             self.logger.error('Indi Camera Error in shoot: {}'.format(e))
 
@@ -181,11 +186,33 @@ class IndiCamera(IndiDevice):
         #return int(expRange['minimum']+2*expRange['step'])
         return 1
 
-    def getExpTimeSec(self):
-        return self.expTimeSec
+    def sanitize_exp_time(self, exp_time_sec):
+        if not isinstance(exp_time_sec, int):
+            try:
+                int_exp_time_sec = int(exp_time_sec)
+            except Exception as e:
+                int_exp_time_sec = self.DEFAULT_EXP_TIME_SEC
+        elif exp_time_sec < 0:
+            int_exp_time_sec = abs(int_exp_time_sec)
+        elif exp_time_sec == 0:
+            int_exp_time_sec = self.DEFAULT_EXP_TIME_SEC
+        elif exp_time_sec > self.MAXIMUM_EXP_TIME_SEC:
+            int_exp_time_sec = self.MAXIMUM_EXP_TIME_SEC
+        else:
+            int_exp_time_sec = exp_time_sec
+        # Show warning is needed
+        if int_exp_time_sec != exp_time_sec:
+            self.logger.warning('Sanitizing exposition time: cannot accept'
+                                ' {}, using {} instead'.format(exp_time_sec
+                                , int_exp_time_sec))
 
-    def setExpTimeSec(self, expTimeSec):
-        self.expTimeSec = expTimeSec
+        return int_exp_time_sec
+
+    def getExpTimeSec(self):
+        return self.sanitize_exp_time(self.exp_time_sec)
+
+    def setExpTimeSec(self, exp_time_sec):
+        self.exp_time_sec = self.sanitize_exp_time(exp_time_sec)
 
     def getGain(self):
         return self.gain

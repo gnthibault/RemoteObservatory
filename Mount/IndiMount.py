@@ -63,10 +63,10 @@ class IndiMount(IndiDevice):
         self.logger.debug('Indi Mount configured successfully')
 
     def onEmergency(self):
-        self.logger.debug('Indi Mount: on emergency routine started...')
+        self.logger.debug('on emergency routine started...')
         self.abortMotion()
         self.park()
-        self.logger.debug('Indi Mount: on emergency routine finished')
+        self.logger.debug('on emergency routine finished')
 
 
     def slew_to_coord_and_stop(self, coord):
@@ -84,8 +84,13 @@ class IndiMount(IndiDevice):
     def set_coord(self, coord):
         rahour_decdeg = {'RA': coord.ra.hour, 
                          'DEC': coord.dec.degree}
-        self.logger.info('Indi Mount setting coord: {}'.format(rahour_decdeg)) 
-        self.setNumber('EQUATORIAL_EOD_COORD', rahour_decdeg, sync=True)
+        if self.isParked():
+            self.logger.warning('Cannot set coord: {} because mount is parked'
+                                ''.format(rahour_decdeg))
+        else:
+            self.logger.info('Now setting coord: {}'.format(rahour_decdeg)) 
+            self.setNumber('EQUATORIAL_EOD_COORD', rahour_decdeg, sync=True,
+                           timeout=180)
 
         #try:
         #    #Read Only property set once requested EQUATORIAL_EOD_COORD is
@@ -105,37 +110,40 @@ class IndiMount(IndiDevice):
             TRACK: Slew to a coordinate and track upon receiving coordinates.
             SYNC: Accept current coordinate as correct upon recving coordinates
         """
+        self.logger.debug('Setting ON_COORD_SET behaviour: {}'.format(
+                          what_to_do))
         self.setSwitch('ON_COORD_SET', [what_to_do])
 
     # This does not work with simulator
     #def setTrackingMode(self, tracking_mode='TRACK_SIDEREAL'):
-    #    self.logger.debug('Indi Mount: Setting tracking mode: {}'.format(
+    #    self.logger.debug('Setting tracking mode: {}'.format(
     #                      tracking_mode))
     #    self.setSwitch('TELESCOPE_TRACK_RATE', [tracking_mode])
 
     def abortMotion(self):
-        self.logger.debug('Indi Mount: Abort Motion')
+        self.logger.debug('Abort Motion')
         self.setSwitch('TELESCOPE_ABORT_MOTION', ['ABORT_MOTION'])
 
     def park(self):
-        self.logger.debug('Indi Mount: Park')
+        self.logger.debug('Park')
         self.setSwitch('TELESCOPE_PARK', ['PARK'])
 
     def unPark(self):
-        self.logger.debug('Indi Mount: unPark')
+        self.logger.debug('unPark')
         self.setSwitch('TELESCOPE_PARK', ['UNPARK'])
 
     def set_slew_rate(self, slew_rate='SLEW_FIND'):
-        self.logger.debug('Indi Mount: Setting slewing rate: {}'.format(
+        self.logger.debug('Setting slewing rate: {}'.format(
                           slew_rate))
         self.setSwitch('TELESCOPE_SLEW_RATE', [slew_rate])
 
     def isParked(self):
-        status = self.getOnSwitchValueVector('TELESCOPE_PARK') 
+        status = self.getOnSwitchValueVector('TELESCOPE_PARK')
+        self.logger.debug('Got TELESCOPE_PARK status: {}'.format(status))
         if status['PARK']:
-            return true
+            return True
         else:
-            return false
+            return False
 
     def __str__(self):
         return 'Mount: {}'.format(self.name)

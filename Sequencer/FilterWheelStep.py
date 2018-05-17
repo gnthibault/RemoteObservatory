@@ -10,16 +10,15 @@ class FilterWheelStep:
         if not filterName and not filterNumber:
             raise RuntimeError('FilterWheelStep: One of filter name or number '
                                'should be defined')
-
-        if filterName:
-            self.filterNumber = filterWheel.filters()[filterName]
-            self.filterName = filterName
-        else:
-            self.filterName = filterWheel.filterName(filterNumber)
-            self.filterNumber = filterNumber
+        self.filterName = filterName
+        self.filterNumber = filterNumber
 
     def run(self):
         self.callbacks.run('onStarted', self)
+        if self.filterName:
+            self.filterNumber = filterWheel.filters()[self.filterName]
+        elif self.filterNumber:
+            self.filterName = filterWheel.filterName(filterNumber)
         self.filterWheel.setFilterNumber(self.filterNumber)
         self.callbacks.run('onFinished', self)
 
