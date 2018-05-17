@@ -49,16 +49,16 @@ class ScheduleSequencer:
 
         curFilter = None
         for el in schedule.observing_blocks:
-            print('Element in schedule: start at {}, target is {}, '
-                  'filter is {}, count is {}, and duration is {}'.format(
-                  el.start_time, el.target, el.configuration['filter'],
-                  el.number_exposures, el.time_per_exposure))
+            #print('Element in schedule: start at {}, target is {}, '
+            #      'filter is {}, count is {}, and duration is {}'.format(
+            #      el.start_time, el.target, el.configuration['filter'],
+            #      el.number_exposures, el.time_per_exposure))
 
             # deriving filter name and configuration
             filter_name = el.configuration['filter']
             if filter_name != curFilter:
-                self.seq_builder.add_message_print(message='Target {}, setting filter '
-                    '{}'.format(el.target,filter_name))
+                self.seq_builder.add_message_print(message='Target {}, '
+                    'setting filter {}'.format(el.target,filter_name))
                 self.seq_builder.add_filterwheel_step(filterName=filter_name)
 
             # deriving name for target

@@ -21,96 +21,99 @@ class IndiClient(PyIndi.BaseClient):
   '''
 
   def __init__(self, configFileName=None, logger=None):
-    self.logger = logger or logging.getLogger(__name__)
-    
-    # Call indi client base classe ctor
-    self.logger.debug('IndiClient: starting constructing base class')
-    super(IndiClient, self).__init__()
-    self.logger.debug('IndiClient: finished constructing base class')
+      self.logger = logger or logging.getLogger(__name__)
+      
+      # Call indi client base classe ctor
+      self.logger.debug('IndiClient: starting constructing base class')
+      super(IndiClient, self).__init__()
+      self.logger.debug('IndiClient: finished constructing base class')
 
-    if configFileName is None:
-      self.configFileName = 'IndiClient.json'
-    else:
-      self.configFileName = configFileName
+      if configFileName is None:
+          self.configFileName = 'IndiClient.json'
+      else:
+          self.configFileName = configFileName
 
-    # Now configuring class
-    self.logger.debug('Configuring Indiclient with file {}'.format(
-      self.configFileName))
-    # Get key from json
-    with open(self.configFileName) as jsonFile:
-      data = json.load(jsonFile)
-      self.remoteHost = data['remoteHost']
-      self.remotePort = int(data['remotePort'])
+      # Now configuring class
+      self.logger.debug('Configuring Indiclient with file {}'.format(
+          self.configFileName))
+      # Get key from json
+      with open(self.configFileName) as jsonFile:
+          data = json.load(jsonFile)
+          self.remoteHost = data['remoteHost']
+          self.remotePort = int(data['remotePort'])
 
-    self.setServer(self.remoteHost,self.remotePort)  
-    self.logger.debug('Indi Client, remote host is: {} : {}'.format(
-                      self.getHost(),self.getPort()))
+      self.setServer(self.remoteHost,self.remotePort)  
+      self.logger.debug('Indi Client, remote host is: {} : {}'.format(
+                        self.getHost(),self.getPort()))
 
-    # Finished configuring
-    self.logger.debug('Configured Indi Client successfully')
+      # Finished configuring
+      self.logger.debug('Configured Indi Client successfully')
 
   def onEmergency(self):
-    self.logger.debug('Indi Client: on emergency routine started...')
-    pass
-    self.logger.debug('Indi Client: on emergency routine finished')
+      self.logger.debug('Indi Client: on emergency routine started...')
+      pass
+      self.logger.debug('Indi Client: on emergency routine finished')
 
   def connect(self):
-    self.logger.info('Indi Client: Connecting to server at {}:{}'.format(
-                     self.getHost(),self.getPort()))
+      if self.isServerConnected():
+          self.logger.warning('Already connected to server')
+      else:
+          self.logger.info('Indi Client: Connecting to server at {}:{}'.format(
+                           self.getHost(),self.getPort()))
 
-    if not self.connectServer():
-      self.logger.error('Indi Client: No indiserver running on '+\
-        self.getHost()+':'+str(self.getPort())+' - Try to run '+\
-        'indiserver indi_simulator_telescope indi_simulator_ccd')
-    else:
-      self.logger.info('Indi Client: Successfully connected to server at '+\
-        self.getHost()+':'+str(self.getPort()))
+          if not self.connectServer():
+              self.logger.error('Indi Client: No indiserver running on {}:{} '
+                  ' - Try to run indiserver indi_simulator_telescope '
+                  ' indi_simulator_ccd'.format(self.getHost(),self.getPort()))
+          else:
+              self.logger.info('Indi Client: Successfully connected to server '
+                               'at{}:{}'.format(self.getHost(),self.getPort()))
 
   '''
     Indi related stuff (implementing BaseClient methods)
   '''
   def device_names(self):
-    return [d.getDeviceName() for d in self.getDevices()]
+      return [d.getDeviceName() for d in self.getDevices()]
 
   def newDevice(self, d):
-    pass
+      pass
 
   def newProperty(self, p):
-    pass
+      pass
 
   def removeProperty(self, p):
-    pass
+      pass
 
   def newBLOB(self, bp):
-    # this threading.Event is used for sync purpose in other part of the code 
-    self.logger.debug("Indi Client: new BLOB received: "+bp.name)
-    global indiClientGlobalBlobEvent
-    indiClientGlobalBlobEvent.set()
+      # this threading.Event is used for sync purpose in other part of the code
+      self.logger.debug("Indi Client: new BLOB received: "+bp.name)
+      global indiClientGlobalBlobEvent
+      indiClientGlobalBlobEvent.set()
 
   def newSwitch(self, svp):
-    pass
+      pass
 
   def newNumber(self, nvp):
-    pass
+      pass
 
   def newText(self, tvp):
-    pass
+      pass
 
   def newLight(self, lvp):
-    pass
+      pass
 
   def newMessage(self, d, m):
-    pass
+      pass
 
   def serverConnected(self):
-    pass
+      self.logger.debug('Server connected')
 
   def serverDisconnected(self, code):
-    pass
+      self.logger.debug('Server disconnected')
 
   def __str__(self):
-    return 'INDI client connected to {0}:{1}'.format(self.host, self.port)
+      return 'INDI client connected to {}:{}'.format(self.host, self.port)
 
   def __repr__(self):
-    return self.__str__()
+      return self.__str__()
 
