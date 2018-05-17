@@ -16,9 +16,9 @@ class FilterWheelStep:
     def run(self):
         self.callbacks.run('onStarted', self)
         if self.filterName:
-            self.filterNumber = filterWheel.filters()[self.filterName]
+            self.filterNumber = self.filterWheel.filters()[self.filterName]
         elif self.filterNumber:
-            self.filterName = filterWheel.filterName(filterNumber)
+            self.filterName = self.filterWheel.filterName(filterNumber)
         self.filterWheel.setFilterNumber(self.filterNumber)
         self.callbacks.run('onFinished', self)
 
