@@ -17,4 +17,17 @@ For now, RemoteObservatory uses some web service to acquire data, so ensure that
   * For WUG, get your key [here](https://www.wunderground.com/weather/api/) and store it in your home directory inside a .wug.json file
   * For nova (astrometry.net), get your key at [here](http://nova.astrometry.net/api_help) and store it in your home directory inside a .nova.json file
 
+## Building 3D support for virtual telescope
 
+We use anaconda 3 distribution, and the following conda environment:
+https://github.com/FreeCAD/FreeCAD_Conda
+
+~/.condarc:
+channels:
+  - freecad
+  - cad
+  - conda-forge
+  - defaults
+
+
+conda create -n freecad freecad pivy=0.6.4b2
