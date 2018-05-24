@@ -315,6 +315,7 @@ class Deaxis:
 
  
     def MakeDeaxis(self):
+        #TODO TN THERE IS A PROBLEM HERE
         self.deaxismain = Part.makeCylinder(self.deaxisradius,
             self.deaxislength,
             self.origin + FreeCAD.Vector(0, 0, 0), FreeCAD.Vector(0,0,-1), 360)
@@ -360,12 +361,12 @@ class Deaxis:
 
     def draw(self, decylindermat,decoordmat, decwmat):
         if self.shape == None: self.MakeDeaaxis()
-        deaxismainnode=Render.Render.draw(self.deaxismain, decylindermat)
+        #deaxismainnode=Render.Render.draw(self.deaxismain, decylindermat)
         decylindernode=Render.Render.draw(self.decylinder, decylindermat)
         decoordnode=Render.Render.draw(self.decoord, decoordmat)
         decwnode=Render.Render.draw(self.decw, decwmat)
         rootnode=pivy.coin.SoSeparator()
-        rootnode.addChild(deaxismainnode)
+        #rootnode.addChild(deaxismainnode)
         rootnode.addChild(decylindernode)
         rootnode.addChild(decoordnode)
         rootnode.addChild(decwnode)

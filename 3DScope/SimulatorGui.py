@@ -1,21 +1,3 @@
-#!/usr/bin/env python2.7
-
-###
-# Copyright (c) 2012-2013 geehalel
-#
-# Permission to use, copy, modify, and distribute this software for any
-# purpose with or without fee is hereby granted, provided that the above
-# copyright notice and this permission notice appear in all copies.
-#
-# THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
-# WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
-# MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
-# ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
-# WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
-# ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
-# OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-#
-
 # Main stuff
 import os
 import sys
@@ -23,23 +5,21 @@ import collections
 import json
 
 # QT stuff
-from PyQt5 import QtCore, QtGui, QtNetwork, QtWidgets
-#from PyQt4.QtGui import QMainWindow, QWorkspace, QAction
-#from PyQt4.QtGui import QFileDialog, QApplication, QTabWidget
+from PySide2 import QtCore, QtGui, QtNetwork, QtWidgets
 
 # Pivy stuff, conda config --add channels conda-forge + conda install pyside2
 from pivy.coin import SoInput, SoDB
 from pivy.quarter import QuarterWidget
 
-FREECADPATH = '/home/gnthibault/anaconda3/envs/freecad/lib/'
-sys.path.append(FREECADPATH)
+import os, sys
+sys.path.append(os.path.join(os.environ["CONDA_PREFIX"], "lib"))
 
 # Local stuff
 import Simulator
 
 class SliderPreciseValue(QtWidgets.QFrame):
 
-    valueChanged = QtCore.pyqtSignal(int)
+    valueChanged = QtCore.Signal(int)
 
     def changeValue(self,v):
         self.qlcd.display(v)
@@ -52,28 +32,28 @@ class SliderPreciseValue(QtWidgets.QFrame):
         QtWidgets.QFrame.__init__(self)
         self.setFrameShape(QtWidgets.QFrame.Box)
         #self.setStyleSheet("QFrame {font-size: 8pt}\nQSlider::groove:horizontal {height: 8px}\nQSlider::handle:horizontal {width: 18px}\nQLineEdit, QPushButton {font-size: 8pt;}\n")
-        self.qboxlayout=QtGui.QBoxLayout(QtGui.QBoxLayout.LeftToRight, self)
-        self.qlabel=QtGui.QLabel(label)
-        self.qlcd=QtGui.QLCDNumber(digits)
+        self.qboxlayout=QtWidgets.QBoxLayout(QtWidgets.QBoxLayout.LeftToRight, self)
+        self.qlabel=QtWidgets.QLabel(label)
+        self.qlcd=QtWidgets.QLCDNumber(digits)
         self.qlcd.setFixedHeight(16)
         #self.qlcd.setSmallDecimalPoint(True)
         self.qlcd.setStyleSheet(
             "QFrame {background-color: black; color: red; }")
-        self.qlcd.setSegmentStyle(QtGui.QLCDNumber.Filled)
+        self.qlcd.setSegmentStyle(QtWidgets.QLCDNumber.Filled)
         #self.qslider=QtGui.QSlider(QtCore.Qt.Horizontal)
-        self.qslider=QtGui.QDial()
+        self.qslider=QtWidgets.QDial()
         self.qslider.setFixedHeight(30)
         self.qslider.setWrapping(wrap)
         self.qslider.setMinimum(minmax[0])
         self.qslider.setMaximum(minmax[1])
-        self.qlineedit=QtGui.QLineEdit()
+        self.qlineedit=QtWidgets.QLineEdit()
         if regexpstring != None:
             self.qlineedit.setValidator(QtGui.QRegExpValidator(
                 QtCore.QRegExp(regexpstring)))
         self.qlineedit.sizeHint=lambda:QtCore.QSize((lineeditlength*10),14)
         if tooltip != None:
             self.qlineedit.setToolTip(tooltip)
-        self.qbutton=QtGui.QPushButton('Set')
+        self.qbutton=QtWidgets.QPushButton('Set')
         self.qbutton.sizeHint=lambda:QtCore.QSize((30),24)
         self.qboxlayout.addWidget(self.qlabel)
         self.qboxlayout.addWidget(self.qlcd)
@@ -105,11 +85,11 @@ class DockManualSetting(QtWidgets.QDockWidget):
         self.setAllowedAreas(QtCore.Qt.TopDockWidgetArea | 
                              QtCore.Qt.BottomDockWidgetArea)
         self.content = QtWidgets.QWidget()
-        self.content.setSizePolicy(QtGui.QSizePolicy.Maximum,
-                                   QtGui.QSizePolicy.Maximum)
+        self.content.setSizePolicy(QtWidgets.QSizePolicy.Maximum,
+                                   QtWidgets.QSizePolicy.Maximum)
 
         #self.qboxlayout=QtGui.QBoxLayout(QtGui.QBoxLayout.TopToBottom, self.content)
-        self.qgridlayout=QtGui.QGridLayout( self.content)
+        self.qgridlayout=QtWidgets.QGridLayout( self.content)
 
         self.latitudeSPV = SliderPreciseValue(
             QtCore.QCoreApplication.translate("DockManualSetting", "Latitude"),
@@ -118,7 +98,7 @@ class DockManualSetting(QtWidgets.QDockWidget):
         self.latitudeSPV.valueChanged.connect(self.simulator.setLatitude)
         self.hemisphereframe=QtWidgets.QFrame()
         self.hemisphereframe.setFrameShape(QtWidgets.QFrame.Box)
-        self.hemispherecheckbox=QtGui.QCheckBox('Southern Hemisphere',
+        self.hemispherecheckbox=QtWidgets.QCheckBox('Southern Hemisphere',
             self.hemisphereframe)
         self.hemispherecheckbox.setContentsMargins(4,4,4,4)
         self.hemispherecheckbox.setCheckState(QtCore.Qt.Unchecked)
@@ -167,18 +147,18 @@ class LcdArray(QtWidgets.QScrollArea):
     def __init__(self, valuelist):
         QtWidgets.QScrollArea.__init__(self)
         self.setStyleSheet("QFrame  {font-size: 8pt;}\n")
-        self.qgridlayout=QtGui.QGridLayout( self)
+        self.qgridlayout=QtWidgets.QGridLayout( self)
         self.dictionnary=dict()
         lcdrecord=collections.namedtuple('LcdRecord',
                                          ['name', 'qlabel', 'qlcd']) 
         for  index, (name, label, digits, mode) in enumerate(valuelist):
-            qlabel=QtGui.QLabel(label, self)
-            qlcd=QtGui.QLCDNumber(digits)
+            qlabel=QtWidgets.QLabel(label, self)
+            qlcd=QtWidgets.QLCDNumber(digits)
             qlcd.setFixedHeight(16)
-            lcdmode=QtGui.QLCDNumber.Dec
-            if (mode=='H'):lcdmode=QtGui.QLCDNumber.Hex 
+            lcdmode=QtWidgets.QLCDNumber.Dec
+            if (mode=='H'):lcdmode=QtWidgets.QLCDNumber.Hex 
             elif (mode=='B'):
-                lcdmode=QtGui.QLCDNumber.Bin
+                lcdmode=QtWidgets.QLCDNumber.Bin
             qlcd.setMode(lcdmode)
             qlcd.setStyleSheet("QFrame {background-color: black; color: red; }")
             r=lcdrecord(name, qlabel, qlcd)
@@ -204,9 +184,9 @@ class DockSimulation(QtWidgets.QDockWidget):
         #self.content=QtWidgets.QWidget()
         #self.content.setSizePolicy(QtGui.QSizePolicy.Maximum, QtGui.QSizePolicy.Maximum)
 
-        #self.tabwidget=QtGui.QTabWidget(self.content)
-        self.tabwidget=QtGui.QTabWidget(self)
-        self.tabwidget.setTabPosition(QtGui.QTabWidget.West)
+        #self.tabwidget=QtWidgets.QTabWidget(self.content)
+        self.tabwidget=QtWidgets.QTabWidget(self)
+        self.tabwidget.setTabPosition(QtWidgets.QTabWidget.West)
         #self.ralcd=LcdArray([('RA_STEPS_360','Tot. steps', 8, 'H'), ('ra_position', 'Cur. step', 8, 'H')])
         #self.delcd=LcdArray([('DE_STEPS_360', 'Tot. steps', 8, 'H'), ('de_position','Cur. step', 8, 'H')])
         #self.piclcd=LcdArray([('TIMER1H','TIMER1H', 8, 'H'), ('TIMER1L','TIMER1L', 8,'H')])
@@ -318,7 +298,7 @@ class TCPHandler(QtCore.QObject):
         self.currentData.append(datas)
         self.currentread=self.currentData.size()
   
-    @QtCore.pyqtSlot()
+    @QtCore.Slot()
     def inputDisconnected(self):
         print('I have been disconnected')
         # Part of the hardening - ensure all buffered local replay data is read and relayed
@@ -357,9 +337,9 @@ def main():
 # Utilisation d'un module tiers (en l'occurence Quarter ?)
 #FreeCADGui.setupWithoutGUI()
 
-    widget3D=QtWidgets.QWidget()
+    widget3D = QtWidgets.QWidget()
     widget3D.setMinimumSize(712,400)
-    qw=QuarterWidget(widget3D)
+    qw = QuarterWidget(widget3D)
     qw.setMinimumSize(712, 400)
 
     qw.setSceneGraph(s.scene)
@@ -369,12 +349,12 @@ def main():
     #server.serve_forever()
      
     #TCP Server
-    server=QtNetwork.QTcpServer()
-    server.setMaxPendingConnections(1)
-    server.currentClient=None
-    server.newConnection.connect(
-        lambda:acceptClient(server, simulationwidget.process_config))
-    server.listen(QtNetwork.QHostAddress.Any, 64101)
+    #server=QtNetwork.QTcpServer()
+    #server.setMaxPendingConnections(1)
+    #server.currentClient=None
+    #server.newConnection.connect(
+    #    lambda:acceptClient(server, simulationwidget.process_config))
+    #server.listen(QtNetwork.QHostAddress.Any, 64101)
 
   #s.Embed(widget3D)
     simappwindow.setCentralWidget(widget3D)

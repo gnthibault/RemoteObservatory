@@ -1,5 +1,6 @@
 # bug setBuffer const void *, use a temp file
-#import tempfile
+import os
+import tempfile
 
 # 3D stuff
 import pivy.sogui
@@ -15,25 +16,22 @@ class Render:
         
     @staticmethod
     def draw(shape, mat):
-        input=pivy.coin.SoInput()
-        shapeinventor=shape.writeInventor()
+        in_data = pivy.coin.SoInput()
+        shapeinventor = shape.writeInventor()
         # bug setBuffer const void *, use a temp file
-        ##tf=tempfile.NamedTemporaryFile()
-        ##tf.write(shapeinventor)
-        ##tf.flush()
-        #input.setFilePointer(tf)
-        ##input.openFile(tf.name)
-        #input.setBuffer(shapeinventor, len(shapeinventor))
-        
-        # SoNode is abstract, so what to use ?
-        #rootnode=SoNode()
-        #SoDB.read(input, rootnode)
-        rootnode=pivy.coin.SoSeparator()
-        objnode=pivy.coin.SoSeparator()
-        objnode=pivy.coin.SoDB.readAll(input)
-        rootnode.addChild(mat)
-        rootnode.addChild(objnode)
-        input.closeFile()
+        fd, path = tempfile.mkstemp()
+        try:
+            tf = open(fd, 'w')
+            tf.write(shapeinventor)
+            #Create default rootnode and attach current shape as child
+            rootnode=pivy.coin.SoSeparator()
+            if (in_data.openFile(path)):
+                objnode = pivy.coin.SoDB.readAll(in_data)
+            rootnode.addChild(mat)
+            rootnode.addChild(objnode)
+            tf.close()
+        finally:
+            os.remove(path)
         return rootnode
 
     @staticmethod

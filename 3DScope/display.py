@@ -1,11 +1,17 @@
-from pivy.sogui import *
-from pivy.coin import *
+# Generic stuff
+import math
 import sys
 
+# Freecad / Pivy stuff
+FREECADPATH = '/home/gnthibault/anaconda3/envs/freecad/lib/'
+sys.path.append(FREECADPATH)
+import FreeCAD
+from pivy.sogui import *
+from pivy.coin import *
+
+# Local stuff
 import Telescope
 import EqMount
-import FreeCAD
-import math
 
 # useful ??SoDB.init()
 
