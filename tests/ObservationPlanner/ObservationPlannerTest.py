@@ -25,15 +25,14 @@ if __name__ == '__main__':
 
     # load the logging configuration
     logging.config.fileConfig('logging.ini')
-    logger = logging.getLogger('mainLogger')
 
-    obs = ShedObservatory(logger=logger)
+    obs = ShedObservatory()
 
     # ntp time server
-    servTime = NTPTimeService(logger=logger)
+    servTime = NTPTimeService()
     
     # ObservationPlanner
-    obs_planner = ObservationPlanner(logger=logger, ntpServ=servTime, obs=obs)
+    obs_planner = ObservationPlanner(ntpServ=servTime, obs=obs)
     #configFileName='test.json')
     #print('Target list is {}'.format(obs_planner.getTargetList()))
 

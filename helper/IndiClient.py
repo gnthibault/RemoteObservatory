@@ -66,8 +66,8 @@ class IndiClient(PyIndi.BaseClient):
                   ' - Try to run indiserver indi_simulator_telescope '
                   ' indi_simulator_ccd'.format(self.getHost(),self.getPort()))
           else:
-              self.logger.info('Successfully connected to server '
-                               'at{}:{}'.format(self.getHost(),self.getPort()))
+              self.logger.info('Successfully connected to server at '
+                               '{}:{}'.format(self.getHost(),self.getPort()))
 
   '''
     Indi related stuff (implementing BaseClient methods)

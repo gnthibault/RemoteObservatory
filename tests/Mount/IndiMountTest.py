@@ -19,14 +19,13 @@ if __name__ == '__main__':
 
     # load the logging configuration
     logging.config.fileConfig('logging.ini')
-    logger = logging.getLogger('mainLogger')
 
     # test indi client
-    indiCli = IndiClient(logger=logger)
+    indiCli = IndiClient()
     indiCli.connect()
 
     # Now test Mount
-    mount = IndiMount(logger=logger, indiClient=indiCli,
+    mount = IndiMount(indiClient=indiCli,
                       configFileName=None, connectOnCreate=True)
     mount.set_slew_rate('SLEW_FIND')
 
