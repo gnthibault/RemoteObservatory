@@ -121,14 +121,15 @@ class ManualSettingDockWidget(QtWidgets.QDockWidget):
                                    QtWidgets.QSizePolicy.Maximum)
 
         # The important Backend object
-        self.simulator=simulator
-        self.qgridlayout=QtWidgets.QGridLayout( self.content)
+        self.simulator = simulator
+        self.qgridlayout = QtWidgets.QGridLayout( self.content)
 
         # Define all the important boxes (1 parameter per box)
 
         # Box 1: The slider to select latitude for eq mount
         self.latitudeSPV = SliderPreciseValue(
-            QtCore.QCoreApplication.translate("ManualSettingDockWidget", "Latitude"),
+            QtCore.QCoreApplication.translate("ManualSettingDockWidget",
+                "Latitude"),
             7, (-90.00, 90.00), False, False, 8, '-?\\d{1,2}(\.\\d{1,4})?',
             'Enter Latitude in decimal format, negative for South hemisphere')
         self.latitudeSPV.valueChanged.connect(self.simulator.setLatitude)

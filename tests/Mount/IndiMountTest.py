@@ -9,7 +9,7 @@ sys.path.append('.')
 from helper.IndiClient import IndiClient
 
 # Local stuff : Mount
-from Mount.IndiVirtualMount import IndiVirtualMount
+from Mount.IndiMount import IndiMount
 
 #Astropy stuff
 from astropy import units as u
@@ -26,9 +26,12 @@ if __name__ == '__main__':
     indiCli.connect()
 
     # Now test Mount
-    mount = IndiVirtualMount(logger=logger, indiClient=indiCli,
-                             configFileName=None, connectOnCreate=True)
+    mount = IndiMount(logger=logger, indiClient=indiCli,
+                      configFileName=None, connectOnCreate=True)
     mount.set_slew_rate('SLEW_FIND')
+
+    # Unpark if you want something useful to actually happen
+    mount.unPark()
 
     # Do a slew and track
     c = SkyCoord(ra=11.5*u.hour, dec=78.9*u.degree, frame='icrs')
@@ -42,7 +45,6 @@ if __name__ == '__main__':
     c = SkyCoord(ra=10*u.hour, dec=60*u.degree, frame='icrs')
     mount.slew_to_coord_and_stop(c)
 
-    #Park/unpark
+    # Park before standby
     mount.park()
-    mount.unPark()
 

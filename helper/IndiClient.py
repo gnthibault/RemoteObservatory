@@ -24,9 +24,9 @@ class IndiClient(PyIndi.BaseClient):
       self.logger = logger or logging.getLogger(__name__)
       
       # Call indi client base classe ctor
-      self.logger.debug('IndiClient: starting constructing base class')
+      self.logger.debug('starting constructing base class')
       super(IndiClient, self).__init__()
-      self.logger.debug('IndiClient: finished constructing base class')
+      self.logger.debug('finished constructing base class')
 
       if configFileName is None:
           self.configFileName = 'IndiClient.json'
@@ -50,23 +50,23 @@ class IndiClient(PyIndi.BaseClient):
       self.logger.debug('Configured Indi Client successfully')
 
   def onEmergency(self):
-      self.logger.debug('Indi Client: on emergency routine started...')
+      self.logger.debug('on emergency routine started...')
       pass
-      self.logger.debug('Indi Client: on emergency routine finished')
+      self.logger.debug('on emergency routine finished')
 
   def connect(self):
       if self.isServerConnected():
           self.logger.warning('Already connected to server')
       else:
-          self.logger.info('Indi Client: Connecting to server at {}:{}'.format(
+          self.logger.info('Connecting to server at {}:{}'.format(
                            self.getHost(),self.getPort()))
 
           if not self.connectServer():
-              self.logger.error('Indi Client: No indiserver running on {}:{} '
+              self.logger.error('No indiserver running on {}:{} '
                   ' - Try to run indiserver indi_simulator_telescope '
                   ' indi_simulator_ccd'.format(self.getHost(),self.getPort()))
           else:
-              self.logger.info('Indi Client: Successfully connected to server '
+              self.logger.info('Successfully connected to server '
                                'at{}:{}'.format(self.getHost(),self.getPort()))
 
   '''
@@ -86,7 +86,7 @@ class IndiClient(PyIndi.BaseClient):
 
   def newBLOB(self, bp):
       # this threading.Event is used for sync purpose in other part of the code
-      self.logger.debug("Indi Client: new BLOB received: "+bp.name)
+      self.logger.debug("new BLOB received: "+bp.name)
       global indiClientGlobalBlobEvent
       indiClientGlobalBlobEvent.set()
 
