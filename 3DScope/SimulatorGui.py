@@ -264,15 +264,15 @@ def main():
     try:
         import FreeCAD
     except ValueError:
-        print('FreeCAD library not found. Please check the FREECADPATH '
-              'variable in this script is correct')
-        sys.exit(1)
+        raise RuntimeError('FreeCAD library not found. Please check that the '
+                           'FREECADPATH variable in this script is correct')
+        
     simapp = QtWidgets.QApplication(sys.argv)
     simappwindow = QtWidgets.QMainWindow()
     simappwindow.setWindowTitle("EQ Simulator")
 
     # Build the backend
-    s=Simulator.Simulator()
+    s = Simulator.Simulator()
     s.Build()
 
     # Build manual setting widget
