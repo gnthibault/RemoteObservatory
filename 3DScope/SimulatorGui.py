@@ -99,7 +99,7 @@ class SliderPreciseValue(QtWidgets.QFrame):
         self.show()
 
 
-class DockManualSetting(QtWidgets.QDockWidget):
+class ManualSettingDockWidget(QtWidgets.QDockWidget):
     """
         This widget will group multiple precise slider (qbox), each related to a
         single parameter of the application (ra, dec, ...)
@@ -110,7 +110,7 @@ class DockManualSetting(QtWidgets.QDockWidget):
     def __init__(self, simulator):
         # Init stuff so that it looks nice
         self.dockwidget = QtWidgets.QDockWidget.__init__(self,
-            QtCore.QCoreApplication.translate("DockManualSetting",
+            QtCore.QCoreApplication.translate("ManualSettingDockWidget",
                                               "Manual Settings"))
         self.setStyleSheet("QFrame, QLineEdit, QPushButton, QCheckBox "
                            "{font-size: 8pt;}\n")
@@ -128,7 +128,7 @@ class DockManualSetting(QtWidgets.QDockWidget):
 
         # Box 1: The slider to select latitude for eq mount
         self.latitudeSPV = SliderPreciseValue(
-            QtCore.QCoreApplication.translate("DockManualSetting", "Latitude"),
+            QtCore.QCoreApplication.translate("ManualSettingDockWidget", "Latitude"),
             7, (-90.00, 90.00), False, False, 8, '-?\\d{1,2}(\.\\d{1,4})?',
             'Enter Latitude in decimal format, negative for South hemisphere')
         self.latitudeSPV.valueChanged.connect(self.simulator.setLatitude)
@@ -146,7 +146,7 @@ class DockManualSetting(QtWidgets.QDockWidget):
 
         # Box 3: The ra-angle
         self.raangleSPV = SliderPreciseValue(
-            QtCore.QCoreApplication.translate("DockManualSetting", "RA Angle"),
+            QtCore.QCoreApplication.translate("ManualSettingDockWidget", "RA Angle"),
             8, (0.00, 360.00), True, False, 8,
             '(([0-2]?\\d{1,2})|(3[0-5][0-9]))(\.\\d{1,4})?',
             'Enter RA axis angle in decimal degrees')
@@ -155,7 +155,7 @@ class DockManualSetting(QtWidgets.QDockWidget):
 
         # Box 4: The de-angle
         self.deangleSPV = SliderPreciseValue(
-            QtCore.QCoreApplication.translate("DockManualSetting", "DE Angle"),
+            QtCore.QCoreApplication.translate("ManualSettingDockWidget", "DE Angle"),
             8, (0.00, 360.00), True, False, 8,
             '(([0-2]?\\d{1,2})|(3[0-5][0-9]))(\.\\d{1,4})?',
             'Enter DE axis angle in decimal degrees')
@@ -164,7 +164,7 @@ class DockManualSetting(QtWidgets.QDockWidget):
 
         # Box 5: The focuser position
         self.focuserpositionSPV = SliderPreciseValue(
-            QtCore.QCoreApplication.translate("DockManualSetting", "Foc. pos."),
+            QtCore.QCoreApplication.translate("ManualSettingDockWidget", "Foc. pos."),
             6, (0.00, 120.00), True, False, 8,
             '((0?\\d{1,2})|(1[0-1][0-9]))(\.\\d{1,4})?',
             'Enter Focuser position in millimeters')
@@ -174,7 +174,7 @@ class DockManualSetting(QtWidgets.QDockWidget):
 
         # Box 6: The focuser angle
         self.focuserangleSPV=SliderPreciseValue(
-            QtCore.QCoreApplication.translate("DockManualSetting", "Foc. ang."),
+            QtCore.QCoreApplication.translate("ManualSettingDockWidget", "Foc. ang."),
             6, (0.00, 360.00), True, False, 8,
             '(([0-2]?\\d{1,2})|(3[0-5][0-9]))(\.\\d{1,4})?',
             'Enter Focuser angle in decimal degrees')
@@ -220,29 +220,45 @@ class LcdArray(QtWidgets.QScrollArea):
     def setValue(self, name, value):
         self.dictionnary[name].qlcd.display(value)
 
-class DockSimulation(QtWidgets.QDockWidget):
+class ValueInfoDockWidget(QtWidgets.QDockWidget):
     """
-        This class 
+        This class intends to show some read-only values that comes from
+        the backend
     """
-    def __init__(self, simulator, manualdock):
+    def __init__(self):
         QtWidgets.QDockWidget.__init__(self,
-            QtCore.QCoreApplication.translate("DockSimulation", "Simulation"))
+            QtCore.QCoreApplication.translate("ValueInfoDockWidget", 
+            "BackendInfos"))
         self.setStyleSheet(
             "QFrame, QLineEdit, QPushButton, QCheckBox {font-size: 8pt;}\n")
 
-        # Hold a pointer to backend + the set of manual controls
-        self.simulator = simulator
-        self.manualdock = manualdock
+        # Stick it somewhere
         self.setAllowedAreas(QtCore.Qt.LeftDockWidgetArea |
                              QtCore.Qt.RightDockWidgetArea)
         self.tabwidget = QtWidgets.QTabWidget(self)
 
-        #self.ralcd=LcdArray([('RA_STEPS_360','Tot. steps', 8, 'H'), ('ra_position', 'Cur. step', 8, 'H')])
-        #self.delcd=LcdArray([('DE_STEPS_360', 'Tot. steps', 8, 'H'), ('de_position','Cur. step', 8, 'H')])
+        #self.ralcd=LcdArray([('RA_STEPS_360','Tot. steps', 8, 'H'),
+        #    ('ra_position', 'Cur. step', 8, 'H')])
+        #self.delcd=LcdArray([('DE_STEPS_360', 'Tot. steps', 8, 'H'),
+        #    ('de_position','Cur. step', 8, 'H')])
         #self.tabwidget.addTab(self.ralcd, "RA Stepper")
         #self.tabwidget.addTab(self.delcd, "DE Stepper")
 
+        # Show everything
         self.tabwidget.show()
+
+class SimulationFrameWidget(QtWidgets.QWidget):
+    """
+        This class intends to show some read-only values that comes from
+        the backend
+    """
+    def __init__(self, simulator):
+        QtWidgets.QWidget.__init__(self)
+        self.simulator = simulator
+        self.setMinimumSize(712,400)
+        self.qw = QuarterWidget(self)
+        self.qw.setMinimumSize(712, 400)
+        self.qw.setSceneGraph(self.simulator.scene)
 
 def main():
     try:
@@ -260,24 +276,20 @@ def main():
     s.Build()
 
     # Build manual setting widget
-    manualsettingswidget = DockManualSetting(s)
+    manualsettingswidget = ManualSettingDockWidget(s)
 
-    # Build the simulation widget
-    simulationwidget = DockSimulation(s, manualsettingswidget)
+    # Build the info widget
+    valueinfowidget = ValueInfoDockWidget()
 
     # Build the simulated system frame, that is generated by the backend,
     # through freecad
-    widget3D = QtWidgets.QWidget()
-    widget3D.setMinimumSize(712,400)
-    qw = QuarterWidget(widget3D)
-    qw.setMinimumSize(712, 400)
-    qw.setSceneGraph(s.scene)
+    widget3D = SimulationFrameWidget(s)
 
     # Add all widgets to main application window
     simappwindow.addDockWidget(QtCore.Qt.BottomDockWidgetArea,
                                manualsettingswidget)
     simappwindow.addDockWidget(QtCore.Qt.LeftDockWidgetArea,
-                               simulationwidget)
+                               valueinfowidget)
     simappwindow.setCentralWidget(widget3D)
 
 
