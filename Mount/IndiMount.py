@@ -95,8 +95,8 @@ class IndiMount(IndiDevice):
         #try:
         #    #Read Only property set once requested EQUATORIAL_EOD_COORD is
         #    #accepted by driver.
-        #    res = self.getNumber('TARGET_EOD_COORD')
-        #    self.logger.info('Indi Mount, coordinates accepted by driver, '
+        #    res = self.get_number('TARGET_EOD_COORD')
+        #    self.logger.debug('Indi Mount, coordinates accepted by driver, '
         #        'Mount driver TARGET_EOD_COORD are: {} and '
         #        'sent EQUATORIAL_EOD_COORD are: {}'.format(rahour_decdeg,res))
         #except Exception as e:
@@ -138,9 +138,9 @@ class IndiMount(IndiDevice):
         self.setSwitch('TELESCOPE_SLEW_RATE', [slew_rate])
 
     def isParked(self):
-        status = self.getOnSwitchValueVector('TELESCOPE_PARK')
+        status = self.get_switch('TELESCOPE_PARK')
         self.logger.debug('Got TELESCOPE_PARK status: {}'.format(status))
-        if status['PARK']:
+        if status['PARK']['value']:
             return True
         else:
             return False
