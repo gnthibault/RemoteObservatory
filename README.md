@@ -19,15 +19,6 @@ For now, RemoteObservatory uses some web service to acquire data, so ensure that
 
 ## Building 3D support for virtual telescope
 
-We use anaconda 3 distribution, and the following conda environment:
-https://github.com/FreeCAD/FreeCAD_Conda
-
-~/.condarc:
-channels:
-  - freecad
-  - cad
-  - conda-forge
-  - defaults
-
+pip install PyQt5 PyQt3D
 
 conda create -n freecad freecad pivy=0.6.4b2
