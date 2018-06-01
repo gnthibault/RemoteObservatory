@@ -9,29 +9,30 @@ from PyQt5.Qt3DRender import QMesh
 from indi.client.qt.indicommon import getGAST
 
 class Model3D(QEntity):
+    stl_path = 'ScopeSimulator/stl'
     _model_file_mat = [
-        ('stl/leg.stl', 'st', None),
-        ('stl/leg.stl', 'st', {'rotationZ': 120.0}),
-        ('stl/leg.stl', 'st', {'rotationZ': 240.0}),
-        ('stl/basetripod.stl', 'mg70', None),
+        (stl_path+'/leg.stl', 'st', None),
+        (stl_path+'/leg.stl', 'st', {'rotationZ': 120.0}),
+        (stl_path+'/leg.stl', 'st', {'rotationZ': 240.0}),
+        (stl_path+'/basetripod.stl', 'mg70', None),
         [
-            ('stl/baseholder.stl', 'mg50', None),
+            (stl_path+'/baseholder.stl', 'mg50', None),
             [
-                ('stl/rahousing.stl', 'mg50', None),
+                (stl_path+'/rahousing.stl', 'mg50', None),
                 [
-                    ('stl/raaxis.stl', 'mg50', None),
-                    ('stl/dehousing.stl', 'mg50', None),
+                    (stl_path+'/raaxis.stl', 'mg50', None),
+                    (stl_path+'/dehousing.stl', 'mg50', None),
                     [
-                        ('stl/deaxis.stl', 'mg50', None),
-                        ('stl/cwbar.stl', 'st', None),
-                        ('stl/dovetail.stl', 'mg70', None),
-                        ('stl/refractor.stl', 'wh', None),
-                        ('stl/lens.stl', 'glass', None),
-                        ('stl/crayford-spacer.stl', 'mg70', None),
+                        (stl_path+'/deaxis.stl', 'mg50', None),
+                        (stl_path+'/cwbar.stl', 'st', None),
+                        (stl_path+'/dovetail.stl', 'mg70', None),
+                        (stl_path+'/refractor.stl', 'wh', None),
+                        (stl_path+'/lens.stl', 'glass', None),
+                        (stl_path+'/crayford-spacer.stl', 'mg70', None),
                         [
-                            ('stl/crayford-cylinder.stl', 'mg70', None),
+                            (stl_path+'/crayford-cylinder.stl', 'mg70', None),
                             [
-                                ('stl/crayford-tube.stl', 'st', None),
+                                (stl_path+'/crayford-tube.stl', 'st', None),
                             ]
                         ]
                     ]

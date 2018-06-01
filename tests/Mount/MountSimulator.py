@@ -86,29 +86,20 @@ if __name__ == "__main__":
     mount = IndiMount(indiClient=indiCli,
                       configFileName=None, connectOnCreate=True)
     gps_coord = obs.getGpsCoordinates()
-    # Update model3D mount with latitude
-    #app = QApplication([])
-    #view = View3D.View3D()
-    #view.set_coord(gps_coord)
-
-    # First register callbacks
-    def update_coord(coord):
-        #view.model.setRA(coord['RA'])
-        #view.model.setDEC(coord['DEC'])
-        pass
-
-    indiCli.register_number_callback(
-        device_name=mount.deviceName,
-        vec_name='EQUATORIAL_EOD_COORD',
-        callback=update_coord)
-
-    # Initializee gui
-    #view.initialiseCamera()
-    #view.window.show()
 
     def gui_loop():
         app = QApplication([])
         view = View3D.View3D()
+
+        # Register callbacks
+        def update_coord(coord):
+            view.model.setHA(coord['RA'])
+            view.model.setDEC(coord['DEC'])
+        indiCli.register_number_callback(
+            device_name=mount.deviceName,
+            vec_name='EQUATORIAL_EOD_COORD',
+            callback=update_coord)
+
         view.set_coord(gps_coord)
         view.initialiseCamera()
         view.window.show()
@@ -124,11 +115,11 @@ if __name__ == "__main__":
     mount.unPark()
 
     # Do a slew and track
-    c = SkyCoord(ra=11.5*u.hour, dec=78.9*u.degree, frame='icrs')
+    c = SkyCoord(ra=0.5*u.hour, dec=5*u.degree, frame='icrs')
     mount.slew_to_coord_and_track(c)
 
     # Sync
-    c = SkyCoord(ra=11.53*u.hour, dec=79*u.degree, frame='icrs')
+    c = SkyCoord(ra=0.5*u.hour, dec=5*u.degree, frame='icrs')
     mount.sync_to_coord(c)
 
     #Do a slew and stop

@@ -23,9 +23,9 @@ class View3D(QObject):
         self.window = Qt3DWindow(parent)
         self.setClearColor(View3D._default_clear_color)
         self.rootEntity = QEntity()
-        #self.world = World3D(self.rootEntity)
+        self.world = World3D(self.rootEntity)
         self.model = Model3D(self.rootEntity)
-        #self.model.setWorld(self.world)
+        self.model.setWorld(self.world)
         self.initialiseCamera()
         self.window.setRootEntity(self.rootEntity)
         self.scope = None
