@@ -1,3 +1,6 @@
+# Astropy stuff
+from astropy.coordinates import SkyCoord
+
 # PyQt stuff
 from PyQt5.QtCore import pyqtSlot, QUrl
 from PyQt5.QtGui import QColor, QVector3D
