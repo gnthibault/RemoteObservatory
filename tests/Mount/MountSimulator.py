@@ -76,15 +76,18 @@ class MainWindow(QMainWindow):
         self.widget3D = QWidget.createWindowContainer(self.view3D.window)
         #self.widget3D.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
         #self.dock_view3D.setWidget(self.widget3D)
-        self.setCentralWidget(self.widget3D)
-        #self.layout.addWidget(self.dock_view3D)
+        #self.setCentralWidget(self.widget3D)
+        self.layout.addWidget(self.widget3D)
 
         # Dock planner
-        self.dock_planner = QDockWidget('Observation planner', self)
-        self.addDockWidget(Qt.TopDockWidgetArea, self.dock_planner)
+        #self.dock_planner = QDockWidget('Observation planner', self)
+        #self.addDockWidget(Qt.TopDockWidgetArea, self.dock_planner)
         self.planner = AltazPlannerWidget() #observatory=)
         #self.planner.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
-        self.dock_planner.setWidget(self.planner)
+        #self.dock_planner.setWidget(self.planner)
+        self.layout.addWidget(self.planner)
+        
+
         self.planner.plot()
 
         # Global stuff
