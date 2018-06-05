@@ -7,10 +7,6 @@ import sys
 
 sys.path.append('.')
 
-# Miscellaneous
-import io
-from astropy.io import fits
-
 # Local stuff : Service
 from Service.NTPTimeService import NTPTimeService
 

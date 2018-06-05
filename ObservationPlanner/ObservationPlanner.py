@@ -187,7 +187,7 @@ class ObservationPlanner:
 
 
     def showObservationPlan(self, start_time=None, duration_hour=None,
-                            show_plot=False):
+                            show_plot=False, write_plot=False):
         """ start_time can either be a precise datetime or a datetime.date """
         if duration_hour is None:
             duration_hour = self.tmh * 2 * AU.hour
@@ -423,20 +423,23 @@ class ObservationPlanner:
         alt_ax.set_ylim(0, 90)
         alt_ax.set_ylabel('Altitude [deg]')
 
+        # Configure airmass plot, both utc and regular time
+        pol_ax.legend(loc='upper left')
+
         # Nice formating, no overlap between subplots
         afig.tight_layout()
         pfig.tight_layout()
 
-        # Configure airmass plot, both utc and regular time
-        pol_ax.legend(loc='upper left')
-
         if show_plot:
             plt.show()
 
-        # Now save everything to disk
-        filepath = os.path.join(self.path, str(target_date) +
-                                '-observation-plan-altaz.png')
-        afig.savefig(filepath)
-        filepath = os.path.join(self.path, str(target_date) +
-                                '-observation-plan-polar.png')
-        pfig.savefig(filepath)
+        if write_plot:
+            # Now save everything to disk
+            filepath = os.path.join(self.path, str(target_date) +
+                                    '-observation-plan-altaz.png')
+            afig.savefig(filepath)
+            filepath = os.path.join(self.path, str(target_date) +
+                                    '-observation-plan-polar.png')
+            pfig.savefig(filepath)
+
+        return afig, pfig
