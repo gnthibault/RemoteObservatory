@@ -41,7 +41,7 @@ from ObservationPlanner.PlannerWidget import AltazPlannerWidget
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
-        self.resize(1024, 480)
+        self.resize(2048, 1024)#, 480)
         self.init_UI()
 
     def init_UI(self):
@@ -72,22 +72,20 @@ class MainWindow(QMainWindow):
 
         # 3D view
         #self.dock_view3D = QDockWidget('Mount simulator', self)
+        #self.addDockWidget(Qt.BottomDockWidgetArea, self.dock_view3D)
         self.view3D = View3D.View3D()
-        self.widget3D = QWidget.createWindowContainer(self.view3D.window)
+        self.widget3D = QWidget.createWindowContainer(self.view3D.window, self)
         #self.widget3D.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
         #self.dock_view3D.setWidget(self.widget3D)
-        #self.setCentralWidget(self.widget3D)
-        self.layout.addWidget(self.widget3D)
+        self.setCentralWidget(self.widget3D)
+        #self.layout.addWidget(self.widget3D)
 
         # Dock planner
-        #self.dock_planner = QDockWidget('Observation planner', self)
-        #self.addDockWidget(Qt.TopDockWidgetArea, self.dock_planner)
+        self.dock_planner = QDockWidget('Observation planner', self)
+        self.addDockWidget(Qt.BottomDockWidgetArea, self.dock_planner)
         self.planner = AltazPlannerWidget() #observatory=)
         #self.planner.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
-        #self.dock_planner.setWidget(self.planner)
-        self.layout.addWidget(self.planner)
-        
-
+        self.dock_planner.setWidget(self.planner)        
         self.planner.plot()
 
         # Global stuff
@@ -117,15 +115,11 @@ class MainWindow(QMainWindow):
                 'It will follow every move as reported'
                 'by the INDI telescope driver.')
 
-class GuiLoop(threading.Thread):
+class GuiLoop():
 
     def __init__(self, gps_coord, mount):
-        threading.Thread.__init__(self)
         self.gps_coord = gps_coord
         self.mount = mount
-
-    def __del__(self):
-        print('Main Qt thread is going to exit')
 
     def run(self):
         app = QApplication([])
@@ -139,12 +133,50 @@ class GuiLoop(threading.Thread):
         self.main_window.view3D.set_coord(self.gps_coord)
         self.main_window.view3D.initialiseCamera()
         self.main_window.view3D.window.show()
-        sys.exit(app.exec_())
+
+        thread = ObservationRun(self.mount)
+        thread.start()
+        
+        # Everything ends when program is over
+        status = app.exec_()
+        thread.join()
+        sys.exit(status)
 
     # callback for updating model
     def update_coord(self, coord):
         self.main_window.view3D.model.setHA(coord['RA'])
         self.main_window.view3D.model.setDEC(coord['DEC'])
+
+class ObservationRun(threading.Thread):
+
+    def __init__(self,  mount):
+        threading.Thread.__init__(self)
+        self.mount = mount
+
+    def __del__(self):
+        print('Backend thread is going to exit')
+
+    def run(self):
+        # Now start to do stuff
+        mount.set_slew_rate('SLEW_FIND')
+
+        # Unpark if you want something useful to actually happen
+        mount.unPark()
+
+        # Do a slew and track
+        c = SkyCoord(ra=0.5*u.hour, dec=5*u.degree, frame='icrs')
+        mount.slew_to_coord_and_track(c)
+
+        # Sync
+        c = SkyCoord(ra=0.5*u.hour, dec=5*u.degree, frame='icrs')
+        mount.sync_to_coord(c)
+
+        #Do a slew and stop
+        c = SkyCoord(ra=10*u.hour, dec=60*u.degree, frame='icrs')
+        mount.slew_to_coord_and_stop(c)
+
+        # Park before standby
+        mount.park()
 
 if __name__ == "__main__":
 
@@ -163,29 +195,5 @@ if __name__ == "__main__":
                       configFileName=None, connectOnCreate=True)
     gps_coord = obs.getGpsCoordinates()
 
-    thread = GuiLoop(gps_coord, mount)
-    thread.start()
-    
-    # Now start to do stuff
-    mount.set_slew_rate('SLEW_FIND')
-
-    # Unpark if you want something useful to actually happen
-    mount.unPark()
-
-    # Do a slew and track
-    c = SkyCoord(ra=0.5*u.hour, dec=5*u.degree, frame='icrs')
-    mount.slew_to_coord_and_track(c)
-
-    # Sync
-    c = SkyCoord(ra=0.5*u.hour, dec=5*u.degree, frame='icrs')
-    mount.sync_to_coord(c)
-
-    #Do a slew and stop
-    c = SkyCoord(ra=10*u.hour, dec=60*u.degree, frame='icrs')
-    mount.slew_to_coord_and_stop(c)
-
-    # Park before standby
-    mount.park()
-
-    # Everything ends when program is over
-    thread.join()
+    main_loop = GuiLoop(gps_coord, mount)
+    main_loop.run()
