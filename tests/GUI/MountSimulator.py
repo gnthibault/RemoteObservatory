@@ -39,8 +39,14 @@ from Observatory.ShedObservatory import ShedObservatory
 from ObservationPlanner.PlannerWidget import AltazPlannerWidget
 
 class MainWindow(QMainWindow):
-    def __init__(self):
+    def __init__(self, planner, view3D):
         super().__init__()
+
+        # Various views/widgets
+        self.planner = planner
+        self.view3D = view3D
+
+        # Change visual parameters and setup widgets on the main window
         self.resize(2048, 1024)#, 480)
         self.init_UI()
 
@@ -73,7 +79,6 @@ class MainWindow(QMainWindow):
         # 3D view
         #self.dock_view3D = QDockWidget('Mount simulator', self)
         #self.addDockWidget(Qt.BottomDockWidgetArea, self.dock_view3D)
-        self.view3D = View3D.View3D()
         self.widget3D = QWidget.createWindowContainer(self.view3D.window, self)
         #self.widget3D.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
         #self.dock_view3D.setWidget(self.widget3D)
@@ -83,7 +88,6 @@ class MainWindow(QMainWindow):
         # Dock planner
         self.dock_planner = QDockWidget('Observation planner', self)
         self.addDockWidget(Qt.BottomDockWidgetArea, self.dock_planner)
-        self.planner = AltazPlannerWidget() #observatory=)
         #self.planner.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
         self.dock_planner.setWidget(self.planner)        
         self.planner.plot()
@@ -117,13 +121,20 @@ class MainWindow(QMainWindow):
 
 class GuiLoop():
 
-    def __init__(self, gps_coord, mount):
+    def __init__(self, gps_coord, mount, observatory):
         self.gps_coord = gps_coord
         self.mount = mount
+        self.observatory = observatory
 
     def run(self):
         app = QApplication([])
-        self.main_window = MainWindow()
+
+        # Initialize various widgets/views
+        planner = AltazPlannerWidget(observatory=self.observatory)
+        view3D = View3D.View3D()
+
+        # Now initialize main window
+        self.main_window = MainWindow(planner=planner, view3D=view3D)
 
         indiCli.register_number_callback(
             device_name = self.mount.deviceName,
@@ -195,5 +206,5 @@ if __name__ == "__main__":
                       configFileName=None, connectOnCreate=True)
     gps_coord = obs.getGpsCoordinates()
 
-    main_loop = GuiLoop(gps_coord, mount)
+    main_loop = GuiLoop(gps_coord, mount, obs)
     main_loop.run()
