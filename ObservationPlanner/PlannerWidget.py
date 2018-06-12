@@ -31,7 +31,7 @@ class AltazPlannerWidget(QFrame):
         self.logger = logger or logging.getLogger(__name__)
 
         # a figure instance to plot on
-        self.figure = plt.figure(figsize=(20,10))#6 should work
+        self.figure = plt.figure(figsize=(20,6))#6 should work
 
         # Observatory needed
         self.observatory = observatory
