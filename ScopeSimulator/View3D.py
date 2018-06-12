@@ -8,9 +8,6 @@ from PyQt5.QtCore import QObject, pyqtSlot
 from PyQt5.Qt3DExtras import Qt3DWindow, QOrbitCameraController
 from PyQt5.Qt3DCore import QEntity
 
-# Indi
-from indi.client.qt.skypoint import SkyPoint
-
 # Local stuff: 3d 
 from ScopeSimulator.CameraController import CameraController
 from ScopeSimulator.Model3D import Model3D
@@ -74,11 +71,11 @@ class View3D(QObject):
         #self.pierside = self.scope.getProperty('TELESCOPE_PIER_SIDE')
         #self.scope.newCoord.connect(self.setCoord)
 
-    @pyqtSlot(SkyPoint)
-    def setCoord(self, skypoint):
-        pon = INDI.IUFindOnSwitch(self.pierside)
-        p = 'PIER_WEST' if  pon.name == 'PIER_WEST' else 'PIER_EAST'
-        self.model.setCoord(skypoint, p)
+    #@pyqtSlot(SkyPoint)
+    #def setCoord(self, skypoint):
+    #    pon = INDI.IUFindOnSwitch(self.pierside)
+    #    p = 'PIER_WEST' if  pon.name == 'PIER_WEST' else 'PIER_EAST'
+    #    self.model.setCoord(skypoint, p)
 
     #def removeTelescope(self):
     #    if self.scope is None:
