@@ -14,11 +14,15 @@ from PyQt5.QtWidgets import QApplication, QMainWindow, QAction, QDockWidget
 from PyQt5.QtWidgets import QWidget, QSizePolicy, QVBoxLayout, QMessageBox
 from PyQt5.QtGui import QVector3D
 from PyQt5.Qt3DExtras import Qt3DWindow, QOrbitCameraController
-from PyQt5.QtCore import Qt, QThread
+from PyQt5.QtCore import Qt, QThread, pyqtSlot
 
-#Astropy stuff
+# Astropy stuff
 from astropy import units as u
 from astropy.coordinates import SkyCoord
+
+# Astroplan
+from astropy.utils.iers import conf
+conf.auto_max_age = None
 
 # Local stuff
 sys.path.append('.')
@@ -37,6 +41,9 @@ from Observatory.ShedObservatory import ShedObservatory
 
 # Local stuff: Observation planner Widget
 from ObservationPlanner.PlannerWidget import AltazPlannerWidget
+
+# Local stuff : Service
+from Service.NTPTimeService import NTPTimeService
 
 class MainWindow(QMainWindow):
     def __init__(self, planner, view3D):
@@ -90,7 +97,6 @@ class MainWindow(QMainWindow):
         self.addDockWidget(Qt.BottomDockWidgetArea, self.dock_planner)
         #self.planner.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
         self.dock_planner.setWidget(self.planner)        
-        self.planner.plot()
 
         # Global stuff
         self.setLayout(self.layout)
@@ -121,16 +127,18 @@ class MainWindow(QMainWindow):
 
 class GuiLoop():
 
-    def __init__(self, gps_coord, mount, observatory):
+    def __init__(self, gps_coord, mount, observatory, serv_time):
         self.gps_coord = gps_coord
         self.mount = mount
         self.observatory = observatory
+        self.serv_time = serv_time
 
     def run(self):
         app = QApplication([])
 
         # Initialize various widgets/views
-        planner = AltazPlannerWidget(observatory=self.observatory)
+        planner = AltazPlannerWidget(observatory=self.observatory,
+                                     serv_time=self.serv_time )
         view3D = View3D.View3D()
 
         # Now initialize main window
@@ -150,7 +158,7 @@ class GuiLoop():
         
         # Everything ends when program is over
         status = app.exec_()
-        thread.join()
+        thread.wait()
         sys.exit(status)
 
     # callback for updating model
@@ -158,29 +166,25 @@ class GuiLoop():
         self.main_window.view3D.model.setHA(coord['RA'])
         self.main_window.view3D.model.setDEC(coord['DEC'])
 
-class ObservationRun(threading.Thread):
+class ObservationRun(QThread):
 
     def __init__(self,  mount):
-        threading.Thread.__init__(self)
+        super(ObservationRun, self).__init__()
         self.mount = mount
 
     def __del__(self):
         print('Backend thread is going to exit')
 
+    @pyqtSlot()
     def run(self):
+        ''' Keep in min that backend thred should not do anything because
+            every action should be launched asynchronously from the gui
+        '''
         # Now start to do stuff
         mount.set_slew_rate('SLEW_FIND')
 
         # Unpark if you want something useful to actually happen
         mount.unPark()
-
-        # Do a slew and track
-        c = SkyCoord(ra=0.5*u.hour, dec=5*u.degree, frame='icrs')
-        mount.slew_to_coord_and_track(c)
-
-        # Sync
-        c = SkyCoord(ra=0.5*u.hour, dec=5*u.degree, frame='icrs')
-        mount.sync_to_coord(c)
 
         #Do a slew and stop
         c = SkyCoord(ra=10*u.hour, dec=60*u.degree, frame='icrs')
@@ -198,6 +202,9 @@ if __name__ == "__main__":
     indiCli = Indi3DSimulatorClient(None)
     indiCli.connect()
 
+    # ntp time server
+    serv_time = NTPTimeService()
+
     # Build the observatory
     obs = ShedObservatory()
 
@@ -206,5 +213,5 @@ if __name__ == "__main__":
                       configFileName=None, connectOnCreate=True)
     gps_coord = obs.getGpsCoordinates()
 
-    main_loop = GuiLoop(gps_coord, mount, obs)
+    main_loop = GuiLoop(gps_coord, mount, obs, serv_time)
     main_loop.run()

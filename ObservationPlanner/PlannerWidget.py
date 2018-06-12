@@ -1,11 +1,12 @@
 # Global stuff
 import sys
-import random #To be deleted later
+import logging
 
 # PyQt stuff
 from PyQt5.QtWidgets import QWidget, QApplication, QFrame
 from PyQt5.QtWidgets import QPushButton, QVBoxLayout
-from PyQt5.QtCore import Qt, pyqtSlot
+from PyQt5.QtCore import QObject, QRunnable, Qt,QThreadPool
+from PyQt5.QtCore import pyqtSlot, pyqtSignal
 
 # Matplotlib stuff
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
@@ -23,11 +24,13 @@ from ObservationPlanner.ObservationPlanner import ObservationPlanner
 
 
 class AltazPlannerWidget(QFrame):
-    def __init__(self, parent=None, observatory=None, serv_time=None):
+    def __init__(self, parent=None, observatory=None, serv_time=None,
+                 logger=None):
         super(QFrame, self).__init__(parent)
+        self.logger = logger or logging.getLogger(__name__)
 
         # a figure instance to plot on
-        self.figure = plt.figure()
+        self.figure = plt.figure(figsize=(20,6))
 
         # Observatory needed
         self.observatory = observatory
@@ -36,6 +39,12 @@ class AltazPlannerWidget(QFrame):
         # ObservationPlanner
         self.obs_planner = ObservationPlanner(ntpServ=serv_time,
                                               obs=observatory)
+
+        # Init a ThreadPool for asynchronous worloads
+        self.threadpool = QThreadPool()
+        self.logger.debug('Initialize threadpool to serve UI requests with '
+                          'a maximum of {} threads'.format(
+                          self.threadpool.maxThreadCount))
 
         self.init_UI()
 
@@ -48,50 +57,88 @@ class AltazPlannerWidget(QFrame):
         # it takes the Canvas widget and a parent
         self.toolbar = NavigationToolbar(self.canvas, self)
 
-        # Just some button connected to zoom_in/out method
-        #self.zoom_in_button = QPushButton('Zoom in')
-        #self.zoom_in_button.clicked.connect(self.zoom_in)
-        #self.zoom_out_button = QPushButton('Zoom out')
-        #self.zoom_out_button.clicked.connect(self.zoom_out)
+        self.plan_button = QPushButton('Plan observation')
+        self.plan_button.clicked.connect(self.launch_plan)
 
         # set the layout
         layout = QVBoxLayout()
         layout.addWidget(self.toolbar,Qt.AlignCenter)
         layout.addWidget(self.canvas, Qt.AlignCenter)
-        #layout.addWidget(self.zoom_in_button)
-        #layout.addWidget(self.zoom_out_button)
+        layout.addWidget(self.plan_button)
         self.setLayout(layout)
 
     def plot(self):
-        ''' plot some random stuff '''
-        # random data
-        data = [random.random() for i in range(10)]
-
-        # instead of ax.hold(False)
-        self.figure.clear()
-
-        # create an axis
-        ax = self.figure.add_subplot(111)
-
-        # plot data
-        ax.plot(data, '*-')
-
         # refresh canvas
         self.canvas.draw()
 
-    def plan(self, start_time=None, duration_hour=None):
+    def finished_planning(self):
+        self.logger.debug("Planning task completed")
+
+    @pyqtSlot()
+    def launch_plan(self, start_time=None, duration_hour=None):
         #print('Target list is {}'.format(obs_planner.getTargetList()))
+        worker = Worker(lambda : self.plan(start_time, duration_hour))
+        worker.signals.result.connect(self.plot)
+        worker.signals.finished.connect(self.finished_planning)
+        self.threadpool.start(worker)
 
+    def plan(self, start_time=None, duration_hour=None):
         # Now schedule with astroplan
-        obs_planner.init_schedule(start_time, duration_hour)
-        afig, pfig = obs_planner.showObservationPlan(start_time, duration_hour,
-                                                     show_plot=True,
-                                                     write_plot=False)
+        self.obs_planner.init_schedule(start_time, duration_hour)
+        self.obs_planner.showObservationPlan(start_time,
+                                             duration_hour,
+                                             show_plot=False,
+                                             write_plot=False,
+                                             afig=self.figure)
+
+class WorkerSignals(QObject):
+    '''
+        Defines the signals available from a running worker thread.
+        Supported signals are:
+        finished
+            No data
+        error
+            `tuple` (exctype, value, traceback.format_exc() )
+        result
+            `object` data returned from processing, anything
+    '''
+    finished = pyqtSignal()
+    error = pyqtSignal(tuple)
+    result = pyqtSignal(object)
+
+class Worker(QRunnable):
+    '''
+        Worker thread
+        Inherits from QRunnable to handler worker thread setup, signals and w
+        :param callback: The function callback to run on this worker thread.
+        kwargs will be passed through to the runner.
+        :type callback: function
+        :param args: Arguments to pass to the callback function
+        :param kwargs: Keywords to pass to the callback function
+    '''
+    def __init__(self, fn, *args, **kwargs):
+        super(Worker, self).__init__()
+        # Store constructor arguments (re-used for processing)
+        self.fn = fn
+        self.args = args
+        self.kwargs = kwargs
+        self.signals = WorkerSignals()
 
     @pyqtSlot()
-    def zoom_in(self):
-        print('Zooming in')
+    def run(self):
+        '''
+          Initialise the runner function with passed args, kwargs.
+        '''
+        self.fn(*self.args, **self.kwargs)
 
-    @pyqtSlot()
-    def zoom_out(self):
-        print('Zooming out')
+        try:
+            result = self.fn(
+                *self.args, **self.kwargs)
+        except:
+            traceback.print_exc()
+            exctype, value = sys.exc_info()[:2]
+            self.signals.error.emit((exctype, value, traceback.format_exception()))
+        else:
+            self.signals.result.emit(result)
+        finally:
+            self.signals.finished.emit()

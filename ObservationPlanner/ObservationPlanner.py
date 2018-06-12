@@ -187,7 +187,8 @@ class ObservationPlanner:
 
 
     def showObservationPlan(self, start_time=None, duration_hour=None,
-                            show_plot=False, write_plot=False):
+                            show_plot=False, write_plot=False,
+                            afig=None, pfig=None):
         """ start_time can either be a precise datetime or a datetime.date """
         if duration_hour is None:
             duration_hour = self.tmh * 2 * AU.hour
@@ -230,7 +231,8 @@ class ObservationPlanner:
             absolute_time_frame.to_datetime())
         m_tmh_range = matplotlib.dates.date2num(utc_tmh_range)
 
-        afig = plt.figure(0, figsize=(25,15))
+        if afig is None:
+            afig = plt.figure(figsize=(25,15))
         # Configure airmass subplot
         air_ax = afig.add_subplot(2,1,1)
         # Configure altaz subplot
@@ -270,7 +272,8 @@ class ObservationPlanner:
             number=grey_moon_intensity, digits=2), zorder=0)
 
         #Now setup the polar chart
-        pfig = plt.figure(1, figsize=(25,15))
+        if pfig is None:
+            pfig = plt.figure(figsize=(25,15))
         pol_ax = plt.gca(projection='polar')
         #pol_ax = pfig.add_axes([0.1, 0.1, 0.8, 0.8], polar=True)
 
