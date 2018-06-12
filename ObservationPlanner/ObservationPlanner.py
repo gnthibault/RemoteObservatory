@@ -78,6 +78,10 @@ class ObservationPlanner:
         self.path = path
         self.tmh = 8
 
+        # figure or axes
+        self.air_ax = None
+        self.alt_ax = None
+
         # Finished configuring
         self.logger.debug('ObservationPlanner configured successfully')
 
@@ -187,7 +191,7 @@ class ObservationPlanner:
 
     def showObservationPlan(self, start_time=None, duration_hour=None,
                             show_plot=False, write_plot=False,
-                            afig=None, pfig=None):
+                            show_airmass=True, afig=None, pfig=None):
         """ start_time can either be a precise datetime or a datetime.date """
         if duration_hour is None:
             duration_hour = self.tmh * 2 * AU.hour
@@ -232,10 +236,13 @@ class ObservationPlanner:
 
         if afig is None:
             afig = plt.figure(figsize=(25,15))
-        # Configure airmass subplot
-        self.air_ax = afig.add_subplot(2,1,1)
-        # Configure altaz subplot
-        self.alt_ax = afig.add_subplot(2,1,2)
+        if show_airmass:
+            # Configure airmass subplot
+            self.air_ax = afig.add_subplot(2,1,1)
+            # Configure altaz subplot
+            self.alt_ax = afig.add_subplot(2,1,2)
+        else:
+            self.alt_ax = afig.add_subplot(111)
 
         #Configure altitude plot and plot sun/moon illumination
         sun_altazs = get_sun(absolute_time_frame).transform_to(altaz_frame)
@@ -344,9 +351,10 @@ class ObservationPlanner:
             # Compute altazs for target
             target_altazs = target_coord.transform_to(altaz_frame)
 
-            # First plot airmass
-            self.air_ax.plot(m_absolute_time_frame, target_altazs.secz,
-                        label=target_name, color=color, alpha=0.4)
+            if show_airmass:
+                # First plot airmass
+                self.air_ax.plot(m_absolute_time_frame, target_altazs.secz,
+                            label=target_name, color=color, alpha=0.4)
 
             # Then plot altitude along with sun/moon
             self.alt_ax.plot(m_absolute_time_frame, target_altazs.alt,
@@ -381,9 +389,10 @@ class ObservationPlanner:
                 if 'filter' in bl.configuration:
                     l_color = self.WheelToPltColors[bl.configuration['filter']]
 
-                # First plot airmass
-                self.air_ax.scatter(l_m_abs_time_frame, l_targ_altazs.secz,
-                               color=l_color, marker='+')
+                if show_airmass:
+                    # First plot airmass
+                    self.air_ax.scatter(l_m_abs_time_frame, l_targ_altazs.secz,
+                                   color=l_color, marker='+')
 
                 # Then plot altitude along with sun/moon
                 self.alt_ax.scatter(l_m_abs_time_frame, l_targ_altazs.alt,
@@ -393,35 +402,42 @@ class ObservationPlanner:
                 self.pol_ax.scatter(np.deg2rad(np.array(l_targ_altazs.az)),
                     90-np.array(l_targ_altazs.alt), color=l_color, marker='+')
 
-        # Configure airmass plot, both utc and regular time
-        self.air_ax.legend(loc='upper left')
-        self.air_ax.set_xlim(m_absolute_time_frame[0], m_absolute_time_frame[-1])
-        self.air_ax.set_xticks(m_tmh_range)
-        self.air_ax.set_xticklabels(utc_tmh_range, rotation=15,
-                               fontsize=date_font_size)
-        self.air_ax.set_xlabel('UTC Time')
-        self.air_ax2 = self.air_ax.twiny()
-        self.air_ax2.set_xlim(m_absolute_time_frame[0], m_absolute_time_frame[-1])
-        self.air_ax2.set_xticks(m_tmh_range)
-        self.air_ax2.set_xticklabels(local_tmh_range, rotation=15,
-                               fontsize=date_font_size)
-        self.air_ax2.set_xlabel('Local time ({})'.format(self.ntpServ.timezone.zone))
-        self.air_ax.set_ylim(0.9, 4)
-        self.air_ax.set_ylabel('Airmass, [Sec(z)]')
+        if show_airmass:
+            # Configure airmass plot, both utc and regular time
+            self.air_ax.legend(loc='upper left')
+            self.air_ax.set_xlim(m_absolute_time_frame[0],
+                                 m_absolute_time_frame[-1])
+            self.air_ax.set_xticks(m_tmh_range)
+            self.air_ax.set_xticklabels(utc_tmh_range, rotation=15,
+                                   fontsize=date_font_size)
+            self.air_ax.set_xlabel('UTC Time')
+            self.air_ax2 = self.air_ax.twiny()
+            self.air_ax2.set_xlim(m_absolute_time_frame[0],
+                                  m_absolute_time_frame[-1])
+            self.air_ax2.set_xticks(m_tmh_range)
+            self.air_ax2.set_xticklabels(local_tmh_range, rotation=15,
+                                   fontsize=date_font_size)
+            self.air_ax2.set_xlabel('Local time ({})'.format(
+                self.ntpServ.timezone.zone))
+            self.air_ax.set_ylim(0.9, 4)
+            self.air_ax.set_ylabel('Airmass, [Sec(z)]')
 
         #Configure altitude plot, both utc and regular time
         self.alt_ax.legend(loc='upper left')
-        self.alt_ax.set_xlim(m_absolute_time_frame[0], m_absolute_time_frame[-1])
+        self.alt_ax.set_xlim(m_absolute_time_frame[0],
+                             m_absolute_time_frame[-1])
         self.alt_ax.set_xticks(m_tmh_range)
         self.alt_ax.set_xticklabels(utc_tmh_range, rotation=15,
                                fontsize=date_font_size)
         self.alt_ax.set_xlabel('UTC Time')
         self.alt_ax2 = self.alt_ax.twiny()
-        self.alt_ax2.set_xlim(m_absolute_time_frame[0], m_absolute_time_frame[-1])
+        self.alt_ax2.set_xlim(m_absolute_time_frame[0],
+                              m_absolute_time_frame[-1])
         self.alt_ax2.set_xticks(m_tmh_range)
         self.alt_ax2.set_xticklabels(local_tmh_range, rotation=15,
                                 fontsize=date_font_size)
-        self.alt_ax2.set_xlabel('Local time ({})'.format(self.ntpServ.timezone.zone))
+        self.alt_ax2.set_xlabel('Local time ({})'.format(
+                                self.ntpServ.timezone.zone))
         self.alt_ax.set_ylim(0, 90)
         self.alt_ax.set_ylabel('Altitude [deg]')
 
@@ -446,12 +462,18 @@ class ObservationPlanner:
 
         return afig, pfig
 
-    def annotate_time_point(self, time_point=None):
+    def annotate_time_point(self, time_point=None, show_airmass=True):
         if time_point is None:
             time_point = self.ntpServ.getUTCFromNTP()
         tm = matplotlib.dates.date2num(time_point)
         color = 'mediumslateblue'
-        for ax in [self.alt_ax, self.air_ax]:
+        axes = []
+        if show_airmass and self.air_ax:
+            axes.append(self.air_ax)
+        if self.alt_ax:
+            axes.append(self.alt_ax)
+
+        for ax in axes:
             ymin, ymax = ax.get_ylim()
             yrange = ymax-ymin
             ylabel = ymin+0.10*yrange

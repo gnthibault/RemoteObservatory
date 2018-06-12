@@ -7,7 +7,7 @@ from datetime import timedelta
 from PyQt5.QtWidgets import QWidget, QApplication, QFrame
 from PyQt5.QtWidgets import QPushButton, QVBoxLayout
 from PyQt5.QtCore import QObject, QRunnable, Qt,QThreadPool
-from PyQt5.QtCore import pyqtSlot, pyqtSignal
+from PyQt5.QtCore import pyqtSlot, pyqtSignal, QTimer
 
 # Matplotlib stuff
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
@@ -31,7 +31,7 @@ class AltazPlannerWidget(QFrame):
         self.logger = logger or logging.getLogger(__name__)
 
         # a figure instance to plot on
-        self.figure = plt.figure(figsize=(20,6))#6 should work
+        self.figure = plt.figure(figsize=(20,4))#6 should work
 
         # Observatory needed
         self.observatory = observatory
@@ -40,6 +40,11 @@ class AltazPlannerWidget(QFrame):
         # ObservationPlanner
         self.obs_planner = ObservationPlanner(ntpServ=serv_time,
                                               obs=observatory)
+
+        # We needs to update the plot at least every 10 seconds
+        timer = QTimer(self)
+        timer.timeout.connect(self.update_figure)
+        timer.start(10*1000)
 
         # Init a ThreadPool for asynchronous worloads
         self.threadpool = QThreadPool()
@@ -90,11 +95,20 @@ class AltazPlannerWidget(QFrame):
                                              duration_hour,
                                              show_plot=False,
                                              write_plot=False,
-                                             afig=self.figure)
-        
+                                             afig=self.figure,
+                                             show_airmass=False)
+        self.show_current_time()
+
+    def show_current_time(self):
+        cur_time = self.serv_time.getUTCFromNTP()
+        #TODO TN: of course this has to be modified accordingly
         tm = self.serv_time.getNextLocalMidnightInUTC()
-        tm = tm + timedelta(hours=-5)
-        self.obs_planner.annotate_time_point(time_point=tm)
+        tm = tm + timedelta(hours=-5)+timedelta(minutes=cur_time.second)
+        self.obs_planner.annotate_time_point(time_point=tm, show_airmass=False)
+
+    def update_figure(self):
+        self.show_current_time()
+        self.canvas.draw()
 
 class WorkerSignals(QObject):
     '''
