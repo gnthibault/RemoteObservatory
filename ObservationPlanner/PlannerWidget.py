@@ -1,6 +1,7 @@
 # Global stuff
 import sys
 import logging
+from datetime import timedelta
 
 # PyQt stuff
 from PyQt5.QtWidgets import QWidget, QApplication, QFrame
@@ -30,7 +31,7 @@ class AltazPlannerWidget(QFrame):
         self.logger = logger or logging.getLogger(__name__)
 
         # a figure instance to plot on
-        self.figure = plt.figure(figsize=(20,6))
+        self.figure = plt.figure(figsize=(20,10))#6 should work
 
         # Observatory needed
         self.observatory = observatory
@@ -90,6 +91,10 @@ class AltazPlannerWidget(QFrame):
                                              show_plot=False,
                                              write_plot=False,
                                              afig=self.figure)
+        
+        tm = self.serv_time.getNextLocalMidnightInUTC()
+        tm = tm + timedelta(hours=-5)
+        self.obs_planner.annotate_time_point(time_point=tm)
 
 class WorkerSignals(QObject):
     '''
