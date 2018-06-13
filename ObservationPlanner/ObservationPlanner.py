@@ -78,9 +78,14 @@ class ObservationPlanner:
         self.path = path
         self.tmh = 8
 
-        # figure or axes
+        # Axes/timeline/annotation
         self.air_ax = None
+        self.air_timeline = None
+        #self._annot = None
         self.alt_ax = None
+        self.alt_timeline = None
+        #self.alt_annot = None
+        self.tmp_drawn = []
 
         # Finished configuring
         self.logger.debug('ObservationPlanner configured successfully')
@@ -468,17 +473,31 @@ class ObservationPlanner:
         tm = matplotlib.dates.date2num(time_point)
         color = 'mediumslateblue'
         axes = []
+        lines = []
         if show_airmass and self.air_ax:
             axes.append(self.air_ax)
+            if self.air_timeline is None:
+                self.air_timeline, = self.air_ax.plot([],[])
+            lines.append(self.air_timeline)
         if self.alt_ax:
             axes.append(self.alt_ax)
+            if self.alt_timeline is None:
+                self.alt_timeline, = self.alt_ax.plot([],[], color=color)
+            lines.append(self.alt_timeline)
+        # delete temporary elements
+        for tmp in self.tmp_drawn:
+            tmp.remove()
+        self.tmp_drawn.clear()
 
-        for ax in axes:
+        for ax,line in zip(axes,lines):
+#        for ax in axes:
             ymin, ymax = ax.get_ylim()
             yrange = ymax-ymin
             ylabel = ymin+0.10*yrange
-            ax.plot([tm,tm],[0,90], color=color)
-            ax.annotate("{:d}:{:02d}".format(time_point.hour,
-                                             time_point.minute),(tm,ylabel),
-                                             color=color)
+            #self.tmp_drawn.append(ax.plot([tm,tm],[0,90], color=color))
+            line.set_xdata([tm,tm])
+            line.set_ydata([0,90])
+            self.tmp_drawn.append(
+                ax.annotate("{:d}:{:02d}".format(time_point.hour,
+                time_point.minute),(tm,ylabel), color=color))
 
