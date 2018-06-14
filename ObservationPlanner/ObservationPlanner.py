@@ -469,7 +469,7 @@ class ObservationPlanner:
 
     def annotate_time_point(self, time_point=None, show_airmass=True):
         if time_point is None:
-            time_point = self.ntpServ.getUTCFromNTP()
+            time_point = self.ntpServ.getLocalTimeFromNTP()
         tm = matplotlib.dates.date2num(time_point)
         color = 'mediumslateblue'
         axes = []
