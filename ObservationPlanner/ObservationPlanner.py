@@ -377,7 +377,8 @@ class ObservationPlanner:
 
                 # compute slot absolute time frame
                 start = bl.start_time
-                l_resolution = bl.number_exposures
+                # We add 1 because last time point is end of the last exposure
+                l_resolution = bl.number_exposures+1
                 l_rel_time_frame = (np.linspace(0, 1, l_resolution) *
                                     bl.duration)
                 l_abs_time_frame = start + l_rel_time_frame
@@ -394,18 +395,32 @@ class ObservationPlanner:
                 if 'filter' in bl.configuration:
                     l_color = self.WheelToPltColors[bl.configuration['filter']]
 
+                def scatter_altaz(ax, abstime, altaz, marker):
+                    ax.scatter(abstime, altaz, color=l_color, marker=marker)
                 if show_airmass:
-                    # First plot airmass
-                    self.air_ax.scatter(l_m_abs_time_frame, l_targ_altazs.secz,
-                                   color=l_color, marker='+')
+                    # First plot airmass for acquisition start points
+                    scatter_altaz(self.air_ax, l_m_abs_time_frame[:-1],
+                                  l_targ_altazs.secz[:-1], marker='+')
+                    # Then plot airmass for the last stop point
+                    scatter_altaz(self.air_ax, l_m_abs_time_frame[-1],
+                                  l_targ_altazs.secz[-1], marker='x')
 
-                # Then plot altitude along with sun/moon
-                self.alt_ax.scatter(l_m_abs_time_frame, l_targ_altazs.alt,
-                                color=l_color, marker='+')
 
-                # Then plot environment aware polar altaz map
-                self.pol_ax.scatter(np.deg2rad(np.array(l_targ_altazs.az)),
-                    90-np.array(l_targ_altazs.alt), color=l_color, marker='+')
+                # Then plot altitude along with sun/moon: start points
+                scatter_altaz(self.alt_ax, l_m_abs_time_frame[:-1],
+                              l_targ_altazs.alt[:-1], marker='+')
+                # Then plot altitude for the last stop point
+                scatter_altaz(self.alt_ax, l_m_abs_time_frame[-1],
+                              l_targ_altazs.alt[-1], marker='x')
+
+                # Then plot environment aware polar altaz map: start points
+                self.pol_ax.scatter(np.deg2rad(np.array(l_targ_altazs.az[:-1])),
+                    90-np.array(l_targ_altazs.alt[:-1]),
+                    color=l_color, marker='+')
+                # Then plot environment aware polar altaz map: stop point
+                self.pol_ax.scatter(np.deg2rad(np.array(l_targ_altazs.az[-1])),
+                    90-np.array(l_targ_altazs.alt[-1]),
+                    color=l_color, marker='x')
 
         if show_airmass:
             # Configure airmass plot, both utc and regular time
