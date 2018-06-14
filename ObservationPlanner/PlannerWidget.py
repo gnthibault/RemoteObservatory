@@ -50,7 +50,7 @@ class AltazPlannerWidget(QFrame):
         self.threadpool = QThreadPool()
         self.logger.debug('Initialize threadpool to serve UI requests with '
                           'a maximum of {} threads'.format(
-                          self.threadpool.maxThreadCount))
+                          self.threadpool.maxThreadCount()))
 
         # We need to protect access to some ressources across threads
         self.mutex = QMutex()
@@ -87,19 +87,16 @@ class AltazPlannerWidget(QFrame):
     @pyqtSlot()
     def launch_plan(self, start_time=None, duration_hour=None):
         #Define the asynchronous workload
-        #worker = Worker(self.plan, start_time, duration_hour)
-        worker = Worker(lambda : self.plan(start_time, duration_hour))
+        worker = Worker(self.plan, start_time, duration_hour)
         worker.signals.result.connect(self.plot)
         worker.signals.finished.connect(self.finished_planning)
         #Asynchronous launch
-        print('########### LAUNCH PLAN THREAD START')
         self.threadpool.start(worker)
 
     def plan(self, start_time=None, duration_hour=None):
         #with QMutexLocker(self.mutex) as mutexLocker:
         # Now schedule with astroplan
         self.obs_planner.init_schedule(start_time, duration_hour)
-        print('WE ARE GOING TO LAUNCH SHOWOBSERVATION')
         self.obs_planner.showObservationPlan(start_time,
                                              duration_hour,
                                              show_plot=False,
@@ -118,7 +115,8 @@ class AltazPlannerWidget(QFrame):
         #with QMutexLocker(self.mutex) as mutexLocker:
         cur_time = self.serv_time.getUTCFromNTP()
         #TODO TN: of course this has to be modified accordingly
-        tm = self.serv_time.getNextLocalMidnightInUTC()
+        tm = self.serv_time.convert_to_local_time(
+            self.serv_time.getNextLocalMidnightInUTC())
         tm = tm + timedelta(hours=-5)+timedelta(minutes=cur_time.second)
         #mutexLocker = QMutexLocker(self.mutex)
         self.obs_planner.annotate_time_point(time_point=tm,
@@ -163,15 +161,14 @@ class Worker(QRunnable):
         '''
           Initialise the runner function with passed args, kwargs.
         '''
-        self.fn(*self.args, **self.kwargs)
-
         try:
             result = self.fn(
                 *self.args, **self.kwargs)
         except:
             traceback.print_exc()
             exctype, value = sys.exc_info()[:2]
-            self.signals.error.emit((exctype, value, traceback.format_exception()))
+            self.signals.error.emit((exctype, value,
+                traceback.format_exception()))
         else:
             self.signals.result.emit(result)
         finally:
