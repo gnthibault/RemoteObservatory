@@ -7,7 +7,7 @@ from datetime import timedelta
 from PyQt5.QtWidgets import QWidget, QApplication, QFrame
 from PyQt5.QtWidgets import QPushButton, QVBoxLayout
 from PyQt5.QtCore import QObject, QRunnable, Qt,QThreadPool
-from PyQt5.QtCore import pyqtSlot, pyqtSignal, QTimer
+from PyQt5.QtCore import pyqtSlot, pyqtSignal, QTimer, QMutex, QMutexLocker
 
 # Matplotlib stuff
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
@@ -52,6 +52,9 @@ class AltazPlannerWidget(QFrame):
                           'a maximum of {} threads'.format(
                           self.threadpool.maxThreadCount))
 
+        # We need to protect access to some ressources across threads
+        self.mutex = QMutex()
+
         self.init_UI()
 
     def init_UI(self):
@@ -75,6 +78,7 @@ class AltazPlannerWidget(QFrame):
 
     def plot(self):
         # refresh canvas
+        mutexLocker = QMutexLocker(self.mutex)
         self.canvas.draw()
 
     def finished_planning(self):
@@ -82,15 +86,20 @@ class AltazPlannerWidget(QFrame):
 
     @pyqtSlot()
     def launch_plan(self, start_time=None, duration_hour=None):
-        #print('Target list is {}'.format(obs_planner.getTargetList()))
+        #Define the asynchronous workload
+        #worker = Worker(self.plan, start_time, duration_hour)
         worker = Worker(lambda : self.plan(start_time, duration_hour))
         worker.signals.result.connect(self.plot)
         worker.signals.finished.connect(self.finished_planning)
+        #Asynchronous launch
+        print('########### LAUNCH PLAN THREAD START')
         self.threadpool.start(worker)
 
     def plan(self, start_time=None, duration_hour=None):
+        #with QMutexLocker(self.mutex) as mutexLocker:
         # Now schedule with astroplan
         self.obs_planner.init_schedule(start_time, duration_hour)
+        print('WE ARE GOING TO LAUNCH SHOWOBSERVATION')
         self.obs_planner.showObservationPlan(start_time,
                                              duration_hour,
                                              show_plot=False,
@@ -99,16 +108,22 @@ class AltazPlannerWidget(QFrame):
                                              show_airmass=False)
         self.show_current_time()
 
+    @pyqtSlot()
+    def update_figure(self):
+        worker = Worker(self.show_current_time)
+        worker.signals.result.connect(self.plot)
+        self.threadpool.start(worker)
+
     def show_current_time(self):
+        #with QMutexLocker(self.mutex) as mutexLocker:
         cur_time = self.serv_time.getUTCFromNTP()
         #TODO TN: of course this has to be modified accordingly
         tm = self.serv_time.getNextLocalMidnightInUTC()
         tm = tm + timedelta(hours=-5)+timedelta(minutes=cur_time.second)
-        self.obs_planner.annotate_time_point(time_point=tm, show_airmass=False)
+        #mutexLocker = QMutexLocker(self.mutex)
+        self.obs_planner.annotate_time_point(time_point=tm,
+                                             show_airmass=False)
 
-    def update_figure(self):
-        self.show_current_time()
-        self.canvas.draw()
 
 class WorkerSignals(QObject):
     '''

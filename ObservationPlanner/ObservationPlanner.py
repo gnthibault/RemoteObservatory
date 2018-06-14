@@ -477,7 +477,7 @@ class ObservationPlanner:
         if show_airmass and self.air_ax:
             axes.append(self.air_ax)
             if self.air_timeline is None:
-                self.air_timeline, = self.air_ax.plot([],[])
+                self.air_timeline, = self.air_ax.plot([],[], color=color)
             lines.append(self.air_timeline)
         if self.alt_ax:
             axes.append(self.alt_ax)
