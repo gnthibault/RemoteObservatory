@@ -48,6 +48,8 @@ class View3D(QObject):
         self.camController.setCamera(self.window.camera())
 
     def set_coord(self, coord):
+        ''' Set coordinates of the observer on earth
+        '''
         latitude = coord['latitude']
         longitude = coord['longitude']
         self.world.setLatitude(latitude)

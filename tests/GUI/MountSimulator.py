@@ -98,6 +98,9 @@ class MainWindow(QMainWindow):
         #self.planner.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
         self.dock_planner.setWidget(self.planner)        
 
+        # Dock safety camera
+
+
         # Global stuff
         self.setLayout(self.layout)
         self.setWindowTitle('Remote observatory dashboard')

@@ -38,26 +38,26 @@ class IndiMount(IndiDevice):
         logger = logger or logging.getLogger(__name__)
         
         if configFileName is None:
-          self.configFileName = 'IndiSimulatorMount.json'
+            self.configFileName = 'IndiSimulatorMount.json'
         else:
-          self.configFileName = configFileName
+            self.configFileName = configFileName
 
         # Now configuring class
         logger.debug('Indi Mount, configuring with file {}'.format(
-          self.configFileName))
+            self.configFileName))
         # Get key from json
         with open(self.configFileName) as jsonFile:
-          data = json.load(jsonFile)
-          deviceName = data['MountName']
+            data = json.load(jsonFile)
+            deviceName = data['MountName']
 
         logger.debug('Indi Mount, mount name is: {}'.format(
-          deviceName))
+            deviceName))
       
         # device related intialization
         IndiDevice.__init__(self, logger=logger, deviceName=deviceName,
-          indiClient=indiClient)
+            indiClient=indiClient)
         if connectOnCreate:
-          self.connect()
+            self.connect()
 
         # Finished configuring
         self.logger.debug('Indi Mount configured successfully')
@@ -136,6 +136,15 @@ class IndiMount(IndiDevice):
         self.logger.debug('Setting slewing rate: {}'.format(
                           slew_rate))
         self.setSwitch('TELESCOPE_SLEW_RATE', [slew_rate])
+
+    def get_pier_side(self):
+        ''' GEM Pier Side
+            PIER_EAST Mount on the East side of pier (Pointing West).
+            PIER_WEST Mount on the West side of pier (Pointing East).
+        '''
+        ret = self.get_switch('TELESCOPE_PIER_SIDE')
+        self.logger.debug('Got pier side: {}'.format(ret))
+        return ret
 
     def isParked(self):
         status = self.get_switch('TELESCOPE_PARK')

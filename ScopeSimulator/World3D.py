@@ -148,7 +148,6 @@ class World3D():
         if jd is None:
             jd = getJD()
         self.jd = jd
-        print(self.jd)
         #self.makeStars(self.jd)
         self.makeStarsPoints(self.jd)
         self.qtime=QQuaternion()

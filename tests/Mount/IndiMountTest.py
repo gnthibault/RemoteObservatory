@@ -27,7 +27,12 @@ if __name__ == '__main__':
     # Now test Mount
     mount = IndiMount(indiClient=indiCli,
                       configFileName=None, connectOnCreate=True)
+
+    # Set slew ret to be used afterwards
     mount.set_slew_rate('SLEW_FIND')
+
+    # Get Pier side, not supported by simulator
+    #ps = mount.get_pier_side()
 
     # Unpark if you want something useful to actually happen
     mount.unPark()
