@@ -11,6 +11,7 @@ import ntplib
 import pytz
 
 # Astropy stuff
+from astropy import units as AU
 from astropy.time import Time as ATime
 
 # Local stuff
@@ -77,7 +78,11 @@ class NTPTimeService(BaseService):
         return self.getLocalTimeFromNTP().date()
 
     def getAstropyTimeFromUTC(self):
-        return ATime(self.getUTCFromNTP())
+        if self.obs is None:
+            return ATime(self.getUTCFromNTP())
+        else:
+            return ATime(self.getUTCFromNTP(),
+                         location=self.obs.getAstropyEarthLocation())
 
     def convert_to_local_time(self, utc_time):
         #If naive time, set to utc by default
@@ -107,4 +112,19 @@ class NTPTimeService(BaseService):
         next_midnight = self.getNextMidnightInUTC(target_date)
         next_noon = next_midnight + timedelta(hours=12)
         return self.convert_to_utc_time(next_noon)
+
+    def get_astropy_gast(self):
+        """ returns approximate sidereal time
+        """
+        utc = self.getAstropyTimeFromUTC()
+        if not (self.obs is None):
+            return utc.sidereal_time( kind='apparent',
+                longitude=self.obs.getAstropyEarthLocation().lon)
+        return utc.sidereal_time(kind='apparent')
+
+    def get_gast(self):
+        return float(self.get_astropy_gast()/AU.hourangle)
+
+    def get_jd(self):
+        return self.getAstropyTimeFromUTC().jd
 

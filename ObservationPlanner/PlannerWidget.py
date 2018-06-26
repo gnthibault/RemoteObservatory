@@ -1,7 +1,8 @@
 # Global stuff
-import sys
-import logging
 from datetime import timedelta
+import logging
+import sys
+import traceback
 
 # PyQt stuff
 from PyQt5.QtWidgets import QWidget, QApplication, QFrame

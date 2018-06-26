@@ -15,13 +15,14 @@ from ScopeSimulator.World3D import World3D
 
 class View3D(QObject):
     _default_clear_color = QColor(97, 97, 99)
-    def __init__(self, parent=None):
+    def __init__(self, parent=None, serv_time=None):
         super().__init__()
+        self.serv_time = serv_time
         self.window = Qt3DWindow(parent)
         self.setClearColor(View3D._default_clear_color)
         self.rootEntity = QEntity()
-        self.world = World3D(self.rootEntity)
-        self.model = Model3D(self.rootEntity)
+        self.world = World3D(self.rootEntity, self.serv_time)
+        self.model = Model3D(self.rootEntity, self.serv_time)
         self.model.setWorld(self.world)
         self.initialiseCamera()
         self.window.setRootEntity(self.rootEntity)

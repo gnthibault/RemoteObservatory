@@ -8,9 +8,6 @@ from PyQt5.Qt3DCore import QEntity, QTransform
 from PyQt5.Qt3DExtras import QMetalRoughMaterial, QDiffuseSpecularMaterial
 from PyQt5.Qt3DRender import QMesh
 
-# Indi stuff
-from indi.client.qt.indicommon import getGAST
-
 class Model3D(QEntity):
     stl_path = 'ScopeSimulator/stl'
     _model_file_mat = [
@@ -49,8 +46,9 @@ class Model3D(QEntity):
                       QVector3D(170.0, 0.0, 1085.0),
                       QVector3D(-40.0, 0.0, 1225.0)]
 
-    def __init__(self, parent=None):
+    def __init__(self, parent=None, serv_time=None):
         super().__init__(parent)
+        self.serv_time = serv_time
         self.azimuth = 0.0
         self.latitude = 0.0
         self.longitude = 0.0
@@ -229,9 +227,9 @@ class Model3D(QEntity):
         self.celestialaz = skypoint.az().Degrees()
         self.celestialalt = skypoint.alt().Degrees()
         if self.world:
-            lst = self.world.getCelestialTime()
+            lst = self.world.get_gast()
         else:
-            lst = (getGAST() + (self.longitude / 15.0))
+            lst = self.serv_time.get_gast()
         ha = self.rangeHA(self.celestialra - lst)
         targetra = self.celestialra
         targetdec = self.celestialdec

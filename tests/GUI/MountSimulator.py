@@ -142,7 +142,7 @@ class GuiLoop():
         # Initialize various widgets/views
         planner = AltazPlannerWidget(observatory=self.observatory,
                                      serv_time=self.serv_time )
-        view3D = View3D.View3D()
+        view3D = View3D.View3D(serv_time=self.serv_time)
 
         # Now initialize main window
         self.main_window = MainWindow(planner=planner, view3D=view3D)
@@ -205,11 +205,11 @@ if __name__ == "__main__":
     indiCli = Indi3DSimulatorClient(None)
     indiCli.connect()
 
-    # ntp time server
-    serv_time = NTPTimeService()
-
     # Build the observatory
     obs = ShedObservatory()
+
+    # ntp time server
+    serv_time = NTPTimeService(obs=obs)
 
     # Build the Mount
     mount = IndiMount(indiClient=indiCli,

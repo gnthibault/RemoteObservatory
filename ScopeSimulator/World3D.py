@@ -16,9 +16,6 @@ from PyQt5.Qt3DRender import QRenderPass, QShaderProgram, QPointSize
 from PyQt5.Qt3DRender import QTechnique, QFilterKey, QGraphicsApiFilter
 from PyQt5.QtSvg import QSvgRenderer
 
-# Indi
-from indi.client.qt.indicommon import getJD, getGAST
-
 # Local stuff
 from Catalogs import load_bright_star_5
 
@@ -135,7 +132,8 @@ class World3D():
     # _m_celestial is its proper inverse
     _sky_radius = 50000.0
 
-    def __init__(self, parent=None, jd=None):
+    def __init__(self, parent=None, serv_time=None):
+        self.serv_time = serv_time
         self.rootEntity = QEntity(parent)
         self.skyEntity = QEntity(self.rootEntity)
         self.skyTransform = QTransform()
@@ -145,16 +143,13 @@ class World3D():
         self.makeHorizontalGrid()
         self.makeMountBasement()
         self.makeCardinals()
-        if jd is None:
-            jd = getJD()
-        self.jd = jd
-        #self.makeStars(self.jd)
-        self.makeStarsPoints(self.jd)
+        #self.makeStars()
+        self.makeStarsPoints()
         self.qtime=QQuaternion()
         self.qlongitude = QQuaternion()
         self.setLatitude(90.0)
         self.setLongitude(0.0)
-        self.setGAST(getGAST())
+        self.set_gast(self.get_gast())
         #self.makeEcliptic()
         self.celestialintervalms = 1 * 1000
         self.celestialacceleration = 1
@@ -167,10 +162,13 @@ class World3D():
 
     def updateCeletialTime(self):
         gast = self.gast + (self.celestialintervalms / 1000) / (60*60)
-        self.setGAST(gast)
+        self.set_gast(gast)
+
+    def get_gast(self):
+        return self.getCelestialTime()
 
     def getCelestialTime(self):
-        return self.gast + (self.longitude / 15.0)
+        return self.serv_time.get_gast()
 
     def updateSkyTransform(self):
         self.skyTransform.setRotation(self.qlatitude * self.qlongitude *
@@ -193,11 +191,12 @@ class World3D():
                                                        angle)
         self.updateSkyTransform()
 
-    def setGAST(self, gast):
+    def set_gast(self, gast):
         #print('Setting GAST', gast)
         self.gast = gast
         angle = -self.gast * 360.0 / 24.0
-        self.qtime = QQuaternion.fromAxisAndAngle(QVector3D(0.0, 1.0, 0.0), angle)
+        self.qtime = QQuaternion.fromAxisAndAngle(QVector3D(0.0, 1.0, 0.0),
+                                                  angle)
         self.updateSkyTransform()
 
     def makeHorizontalPlane(self):
@@ -317,11 +316,12 @@ class World3D():
             e.setParent(self.cardinals)
         self.cardinals.setParent(self.rootEntity)
 
-    def makeStars(self, jd):
+    def makeStars(self):
         # star coordinates in J2000.0 equinox,no proper motion
         # transform for precession-nutation as defined by IAU2006
         # see http://www-f1.ijs.si/~ramsak/KlasMeh/razno/zemlja.pdf page 8
         # not accurate for more than +-7000 years
+        jd = self.serv_time.get_jd()
         self.skyJ2000 = QEntity()
         self.transformJ2000 = QTransform()
         m = self.matPrecessNut(jd)
@@ -356,7 +356,8 @@ class World3D():
 
         self.skyJ2000.setParent(self.skyEntity)
 
-    def makeStarsPoints(self, jd):
+    def makeStarsPoints(self):
+        jd = self.serv_time.get_jd()
         self.skyJ2000 = QEntity()
         self.transformJ2000 = QTransform()
         m = self.matPrecessNut(jd)
