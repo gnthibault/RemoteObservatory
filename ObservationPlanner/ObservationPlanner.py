@@ -3,6 +3,7 @@ import datetime
 import json
 import logging
 import os.path
+import pickle
 
 # Numerical stuff
 import numpy as np
@@ -101,7 +102,8 @@ class ObservationPlanner:
         scheduler = self.gen_scheduler(constr)
         self.schedule = self.gen_schedule(obs_blocks, scheduler, start_time,
                                           duration_hour)
-        print(self.schedule.to_table())
+        # a bug, apparently: https://github.com/astropy/astroplan/issues/372
+        #print(self.schedule.to_table())
         for i, el in enumerate(self.schedule.observing_blocks):
             print('Element {} in schedule: start at {}, target is {}, '
                   'filter is {}, count is {}, and duration is {}'.format(

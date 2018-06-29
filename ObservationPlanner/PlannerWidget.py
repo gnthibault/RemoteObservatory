@@ -26,6 +26,9 @@ from ObservationPlanner.ObservationPlanner import ObservationPlanner
 
 
 class AltazPlannerWidget(QFrame):
+
+    schedule_ready_trigger = pyqtSignal(object)
+
     def __init__(self, parent=None, observatory=None, serv_time=None,
                  logger=None):
         super(QFrame, self).__init__(parent)
@@ -82,8 +85,10 @@ class AltazPlannerWidget(QFrame):
         mutexLocker = QMutexLocker(self.mutex)
         self.canvas.draw()
 
+    @pyqtSlot()
     def finished_planning(self):
         self.logger.debug("Planning task completed")
+        self.schedule_ready_trigger.emit(self.obs_planner.schedule)
 
     @pyqtSlot()
     def launch_plan(self, start_time=None, duration_hour=None):
