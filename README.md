@@ -21,4 +21,12 @@ For now, RemoteObservatory uses some web service to acquire data, so ensure that
 
 pip install PyQt5 PyQt3D
 
-conda create -n freecad freecad pivy=0.6.4b2
+## Support for DBus scripting
+
+sudo apt-get install libgirepository1.0-dev gobject-introspection
+pip install PyGObject
+
+or
+
+conda install -c conda-forge pygobject
+
