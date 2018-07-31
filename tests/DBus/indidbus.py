@@ -1,8 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-# You must initialize the gobject/dbus support for threading
-# before doing anything.
 from gi.repository import GObject
 from gi.repository import GLib
 import os
