@@ -11,6 +11,9 @@ from helper.IndiClient import indiClientGlobalBlobEvent
 # Imaging and Fits stuff
 from astropy.io import fits
 
+# Local stuff: Focuser
+from Focuser.IndiFocuser import IndiFocuser
+
 class IndiCamera(IndiDevice):
     """ Indi Camera """
 
@@ -33,10 +36,16 @@ class IndiCamera(IndiDevice):
         # Now configuring class
         logger.debug('Configuring Indi Camera with file {}'.format(
                       self.configFileName))
+
+        self.focuser = None
         # Get key from json
         with open(self.configFileName) as jsonFile:
             data = json.load(jsonFile)
             deviceName = data['cameraName']
+            if 'focuserCfg' in data:
+                self.focuser = IndiFocuser(indiClient=indiClient,
+                                           configFileName=data['focuserCfg']
+                                           connectOnCreate=connectOnCreate)
 
         logger.debug('Indi camera, camera name is: {}'.format(deviceName))
       
@@ -52,6 +61,13 @@ class IndiCamera(IndiDevice):
         # Default exposureTime, gain
         self.exp_time_sec=5
         self.gain=400
+
+        # Now check if there is a focuser attached
+        #try:
+        #    self.focuser = IndiFocuser(indiClient=self.indi_client,
+        #                               connectOnCreate=True)
+        #except Exception:
+        #    raise error.RuntimeError('Problem setting up focuser')
 
         # Finished configuring
         self.logger.debug('Configured Indi Camera successfully')

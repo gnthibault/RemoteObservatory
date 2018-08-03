@@ -13,7 +13,7 @@ from astroplan import Observer
 import pytz
 from tzwhere import tzwhere
 
-class ShedObservatory(object):
+class ShedObservatory():
     """Shed Observatory 
     """
 
@@ -68,19 +68,19 @@ class ShedObservatory(object):
     def getOwnerName(self):
         return self.ownerName
 
-    def openEverything(self):
+    def open_everything(self):
         self.logger.debug('ShedObservatory: open everything....')
         pass
         self.logger.debug('ShedObservatory: everything opened')
    
-    def closeEverything(self):
+    def close_everything(self):
         self.logger.debug('ShedObservatory: close everything....')
         pass
         self.logger.debug('ShedObservatory: everything closed')
 
     def onEmergency(self):
         self.logger.debug('ShedObservatory: on emergency routine started...')
-        self.closeEverything()
+        self.close_everything()
         self.logger.debug('ShedObservatory: on emergency routine finished')
 
     def switchOnFlatPannel(self):
@@ -98,7 +98,7 @@ class ShedObservatory(object):
         pressure = 0.85 * AU.bar
         relative_humidity = 0.20
         temperature = 15 * AU.deg_C
-        if not (self.servWeather is None):
+        if self.servWeather is not None:
             pressure = (self.servWeather.getPressure_mb() / 1000) * AU.bar
             relative_humidity = self.servWeather.getRelative_humidity()
             temperature = self.servWeather.getTemp_c() * AU.deg_C

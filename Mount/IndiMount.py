@@ -53,6 +53,8 @@ class IndiMount(IndiDevice):
         logger.debug('Indi Mount, mount name is: {}'.format(
             deviceName))
       
+        self.initialized = False
+
         # device related intialization
         IndiDevice.__init__(self, logger=logger, deviceName=deviceName,
             indiClient=indiClient)
@@ -61,6 +63,12 @@ class IndiMount(IndiDevice):
 
         # Finished configuring
         self.logger.debug('Indi Mount configured successfully')
+
+    def is_tracking(self):
+        return True
+
+    def is_initialized(self):
+        return self.initialized
 
     def onEmergency(self):
         self.logger.debug('on emergency routine started...')

@@ -1,10 +1,20 @@
 # RemoteObservatory
-Another astronomical observatory manager
+Another astronomical observatory manager.
+This project either uses, or is directly inspired by:
+
+* KStars: https://github.com/KDE/kstars
+* Indi: https://github.com/indilib/indi (Jasem Mutlaq + contributors)
+* Indi-lite-tools: https://github.com/GuLinux/indi-lite-tools (Marco Gulino)
+* npindi: https://github.com/geehalel/npindi (Geehalel)
+* Panoptes: https://github.com/panoptes/POCS
+* Astropy: https://github.com/astropy/astropy
+* Astroplan: https://github.com/astropy/astroplan (Brett Morris + contributors)
+* Astrometry.net: https://github.com/dstndstn/astrometry.net (Dustin Lang + contributors)
 
 ## Install
 sudo apt-add-repository ppa:mutlaqja/ppa
 sudo apt-get update
-sudo apt-get install libcfitsio-dev libnova-dev swig indi-full kstars-bleeding libftdi-dev libgps-dev libraw-dev libgphoto2-dev libboost-dev libboost-regex-dev librtlsdr-dev libftdi1-dev libfftw3-dev libastrometry* libnova* astrometry-* xplanet extra-cmake-modules kdelibs5-dev libkf5declarative-dev libkf5globalaccel-dev libkf5configwidgets-dev libkf5xmlgui-dev libkf5windowsystem-dev kdoctools-dev libkf5notifications-dev libkf5kdelibs4support5-bin libkf5newstuff-dev libkf5crash-dev libkf5plotting-dev libkf5notifyconfig-dev libraw-dev wcslib-dev libqt5svg5-dev libqt5websockets5-dev qttools5-dev-tools -y
+sudo apt-get install libcfitsio-dev libnova-dev swig indi-full kstars-bleeding libftdi-dev libgps-dev libraw-dev libgphoto2-dev libboost-dev libboost-regex-dev librtlsdr-dev libftdi1-dev libfftw3-dev libastrometry* libnova* astrometry-* xplanet extra-cmake-modules kdelibs5-dev libkf5declarative-dev libkf5globalaccel-dev libkf5configwidgets-dev libkf5xmlgui-dev libkf5windowsystem-dev kdoctools-dev libkf5notifications-dev libkf5kdelibs4support5-bin libkf5newstuff-dev libkf5crash-dev libkf5plotting-dev libkf5notifyconfig-dev libraw-dev wcslib-dev libqt5svg5-dev libqt5websockets5-dev qttools5-dev-tools libftdi1-dev libgps-dev libgphoto2-dev -y
 
 pip install requests pyindi-client requests-cache watchdog astropy ntplib astroplan matplotlib tzwhere astroquery
 
