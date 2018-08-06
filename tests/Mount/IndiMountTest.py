@@ -41,6 +41,10 @@ if __name__ == '__main__':
     c = SkyCoord(ra=11.5*u.hour, dec=78.9*u.degree, frame='icrs')
     mount.slew_to_coord_and_track(c)
 
+    # Check coordinates
+    c = mount.get_current_coordinates()
+    print('Coordinates are now: {}'.format(c))
+
     # Sync
     c = SkyCoord(ra=11.53*u.hour, dec=79*u.degree, frame='icrs')
     mount.sync_to_coord(c)

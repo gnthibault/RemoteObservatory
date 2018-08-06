@@ -1,16 +1,17 @@
+# Astroplan
 from astroplan import FixedTarget
+
+# Astropy
 from astropy.coordinates import SkyCoord
 
-from pocs.base import PanBase
-
-
-class Field(FixedTarget, PanBase):
+class Field(FixedTarget):
 
     def __init__(self, name, position, equinox='J2000', **kwargs):
         """ An object representing an area to be observed
 
-        A `Field` corresponds to an `~astroplan.ObservingBlock` and contains information
-        about the center of the field (represented by an `astroplan.FixedTarget`).
+        A `Field` corresponds to an `~astroplan.ObservingBlock` and contains
+        information about the center of the field (represented by an
+        `astroplan.FixedTarget`).
 
         Arguments:
             name {str} -- Name of the field, typically the name of object at
@@ -21,8 +22,6 @@ class Field(FixedTarget, PanBase):
                 `astroplan.ObservingBlock`
 
         """
-        PanBase.__init__(self)
-
         # Force an equinox
         if equinox is None:
             equinox = 'J2000'
@@ -32,9 +31,9 @@ class Field(FixedTarget, PanBase):
         self._field_name = self.name.title().replace(' ', '').replace('-', '')
 
 
-##################################################################################################
+###############################################################################
 # Properties
-##################################################################################################
+###############################################################################
 
     @property
     def field_name(self):
@@ -42,14 +41,14 @@ class Field(FixedTarget, PanBase):
         return self._field_name
 
 
-##################################################################################################
+###############################################################################
 # Methods
-##################################################################################################
+###############################################################################
 
 
-##################################################################################################
+###############################################################################
 # Private Methods
-##################################################################################################
+###############################################################################
 
     def __str__(self):
         return self.name

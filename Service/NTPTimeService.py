@@ -128,3 +128,11 @@ class NTPTimeService(BaseService):
     def get_jd(self):
         return self.getAstropyTimeFromUTC().jd
 
+    def flat_time(self):
+        """
+            Given an astropy Time, flatten to have no extra chars besides
+            integers
+        """
+        t = self.getAstropyTimeFromUTC()
+        return t.isot.replace('-', '').replace(':', '').split('.')[0]
+

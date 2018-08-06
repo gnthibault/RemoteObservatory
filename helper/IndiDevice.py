@@ -39,6 +39,9 @@ class IndiDevice:
                                PyIndi.INDI_BLOB: 'blob',
                                PyIndi.INDI_UNKNOWN: 'unknown' }
 
+    @property
+    def is_connected(self):
+        return self.device.isConnected()
 
     def __findDevice(self):
         self.logger.debug('IndiDevice: asking indiClient to look for device {}'
@@ -118,7 +121,7 @@ class IndiDevice:
                                   ctl)
 
     def get_number(self, name, ctl=None):
-        return self.get_prop_dict(name, 'text',
+        return self.get_prop_dict(name, 'number',
                                   lambda c: {'value': c.value, 'min': c.min,
                                              'max': c.max, 'step': c.step,
                                              'format': c.format},

@@ -10,14 +10,13 @@ from astropy import units as u
 from astroplan import Observer
 
 # Generic stuff
-from pocs.utils import current_time
-from pocs.scheduler.field import Field
-from pocs.scheduler.observation import Observation
+from ObservationPlanner.Field import Field
+from ObservationPlanner.Observation import Observation
 
 
 class BaseScheduler:
 
-    def __init__(self, observer, fields_list=None, fields_file=None,
+    def __init__(self, observer, serv_time, fields_list=None, fields_file=None,
                  constraints=list(), *args, **kwargs):
         """Loads `~pocs.scheduler.field.Field`s from a field
 
@@ -41,11 +40,14 @@ class BaseScheduler:
         """
         assert isinstance(observer, Observer)
 
+        if fields_file is None:
+            fields_file = 'default_targets.yaml'
         self._fields_file = fields_file
         self._fields_list = fields_list
         self._observations = dict()
 
         self.observer = observer
+        self.serv_time = serv_time
 
         self.constraints = constraints
 
@@ -82,7 +84,7 @@ class BaseScheduler:
 
         Upon setting a new observation the `seq_time` is set to the current time
         and added to the `observed_list`. An old observation is reset (so that
-        it can be used again - see `~pocs.scheduelr.observation.reset`). If the
+        it can be used again - see `~pocs.scheduler.observation.reset`). If the
         new observation is the same as the old observation, nothing is done. The
         new observation can also be set to `None` to specify there is no current
         observation.
@@ -93,11 +95,11 @@ class BaseScheduler:
     def current_observation(self, new_observation):
 
         if self.current_observation is None:
-            # If we have no current observation but do have a new one, set seq_time
-            # and add to the list
+            # If we have no current observation but do need a new one, set
+            # seq_time and add to the list
             if new_observation is not None:
                 # Set the new seq_time for the observation
-                new_observation.seq_time = current_time(flatten=True)
+                new_observation.seq_time = self.serv_time.flat_time()
 
                 # Add the new observation to the list
                 self.observed_list[new_observation.seq_time] = new_observation
@@ -109,7 +111,7 @@ class BaseScheduler:
                 # If we have a new observation, check if same as old observation
                 if self.current_observation.name != new_observation.name:
                     self.current_observation.reset()
-                    new_observation.seq_time = current_time(flatten=True)
+                    new_observation.seq_time = self.serv_time.flat_time()
 
                     # Add the new observation to the list
                     self.observed_list[new_observation.seq_time] = new_observation

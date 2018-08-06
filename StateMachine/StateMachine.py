@@ -1,4 +1,5 @@
 # Generic stuff
+import logging
 import os
 import yaml
 
@@ -19,6 +20,7 @@ class StateMachine(Machine):
 
     def __init__(self, state_machine_table, **kwargs):
 
+        self.logger = logging.getLogger(__name__)
         if isinstance(state_machine_table, str):
             self.logger.info("Loading state table: {}".format(
                 state_machine_table))
@@ -41,6 +43,8 @@ class StateMachine(Machine):
 
         states = [self._load_state(state) for state in state_machine_table.get(
                   'states', [])]
+        self.logger.debug('List of stattes loaded from {}: {}'.format(
+            state_machine_table, states))
 
         super(StateMachine, self).__init__(
             states=states,
@@ -352,9 +356,8 @@ class StateMachine(Machine):
         self.logger.debug("Loading state: {}".format(state))
         s = None
         try:
-            state_module = load_module('{}.{}.{}'.format(
+            state_module = load_module('{}.{}'.format(
                 self._states_location.replace("/", "."),
-                self._state_table_name,
                 state
             ))
 

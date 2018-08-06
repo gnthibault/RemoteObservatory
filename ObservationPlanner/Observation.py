@@ -1,21 +1,25 @@
-from astropy import units as u
+# Generic
 from collections import OrderedDict
+import logging
 
-from pocs.base import PanBase
-from pocs.scheduler.field import Field
+# Astropy
+from astropy import units as u
+
+# Local
+from ObservationPlanner.Field import Field
 
 
-class Observation(PanBase):
+class Observation:
 
     @u.quantity_input(exp_time=u.second)
     def __init__(self, field, exp_time=120 * u.second, min_nexp=60,
                  exp_set_size=10, priority=100, **kwargs):
         """ An observation of a given `~pocs.scheduler.field.Field`.
 
-        An observation consists of a minimum number of exposures (`min_nexp`) that
-        must be taken at a set exposure time (`exp_time`). These exposures come
-        in sets of a certain size (`exp_set_size`) where the minimum number of
-        exposures  must be an integer multiple of the set size.
+        An observation consists of a minimum number of exposures (`min_nexp`)
+        that must be taken at a set exposure time (`exp_time`). These exposures
+        come in sets of a certain size (`exp_set_size`) where the minimum
+        number of exposures  must be an integer multiple of the set size.
 
         Note:
             An observation may consist of more exposures than `min_nexp` but
@@ -39,19 +43,19 @@ class Observation(PanBase):
                 (default: {100})
 
         """
-        PanBase.__init__(self)
+        self.logger = logging.getLogger(__name__)
+        assert isinstance(field, Field), self.logger.error(
+            "Must be a valid Field instance")
 
-        assert isinstance(field, Field), self.logger.error("Must be a valid Field instance")
+        assert exp_time > 0.0, self.logger.error('Exposure time (exp_time) '
+            'must be greater than 0')
 
-        assert exp_time > 0.0, \
-            self.logger.error("Exposure time (exp_time) must be greater than 0")
+        assert min_nexp % exp_set_size == 0, self.logger.error('Minimum number'
+            ' of exposures (min_nexp) must be multiple of set size '
+            '(exp_set_size)')
 
-        assert min_nexp % exp_set_size == 0, \
-            self.logger.error(
-                "Minimum number of exposures (min_nexp) must be " +
-                "multiple of set size (exp_set_size)")
-
-        assert float(priority) > 0.0, self.logger.error("Priority must be 1.0 or larger")
+        assert float(priority) > 0.0, self.logger.error('Priority must be 1.0 '
+            'or larger')
 
         self.field = field
 
@@ -76,9 +80,9 @@ class Observation(PanBase):
         self.logger.debug("Observation created: {}".format(self))
 
 
-##################################################################################################
+###############################################################################
 # Properties
-##################################################################################################
+###############################################################################
 
     @property
     def minimum_duration(self):
@@ -92,7 +96,9 @@ class Observation(PanBase):
 
     @property
     def name(self):
-        """ Name of the `~pocs.scheduler.field.Field` associated with the observation """
+        """ Name of the `~pocs.scheduler.field.Field` associated with the 
+            observation
+        """
         return self.field.name
 
     @property
@@ -112,7 +118,8 @@ class Observation(PanBase):
         """ Return the latest exposure information
 
         Returns:
-            tuple: `image_id` and full path of most recent exposure from the primary camera
+            tuple: `image_id` and full path of most recent exposure from the
+                    primary camera
         """
         try:
             return list(self.exposure_list.items())[0]
@@ -124,7 +131,8 @@ class Observation(PanBase):
         """ Return the latest exposure information
 
         Returns:
-            tuple: `image_id` and full path of most recent exposure from the primary camera
+            tuple: `image_id` and full path of most recent exposure from the
+                   primary camera
         """
         try:
             return list(self.exposure_list.items())[-1]
@@ -132,9 +140,9 @@ class Observation(PanBase):
             self.logger.warning("No exposure available")
 
 
-##################################################################################################
+###############################################################################
 # Methods
-##################################################################################################
+###############################################################################
 
     def reset(self):
         """Resets the exposure values for the observation """
@@ -179,10 +187,11 @@ class Observation(PanBase):
         return status
 
 
-##################################################################################################
+###############################################################################
 # Private Methods
-##################################################################################################
+###############################################################################
 
     def __str__(self):
-        return "{}: {} exposures in blocks of {}, minimum {}, priority {:.0f}".format(
-            self.field, self.exp_time, self.exp_set_size, self.min_nexp, self.priority)
+        return '{}: {} exposures in blocks of {}, minimum {}, priority '
+               '{:.0f}'.format(self.field, self.exp_time, self.exp_set_size,
+                               self.min_nexp, self.priority)

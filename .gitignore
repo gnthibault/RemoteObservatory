@@ -17,3 +17,4 @@ __pycache__
 /IndiSimulatorMount.json
 /IndiSimulatorFocuser.json
 /simple_state_table.yaml
+/default_targets.yaml

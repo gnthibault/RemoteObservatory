@@ -6,6 +6,10 @@ import logging
 import os
 import time
 
+# Asynchronous stuff
+from threading import Event
+from threading import Thread
+
 # Astropy
 from astropy import units as u
 from astropy.coordinates import EarthLocation
@@ -16,7 +20,7 @@ from astropy.coordinates import get_sun
 from astroplan import Observer
 
 # Local stuff: Camera
-from Camera.IndiVirtualCamera import IndiVirtualCamera
+from Camera.IndiCamera import IndiCamera
 from Camera.IndiEos350DCamera import IndiEos350DCamera
 
 # Local stuff: FilterWheel
@@ -32,7 +36,11 @@ from helper.IndiClient import IndiClient
 # Local stuff: Mount
 from Mount.IndiMount import IndiMount
 
-# Local stuff: Target list
+# Local stuff: Observation planning
+from ObservationPlanner.Constraint import Duration
+from ObservationPlanner.Constraint import MoonAvoidance
+from ObservationPlanner.Constraint import Altitude
+from ObservationPlanner import Horizon as horizon_utils
 from ObservationPlanner.ObservationPlanner import ObservationPlanner
 
 # Local stuff: Observatory
@@ -48,20 +56,11 @@ from Service.WUGWeatherService import WUGWeatherService
 from Service.NTPTimeService import NTPTimeService
 from Service.NovaAstrometryService import NovaAstrometryService
 
-# Local stiff: Utils
+# Local stuff: Utils
 from utils import error
 
-#from pocs.base import PanBase
-#import pocs.dome
-#from pocs.images import Image
-#from pocs.scheduler.constraint import Duration
-#from pocs.scheduler.constraint import MoonAvoidance
-#from pocs.scheduler.constraint import Altitude
-#from pocs.utils import current_time
 #from pocs.utils import images as img_utils
-#from pocs.utils import horizon as horizon_utils
-#from pocs.utils import list_connected_cameras
-#from pocs.utils import load_module
+from utils import load_module
 
 
 class Manager():
@@ -122,7 +121,7 @@ class Manager():
     def is_dark(self):
         horizon = self.location.get('twilight_horizon', -18 * u.degree)
 
-        t0 = current_time()
+        t0 = self.serv_time.getAstropyTimeFromUTC()
         is_dark = self.observer.is_night(t0, horizon=horizon)
 
         if not is_dark:
@@ -133,7 +132,7 @@ class Manager():
 
     @property
     def sidereal_time(self):
-        return self.observer.local_sidereal_time(current_time())
+        return self.observer.local_sidereal_time(self.serv_time.getAstropyTimeFromUTC())
 
     @property
     def primary_camera(self):
@@ -164,23 +163,21 @@ class Manager():
         """Initialize the observatory and connected hardware """
         self.logger.debug("Initializing mount")
         self.mount.initialize()
-        if self.dome:
-            self.dome.connect()
+        self.observatory.initialize()
 
     def power_down(self):
         """Power down the observatory. Currently does nothing
         """
         self.logger.debug("Shutting down observatory")
-        self.mount.disconnect()
-        if self.dome:
-            self.dome.disconnect()
+        self.mount.deinitialize()
+        self.observatory.deinitialize()
 
     def status(self):
         """Get status information for various parts of the observatory
         """
         status = {}
         try:
-            t = current_time()
+            t = self.serv_time.getAstropyTimeFromUTC()
             local_time = str(datetime.now()).split('.')[0]
 
             if self.mount.is_initialized:
@@ -188,19 +185,23 @@ class Manager():
                 status['mount']['current_ha'] = self.observer.target_hour_angle(
                     t, self.mount.get_current_coordinates())
                 if self.mount.has_target:
-                    status['mount']['mount_target_ha'] = self.observer.target_hour_angle(
-                        t, self.mount.get_target_coordinates())
+                    status['mount']['mount_target_ha'] = (
+                        self.observer.target_hour_angle(t, 
+                            self.mount.get_target_coordinates()))
 
             if self.dome:
                 status['dome'] = self.dome.status
 
             if self.current_observation:
                 status['observation'] = self.current_observation.status()
-                status['observation']['field_ha'] = self.observer.target_hour_angle(
-                    t, self.current_observation.field)
+                status['observation']['field_ha'] = (
+                    self.observer.target_hour_angle(t,
+                        self.current_observation.field))
 
-            evening_astro_time = self.observer.twilight_evening_astronomical(t, which='next')
-            morning_astro_time = self.observer.twilight_morning_astronomical(t, which='next')
+            evening_astro_time = self.observer.twilight_evening_astronomical(t,
+                                 which='next')
+            morning_astro_time = self.observer.twilight_morning_astronomical(t,
+                                 which='next')
 
             status['observer'] = {
                 'siderealtime': str(self.sidereal_time),
@@ -255,36 +256,27 @@ class Manager():
         `observed_list` when done
 
         """
-        try:
-            upload_images = self.config.get('panoptes_network', {})['image_storage']
-        except KeyError:
-            upload_images = False
-
-        try:
-            pan_id = self.config['pan_id']
-        except KeyError:
-            self.logger.warning("pan_id not set in config, can't upload images.")
-            upload_images = False
+        upload_images = False
 
         for seq_time, observation in self.scheduler.observed_list.items():
             self.logger.debug("Housekeeping for {}".format(observation))
 
-            for cam_name, camera in self.cameras.items():
-                self.logger.debug('Cleanup for camera {} [{}]'.format(
-                    cam_name, camera.uid))
+            #for cam_name, camera in self.cameras.items():
+            #    self.logger.debug('Cleanup for camera {} [{}]'.format(
+            #        cam_name, camera.uid))
 
-                dir_name = "{}/fields/{}/{}/{}/".format(
-                    self.config['directories']['images'],
-                    observation.field.field_name,
-                    camera.uid,
-                    seq_time,
-                )
+            #    dir_name = "{}/fields/{}/{}/{}/".format(
+            #        self.config['directories']['images'],
+            #        observation.field.field_name,
+            #        camera.uid,
+            #        seq_time,
+            #    )
 
-                img_utils.clean_observation_dir(dir_name)
+            #    img_utils.clean_observation_dir(dir_name)
 
-                if upload_images is True:
-                    self.logger.debug("Uploading directory to google cloud storage")
-                    img_utils.upload_observation_dir(pan_id, dir_name)
+            #    if upload_images is True:
+            #        self.logger.debug("Uploading directory to google cloud storage")
+            #        img_utils.upload_observation_dir(pan_id, dir_name)
 
             self.logger.debug('Cleanup finished')
 
@@ -301,7 +293,7 @@ class Manager():
         headers = self.get_standard_headers()
 
         # All cameras share a similar start time
-        headers['start_time'] = current_time(flatten=True)
+        headers['start_time'] = self.serv_time.flat_time()
 
         # List of camera events to wait for to signal exposure is done
         # processing
@@ -313,8 +305,8 @@ class Manager():
 
             try:
                 # Start the exposures
-                cam_event = camera.take_observation(
-                    self.current_observation, headers)
+                cam_event = self.take_observation(
+                    camera, self.current_observation, headers)
 
                 camera_events[cam_name] = cam_event
 
@@ -323,11 +315,68 @@ class Manager():
 
         return camera_events
 
+    def take_observation(self, camera, observation, headers):
+        """Take an observation
+
+        Gathers various header information, sets the file path, and calls
+            `take_exposure`. Also creates a `threading.Event` object and a
+            `threading.Thread` object. The Thread calls `process_exposure`
+            after the exposure had completed and the Event is set once
+            `process_exposure` finishes.
+
+        Args:
+            observation (~pocs.scheduler.observation.Observation): Object
+                describing the observation
+            headers (dict, optional): Header data to be saved along with the
+                file.
+            filename (str, optional): pass a filename for the output FITS file
+                to overrride the default file naming system
+
+        Returns:
+            threading.Event: An event to be set when the image is done
+                processing
+        """
+
+        #exp_time, file_path, image_id, metadata = self._setup_observation(observation,
+        #                                                                  headers,
+        #                                                                  filename,
+        #                                                                  *args,
+
+        # TODO TN, for now, just a dummy wait, no image is written
+        exposure_event = Event()
+        #camera.prepareShoot()
+        #camera.shootAsyncWithEvent(
+        # seconds=exp_time, filename=file_path, *args, **kwargs)
+        image_id = 1
+        file_path = '/tmp/dummy.fit'
+
+        def moc_exposure(sleep_sec, exp_event):
+            time.sleep(sleep_sec)
+            exp_event.set()
+        t = Thread(target=moc_exposure, args=(observation.exp_time.value,
+                                               exposure_event))
+        t.name = '{}Thread'.format(self.name)
+        
+
+        # Add most recent exposure to list
+        if self.is_primary:
+            observation.exposure_list[image_id] = file_path
+
+        # Process the exposure once readout is complete
+        #observation_event = Event()
+        #t2 = Thread(target=self.process_exposure, args=(metadata,
+        #                                                observation_event,
+        #                                                exposure_event))
+        #t2.name = '{}Thread'.format(self.name)
+        #t2.start()
+
+        return exposure_event
+
     def analyze_recent(self):
         """Analyze the most recent exposure
 
-        Compares the most recent exposure to the reference exposure and determines
-        the offset between the two.
+        Compares the most recent exposure to the reference exposure and
+        determines the offset between the two.
 
         Returns:
             dict: Offset information
@@ -341,26 +390,26 @@ class Manager():
             # Get the image to compare
             image_id, image_path = self.current_observation.last_exposure
 
-            current_image = Image(image_path, location=self.earth_location)
+            #current_image = Image(image_path, location=self.earth_location)
 
-            solve_info = current_image.solve_field()
+            #solve_info = current_image.solve_field()
 
-            self.logger.debug("Solve Info: {}".format(solve_info))
+            #self.logger.debug("Solve Info: {}".format(solve_info))
 
             # Get the offset between the two
-            self.current_offset_info = current_image.compute_offset(
-                pointing_image)
-            self.logger.debug('Offset Info: {}'.format(
-                self.current_offset_info))
+            #self.current_offset_info = current_image.compute_offset(
+            #    pointing_image)
+            #self.logger.debug('Offset Info: {}'.format(
+            #    self.current_offset_info))
 
             # Store the offset information
-            self.db.insert('offset_info', {
-                'image_id': image_id,
-                'd_ra': self.current_offset_info.delta_ra.value,
-                'd_dec': self.current_offset_info.delta_dec.value,
-                'magnitude': self.current_offset_info.magnitude.value,
-                'unit': 'arcsec',
-            })
+            #self.db.insert('offset_info', {
+            #    'image_id': image_id,
+            #    'd_ra': self.current_offset_info.delta_ra.value,
+            #    'd_dec': self.current_offset_info.delta_dec.value,
+            #    'magnitude': self.current_offset_info.magnitude.value,
+            #    'unit': 'arcsec',
+            #})
 
         except error.SolveError:
             self.logger.warning("Can't solve field, skipping")
@@ -424,10 +473,12 @@ class Manager():
                         dec_direction), '{:05.0f}'.format(dec_ms))
 
                 # Adjust tracking for up to 30 seconds then fail if not done.
-                start_tracking_time = current_time()
+                start_tracking_time = self.serv_time.getAstropyTimeFromUTC()
                 while self.mount.is_tracking is False:
-                    if (current_time() - start_tracking_time).sec > 30:
-                        raise Exception("Trying to adjust Dec tracking for more than 30 seconds")
+                    if (self.serv_time.getAstropyTimeFromUTC() -
+                            start_tracking_time).sec > 30:
+                        raise Exception('Trying to adjust Dec tracking for '
+                                        'more than 30 seconds')
 
                     self.logger.debug("Waiting for Dec tracking adjustment")
                     time.sleep(0.1)
@@ -444,10 +495,12 @@ class Manager():
                         ra_direction), '{:05.0f}'.format(ra_ms))
 
                 # Adjust tracking for up to 30 seconds then fail if not done.
-                start_tracking_time = current_time()
+                start_tracking_time = self.serv_time.getAstropyTimeFromUTC()
                 while self.mount.is_tracking is False:
-                    if (current_time() - start_tracking_time).sec > 30:
-                        raise Exception("Trying to adjust RA tracking for more than 30 seconds")
+                    if (self.serv_time.getAstropyTimeFromUTC() - 
+                            start_tracking_time).sec > 30:
+                        raise Exception('Trying to adjust RA tracking for '
+                                        'more than 30 seconds')
 
                     self.logger.debug("Waiting for RA tracking adjustment")
                     time.sleep(0.1)
@@ -473,12 +526,12 @@ class Manager():
 
         self.logger.debug("Getting headers for : {}".format(observation))
 
-        t0 = current_time()
+        t0 = self.serv_time.getAstropyTimeFromUTC()
         moon = get_moon(t0, self.observer.location)
 
         headers = {
             'airmass': self.observer.altaz(t0, field).secz.value,
-            'creator': "POCSv{}".format(self.__version__),
+            'creator': "RemoteObservatoryV{}".format(self.__version__),
             'elevation': self.location.get('elevation').value,
             'ha_mnt': self.observer.target_hour_angle(t0, field).value,
             'latitude': self.location.get('latitude').value,
@@ -486,8 +539,8 @@ class Manager():
             'moon_fraction': self.observer.moon_illumination(t0),
             'moon_separation': field.coord.separation(moon).value,
             'observer': self.config.get('name', ''),
-            'origin': 'Project PANOPTES',
-            'tracking_rate_ra': self.mount.tracking_rate,
+            'origin': 'gnthibault',
+            'tracking_rate_ra': self.mount.getTrackRate()
         }
 
         # Add observation metadata
@@ -544,11 +597,11 @@ class Manager():
             try:
                 assert camera.focuser.is_connected
             except AttributeError:
-                self.logger.debug(
-                    'Camera {} has no focuser, skipping autofocus'.format(cam_name))
+                self.logger.debug('Camera {} has no focuser, skipping '
+                                  'autofocus'.format(cam_name))
             except AssertionError:
-                self.logger.debug(
-                    'Camera {} focuser not connected, skipping autofocus'.format(cam_name))
+                self.logger.debug('Camera {} focuser not connected, skipping '
+                                  'autofocus'.format(cam_name))
             else:
                 try:
                     # Start the autofocus
@@ -674,6 +727,7 @@ class Manager():
             raise error.CameraNotFound(
                 msg="No cameras available. Exiting.", exit=True)
 
+    # TODO TN: filterwheel should be relative to a camera
     def _setup_filterwheel(self):
         """
             Setup a filterwheel object.
@@ -689,10 +743,38 @@ class Manager():
         """
             Sets up the scheduler that will be used by the observatory
         """
-
+        
+        # Legacy mode that I wrote quite a while ago (TN)
         try:
             self.observation_planner = ObservationPlanner(
                 ntpServ=self.serv_time, obs=self.observatory)
         except Exception:
-            raise error.RuntimeError('Problem setting up focuser')
+            raise error.RuntimeError('Problem setting up observation planner')
 
+        # Target as defined in the Panoptes project
+        try:
+            module = load_module(
+                'ObservationPlanner.Scheduler.{}'.format('Scheduler'))
+
+            obstruction_list = list()
+            default_horizon = 30 * u.degree
+
+            horizon_line = horizon_utils.Horizon(
+                obstructions=obstruction_list,
+                default_horizon=default_horizon.value
+            )
+
+            # Simple constraint for now
+            constraints = [
+                Altitude(horizon=horizon_line),
+                MoonAvoidance(),
+                Duration(default_horizon)
+            ]
+
+            # Create the Scheduler instance
+            self.scheduler = module.Scheduler(
+                self.observer, self.serv_time, fields_file=None,
+                constraints=constraints)
+            self.logger.debug("Scheduler created")
+        except ImportError as e:
+            raise error.NotFound(msg=e)

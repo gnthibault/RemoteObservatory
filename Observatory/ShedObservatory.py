@@ -53,6 +53,12 @@ class ShedObservatory():
         # Finished configuring
         self.logger.debug('Configured ShedObservatory successfully')
     
+    def initialize(self):
+        self.logger.debug("Initializing observatory")
+
+    def deinitialize(self):
+        self.logger.debug("Deinitializing observatory")
+
     def getGpsCoordinates(self):
         return self.gpsCoordinates
 

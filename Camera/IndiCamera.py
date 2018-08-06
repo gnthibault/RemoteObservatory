@@ -44,7 +44,7 @@ class IndiCamera(IndiDevice):
             deviceName = data['cameraName']
             if 'focuserCfg' in data:
                 self.focuser = IndiFocuser(indiClient=indiClient,
-                                           configFileName=data['focuserCfg']
+                                           configFileName=data['focuserCfg'],
                                            connectOnCreate=connectOnCreate)
 
         logger.debug('Indi camera, camera name is: {}'.format(deviceName))
@@ -122,6 +122,12 @@ class IndiCamera(IndiDevice):
         except Exception as e:
             self.logger.error('Indi Camera Error in shoot: {}'.format(e))
 
+    # TODO TN: setup event based acquisition properly
+    def shootAsyncWithEvent(self, exp_time, exposure_event):
+        self.shootAsync()
+        self.synchronizeWithImageReception() 
+        exposure_event.set()
+
     def abortShoot(self, sync=True):
         self.setNumber('CCD_ABORT_EXPOSURE', {'ABORT': 1}, sync=sync)
 
@@ -154,8 +160,9 @@ class IndiCamera(IndiDevice):
         self.setNumber('CCD_FRAME', roi)
    
     def getTemperature(self):
-        return self.getPropertyValueVector('CCD_TEMPERATURE',
-                                           'number')['CCD_TEMPERATURE_VALUE']
+        #return self.getPropertyValueVector('CCD_TEMPERATURE',
+        #                                   'number')['CCD_TEMPERATURE_VALUE']
+        return self.get_number('CCD_TEMPERATURE')['CCD_TEMPERATURE_VALUE']
 
     def setTemperature(self, temperature):
         """ It may take time to lower the temperature of a ccd """
@@ -216,7 +223,7 @@ class IndiCamera(IndiDevice):
             int_exp_time_sec = self.MAXIMUM_EXP_TIME_SEC
         else:
             int_exp_time_sec = exp_time_sec
-        # Show warning is needed
+        # Show warning if needed
         if int_exp_time_sec != exp_time_sec:
             self.logger.warning('Sanitizing exposition time: cannot accept'
                                 ' {}, using {} instead'.format(exp_time_sec

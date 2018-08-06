@@ -64,6 +64,12 @@ class IndiMount(IndiDevice):
         # Finished configuring
         self.logger.debug('Indi Mount configured successfully')
 
+    def initialize(self):
+        self.logger.debug("Initializing mount")
+
+    def deinitialize(self):
+        self.logger.debug("Deinitializing mount")
+
     def is_tracking(self):
         return True
 
@@ -92,7 +98,7 @@ class IndiMount(IndiDevice):
     def set_coord(self, coord):
         rahour_decdeg = {'RA': coord.ra.hour, 
                          'DEC': coord.dec.degree}
-        if self.isParked():
+        if self.is_parked:
             self.logger.warning('Cannot set coord: {} because mount is parked'
                                 ''.format(rahour_decdeg))
         else:
@@ -123,10 +129,17 @@ class IndiMount(IndiDevice):
         self.setSwitch('ON_COORD_SET', [what_to_do])
 
     # This does not work with simulator
-    #def setTrackingMode(self, tracking_mode='TRACK_SIDEREAL'):
-    #    self.logger.debug('Setting tracking mode: {}'.format(
-    #                      tracking_mode))
-    #    self.setSwitch('TELESCOPE_TRACK_RATE', [tracking_mode])
+    def setTrackRate(self, tracking_mode='TRACK_SIDEREAL'):
+        self.logger.debug('Setting tracking mode: {}'.format(
+                          tracking_mode))
+        self.setSwitch('TELESCOPE_TRACK_RATE', [tracking_mode])
+
+    def getTrackRate(self):
+        self.logger.debug('Getting tracking rate')
+        self.get_switch('TELESCOPE_TRACK_RATE')
+        self.logger.debug('Got tracking rate: {}'.format(
+                          tracking_mode))
+        return track_rate
 
     def abortMotion(self):
         self.logger.debug('Abort Motion')
@@ -154,7 +167,19 @@ class IndiMount(IndiDevice):
         self.logger.debug('Got pier side: {}'.format(ret))
         return ret
 
-    def isParked(self):
+    def get_current_coordinates(self):
+        self.logger.debug('Asking mount {} for its current coordinates'.format(
+            self.deviceName)) 
+        rahour_decdeg = self.get_number('EQUATORIAL_EOD_COORD')
+        self.logger.debug('Received current coordinates {}'.format(
+                          rahour_decdeg))
+
+        return SkyCoord(ra=rahour_decdeg['RA']['value']*u.hour,
+                        dec=rahour_decdeg['DEC']['value']*u.degree,
+                        frame='icrs')
+
+    @property
+    def is_parked(self):
         status = self.get_switch('TELESCOPE_PARK')
         self.logger.debug('Got TELESCOPE_PARK status: {}'.format(status))
         if status['PARK']['value']:
@@ -162,8 +187,11 @@ class IndiMount(IndiDevice):
         else:
             return False
 
+    def status(self):
+       return self.__str__()
+
     def __str__(self):
-        return 'Mount: {}'.format(self.name)
+        return 'Mount: {}'.format(self.deviceName)
 
     def __repr__(self):
         return self.__str__()
