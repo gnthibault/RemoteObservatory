@@ -13,8 +13,8 @@ from astropy import units as u
 
 # Local
 ##from Manager.Manager import Manager
-from StateMachine import StateMachine
-##from utils import get_free_space
+from StateMachine.StateMachine import StateMachine
+from utils import get_free_space
 #from utils.messaging import Messaging
 
 

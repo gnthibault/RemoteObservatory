@@ -4,6 +4,7 @@ __pycache__
 *.html
 *.png*
 *.sqlite
+*.swo
 *.swp
 
 /IndiCCDSimulatorCamera.json
