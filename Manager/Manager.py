@@ -71,16 +71,20 @@ class Manager():
         Starts up the observatory. Reads config file, sets up location,
         dates, mount, cameras, and weather station
         """
-        logger = logging.getLogger(__name__)
+        self.logger = logging.getLogger(__name__)
         self.logger.info('Initializing observatory manager')
 
         # Image directory and other ios
         self.logger.info('\tSetting up main image directory')
-        self._setup_image_dir()
+        self._setup_image_directory()
 
         # setup indi client
         self.logger.info('\tSetting up indi client')
         self._setup_indi_client()
+
+        # setup web services
+        self.logger.info('\tSetting up web services')
+        self._setup_services()
 
         # Setup physical obervatory related informations
         self.logger.info('\tSetting up observatory')
@@ -646,18 +650,18 @@ class Manager():
 # Private Methods
 ##########################################################################
 
-    def _setup_output_directory(self, path='.'):
+    def _setup_image_directory(self, path='.'):
         path_idx = 0
 
         #Create a new path, whatever the input is
         path = os.path.realpath(path)
         test_path = path
         while os.path.exists(test_path):
-            test_path = (path+'-'+str(datetime.datetime.now().date())+'-'+
+            test_path = (path+'-'+str(datetime.now().date())+'-'+
                          str(path_idx))
             path_idx += 1
         os.makedirs(test_path, exist_ok=False)
-        self.self._image_dir = test_path
+        self._image_dir = test_path
 
     def _setup_indi_client(self):
         """
@@ -709,19 +713,19 @@ class Manager():
         """
         self.cameras = OrderedDict()
         try:
-            cam = IndiVirtualCamera(indiClient=self.indi_client,
-                                    connectOnCreate=True)
+            cam = IndiCamera(indiClient=self.indi_client,
+                             connectOnCreate=True)
 
             # test indi camera class on a old EOS350D
             #cam = IndiEos350DCamera(indiClient=self.indi_client,\
             #                        configFileName='IndiEos350DCamera.json',
             #                        connectOnCreate=True)
  
-        except Exception:
-            raise error.RuntimeError('Problem setting up camera')
+        except Exception as e:
+            raise error.RuntimeError('Problem setting up camera: {}'.format(e))
 
         self.primary_camera = cam
-        self.cameras[cam_name] = cam.name
+        self.cameras[cam.name] = cam
 
         if len(self.cameras) == 0:
             raise error.CameraNotFound(
@@ -754,7 +758,7 @@ class Manager():
         # Target as defined in the Panoptes project
         try:
             module = load_module(
-                'ObservationPlanner.Scheduler.{}'.format('Scheduler'))
+                'ObservationPlanner.{}'.format('Scheduler'))
 
             obstruction_list = list()
             default_horizon = 30 * u.degree
@@ -772,7 +776,7 @@ class Manager():
             ]
 
             # Create the Scheduler instance
-            self.scheduler = module.Scheduler(
+            self.scheduler = module.BaseScheduler(
                 self.observer, self.serv_time, fields_file=None,
                 constraints=constraints)
             self.logger.debug("Scheduler created")

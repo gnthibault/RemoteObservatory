@@ -192,6 +192,6 @@ class Observation:
 ###############################################################################
 
     def __str__(self):
-        return '{}: {} exposures in blocks of {}, minimum {}, priority '
-               '{:.0f}'.format(self.field, self.exp_time, self.exp_set_size,
-                               self.min_nexp, self.priority)
+        return ('{}: {} exposures in blocks of {}, minimum {}, priority '
+                '{:.0f}'.format(self.field, self.exp_time, self.exp_set_size,
+                                self.min_nexp, self.priority))

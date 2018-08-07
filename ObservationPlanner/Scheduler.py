@@ -1,7 +1,8 @@
 #Generic stuff
+from collections import OrderedDict
+import logging
 import os
 import yaml
-from collections import OrderedDict
 
 # Astropy stuff
 from astropy import units as u
@@ -38,6 +39,7 @@ class BaseScheduler:
             *args: Arguments to be passed to `PanBase`
             **kwargs: Keyword args to be passed to `PanBase`
         """
+        self.logger = logging.getLogger(__name__)
         assert isinstance(observer, Observer)
 
         if fields_file is None:

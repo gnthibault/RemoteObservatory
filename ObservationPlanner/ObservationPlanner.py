@@ -33,9 +33,8 @@ from astroplan import TransitionBlock
 from astroplan.scheduling import Transitioner
 
 # Plotting stuff
-import matplotlib
-import matplotlib.pyplot as plt
-
+#import matplotlib
+#import matplotlib.pyplot as plt
 
 # Locally defined constraints
 from ObservationPlanner.LocalHorizonConstraint import LocalHorizonConstraint

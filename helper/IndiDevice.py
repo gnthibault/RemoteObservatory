@@ -43,6 +43,10 @@ class IndiDevice:
     def is_connected(self):
         return self.device.isConnected()
 
+    @property
+    def name(self):
+        return self.deviceName
+
     def __findDevice(self):
         self.logger.debug('IndiDevice: asking indiClient to look for device {}'
                           ''.format(self.deviceName))

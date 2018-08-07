@@ -12,7 +12,7 @@ import zmq
 from astropy import units as u
 
 # Local
-##from Manager.Manager import Manager
+from Manager.Manager import Manager
 from StateMachine.StateMachine import StateMachine
 from utils import get_free_space
 #from utils.messaging import Messaging
@@ -562,7 +562,8 @@ class RemoteObservatoryFSM(StateMachine):
                     if cmd_subscriber.socket in sockets and \
                             sockets[cmd_subscriber.socket] == zmq.POLLIN:
 
-                        msg_type, msg_obj = cmd_subscriber.receive_message(flags=zmq.NOBLOCK)
+                        msg_type, msg_obj = cmd_subscriber.receive_message(
+                            flags=zmq.NOBLOCK)
 
                         # Put the message in a queue to be processed
                         if msg_type == 'POCS-CMD':
@@ -577,7 +578,8 @@ class RemoteObservatoryFSM(StateMachine):
             target=check_message_loop, args=(self._cmd_queue,))
         check_messages_process.name = 'MessageCheckLoop'
         check_messages_process.start()
-        self.logger.debug('Command message subscriber set up on port {}'.format(cmd_port))
+        self.logger.debug('Command message subscriber set up on port {}'.format(
+                          cmd_port))
 
         self._processes = {
             'check_messages': check_messages_process,
@@ -586,7 +588,6 @@ class RemoteObservatoryFSM(StateMachine):
         }
         
 if __name__ == '__main__':
-    pass
-    #m = Manager()
+    m = Manager()
     #r = RemoteObservatoryFSM(manager = m)
     #r.run()
