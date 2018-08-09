@@ -67,7 +67,7 @@ def listify(obj):
 
 def get_free_space(dir=None):
     if dir is None:
-        dir = os.getenv('PANDIR')
+        dir = os.getenv('HOME')
 
     _, _, free_space = shutil.disk_usage(dir)
     free_space = (free_space * u.byte).to(u.gigabyte)

@@ -33,8 +33,8 @@ class IndiMount(IndiDevice):
         ALT Altitude, degrees above horizon
         AZ Azimuth, degrees E of N
     """
-    def __init__(self, indiClient, logger=None, configFileName=None,
-                 connectOnCreate=True):
+    def __init__(self, indiClient, connectOnCreate=True, logger=None,
+                 configFileName=None):
         logger = logger or logging.getLogger(__name__)
         
         if configFileName is None:
@@ -53,35 +53,21 @@ class IndiMount(IndiDevice):
         logger.debug('Indi Mount, mount name is: {}'.format(
             deviceName))
       
-        self.initialized = False
-
         # device related intialization
         IndiDevice.__init__(self, logger=logger, deviceName=deviceName,
             indiClient=indiClient)
+
         if connectOnCreate:
             self.connect()
 
         # Finished configuring
         self.logger.debug('Indi Mount configured successfully')
 
-    def initialize(self):
-        self.logger.debug("Initializing mount")
-
-    def deinitialize(self):
-        self.logger.debug("Deinitializing mount")
-
-    def is_tracking(self):
-        return True
-
-    def is_initialized(self):
-        return self.initialized
-
     def onEmergency(self):
         self.logger.debug('on emergency routine started...')
         self.abortMotion()
         self.park()
         self.logger.debug('on emergency routine finished')
-
 
     def slew_to_coord_and_stop(self, coord):
         self.on_coord_set('SLEW')
@@ -134,19 +120,12 @@ class IndiMount(IndiDevice):
                           tracking_mode))
         self.setSwitch('TELESCOPE_TRACK_RATE', [tracking_mode])
 
-    def getTrackRate(self):
-        self.logger.debug('Getting tracking rate')
-        self.get_switch('TELESCOPE_TRACK_RATE')
-        self.logger.debug('Got tracking rate: {}'.format(
-                          tracking_mode))
-        return track_rate
-
     def abortMotion(self):
         self.logger.debug('Abort Motion')
         self.setSwitch('TELESCOPE_ABORT_MOTION', ['ABORT_MOTION'])
 
     def park(self):
-        self.logger.debug('Park')
+        self.logger.debug('Slewing to Park')
         self.setSwitch('TELESCOPE_PARK', ['PARK'])
 
     def unPark(self):
@@ -162,9 +141,40 @@ class IndiMount(IndiDevice):
         ''' GEM Pier Side
             PIER_EAST Mount on the East side of pier (Pointing West).
             PIER_WEST Mount on the West side of pier (Pointing East).
+            WARNING: does not work with simulator
         '''
         ret = self.get_switch('TELESCOPE_PIER_SIDE')
         self.logger.debug('Got pier side: {}'.format(ret))
+        return ret
+
+    def get_track_rate(self):
+        ''' Available track rate
+            TELESCOPE_TRACK_RATE Switch:
+                TRACK_SIDEREAL: Track at sidereal rate.
+                TRACK_SOLAR: Track at solar rate.
+                TRACK_LUNAR: Track at lunar rate.
+                TRACK_CUSTOM: custom
+            WARNING: does not work with simulator
+        '''
+        ret = self.get_switch('TELESCOPE_TRACK_RATE')
+        self.logger.debug('Got track rate: {}'.format(ret))
+        return ret
+
+    # This does not work with simulator
+    def set_track_rate(self, track_rate='TRACK_SIDEREAL'):
+        self.logger.debug('Setting track rate: {}'.format(
+                          track_rate))
+        self.setSwitch('TELESCOPE_TRACK_RATE', [track_rate])
+
+    @property
+    def is_parked(self):
+        ret = None
+        status = self.get_switch('TELESCOPE_PARK')
+        self.logger.debug('Got TELESCOPE_PARK status: {}'.format(status))
+        if status['PARK']['value']:
+            ret = True
+        else:
+            ret = False
         return ret
 
     def get_current_coordinates(self):
@@ -178,17 +188,9 @@ class IndiMount(IndiDevice):
                         dec=rahour_decdeg['DEC']['value']*u.degree,
                         frame='icrs')
 
-    @property
-    def is_parked(self):
-        status = self.get_switch('TELESCOPE_PARK')
-        self.logger.debug('Got TELESCOPE_PARK status: {}'.format(status))
-        if status['PARK']['value']:
-            return True
-        else:
-            return False
-
-    def status(self):
-       return self.__str__()
+###############################################################################
+# Monitoring related stuff
+###############################################################################
 
     def __str__(self):
         return 'Mount: {}'.format(self.deviceName)

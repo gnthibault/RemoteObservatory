@@ -100,10 +100,10 @@ class IndiDevice:
 
         # Now connect
         if self.device.isConnected():
-            self.logger.warn('IndiDevice: already connected to device {}'
-                             ''.format(self.deviceName))
+            self.logger.warn('already connected to device {}'.format(
+                             self.deviceName))
             return
-        self.logger.info('IndiDevice: connecting to device {}'.format(
+        self.logger.info('Connecting to device {}'.format(
                          self.deviceName))
         # get interfaces
         self.interfaces = self.find_interfaces(self.device)

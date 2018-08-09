@@ -34,7 +34,7 @@ from helper.IndiClient import IndiClient
 #from Imaging.FitsWriter import FitsWriter
 
 # Local stuff: Mount
-from Mount.IndiMount import IndiMount
+from Mount.IndiAbstractMount import IndiAbstractMount
 
 # Local stuff: Observation planning
 from ObservationPlanner.Constraint import Duration
@@ -115,6 +115,10 @@ class Manager():
     @property
     def observer(self):
         return self.observatory.getAstroplanObserver()
+
+    @property
+    def earth_location(self):
+        return self.observatory.getAstropyEarthLocation()
 
     #TODO TN
     #@property
@@ -702,6 +706,8 @@ class Manager():
         """
         try:
             self.mount = IndiMount(indiClient=self.indi_client,
+                                   location=earth_location,
+                                   serv_time=self.serv_time,
                                    connectOnCreate=True)
         except Exception:
             raise error.RuntimeError('Problem setting up mount')

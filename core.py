@@ -589,5 +589,5 @@ class RemoteObservatoryFSM(StateMachine):
         
 if __name__ == '__main__':
     m = Manager()
-    #r = RemoteObservatoryFSM(manager = m)
+    r = RemoteObservatoryFSM(manager = m)
     #r.run()

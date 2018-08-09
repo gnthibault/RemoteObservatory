@@ -5,6 +5,7 @@ import yaml
 
 # FSM stuff
 import pygraphviz
+from transitions import State
 from transitions.extensions import GraphMachine as Machine
 
 # Local stuff
@@ -374,8 +375,7 @@ class StateMachine(Machine):
 
             s.add_callback('enter', '_update_status')
 
-            if can_graph:
-                s.add_callback('enter', '_update_graph')
+            s.add_callback('enter', '_update_graph')
 
             s.add_callback('enter', 'on_enter_{}'.format(state))
 

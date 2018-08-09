@@ -24,4 +24,4 @@ def on_enter(event_data):
         infos.logger.debug('Doing stuff in analyzing state')
     except Exception as e:
         infos.logger.error("Problem in analyzing: {}".format(e))
-        infos..next_state = 'parking'
+        infos.next_state = 'parking'
