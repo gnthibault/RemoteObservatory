@@ -197,7 +197,7 @@ class Manager():
                         self.observer.target_hour_angle(t, 
                             self.mount.get_target_coordinates()))
 
-            if self.dome:
+            if self.has_dome:
                 status['dome'] = self.dome.status
 
             if self.current_observation:
@@ -622,10 +622,10 @@ class Manager():
 
         return autofocus_events
 
-    def open_ror(self):
-        """Open the ror, if there is one.
+    def open_dome(self):
+        """Open the dome, if there is one.
 
-        Returns: False if there is a problem opening the ror,
+        Returns: False if there is a problem opening the dome,
                  else True if open (or if not exists).
         """
         try:
@@ -633,13 +633,13 @@ class Manager():
             return True
         except Exception as e:
             self.logger.error(
-                "Problem opening ror: {}".format(e))
+                "Problem opening dome: {}".format(e))
             return False
 
-    def close_ror(self):
-        """Close the ror, if there is one.
+    def close_dome(self):
+        """Close the dome, if there is one.
 
-        Returns: False if there is a problem closing the ror,
+        Returns: False if there is a problem closing the dome,
                  else True if closed (or if not exists).
         """
         try:
@@ -647,7 +647,7 @@ class Manager():
             return True
         except Exception as e:
             self.logger.error(
-                "Problem closing ror: {}".format(e))
+                "Problem closing dome: {}".format(e))
             return False
 
 ##########################################################################
@@ -697,6 +697,7 @@ class Manager():
         """
         try:
             self.observatory = ShedObservatory()
+            self.dome = None #TODO TN integrate latter
         except Exception:
             raise error.RuntimeError('Problem setting up observatory')
 
@@ -704,12 +705,12 @@ class Manager():
         """
             Setup a mount object.
         """
-        try:
-            self.mount = IndiAbstractMount(indiClient=self.indi_client,
-                                           location=earth_location,
-                                           serv_time=self.serv_time)
-        except Exception:
-            raise error.MountNotFound('Problem setting up mount')
+        #try:
+        self.mount = IndiAbstractMount(indiClient=self.indi_client,
+                                       location=self.earth_location,
+                                       serv_time=self.serv_time)
+        #except Exception:
+        #    raise error.MountNotFound('Problem setting up mount')
 
     def _setup_cameras(self, **kwargs):
         """

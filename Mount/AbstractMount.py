@@ -66,6 +66,7 @@ class AbstractMount: #(Base):
         self._location = location
 
         # We set some initial mount properties. May come from config
+        print('problem is {}'.format(self.mount_config))
         self.non_sidereal_available = self.mount_config.setdefault(
             'non_sidereal_available', False)
         self.PEC_available = self.mount_config.setdefault('PEC_available',
@@ -556,7 +557,8 @@ class AbstractMount: #(Base):
         Deleted Parameters:
             *args: Parameters to be sent with command if required.
         """
-        assert self.is_initialized, self.logger.warning('Mount has not been initialized')
+        assert self.is_initialized, self.logger.warning('Mount has not been '
+               'initialized')
 
         full_command = self._get_command(cmd, params=params)
         self.write(full_command)

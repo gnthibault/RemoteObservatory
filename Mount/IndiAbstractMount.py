@@ -66,11 +66,19 @@ class IndiAbstractMount(IndiMount, AbstractMount):
 
     @property
     def non_sidereal_available(self):
-        return False
+        return vself._non_sidereal_available
+
+    @non_sidereal_available.setter
+    def non_sidereal_available(self, val):
+        self._non_sidereal_available = val
 
     @property #Todo TN, check how to do this in INDI
     def PEC_available(self):
-        return False
+        return self._PEC_available
+
+    @PEC_available.setter
+    def PEC_available(self, val):
+        self._PEC_available = val
 
 ###############################################################################
 # Overriding methods for efficiency/consistency
