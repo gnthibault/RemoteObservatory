@@ -15,7 +15,7 @@ from astropy.coordinates import SkyCoord
 from Mount.AbstractMount import AbstractMount
 from Mount.IndiMount import IndiMount
 
-class IndiMount(IndiMount, AbstractMount):
+class IndiAbstractMount(IndiMount, AbstractMount):
     """
         We recall that, with indi, telescopes should be adressed using JNow
         coordinates, see:
@@ -42,9 +42,8 @@ class IndiMount(IndiMount, AbstractMount):
         
 
         # device related intialization
-        IndiMount.__init__(self, indiClient, logger=logger,
-                           configFileName=configFileName)
-            indiClient=indiClient)
+        IndiMount.__init__(self, indiClient=indiClient, logger=logger,
+                           configFileName=configFileName, connectOnCreate=False)
         # setup AbstractMount config
         self._setup_abstract_config()
         #Setup AbstractMount

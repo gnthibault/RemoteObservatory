@@ -705,12 +705,11 @@ class Manager():
             Setup a mount object.
         """
         try:
-            self.mount = IndiMount(indiClient=self.indi_client,
-                                   location=earth_location,
-                                   serv_time=self.serv_time,
-                                   connectOnCreate=True)
+            self.mount = IndiAbstractMount(indiClient=self.indi_client,
+                                           location=earth_location,
+                                           serv_time=self.serv_time)
         except Exception:
-            raise error.RuntimeError('Problem setting up mount')
+            raise error.MountNotFound('Problem setting up mount')
 
     def _setup_cameras(self, **kwargs):
         """
