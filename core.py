@@ -121,9 +121,9 @@ class RemoteObservatoryFSM(StateMachine):
         return self._obs_run_retries >= 0
 
 
-##################################################################################################
+###############################################################################
 # Methods
-##################################################################################################
+###############################################################################
 
     def initialize(self):
         """Initialize POCS.
@@ -329,11 +329,11 @@ class RemoteObservatoryFSM(StateMachine):
         is_dark = self.manager.is_dark
 
         # Check simulator TODO TN setup back simulator
-        try:
-            if 'night' in self.config['simulator']:
-                is_dark = True
-        except KeyError:
-            pass
+        #try:
+        #    if 'night' in self.config['simulator']:
+        #        is_dark = True
+        #except KeyError:
+        #    pass
 
         self.logger.debug("Dark Check: {}".format(is_dark))
         return is_dark
@@ -355,33 +355,37 @@ class RemoteObservatoryFSM(StateMachine):
         record = {'safe': False}
 
         # TODO TN: setup back simulator
-        try:
-            if 'weather' in self.config['simulator']:
-                is_safe = True
-                self.logger.debug("Weather simulator always safe")
-                return is_safe
-        except KeyError:
-            pass
+        #try:
+        #    if 'weather' in self.config['simulator']:
+        #        is_safe = True
+        #        self.logger.debug("Weather simulator always safe")
+        #        return is_safe
+        #except KeyError:
+        #    pass
 
         try:
             # TODO TN: setup back PanBase with db support
-            record = self.db.get_current('weather')
+            # TODO TN ULTRA URGENT
+            #record = self.db.get_current('weather')
 
-            is_safe = record['data'].get('safe', False)
-            timestamp = record['date'].replace(tzinfo=None)  # current_time is timezone naive
-            age = (current_time().datetime - timestamp).total_seconds()
-
-            self.logger.debug(
-                "Weather Safety: {} [{:.0f} sec old - {}]".format(is_safe, age, timestamp))
+            is_safe = True
+            #is_safe = record['data'].get('safe', False)
+            #age = (self.manager.serv_time.getUTCFromNTP() -
+            #       timestamp).total_seconds()
+            #self.logger.debug(
+            #    "Weather Safety: {} [{:.0f} sec old - {}]".format(is_safe,
+            #    age, timestamp))
+            self.logger.warning('REAL Weather checking is NOT implemented')
 
         except (TypeError, KeyError) as e:
             self.logger.warning("No record found in DB: {}", e)
         except BaseException as e:
             self.logger.error("Error checking weather: {}", e)
         else:
-            if age > stale:
-                self.logger.warning("Weather record looks stale, marking unsafe.")
-                is_safe = False
+            pass
+            #if age > stale:
+            #    self.logger.warning("Weather record looks stale, marking unsafe.")
+            #    is_safe = False
 
         self._is_safe = is_safe
 
@@ -588,6 +592,9 @@ class RemoteObservatoryFSM(StateMachine):
         }
         
 if __name__ == '__main__':
+    # load the logging configuration
+    logging.config.fileConfig('logging.ini')
     m = Manager()
     r = RemoteObservatoryFSM(manager = m)
-    #r.run()
+    r.initialize()
+    r.run()

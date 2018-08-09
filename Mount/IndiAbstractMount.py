@@ -99,7 +99,8 @@ class IndiAbstractMount(IndiMount, AbstractMount):
         IndiMount.connect(self)
 
     def initialize(self, *arg, **kwargs):  # pragma: no cover
-        self.logger.debug('initialize, {}, {}'.format(arg, kwargs))
+        self.logger.debug('initializing, {}, {}'.format(arg, kwargs))
+        self.connect()
         self._is_initialized = True
 
     def set_tracking_rate(self, direction='ra', delta=1.0):

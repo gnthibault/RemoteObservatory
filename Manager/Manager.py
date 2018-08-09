@@ -127,7 +127,7 @@ class Manager():
 
     @property
     def is_dark(self):
-        horizon = self.location.get('twilight_horizon', -18 * u.degree)
+        horizon = -18 * u.degree
 
         t0 = self.serv_time.getAstropyTimeFromUTC()
         is_dark = self.observer.is_night(t0, horizon=horizon)
