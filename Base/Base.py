@@ -1,10 +1,13 @@
+# Generic
+import logging
 import sys
 
-from pocs import hardware
-from pocs import __version__
+# Local stuff
+#from pocs import hardware
+from version import __version__
 from pocs.utils import config
-from pocs.utils.database import PanDB
-from pocs.utils.logger import get_root_logger
+from pocs.utils.database import DB
+#from pocs.utils.logger import get_root_logger
 
 # Global vars
 _config = None
@@ -13,14 +16,14 @@ _config = None
 def reset_global_config():
     """Reset the global _config to None.
 
-    Globals such as _config make tests non-hermetic. Enable conftest.py to clear _config
-    in an explicit fashion.
+    Globals such as _config make tests non-hermetic. Enable conftest.py to
+    clear _config in an explicit fashion.
     """
     global _config
     _config = None
 
 
-class PanBase(object):
+class Base():
 
     """ Base class for other classes within the PANOPTES ecosystem
 
@@ -43,11 +46,9 @@ class PanBase(object):
         self._check_config(_config)
         self.config = _config
 
-        self.logger = kwargs.get('logger')
-        if not self.logger:
-            self.logger = get_root_logger()
-
-        self.config['simulator'] = hardware.get_simulator_names(config=self.config, kwargs=kwargs)
+        self.logger = kwargs.get('logger') or logging.getLogger(__name__)
+        #if not self.logger:
+        #    self.logger = get_root_logger()
 
         # Get passed DB or set up new connection
         _db = kwargs.get('db', None)
@@ -64,7 +65,7 @@ class PanBase(object):
             db_type = self.config['db']['type']
             db_name = self.config['db']['name']
 
-            _db = PanDB(db_type=db_type, db_name=db_name, logger=self.logger)
+            _db = DB(db_type=db_type, db_name=db_name, logger=self.logger)
 
         self.db = _db
 
@@ -80,7 +81,10 @@ class PanBase(object):
         if 'state_machine' not in temp_config:
             sys.exit('State Table must be specified in config')
 
-    def __getstate__(self):  # pragma: no cover
+    def __getstate__(self):  # pragma: no covera
+        """ Returns a copy of the internal dictionary without
+            restricted acess ressources (logger and database object
+        """
         d = dict(self.__dict__)
 
         if 'logger' in d:
