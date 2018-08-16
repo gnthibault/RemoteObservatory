@@ -140,7 +140,8 @@ class Manager():
 
     @property
     def sidereal_time(self):
-        return self.observer.local_sidereal_time(self.serv_time.getAstropyTimeFromUTC())
+        return self.observer.local_sidereal_time(
+            self.serv_time.getAstropyTimeFromUTC())
 
     @property
     def primary_camera(self):

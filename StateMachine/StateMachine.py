@@ -1,6 +1,7 @@
 # Generic stuff
 import logging
 import os
+import time
 import yaml
 
 # FSM stuff
@@ -47,6 +48,12 @@ class StateMachine(Machine):
         self.logger.debug('List of stattes loaded from {}: {}'.format(
             state_machine_table, states))
 
+        # About the send_event option: If you set send_event=True at Machine
+        #initialization, all arguments to the triggers will be wrapped in an 
+        #EventData instance and passed on to every callback. (The EventData
+        #object also maintains internal references to the source state, model,
+        #transition, machine, and trigger associateda with the event, in case
+        #you need to access these for anything.)
         super(StateMachine, self).__init__(
             states=states,
             transitions=_transitions,
@@ -55,7 +62,7 @@ class StateMachine(Machine):
             before_state_change='before_state',
             after_state_change='after_state',
             auto_transitions=False,
-            name="POCS State Machine"
+            name="Remote Observatory State Machine"
         )
 
         self._state_machine_table = state_machine_table
@@ -89,6 +96,29 @@ class StateMachine(Machine):
     @next_state.setter
     def next_state(self, value):
         self._next_state = value
+
+###############################################################################
+# Properties to be overriden
+###############################################################################
+
+    @property
+    def is_initialized(self):
+        """ Indicates if remote observatory has been initalized or not """
+        raise NotImplemented
+
+    @property
+    def interrupted(self):
+        """If remote observatory has been interrupted
+
+        Returns:
+            bool: If an interrupt signal has been received
+        """
+        raise NotImplemented
+
+    @property
+    def connected(self):
+        """ Indicates if remote observatory is connected """
+        raise NotImplemented
 
 ###############################################################################
 # Methods
@@ -130,7 +160,6 @@ class StateMachine(Machine):
                 if self.state == 'sleeping':
                     if self.is_safe() is not True:
                         self.wait_until_safe()
-
                 try:
                     state_changed = self.goto_next_state()
                 except Exception as e:
@@ -177,9 +206,11 @@ class StateMachine(Machine):
 
         self.logger.debug("Transition method: {}".format(call_method))
 
+        #TODO TN: what the fuck, return string ?
         caller = getattr(self, call_method, 'park')
         state_changed = caller()
-        self.db.insert_current('state', {"source": self.state, "dest": self.next_state})
+        self.db.insert_current('state', {"source": self.state,
+                                         "dest": self.next_state})
 
         return state_changed
 
@@ -188,13 +219,30 @@ class StateMachine(Machine):
         self.logger.info("Stopping states")
         self._do_states = False
 
+###############################################################################
+# Methods to be overriden
+###############################################################################
     def status(self):
         """Computes status, a dict, of whole observatory."""
         return NotImplemented
 
-##################################################################################################
+    def wait_until_safe(self):
+        """ Waits until all safety flags are set 
+        """
+        while not self.is_safe(no_warning=True):
+            self.sleep(30)
+
+    def sleep(self, delay=2.5, with_status=True):
+        time.sleep(delay)
+
+    def check_messages(self):
+        """
+            In charge of monitoring external order/commands
+        """
+        pass
+###############################################################################
 # State Conditions
-##################################################################################################
+###############################################################################
 
     def check_safety(self, event_data=None):
         """ Checks the safety flag of the system to determine if safe.

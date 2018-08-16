@@ -59,10 +59,9 @@ class RemoteObservatoryFSM(StateMachine):
 
         self.logger = logging.getLogger(__name__)
         self.name = 'gntibault\'s Remote Observatory'
-        self.logger.info('Initializing Remote Observatory - {}', self.name)
-
+        self.logger.info('Initializing Remote Observatory - {}'.format(
+                         self.name))
         self._processes = {}
-
         self._has_messaging = None
         self.has_messaging = messaging
 
@@ -89,12 +88,12 @@ class RemoteObservatoryFSM(StateMachine):
 
     @property
     def is_initialized(self):
-        """ Indicates if POCS has been initalized or not """
+        """ Indicates if remote observatory has been initalized or not """
         return self._initialized
 
     @property
     def interrupted(self):
-        """If POCS has been interrupted
+        """If remote observatory has been interrupted
 
         Returns:
             bool: If an interrupt signal has been received
@@ -103,7 +102,7 @@ class RemoteObservatoryFSM(StateMachine):
 
     @property
     def connected(self):
-        """ Indicates if POCS is connected """
+        """ Indicates if remote observatory is connected """
         return self._connected
 
     @property
@@ -228,18 +227,20 @@ class RemoteObservatoryFSM(StateMachine):
             # Park if needed
             if self.state not in ['parking', 'parked', 'sleeping',
                                   'housekeeping']:
-                # TODO(jamessynge): Figure out how to handle the situation where we have both
-                # mount and dome, but this code is only checking for a mount.
+                # TODO(jamessynge): Figure out how to handle the situation
+                # where we have both mount and dome, but this code is only
+                # checking for a mount.
                 if self.manager.mount.is_connected:
                     if not self.manager.mount.is_parked:
                         self.logger.info("Parking mount")
-                        self.park()
+                        self.park() #FSM trigger
 
             if self.state == 'parking':
                 if self.manager.mount.is_connected:
                     if self.manager.mount.is_parked:
-                        self.logger.info("Mount is parked, setting Parked state")
-                        self.set_park()
+                        self.logger.info('Mount is parked, setting Parked '
+                                         'state')
+                        self.set_park() #FSM trigger
 
             if not self.manager.mount.is_parked:
                 self.logger.info('Mount not parked, parking')

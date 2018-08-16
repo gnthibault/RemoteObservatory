@@ -22,16 +22,16 @@ class BaseScheduler:
         """Loads `~pocs.scheduler.field.Field`s from a field
 
         Note:
-            `~pocs.scheduler.field.Field` configurations passed via the `fields_list`
-            will not be saved but will instead be turned into
+            `~pocs.scheduler.field.Field` configurations passed via the
+            `fields_list` will not be saved but will instead be turned into
             `~pocs.scheduler.observation.Observations`.
 
-            Further `Observations` should be added directly via the `add_observation`
-            method.
+            Further `Observations` should be added directly via the
+            `add_observation` method.
 
         Args:
-            observer (`astroplan.Observer`): The physical location the scheduling
-                will take place from.
+            observer (`astroplan.Observer`): The physical location the
+                scheduling will take place from.
             fields_list (list, optional): A list of valid field configurations.
             fields_file (str): YAML file containing field parameters.
             constraints (list, optional): List of `Constraints` to apply to each
@@ -65,8 +65,8 @@ class BaseScheduler:
 
     @property
     def observations(self):
-        """Returns a dict of `~pocs.scheduler.observation.Observation` objects
-        with `~pocs.scheduler.observation.Observation.field.field_name` as the key
+        """Returns a dict of `scheduler.observation.Observation` objects
+        with `ischeduler.observation.Observation.field.field_name` as the key
 
         Note:
             `read_field_list` is called if list is None
@@ -215,7 +215,8 @@ class BaseScheduler:
             time (astropy.time.Time): The time at which to check observation
 
         """
-        return self.observer.target_is_up(time, observation.field, horizon=30 * u.degree)
+        return self.observer.target_is_up(time, observation.field,
+                                          horizon=30 * u.degree)
 
     def add_observation(self, field_config):
         """Adds an `Observation` to the scheduler
@@ -224,19 +225,22 @@ class BaseScheduler:
             field_config (dict): Configuration items for `Observation`
         """
         if 'exp_time' in field_config:
-            field_config['exp_time'] = float(field_config['exp_time']) * u.second
+            field_config['exp_time'] = float(field_config['exp_time']) * (
+                u.second)
 
-        self.logger.debug("Adding {} to scheduler", field_config['name'])
+        self.logger.debug("Adding {} to scheduler".format(field_config['name']))
         field = Field(field_config['name'], field_config['position'])
 
         try:
             obs = Observation(field, **field_config)
         except Exception as e:
-            self.logger.warning("Skipping invalid field config: {}".format(field_config))
+            self.logger.warning('Skipping invalid field config: {}'.format(
+                                field_config))
             self.logger.warning(e)
         else:
             if field.name in self._observations:
-                self.logger.debug("Overriding existing entry for {}".format(field.name))
+                self.logger.debug('Overriding existing entry for {}'.format(
+                                  field.name))
             self._observations[field.name] = obs
 
     def remove_observation(self, field_name):
