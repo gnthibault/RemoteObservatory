@@ -12,13 +12,14 @@ import zmq
 from astropy import units as u
 
 # Local
+from Base.Base import Base
 from Manager.Manager import Manager
 from StateMachine.StateMachine import StateMachine
 from utils import get_free_space
 #from utils.messaging import Messaging
 
 
-class RemoteObservatoryFSM(StateMachine):
+class RemoteObservatoryFSM(StateMachine, Base):
 
     """The main class representing the Remote Observatory Control Software
 
@@ -57,6 +58,10 @@ class RemoteObservatoryFSM(StateMachine):
 
         assert isinstance(manager, Manager)
 
+        # Explicitly call the base classes in the order we want
+        Base.__init__(self, **kwargs)
+
+        # local init
         self.logger = logging.getLogger(__name__)
         self.name = 'gntibault\'s Remote Observatory'
         self.logger.info('Initializing Remote Observatory - {}'.format(
@@ -199,11 +204,12 @@ class RemoteObservatoryFSM(StateMachine):
     def check_messages(self):
         """ Check messages for the system
 
-        If `self.has_messaging` is True then there is a separate process running
-        responsible for checking incoming zeromq messages. That process will fill
-        various `queue.Queue`s with messages depending on their type. This method
-        is a thin-wrapper around private methods that are responsible for message
-        dispatching based on which queue received a message.
+        If `self.has_messaging` is True then there is a separate process
+        running responsible for checking incoming zeromq messages. That process
+        will fill various `queue.Queue`s with messages depending on their type.
+        This method is a thin-wrapper around private methods that are
+        responsible for message dispatching based on which queue received a
+        message.
         """
         if self.has_messaging:
             self._check_messages('command', self._cmd_queue)
@@ -275,7 +281,8 @@ class RemoteObservatoryFSM(StateMachine):
         """Checks the safety flag of the system to determine if safe.
 
         This will check the weather station as well as various other environmental
-        aspects of the system in order to determine if conditions are safe for operation.
+        aspects of the system in order to determine if conditions are safe for
+        operation.
 
         Note:
             This condition is called by the state machine during each transition
@@ -293,10 +300,10 @@ class RemoteObservatoryFSM(StateMachine):
 
         is_safe_values = dict()
 
-        # Check if night time
+        # Check if night time: synchronous
         is_safe_values['is_dark'] = self.is_dark()
 
-        # Check weather
+        # Check weather: not really synchronous, checks db
         is_safe_values['good_weather'] = self.is_weather_safe()
 
         # Check if computer has free disk space
@@ -312,7 +319,7 @@ class RemoteObservatoryFSM(StateMachine):
             if self.state not in ['sleeping', 'parked', 'parking',
                                   'housekeeping', 'ready']:
                 self.logger.warning('Safety failed so sending to park')
-                self.park()
+                self.park() #FSM trigger
 
         return safe
 
@@ -343,7 +350,8 @@ class RemoteObservatoryFSM(StateMachine):
         """Determines whether current weather conditions are safe or not
 
         Args:
-            stale (int, optional): Number of seconds before record is stale, defaults to 180
+            stale (int, optional): Number of seconds before record is stale,
+            defaults to 180
 
         Returns:
             bool: Conditions are safe (True) or unsafe (False)
@@ -365,18 +373,15 @@ class RemoteObservatoryFSM(StateMachine):
         #    pass
 
         try:
-            # TODO TN: setup back PanBase with db support
-            # TODO TN ULTRA URGENT
-            #record = self.db.get_current('weather')
+            record = self.db.get_current('weather')
 
-            is_safe = True
-            #is_safe = record['data'].get('safe', False)
-            #age = (self.manager.serv_time.getUTCFromNTP() -
-            #       timestamp).total_seconds()
-            #self.logger.debug(
-            #    "Weather Safety: {} [{:.0f} sec old - {}]".format(is_safe,
-            #    age, timestamp))
-            self.logger.warning('REAL Weather checking is NOT implemented')
+            is_safe = record['data'].get('safe', False)
+            timestamp = record['date']
+            age = (self.manager.serv_time.getUTCFromNTP() -
+                   timestamp).total_seconds()
+            self.logger.debug(
+                "Weather Safety: {} [{:.0f} sec old - {}]".format(is_safe,
+                age, timestamp))
 
         except (TypeError, KeyError) as e:
             self.logger.warning("No record found in DB: {}", e)
@@ -520,7 +525,7 @@ class RemoteObservatoryFSM(StateMachine):
     def _interrupt_and_park(self):
         self.logger.info('Park interrupt received')
         self._interrupted = True
-        self.park()
+        self.park() #FSM trigger
 
     def _interrupt_and_shutdown(self):
         self.logger.warning('Shutdown command received')

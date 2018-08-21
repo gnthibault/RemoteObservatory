@@ -16,8 +16,40 @@ from utils import load_module
 class StateMachine(Machine):
     """ A finite state machine class initially written by PANOPTES project
     members
-
     The state machine guides the overall action of the unit.
+
+    Why don't we use a separate model class to store the logic, but instead put
+    everything into the statemachine ? Here is the answer in the relevant part
+    of the documentation:
+
+    Alternative initialization patterns
+    In all of the examples so far, we've attached a new Machine instance to a
+    separate model ( lump , an instance of class Matter ). While this
+    separation keeps things tidy (because you don't have to monkey patch a
+    whole bunch of new methods into the Matter class), it can also get annoying
+    , since it requires you to keep track of which methods are called on the
+    state machine, and which ones are called on the model that the state
+    machine is bound to
+    (e.g., lump.on_enter_StateA() vs. machine.add_transition() ).
+    Fortunately, Transitions is flexible, and supports two other initialization
+    patterns.
+    First, you can create a standalone state machine that doesn't require
+    another model at all. Simply omit the model argument during initialization:
+
+    machine = Machine(states=states, transitions=transitions, initial='solid')
+    machine.melt()
+    machine.state
+    > liquid
+    If you initialize the machine this way, you can then attach all triggering
+    events (like evaporate() , sublimate() , etc.) and all callback functions
+    directly to the Machine instance.
+    This approach has the benefit of consolidating all of the state machine
+    functionality in one place, but can feel a little bit unnatural if you
+    think state logic should be contained within the model itself rather than
+    in a separate controller.
+    An alternative (potentially better) approach is to have the model inherit
+    from the Machine class. Transitions is designed to support inheritance
+    seamlessly. (just be sure to override class Machine 's __init__ method!):
     """
 
     def __init__(self, state_machine_table, **kwargs):
@@ -37,26 +69,29 @@ class StateMachine(Machine):
         self._state_table_name = state_machine_table.get('name',
                                                          'default_name')
         self._states_location = state_machine_table.get('location',
-                                                         'StateMachine/States')
+                                                        'StateMachine/States')
 
-        # Setup Transitions
-        _transitions = [self._load_transition(transition)
-                        for transition in state_machine_table['transitions']]
-
-        states = [self._load_state(state) for state in state_machine_table.get(
-                  'states', [])]
-        self.logger.debug('List of stattes loaded from {}: {}'.format(
-            state_machine_table, states))
+        # Load transitions from config file
+        transitions_list = [self._load_and_customize_transition(transition)
+                           for transition in state_machine_table['transitions']]
+        # Load states from config file
+        states_list = [self._load_state(state) for state in
+                       state_machine_table.get('states', [])]
+        self.logger.debug('List of states loaded from {}: {}'.format(
+                          state_machine_table, states_list))
 
         # About the send_event option: If you set send_event=True at Machine
         #initialization, all arguments to the triggers will be wrapped in an 
         #EventData instance and passed on to every callback. (The EventData
         #object also maintains internal references to the source state, model,
-        #transition, machine, and trigger associateda with the event, in case
+        #transition, machine, and trigger associated with the event, in case
         #you need to access these for anything.)
+        # The auto_transitions=False disable automatic addition of
+        #to_<statename> method to the machine/model, that otherwise would allow
+        #to go from any other state to <statename> upon triggering
         super(StateMachine, self).__init__(
-            states=states,
-            transitions=_transitions,
+            states=states_list,
+            transitions=transitions_list,
             initial=state_machine_table.get('initial'),
             send_event=True,
             before_state_change='before_state',
@@ -130,12 +165,28 @@ class StateMachine(Machine):
         This runs the state machine in a loop. Setting the machine property
         `is_running` to False will stop the loop.
 
+
+        One might ask, but who is deciding the "scheduling", who performs the
+        triggers, and who decides of what should be the next_state attribute ?
+        -The run method here decide of the main "scheduling loop".
+        -Basic schedule may be modified upon receipt of a zmq message if
+         core does feature a messaging service (has_messaging)
+        -But most of the logic is contained inside of the body of the on_enter
+         function defined in each state module in StateMachine/States
+         Those functions are defined the behaviour of the state, but more 
+         importantly of next_state. See StateMachine/States/ready,py for a
+         good example
+
+         Are some services running asynchronously, like weather checking ?
+         TODO TN: answer this question
+
         Args:
             exit_when_done (bool, optional): If True, the loop will exit when
                 `do_states` has become False, otherwise will sleep (default)
 
             run_once (bool, optional): If the machine loop should only run one
-                time, defaults to False to loop continuously.
+                time, defaults to False to loop continuously. after run
+                don't do state anymore but still read messages
         """
         assert self.is_initialized, self.logger.error("not initialized")
 
@@ -201,13 +252,12 @@ class StateMachine(Machine):
     def goto_next_state(self):
         state_changed = False
 
-        # Get the next transition method based off `state` and `next_state`
+        # Get the next transition method based on `state` and `next_state`
         call_method = self._lookup_trigger()
 
         self.logger.debug("Transition method: {}".format(call_method))
 
-        #TODO TN: what the fuck, return string ?
-        caller = getattr(self, call_method, 'park')
+        caller = getattr(self, call_method, self.park)
         state_changed = caller()
         self.db.insert_current('state', {"source": self.state,
                                          "dest": self.next_state})
@@ -359,6 +409,9 @@ class StateMachine(Machine):
 ################################################################################
 
     def _lookup_trigger(self):
+        """ returns name of trigger method based on state and next_state
+
+        """
         self.logger.debug("Source: {}\t Dest: {}".format(self.state,
                           self.next_state))
         if self.state == 'parking' and self.next_state == 'parking':
@@ -369,8 +422,8 @@ class StateMachine(Machine):
                                                            == self.next_state):
                     return state_info['trigger']
 
-        # Return parking if we don't find anything
-        return 'parking'
+        # Return parking if we don't find anything TODO TN, check that
+        return 'park' #'parking'
 
     def _update_status(self, event_data):
         self.status()
@@ -402,6 +455,29 @@ class StateMachine(Machine):
             self.logger.warning("Can't generate state graph: {}".format(e))
 
     def _load_state(self, state):
+        """
+           load and customize the "state" state
+           It must be noticed that state_module here DO NOT DEFINE A FULL STATE
+           instead, they only define an on_enter function that is supposed to
+           be used inside of this (StateMachine) class. When named accordingly
+           transition mechanism takes care of call on_enter_<statename> whenever
+           the transition to <statename> is triggered
+
+           What we load is actually only a generic state, on which we add some
+           callback that will for instance log some data or update the model
+           object with informations we need.
+
+           Here is the relevant extract from the documentation:
+           A State can also be associated with a list of enter and exit
+           callbacks, which are called whenever the state machine enters or
+           leaves that state. You can specify callbacks during initialization,
+           or add them later.
+           For convenience, whenever a new State is added to a Machine , the
+           methods on_enter_«state name» and on_exit_«state name» are
+           dynamically created on the Machine (not on the model), which allow
+           you to dynamically add new enter and exit callbacks later if you
+           need them.
+        """
         self.logger.debug("Loading state: {}".format(state))
         s = None
         try:
@@ -409,7 +485,6 @@ class StateMachine(Machine):
                 self._states_location.replace("/", "."),
                 state
             ))
-
             # Get the `on_enter` method
             self.logger.debug("Checking {}".format(state_module))
             on_enter_method = getattr(state_module, 'on_enter')
@@ -420,11 +495,8 @@ class StateMachine(Machine):
 
             self.logger.debug("Created state")
             s = State(name=state)
-
             s.add_callback('enter', '_update_status')
-
             s.add_callback('enter', '_update_graph')
-
             s.add_callback('enter', 'on_enter_{}'.format(state))
 
         except Exception as e:
@@ -433,8 +505,32 @@ class StateMachine(Machine):
 
         return s
 
-    def _load_transition(self, transition):
-        self.logger.debug("Loading transition: {}".format(transition))
+    def _load_and_customize_transition(self, transition):
+        """ Relevant extract from the documentation for conditional transitions:
+            Sometimes you only want a particular transition to execute if a
+            specific condition occurs. You can do this by passing a method, or
+            list of methods, in the conditions argument.
+            It should be noticed that the method refers here to model method by
+            default, or statemachine in case there is no model.
+            Note that condition-checking methods will passively receive optional
+            arguments and/or data objects passed to triggering methods. For
+            instance, the following call:
+           
+            statemachine.heatsystem(temp=74)
+            # equivalent to statemachine.trigger('heatsystem', temp=74)
+
+            would pass the temp=74 optional kwarg to the is_flammable() check
+            (possibly wrapped in an EventData instance).
+
+            Another extract from the documentation:
+            You can attach callbacks to transitions as well as states. Every
+            transition has 'before' and 'after' attributes that contain
+            a list of methods to call before and after the transition executes.
+            Those method also refers to model by default, but can be part of
+            statemachine if there is no model
+        """
+
+        self.logger.debug('Loading transition: {}'.format(transition))
 
         # Add `check_safety` as the first transition for all states
         conditions = listify(transition.get('conditions', []))

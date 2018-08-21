@@ -1,0 +1,41 @@
+name: gnthibault remote observatory
+location:
+    name: Mauna Loa Observatory
+    latitude: 19.54 # Degrees
+    longitude: -155.58 # Degrees
+    elevation: 3400.0 # Meters
+    utc_offset: -10.00 # Hours
+    horizon: 30 # Degrees
+    twilight_horizon: -18 # Degrees
+    timezone: US/Hawaii
+    gmt_offset: -600
+directories:
+    base: /var/RemoteObservatory
+    images: images
+    webcam: webcams
+    data: data
+    resources: resources/
+    targets: resources/targets
+    mounts: resources/mounts
+db: 
+    name: /var/RemoteObservatory/DB
+    type: file
+mount:
+    brand: simulator
+    driver: indi
+messaging:
+    # Must match ports in peas.yaml.
+    cmd_port: 6500
+    msg_port: 6510
+#Enable to output POCS messages to social accounts
+# social_accounts:
+#     twitter:
+#         consumer_key: [your_consumer_key]
+#         consumer_secret: [your_consumer_secret]
+#         access_token: [your_access_token]
+#         access_token_secret: [your_access_token_secret] 
+#     slack:
+#         webhook_url: [your_webhook_url]
+#         output_timestamp: False
+
+state_machine: simple_state_table

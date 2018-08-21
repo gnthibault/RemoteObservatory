@@ -5,8 +5,8 @@ import sys
 # Local stuff
 #from pocs import hardware
 from version import __version__
-from pocs.utils import config
-from pocs.utils.database import DB
+from utils import config
+from utils.database import DB
 #from pocs.utils.logger import get_root_logger
 
 # Global vars
@@ -47,8 +47,6 @@ class Base():
         self.config = _config
 
         self.logger = kwargs.get('logger') or logging.getLogger(__name__)
-        #if not self.logger:
-        #    self.logger = get_root_logger()
 
         # Get passed DB or set up new connection
         _db = kwargs.get('db', None)
@@ -81,7 +79,7 @@ class Base():
         if 'state_machine' not in temp_config:
             sys.exit('State Table must be specified in config')
 
-    def __getstate__(self):  # pragma: no covera
+    def __getstate__(self):  # pragma: no cover
         """ Returns a copy of the internal dictionary without
             restricted acess ressources (logger and database object
         """

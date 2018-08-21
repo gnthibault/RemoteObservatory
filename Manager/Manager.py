@@ -19,6 +19,9 @@ from astropy.coordinates import get_sun
 # Astroplan
 from astroplan import Observer
 
+# Local stuff: Base
+from Base.Base import Base
+
 # Local stuff: Camera
 from Camera.IndiCamera import IndiCamera
 from Camera.IndiEos350DCamera import IndiEos350DCamera
@@ -63,7 +66,7 @@ from utils import error
 from utils import load_module
 
 
-class Manager():
+class Manager(Base):
 
     def __init__(self, *args, **kwargs):
         """Main Observatory manager class
@@ -187,7 +190,7 @@ class Manager():
         status = {}
         try:
             t = self.serv_time.getAstropyTimeFromUTC()
-            local_time = str(datetime.now()).split('.')[0]
+            local_time = str(self.serv_time.getLocalTimeFromNTP())
 
             if self.mount.is_initialized:
                 status['mount'] = self.mount.status()

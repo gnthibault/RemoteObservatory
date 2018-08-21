@@ -1,13 +1,13 @@
 def on_enter(event_data):
     """ """
-    infos = event_data.model
+    model = event_data.model
 
     #observation = pocs.manager.current_observation
 
     #pocs.say("Analyzing image {} / {}".format(observation.current_exp,
     #                                           observation.min_nexp))
 
-    infos.next_state = 'tracking'
+    model.next_state = 'tracking'
     try:
 
         #pocs.manager.analyze_recent()
@@ -21,7 +21,7 @@ def on_enter(event_data):
         #    # Check if we have completed an exposure block
         #    if observation.current_exp % observation.exp_set_size == 0:
         #        pocs.next_state = 'scheduling'
-        infos.logger.debug('Doing stuff in analyzing state')
+        model.logger.debug('Doing stuff in analyzing state')
     except Exception as e:
-        infos.logger.error("Problem in analyzing: {}".format(e))
-        infos.next_state = 'parking'
+        model.logger.error("Problem in analyzing: {}".format(e))
+        model.next_state = 'parking'

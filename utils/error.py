@@ -1,16 +1,19 @@
+# Generic stuff
 import sys
 
+# Astropy
 from astropy.utils.exceptions import AstropyWarning
 
-from pocs.base import PanBase
+# Local
+from Base import Base
 
 
-class PanError(AstropyWarning, PanBase):
+class Error(AstropyWarning, Base):
 
     """ Base class for Panoptes errors """
 
     def __init__(self, msg=None, exit=False):
-        PanBase.__init__(self)
+        Base.__init__(self)
         if msg:
             if exit:
                 self.exit_program(msg)
@@ -24,7 +27,7 @@ class PanError(AstropyWarning, PanBase):
         sys.exit(1)
 
 
-class InvalidSystemCommand(PanError):
+class InvalidSystemCommand(Error):
 
     """ Error for a system level command malfunction """
 
@@ -32,7 +35,7 @@ class InvalidSystemCommand(PanError):
         super().__init__(msg)
 
 
-class Timeout(PanError):
+class Timeout(Error):
 
     """ Error called when an event times out """
 
@@ -40,7 +43,7 @@ class Timeout(PanError):
         super().__init__(msg)
 
 
-class NoObservation(PanError):
+class NoObservation(Error):
 
     """ Generic no Observation """
 
@@ -48,49 +51,49 @@ class NoObservation(PanError):
         super().__init__(msg)
 
 
-class NotFound(PanError):
+class NotFound(Error):
 
     """ Generic not found class """
     pass
 
 
 class InvalidCollection(NotFound):
-    """PanError raised if a collection name is invalid."""
+    """Error raised if a collection name is invalid."""
     pass
 
 
-class InvalidConfig(PanError):
+class InvalidConfig(Error):
 
-    """ PanError raised if config file is invalid """
+    """ Error raised if config file is invalid """
     pass
 
 
-class InvalidCommand(PanError):
+class InvalidCommand(Error):
 
-    """ PanError raised if a system command does not run """
+    """ Error raised if a system command does not run """
     pass
 
 
-class InvalidMountCommand(PanError):
+class InvalidMountCommand(Error):
 
-    """ PanError raised if attempting to send command that doesn't exist """
+    """ Error raised if attempting to send command that doesn't exist """
     pass
 
 
-class BadConnection(PanError):
+class BadConnection(Error):
 
-    """ PanError raised when a connection is bad """
+    """ Error raised when a connection is bad """
     pass
 
 
-class BadSerialConnection(PanError):
+class BadSerialConnection(Error):
 
-    """ PanError raised when serial command is bad """
+    """ Error raised when serial command is bad """
     pass
 
 
-class ArduinoDataError(PanError):
-    """PanError raised when there is something very wrong with Arduino information."""
+class ArduinoDataError(Error):
+    """Error raised when there is something very wrong with Arduino information."""
     pass
 
 
@@ -119,7 +122,7 @@ class SolveError(NotFound):
     pass
 
 
-class TheSkyXError(PanError):
+class TheSkyXError(Error):
     """ Errors from TheSkyX """
     pass
 
@@ -134,6 +137,6 @@ class TheSkyXTimeout(TheSkyXError):
     pass
 
 
-class GoogleCloudError(PanError):
+class GoogleCloudError(Error):
     """ Errors related to google cloud """
     pass

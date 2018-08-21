@@ -1,15 +1,15 @@
 def on_enter(event_data):
     """ """
-    infos = event_data.model
+    model = event_data.model
 
-    if infos.should_retry is False:
-        infos.logger.debug('Weather is good and it is dark. Something must '
+    if model.should_retry is False:
+        model.logger.debug('Weather is good and it is dark. Something must '
                            'have gone wrong. Stopping loop.')
-        infos.stop_states()
+        model.stop_states()
     else:
         # Note: Unit will "sleep" before transition until it is safe
         # to observe again.
-        infos.next_state = 'ready'
-        infos.reset_observing_run()
+        model.next_state = 'ready'
+        model.reset_observing_run()
 
-    infos.logger.debug("Another successful night!")
+    model.logger.debug("Another successful night!")

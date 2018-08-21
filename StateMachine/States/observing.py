@@ -6,23 +6,23 @@ timeout = 900.
 
 def on_enter(event_data):
     """ """
-    infos = event_data.model
-    infos.next_state = 'parking'
+    model = event_data.model
+    model.next_state = 'parking'
 
     try:
-        infos.logger.debug("Inside of observing state")
+        model.logger.debug("Inside of observing state")
         # Start the observing
-        #camera_events = infos.manager.observe()
+        #camera_events = model.manager.observe()
 
         wait_time = 0.
         #while not all([event.is_set() for event in camera_events.values()]):
-        #    infos.check_messages()
-        #    if infos.interrupted:
-        #        infos.logger.debug("Observation interrupted!")
+        #    model.check_messages()
+        #    if model.interrupted:
+        #        model.logger.debug("Observation interrupted!")
         #        break
 
-        #    infos.logger.debug('Waiting for images: {} seconds'.format(wait_time))
-        #    infos.status()
+        #    model.logger.debug('Waiting for images: {} seconds'.format(wait_time))
+        #    model.status()
 
         #    if wait_time > timeout:
         #        raise RuntimeError('Timeout error')
@@ -31,8 +31,8 @@ def on_enter(event_data):
         #    wait_time += wait_interval
 
     except Exception as e:
-        infos.logger.warning('Problem with imaging: {}'.format(e))
+        model.logger.warning('Problem with imaging: {}'.format(e))
     else:
-        #infos.manager.current_observation.current_exp += 1
-        infos.logger.debug('Finished with observing, going to analyze')
-        infos.next_state = 'analyzing'
+        #model.manager.current_observation.current_exp += 1
+        model.logger.debug('Finished with observing, going to analyze')
+        model.next_state = 'analyzing'

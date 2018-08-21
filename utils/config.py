@@ -1,13 +1,13 @@
 # Generic
 import os
+from warnings import warn
 import yaml
 
 # Astropy
 from astropy import units as u
 
 # Local stuff
-from pocs.utils import listify
-from warnings import warn
+from utils import listify
 
 
 def load_config(config_files=None, parse=True, ignore_local=False):
@@ -57,8 +57,7 @@ def load_config(config_files=None, parse=True, ignore_local=False):
 
     config = dict()
 
-    config_dir = '{}/conf_files'.format(os.getenv(os.curdir))
-
+    config_dir = '{}/conf_files'.format(os.curdir)
     for f in config_files:
         if not f.endswith('.yaml'):
             f = '{}.yaml'.format(f)
@@ -117,11 +116,11 @@ def _parse_config(config):
 
     # Prepend the base directory to relative dirs
     if 'directories' in config:
-        base_dir = os.getenv('PANDIR')
+        base_dir = config['directories'].get('base','/var/RemoteObservatory')
         for dir_name, rel_dir in config['directories'].items():
             if not rel_dir.startswith('/'):
-                config['directories'][dir_name] = '{}/{}'.format(base_dir, rel_dir)
-
+                config['directories'][dir_name] = os.path.join(base_dir,
+                                                               rel_dir)
     return config
 
 

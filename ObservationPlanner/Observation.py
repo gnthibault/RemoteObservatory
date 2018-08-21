@@ -6,10 +6,11 @@ import logging
 from astropy import units as u
 
 # Local
+from Base.Base import Base
 from ObservationPlanner.Field import Field
 
 
-class Observation:
+class Observation(Base):
 
     @u.quantity_input(exp_time=u.second)
     def __init__(self, field, exp_time=120 * u.second, min_nexp=60,

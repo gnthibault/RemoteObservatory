@@ -10,8 +10,8 @@ from warnings import warn
 import weakref
 
 # Local
-from pocs.utils import serializers as json_util
-from pocs.utils.config import load_config
+from utils import serializers as json_util
+from utils.config import load_config
 from Service.NTPTimeService import NTPTimeService
 
 class AbstractDB(metaclass=abc.ABCMeta):
@@ -129,16 +129,16 @@ class AbstractDB(metaclass=abc.ABCMeta):
 _shared_mongo_clients = weakref.WeakValueDictionary()
 
 def get_shared_mongo_client(host, port, connect):
-        """Provides a mongodb database manager class as a singleton
+    """Provides a mongodb database manager class as a singleton
 
-        Args:
-            host (str): domain name or ip address of the server hosting the db
-            port (int): Port on which the server database listen
-            connect (?): ?
+    Args:
+        host (str): domain name or ip address of the server hosting the db
+        port (int): Port on which the server database listen
+        connect (?): ?
 
-        Returns:
-            pymongo.MongoClient: the database connector class 
-        """
+    Returns:
+        pymongo.MongoClient: the database connector class 
+    """
     global _shared_mongo_clients
     key = (host, port, connect)
     try:
@@ -163,7 +163,7 @@ def create_storage_obj(collection, data, obj_id=None,
     return obj
 
 
-class DB(object):
+class DB():
     """Simple class to load the appropriate DB type based on the config.
 
     We don't actually create instances of this class, but instead create
@@ -352,8 +352,7 @@ class FileDB(AbstractDB):
         self.db_folder = db_name
 
         # Set up storage directory.
-        self._storage_dir = os.path.join(os.curdir, 'json_store',
-                                         self.db_folder)
+        self._storage_dir = self.db_folder
         os.makedirs(self._storage_dir, exist_ok=True)
 
     def insert_current(self, collection, obj, store_permanently=True):

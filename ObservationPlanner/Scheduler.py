@@ -10,12 +10,13 @@ from astropy import units as u
 # Astroplan stuff
 from astroplan import Observer
 
-# Generic stuff
+# Local stuff
+from Base.Base import Base
 from ObservationPlanner.Field import Field
 from ObservationPlanner.Observation import Observation
 
 
-class BaseScheduler:
+class BaseScheduler(Base):
 
     def __init__(self, observer, serv_time, fields_list=None, fields_file=None,
                  constraints=list(), *args, **kwargs):

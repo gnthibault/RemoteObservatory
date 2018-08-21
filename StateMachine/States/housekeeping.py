@@ -1,14 +1,14 @@
 def on_enter(event_data):
     """ """
-    infos = event_data.model
-    infos.next_state = 'sleeping'
-    infos.logger.debug("Recording all the data for the night.")
+    model = event_data.model
+    model.next_state = 'sleeping'
+    model.logger.debug("Recording all the data for the night.")
 
     # Cleanup existing observations
     try:
-        infos.logger.debug("Cleaning data ...")
-        #infos.manager.cleanup_observations()
+        model.logger.debug("Cleaning data ...")
+        #model.manager.cleanup_observations()
     except Exception as e:
-        infos.logger.warning('Problem with cleanup: {}'.format(e))
+        model.logger.warning('Problem with cleanup: {}'.format(e))
 
-    infos.logger.debug("Done cleaning up all the recorded data.")
+    model.logger.debug("Done cleaning up all the recorded data.")
