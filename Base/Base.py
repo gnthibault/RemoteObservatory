@@ -7,7 +7,6 @@ import sys
 from version import __version__
 from utils import config
 from utils.database import DB
-#from pocs.utils.logger import get_root_logger
 
 # Global vars
 _config = None
@@ -23,7 +22,7 @@ def reset_global_config():
     _config = None
 
 
-class Base():
+class Base:
 
     """ Base class for other classes within the PANOPTES ecosystem
 

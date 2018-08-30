@@ -41,3 +41,7 @@ or
 
 conda install -c conda-forge pygobject
 
+## Support for the Dash dashboard:
+
+pip install dash dash-core-components dash-html-components dash-renderer plotly
+

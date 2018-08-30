@@ -1,5 +1,6 @@
 # Generic import
 import logging
+import logging.config
 import multiprocessing
 import os
 import queue
@@ -388,10 +389,9 @@ class RemoteObservatoryFSM(StateMachine, Base):
         except BaseException as e:
             self.logger.error("Error checking weather: {}", e)
         else:
-            pass
-            #if age > stale:
-            #    self.logger.warning("Weather record looks stale, marking unsafe.")
-            #    is_safe = False
+            if age > stale:
+                self.logger.warning("Weather record looks stale, marking unsafe.")
+                is_safe = False
 
         self._is_safe = is_safe
 

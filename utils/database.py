@@ -179,6 +179,10 @@ class DB():
         if db_type is None:
             db_type = load_config()['db']['type']
 
+        if db_name is None:
+            db_name = load_config()['db']['name']
+
+
         if not isinstance(db_type, str) and db_type:
             raise ValueError('db_type, a string, must  not be empty')
 
@@ -337,7 +341,7 @@ class MongoDB(AbstractDB):
 class FileDB(AbstractDB):
     """Stores collections as files of JSON records."""
 
-    def __init__(self, db_name='remote_observatory', **kwargs):
+    def __init__(self, db_name='remote_observatory_file_db', **kwargs):
         """Flat file storage for json records
 
         This will simply store each json record inside a file corresponding

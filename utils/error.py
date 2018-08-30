@@ -5,7 +5,7 @@ import sys
 from astropy.utils.exceptions import AstropyWarning
 
 # Local
-from Base import Base
+from Base.Base import Base
 
 
 class Error(AstropyWarning, Base):
