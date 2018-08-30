@@ -88,8 +88,6 @@ if __name__ == '__main__':
         data = aag.capture(store_result=args.store_result,
                            send_message=args.send_message)
 
-        print('New sample at {}'.format(data['date']))
-
         # Save to file
         if args.filename is not None:
             write_capture(filename=args.filename, data=data)

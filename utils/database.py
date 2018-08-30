@@ -182,7 +182,6 @@ class DB():
         if db_name is None:
             db_name = load_config()['db']['name']
 
-
         if not isinstance(db_type, str) and db_type:
             raise ValueError('db_type, a string, must  not be empty')
 
@@ -203,15 +202,17 @@ class DB():
 
         if db_type == 'mongo':
             try:
-                return MongoDB(collection_names=collection_names, **kwargs)
+                return MongoDB(collection_names=collection_names,
+                               db_name=db_name, **kwargs)
             except Exception:
                 raise Exception('Cannot connect to mongo, please check '
                                 'settings or change DB storage type')
         elif db_type == 'file':
-            return FileDB(collection_names=collection_names, **kwargs)
+            return FileDB(collection_names=collection_names,
+                          db_name=db_name, **kwargs)
         elif db_type == 'memory':
             return MemoryDB.get_or_create(collection_names=collection_names,
-                                          **kwargs)
+                                          db_name=db_name, **kwargs)
         else:
             raise Exception('Unsupported database type: {}', db_type)
 
@@ -458,7 +459,7 @@ class MemoryDB(AbstractDB):
     active_dbs = weakref.WeakValueDictionary()
 
     @classmethod
-    def get_or_create(cls, db_name=None, **kwargs):
+    def get_or_create(cls, db_name='remote_observatory_memory', **kwargs):
         """Returns the named db, creating if needed.
 
         This method exists because DB gets called multiple times for

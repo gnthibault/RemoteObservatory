@@ -21,7 +21,7 @@ from utils.config import load_config
 #from utils.messaging import PanMessaging
 
 
-def get_mongodb():
+def get_db():
     from utils.database import DB
     return DB()
 
@@ -38,7 +38,7 @@ class DummyCloudSensor:
 
         self.db = None
         if store_result:
-            self.db = get_mongodb()
+            self.db = get_db()
 
     def capture(self, store_result=False, send_message=False, **kwargs):
         """ Query the CloudWatcher """
@@ -77,7 +77,7 @@ class DummyCloudSensor:
 
         if store_result:
             if self.db is None:
-                self.db = get_mongodb()
+                self.db = get_db()
             self.db.insert_current('weather', data)
 
         return data
