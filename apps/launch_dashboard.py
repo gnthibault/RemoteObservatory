@@ -56,12 +56,12 @@ def retrieve_obd_values():
 app = dash.Dash('')
 df = retrieve_obd_values()
 
-app.layout = html.Div([
+# Define weather tab
+div_weather = html.Div(id='div_weather', children = [
     html.Div([
-        html.H2('Observatory Monitoring Dashboard',
-                style={'float': 'left',
-                       }),
-        ]),
+        html.H2('Observatory Weather Monitoring Dashboard',
+                style={'float': 'left',}),
+    ]),
     dcc.Dropdown(id='observatory-data-name',
                  options=[{'label': s, 'value': s}
                           for s in df.keys()],
@@ -75,6 +75,58 @@ app.layout = html.Div([
         interval=1000), #in milliseconds ?
     ], className="container",style={'width':'98%','margin-left':10,
                                     'margin-right':10,'max-width':50000})
+
+# Define observatory tab
+div_observatory = html.Div(id='div_observatory', children = [
+    html.H2('Inside of observatory')
+])
+
+# Define telescope tab
+div_telescope = html.Div(id='div_telescope', children = [
+    html.H2('Telescope monitoring')
+])
+
+# Now define main Div
+app.layout = html.Div([
+    html.Div([
+        html.H2('Observatory Monitoring Dashboard',
+                style={'float': 'left',}),
+    ]),
+    dcc.Tabs(id="tabs", value='tab1', children=[
+        dcc.Tab(label='Weather monitoring', value='tab1'),
+        dcc.Tab(label='Observatory monitoring', value='tab2'),
+        dcc.Tab(label='Telescope monitoring', value='tab3'),
+    ]),
+    div_weather,
+    div_observatory,
+    div_telescope
+])
+
+# list of callback for each tab
+@app.callback(dash.dependencies.Output('div_weather', 'style'),
+              [dash.dependencies.Input('tabs', 'value')])
+def update_div_weather_visible(tab_val):
+    if tab_val == 'tab1':
+        return {'display': 'block'}
+    else:
+        return {'display': 'none'}
+
+@app.callback(dash.dependencies.Output('div_observatory', 'style'),
+              [dash.dependencies.Input('tabs', 'value')])
+def update_div_weather_visible(tab_val):
+    if tab_val == 'tab2':
+        return {'display': 'block'}
+    else:
+        return {'display': 'none'}
+
+@app.callback(dash.dependencies.Output('div_telescope', 'style'),
+              [dash.dependencies.Input('tabs', 'value')])
+def update_div_weather_visible(tab_val):
+    if tab_val == 'tab3':
+        return {'display': 'block'}
+    else:
+        return {'display': 'none'}
+
 
 #############################################
 # Interaction Between Components / Controller
@@ -111,9 +163,9 @@ def update_graph(data_names):
             id=data_name,
             animate=True,
             figure={'data': [data],'layout' :
-                go.Layout(xaxis=dict(range=[min(df.index),max(df.index)]),
-                          yaxis=dict(range=[min(df[data_name]),
-                                            max(df[data_name])]),
+                go.Layout(xaxis=dict(range=[df.index.min(),df.index.max()]),
+                          yaxis=dict(range=[df[data_name].min(),
+                                            df[data_name].max()]),
                           margin={'l':50,'r':1,'t':45,'b':1},
                           title='{}'.format(data_name))}
             ), className=class_choice))
@@ -122,13 +174,13 @@ def update_graph(data_names):
 
 
 
-#external_css = ["https://cdnjs.cloudflare.com/ajax/libs/materialize/0.100.2/css/materialize.min.css"]
-#for css in external_css:
-#    app.css.append_css({"external_url": css})
+external_css = ["https://cdnjs.cloudflare.com/ajax/libs/materialize/0.100.2/css/materialize.min.css"]
+for css in external_css:
+    app.css.append_css({"external_url": css})
 
-#external_js = ['https://cdnjs.cloudflare.com/ajax/libs/materialize/0.100.2/js/materialize.min.js']
-#for js in external_css:
-#    app.scripts.append_script({'external_url': js})
+external_js = ['https://cdnjs.cloudflare.com/ajax/libs/materialize/0.100.2/js/materialize.min.js']
+for js in external_css:
+    app.scripts.append_script({'external_url': js})
 
 if __name__ == '__main__':
     app.css.config.serve_locally = True
