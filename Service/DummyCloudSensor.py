@@ -20,11 +20,9 @@ from Service.NTPTimeService import NTPTimeService
 from utils.config import load_config
 #from utils.messaging import PanMessaging
 
-
 def get_db():
     from utils.database import DB
     return DB()
-
 
 class DummyCloudSensor:
 
@@ -69,6 +67,7 @@ class DummyCloudSensor:
         self.weather_entries.append(data)
 
         # If we get over a certain amount of entries, trim the earliest
+        # TODO TN URGENT: use deque you idiot
         if len(self.weather_entries) > int(self.safety_delay):
             del self.weather_entries[:1]
 

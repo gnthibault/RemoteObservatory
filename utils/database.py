@@ -364,7 +364,7 @@ class FileDB(AbstractDB):
         self.validate_collection(collection)
         obj_id = self._make_id()
         obj = create_storage_obj(collection, obj, obj_id=obj_id)
-        current_fn = self._get_file(collection, permanent=False)
+        current_fn = self.get_file(collection, permanent=False)
         result = obj_id
         try:
             # Overwrite current collection file with obj.
@@ -377,7 +377,7 @@ class FileDB(AbstractDB):
         if not store_permanently:
             return result
 
-        collection_fn = self._get_file(collection)
+        collection_fn = self.get_file(collection)
         try:
             # Append obj to collection file.
             json_util.dumps_file(collection_fn, obj)
@@ -391,7 +391,7 @@ class FileDB(AbstractDB):
         self.validate_collection(collection)
         obj_id = self._make_id()
         obj = create_storage_obj(collection, obj, obj_id=obj_id)
-        collection_fn = self._get_file(collection)
+        collection_fn = self.get_file(collection)
         try:
             # Insert record into file
             json_util.dumps_file(collection_fn, obj)
@@ -402,7 +402,7 @@ class FileDB(AbstractDB):
             return None
 
     def get_current(self, collection):
-        current_fn = self._get_file(collection, permanent=False)
+        current_fn = self.get_file(collection, permanent=False)
 
         try:
             return json_util.loads_file(current_fn)
@@ -411,7 +411,7 @@ class FileDB(AbstractDB):
             return None
 
     def find(self, collection, obj_id):
-        collection_fn = self._get_file(collection)
+        collection_fn = self.get_file(collection)
         with open(collection_fn, 'r') as f:
             for line in f:
                 # Note: We can speed this up for the case where the obj_id
@@ -431,7 +431,7 @@ class FileDB(AbstractDB):
         except FileNotFoundError as e:
             pass
 
-    def _get_file(self, collection, permanent=True):
+    def get_file(self, collection, permanent=True):
         if permanent:
             name = '{}.json'.format(collection)
         else:
