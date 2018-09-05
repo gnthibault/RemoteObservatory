@@ -5,11 +5,12 @@ import time
 
 # UI/Dash stuff
 import dash
-from dash.dependencies import Output, Event
+from dash.dependencies import Input, Output, Event
 import dash_core_components as dcc
 import dash_html_components as html
 
 import plotly
+import plotly.figure_factory as ff
 import plotly.graph_objs as go
 
 # DS
@@ -24,7 +25,7 @@ from utils.database import DB, FileDB, MongoDB
 #######################
 # Data Analysis / Model
 #######################
-max_length = 20
+max_length = 40
 db = DB()
 
 def retrieve_obd_values():
@@ -52,75 +53,118 @@ def retrieve_obd_values():
 # Dashboard Layout / View
 #########################
 
+# Common definitions
+colors = {
+    'background': '#F6F8FD', #clear grey or dark grey with #111111
+    'text': '#7FDBFF'
+}
+default_style={} #{'backgroundColor': colors['background']}
+default_title_style={'textAlign': 'center',
+                     'color': colors['text']}
+
 # Set up Dashboard and create layout
 app = dash.Dash('')
 df = retrieve_obd_values()
 
 # Define weather tab
-div_weather = html.Div(id='div_weather', children = [
-    html.Div([
-        html.H2('Observatory Weather Monitoring Dashboard',
-                style={'float': 'left',}),
-    ]),
-    dcc.Dropdown(id='observatory-data-name',
-                 options=[{'label': s, 'value': s}
-                          for s in df.keys()],
-                 value=['ambient_temp_C', 'rain_sensor_temp_C',
-                        'wind_speed_KPH'],
-                 multi=True
-                 ),
-    html.Div(children=html.Div(id='graphs'), className='row'),
-    dcc.Interval(
-        id='graph-update',
-        interval=1000), #in milliseconds ?
-    ], className="container",style={'width':'98%','margin-left':10,
-                                    'margin-right':10,'max-width':50000})
+div_weather = html.Div(
+    id='div_weather',
+    children = [
+        html.Div(
+            style=default_style,
+            children=[
+                html.H2(style=default_title_style,
+                        children='Weather Monitoring',
+                ),
+            ]
+        ),
+        dcc.Dropdown(id='weather_data_name',
+                     options=[{'label': s, 'value': s}
+                              for s in df.keys()],
+                     value=['ambient_temp_C', 'rain_sensor_temp_C',
+                            'wind_speed_KPH'],
+                     multi=True
+                     ),
+        html.Div(children=html.Div(id='weather_graphs'), className='row'),
+        dcc.Interval(
+            id='weather_update',
+            interval=1*1000, # in milliseconds
+            n_intervals=0)
+    ],
+)
 
 # Define observatory tab
-div_observatory = html.Div(id='div_observatory', children = [
-    html.H2('Inside of observatory')
-])
+div_observatory = html.Div(
+    id='div_observatory',
+    style=default_style,
+    children = [
+        html.H2(style=default_title_style,
+                children='Observatory Building',
+        ),
+        html.Div(
+            children = [
+                html.H4(children='Observatory table'),
+                html.Div(id='observatory_tables'),
+            ]),
+        dcc.Interval(
+            id='observatory_update',
+            interval=1*1000, # in milliseconds
+            n_intervals=0
+        )
+    ]
+)
 
 # Define telescope tab
-div_telescope = html.Div(id='div_telescope', children = [
-    html.H2('Telescope monitoring')
-])
+div_telescope = html.Div(
+    id='div_telescope',
+    style=default_style,
+    children = [
+        html.H2(style=default_title_style,
+                children='Telescope Monitoring',
+        ),
+    ]
+)
 
 # Now define main Div
-app.layout = html.Div([
-    html.Div([
-        html.H2('Observatory Monitoring Dashboard',
-                style={'float': 'left',}),
-    ]),
-    dcc.Tabs(id="tabs", value='tab1', children=[
-        dcc.Tab(label='Weather monitoring', value='tab1'),
-        dcc.Tab(label='Observatory monitoring', value='tab2'),
-        dcc.Tab(label='Telescope monitoring', value='tab3'),
-    ]),
-    div_weather,
-    div_observatory,
-    div_telescope
-])
+app.layout = html.Div(
+    className="container", # goesalong with some external css
+    style={'width':'98%','margin-left':1,'margin-right':1,'max-width':50000},
+    children=[
+        html.Div(style=default_style, children=[
+            html.H1(style=default_title_style, children=
+                    'Observatory Monitoring Dashboard',
+            ),
+        ]),
+        dcc.Tabs(id="tabs", value='tab1', children=[
+            dcc.Tab(label='Weather monitoring', value='tab1'),
+            dcc.Tab(label='Observatory monitoring', value='tab2'),
+            dcc.Tab(label='Telescope monitoring', value='tab3'),
+        ]),
+        div_weather,
+        div_observatory,
+        div_telescope
+    ]
+)
 
 # list of callback for each tab
-@app.callback(dash.dependencies.Output('div_weather', 'style'),
-              [dash.dependencies.Input('tabs', 'value')])
+@app.callback(Output('div_weather', 'style'),
+              [Input('tabs', 'value')])
 def update_div_weather_visible(tab_val):
     if tab_val == 'tab1':
         return {'display': 'block'}
     else:
         return {'display': 'none'}
 
-@app.callback(dash.dependencies.Output('div_observatory', 'style'),
-              [dash.dependencies.Input('tabs', 'value')])
+@app.callback(Output('div_observatory', 'style'),
+              [Input('tabs', 'value')])
 def update_div_weather_visible(tab_val):
     if tab_val == 'tab2':
         return {'display': 'block'}
     else:
         return {'display': 'none'}
 
-@app.callback(dash.dependencies.Output('div_telescope', 'style'),
-              [dash.dependencies.Input('tabs', 'value')])
+@app.callback(Output('div_telescope', 'style'),
+              [Input('tabs', 'value')])
 def update_div_weather_visible(tab_val):
     if tab_val == 'tab3':
         return {'display': 'block'}
@@ -128,14 +172,15 @@ def update_div_weather_visible(tab_val):
         return {'display': 'none'}
 
 
-#############################################
-# Interaction Between Components / Controller
-#############################################
+###########################################################
+# Interaction Between Components / Controller : Weather tab
+###########################################################
+
 
 @app.callback(
-    dash.dependencies.Output('graphs','children'),
-    [dash.dependencies.Input('observatory-data-name', 'value')],
-    events=[dash.dependencies.Event('graph-update', 'interval')]
+    Output('weather_graphs','children'),
+    [Input('weather_data_name', 'value')],
+    events=[Event('weather_update', 'interval')]
     )
 def update_graph(data_names):
     graphs = []
@@ -155,24 +200,52 @@ def update_graph(data_names):
             x=list(df.index),
             y=list(df[data_name]),
             name='Scatter',
-            fill="tozeroy",
-            fillcolor="#6897bb"
-            )
+            mode = 'lines',
+            #color="#6897bb"
+        )
 
         graphs.append(html.Div(dcc.Graph(
             id=data_name,
-            animate=True,
+            animate=False, #True messes with autorange
             figure={'data': [data],'layout' :
-                go.Layout(xaxis=dict(range=[df.index.min(),df.index.max()]),
-                          yaxis=dict(range=[df[data_name].min(),
-                                            df[data_name].max()]),
-                          margin={'l':50,'r':1,'t':45,'b':1},
-                          title='{}'.format(data_name))}
+                go.Layout(xaxis=dict(#range=[df.index.min(),
+                                     #       df.index.max()],
+                                     autorange=True,
+                                     showgrid=True,
+                                     zeroline=False,
+                                     showline=False,
+                                     showticklabels=True),
+                          yaxis=dict(#range=[df[data_name].min(),
+                                     #       df[data_name].max()],
+                                     autorange=True,
+                                     showgrid=True,
+                                     zeroline=False,
+                                     showline=True,
+                                     showticklabels=True),
+                          margin={'l':50,'r':50,'t':45,'b':45},
+                          title='{}'.format(data_name)),}
             ), className=class_choice))
 
     return graphs
 
+###############################################################
+# Interaction Between Components / Controller : Observatory tab
+###############################################################
 
+@app.callback(
+    Output('observatory_tables', 'children'),
+    events=[Event('observatory_update', 'interval')])    
+def table_update():
+    df = pd.DataFrame([{'a':1,'b':2},{'a':44,'b':88}], index=['1st','2nd'])
+    return dcc.Graph(
+        id='observatory_sensor_table',
+        figure=ff.create_table(df, index=True))
+
+
+
+#############################################################
+# Interaction Between Components / Controller : Telescope tab
+#############################################################
 
 external_css = ["https://cdnjs.cloudflare.com/ajax/libs/materialize/0.100.2/css/materialize.min.css"]
 for css in external_css:
@@ -183,7 +256,7 @@ for js in external_css:
     app.scripts.append_script({'external_url': js})
 
 if __name__ == '__main__':
-    app.css.config.serve_locally = True
-    app.scripts.config.serve_locally = True
+    #app.css.config.serve_locally = True
+    #app.scripts.config.serve_locally = True
     app.run_server(debug=True)
 
