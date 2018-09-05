@@ -1,4 +1,5 @@
 # Generic python stuff
+import base64
 import bson.json_util as json_util
 from collections import deque
 import time
@@ -12,12 +13,16 @@ import dash_html_components as html
 import plotly
 import plotly.figure_factory as ff
 import plotly.graph_objs as go
+import plotly.plotly as py
+import plotly.tools as tls
+
+import matplotlib.pyplot as plt
 
 # DS
 import pandas as pd
 
 # Numerical stuff
-import random
+import numpy as np
 
 # Local stuff
 from utils.database import DB, FileDB, MongoDB
@@ -53,6 +58,7 @@ def retrieve_obd_values():
 # Dashboard Layout / View
 #########################
 
+
 # Common definitions
 colors = {
     'background': '#F6F8FD', #clear grey or dark grey with #111111
@@ -69,9 +75,9 @@ df = retrieve_obd_values()
 # Define weather tab
 div_weather = html.Div(
     id='div_weather',
+    style=default_style,
     children = [
         html.Div(
-            style=default_style,
             children=[
                 html.H2(style=default_title_style,
                         children='Weather Monitoring',
@@ -122,6 +128,18 @@ div_telescope = html.Div(
         html.H2(style=default_title_style,
                 children='Telescope Monitoring',
         ),
+        html.Div(
+            children = [
+                html.H4(children='Telescope plot'),
+                html.Div(id='telescope_plot'),
+            ]),
+        html.Div(
+            id='telescope_image'),
+        dcc.Interval(
+            id='telescope_update',
+            interval=1*1000, # in milliseconds
+            n_intervals=0
+        )
     ]
 )
 
@@ -182,7 +200,7 @@ def update_div_weather_visible(tab_val):
     [Input('weather_data_name', 'value')],
     events=[Event('weather_update', 'interval')]
     )
-def update_graph(data_names):
+def update_weather_graph(data_names):
     graphs = []
     df = retrieve_obd_values()
     if data_names is None:
@@ -235,7 +253,7 @@ def update_graph(data_names):
 @app.callback(
     Output('observatory_tables', 'children'),
     events=[Event('observatory_update', 'interval')])    
-def table_update():
+def update_observatory_table():
     df = pd.DataFrame([{'a':1,'b':2},{'a':44,'b':88}], index=['1st','2nd'])
     return dcc.Graph(
         id='observatory_sensor_table',
@@ -247,15 +265,41 @@ def table_update():
 # Interaction Between Components / Controller : Telescope tab
 #############################################################
 
-external_css = ["https://cdnjs.cloudflare.com/ajax/libs/materialize/0.100.2/css/materialize.min.css"]
-for css in external_css:
-    app.css.append_css({"external_url": css})
+@app.callback(
+    Output('telescope_plot', 'children'),
+    events=[Event('telescope_update', 'interval')])
+def update_telescope_plot():
+    mpl_fig = plt.figure()
+    ax = mpl_fig.add_subplot(111)
+    ax.plot(np.arange(10),np.random.rand(10))
+    #ax.imshow(np.random.rand(256,256))
+    #ax.set_title('A random image')
+    #ax.xaxis.set_major_formatter(plt.NullFormatter())
+    #ax.yaxis.set_major_formatter(plt.NullFormatter())
+    #plt.axis('off')
 
-external_js = ['https://cdnjs.cloudflare.com/ajax/libs/materialize/0.100.2/js/materialize.min.js']
-for js in external_css:
-    app.scripts.append_script({'external_url': js})
+    return dcc.Graph(
+        id='telescope_plot',
+        figure=tls.mpl_to_plotly(mpl_fig))
+
+@app.callback(
+    Output('telescope_image', 'children'),
+    events=[Event('telescope_update', 'interval')])
+def update_telescope_image():
+    image_filename = './ScopeSimulator/compass.svg.png'
+    encoded_image = base64.b64encode(open(image_filename, 'rb').read())
+    return html.Img(src='data:image/png;base64,{}'.format(
+        encoded_image.decode()))
+
 
 if __name__ == '__main__':
+    # include external css
+    external_css = ["https://cdnjs.cloudflare.com/ajax/libs/materialize/0.100.2/css/materialize.min.css"]
+    for css in external_css:
+        app.css.append_css({"external_url": css})
+    external_js = ['https://cdnjs.cloudflare.com/ajax/libs/materialize/0.100.2/js/materialize.min.js']
+    for js in external_css:
+        app.scripts.append_script({'external_url': js})
     #app.css.config.serve_locally = True
     #app.scripts.config.serve_locally = True
     app.run_server(debug=True)
