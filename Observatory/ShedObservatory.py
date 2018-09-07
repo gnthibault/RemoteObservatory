@@ -13,7 +13,7 @@ from astroplan import Observer
 import pytz
 from tzwhere import tzwhere
 
-class ShedObservatory():
+class ShedObservatory:
     """Shed Observatory 
     """
 
@@ -21,7 +21,7 @@ class ShedObservatory():
         self.logger = logger or logging.getLogger(__name__)
         
         if configFileName is None:
-            self.configFileName = 'ShedObservatory.json'
+            self.configFileName = './conf_files/ShedObservatory.json'
         else:
             self.configFileName = configFileName
 

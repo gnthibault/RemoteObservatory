@@ -29,7 +29,7 @@ class IndiClient(PyIndi.BaseClient):
       self.logger.debug('finished constructing base class')
 
       if configFileName is None:
-          self.configFileName = 'IndiClient.json'
+          self.configFileName = './conf_files/IndiClient.json'
       else:
           self.configFileName = configFileName
 

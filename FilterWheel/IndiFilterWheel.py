@@ -13,7 +13,7 @@ class IndiFilterWheel(IndiDevice):
         logger = logger or logging.getLogger(__name__)
         
         if configFileName is None:
-            self.configFileName = 'IndiSimulatorFilterWheel.json'
+            self.configFileName = 'conf_files/IndiSimulatorFilterWheel.json'
         else:
             self.configFileName = configFileName
 

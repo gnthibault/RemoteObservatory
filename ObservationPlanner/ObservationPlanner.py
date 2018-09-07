@@ -61,7 +61,7 @@ class ObservationPlanner:
         self.logger = logger or logging.getLogger(__name__)
         
         if configFileName is None:
-            self.configFileName = 'TargetList.json'
+            self.configFileName = './conf_files/TargetList.json'
         else:
             self.configFileName = configFileName
 

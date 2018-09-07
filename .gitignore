@@ -7,15 +7,4 @@ __pycache__
 *.swo
 *.swp
 
-/IndiCCDSimulatorCamera.json
-/IndiClient.json
-/IndiEos350DCamera.json
-/IndiSimulatorFilterWheel.json
-/ntp.json
-/ShedObservatory.json
-/TargetList.json
-/test.py
-/IndiSimulatorMount.json
-/IndiSimulatorFocuser.json
-/simple_state_table.yaml
-/default_targets.yaml
+/conf_files

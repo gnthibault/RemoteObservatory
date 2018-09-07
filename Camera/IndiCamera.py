@@ -29,7 +29,7 @@ class IndiCamera(IndiDevice):
         logger = logger or logging.getLogger(__name__)
         
         if configFileName is None:
-            self.configFileName = 'IndiCCDSimulatorCamera.json'
+            self.configFileName = './conf_files/IndiCCDSimulatorCamera.json'
         else:
             self.configFileName = configFileName
 

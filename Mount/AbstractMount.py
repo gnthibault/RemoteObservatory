@@ -8,16 +8,18 @@ from astropy.coordinates import EarthLocation
 from astropy.coordinates import SkyCoord
 
 # Local
-#from Base.Base import Base
+from Base.Base import Base
 from utils import error
 
-class AbstractMount: #(Base):
+class AbstractMount(Base):
 
     """
-        Abstract Base class for controlling a mount. This provides the basic functionality
-        for the mounts. Sub-classes should override the `initialize` method for mount-specific
-        issues as well as any helper methods specific mounts might need. See
-        "NotImplemented Methods" section of this module.
+        From panoptes:
+        Abstract Base class for controlling a mount. This provides the basic
+        functionality for the mounts. Sub-classes should override the
+        `initialize` method for mount-specific issues as well as any helper
+        methods specific mounts might need. See "NotImplemented Methods"
+        section of this module.
 
         Sets the following properies:
 
@@ -42,9 +44,8 @@ class AbstractMount: #(Base):
 
     def __init__(self, location, serv_time, commands=None, logger=None, *args,
                  **kwargs):
-        #super(AbstractMount, self).__init__(*args, **kwargs)
+        super(AbstractMount, self).__init__(*args, **kwargs)
         self.logger = logger or logging.getLogger(__name__)
-
         assert isinstance(location, EarthLocation)
 
         # Needed for time reference
@@ -500,10 +501,10 @@ class AbstractMount: #(Base):
             self.logger.debug("{} seconds passed total".format(
                 (self.self.serv_time.getAstropyTimeFromUTC() - now).sec))
         except KeyboardInterrupt:
-            self.logger.warning("Keyboard interrupt, stopping movement.")
+            self.logger.warning('Keyboard interrupt, stopping movement.')
         except Exception as e:
-            self.logger.warning(
-                "Problem moving command!! Make sure mount has stopped moving: {}".format(e))
+            self.logger.warning('Problem moving command!! Make sure mount has '
+                                'stopped moving: {}'.format(e))
         finally:
             # Note: We do this twice. That's fine.
             self.logger.debug("Stopping movement")
@@ -535,9 +536,10 @@ class AbstractMount: #(Base):
     def query(self, cmd, params=None):
         """Sends a query to the mount and returns response.
 
-        Performs a send and then returns response. Will do a translate on cmd first. This should
-        be the major serial utility for commands. Accepts an additional args that is passed
-        along with the command. Checks for and only accepts one args param.
+        Performs a send and then returns response. Will do a translate on cmd
+        first. This should be the major serial utility for commands. Accepts an
+        additional args that is passed along with the command. Checks for and
+        only accepts one args param.
 
         Args:
             cmd (str): A command to send to the mount. This should be one of the
@@ -566,7 +568,8 @@ class AbstractMount: #(Base):
 
         # expected_response = self._get_expected_response(cmd)
         # if str(response) != str(expected_response):
-        #     self.logger.warning("Expected: {}\tGot: {}".format(expected_response, response))
+        #     self.logger.warning("Expected: {}\tGot: {}".format(
+        #                         expected_response, response))
 
         return response
 
@@ -576,9 +579,9 @@ class AbstractMount: #(Base):
     def read(self, *args):
         raise NotImplementedError
 
-##################################################################################################
+###############################################################################
 # Private Methods
-##################################################################################################
+###############################################################################
 
     def _get_expected_response(self, cmd):
         """ Looks up appropriate response for command for telescope """

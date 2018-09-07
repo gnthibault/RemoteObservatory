@@ -17,7 +17,7 @@ class IndiFocuser(IndiDevice):
         logger = logger or logging.getLogger(__name__)
         
         if configFileName is None:
-          self.configFileName = 'IndiSimulatorFocuser.json'
+          self.configFileName = './conf_files/IndiSimulatorFocuser.json'
         else:
           self.configFileName = configFileName
 

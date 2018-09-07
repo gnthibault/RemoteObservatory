@@ -27,7 +27,7 @@ class NTPTimeService(BaseService):
 
         if configFileName is None:
             # Default file is ntp.json
-            self.configFileName = 'ntp.json'
+            self.configFileName = './conf_files/ntp.json'
         else:
             self.configFileName = configFileName
 

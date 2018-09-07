@@ -38,7 +38,7 @@ class IndiMount(IndiDevice):
         logger = logger or logging.getLogger(__name__)
         
         if configFileName is None:
-            self.configFileName = 'IndiSimulatorMount.json'
+            self.configFileName = 'conf_files/IndiSimulatorMount.json'
         else:
             self.configFileName = configFileName
 
