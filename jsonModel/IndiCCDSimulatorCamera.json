@@ -1,4 +1,4 @@
 {
   "cameraName": "CCD Simulator",
-  "focuserCfg": "IndiSimulatorFocuser.json"
+  "focuserCfg": "conf_files/IndiSimulatorFocuser.json"
 }

@@ -67,7 +67,7 @@ class IndiCamera(IndiDevice):
         #    self.focuser = IndiFocuser(indiClient=self.indi_client,
         #                               connectOnCreate=True)
         #except Exception:
-        #    raise error.RuntimeError('Problem setting up focuser')
+        #    raise RuntimeError('Problem setting up focuser')
 
         # Finished configuring
         self.logger.debug('Configured Indi Camera successfully')

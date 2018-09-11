@@ -679,7 +679,7 @@ class Manager(Base):
             self.indi_client = IndiClient()
             self.indi_client.connect()
         except Exception:
-            raise error.RuntimeError('Problem setting up indi client')
+            raise RuntimeError('Problem setting up indi client')
 
     def _setup_services(self):
         """
@@ -692,7 +692,7 @@ class Manager(Base):
             #self.serv_astrometry.login()
 
         except Exception:
-            raise error.RuntimeError('Problem setting up services')
+            raise RuntimeError('Problem setting up services')
 
 
     def _setup_observatory(self):
@@ -703,7 +703,7 @@ class Manager(Base):
             self.observatory = ShedObservatory()
             self.dome = None #TODO TN integrate latter
         except Exception:
-            raise error.RuntimeError('Problem setting up observatory')
+            raise RuntimeError('Problem setting up observatory')
 
     def _setup_mount(self):
         """
@@ -732,7 +732,7 @@ class Manager(Base):
             #                        connectOnCreate=True)
  
         except Exception as e:
-            raise error.RuntimeError('Problem setting up camera: {}'.format(e))
+            raise RuntimeError('Problem setting up camera: {}'.format(e))
 
         self.primary_camera = cam
         self.cameras[cam.name] = cam
@@ -750,7 +750,7 @@ class Manager(Base):
             self.filterwheel = IndiFilterWheel(indiClient=self.indi_client,
                                                connectOnCreate=True)
         except Exception:
-            raise error.RuntimeError('Problem setting up filterwheel')
+            raise RuntimeError('Problem setting up filterwheel')
 
 
     def _setup_observation_planner(self):
@@ -763,7 +763,7 @@ class Manager(Base):
             self.observation_planner = ObservationPlanner(
                 ntpServ=self.serv_time, obs=self.observatory)
         except Exception:
-            raise error.RuntimeError('Problem setting up observation planner')
+            raise RuntimeError('Problem setting up observation planner')
 
         # Target as defined in the Panoptes project
         try:

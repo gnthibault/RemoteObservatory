@@ -6,7 +6,10 @@ import time
 import PyIndi
 from helper.IndiClient import IndiClient
 
-class IndiDevice:
+# Local stuff
+from Base.Base import Base
+
+class IndiDevice(Base):
     defaultTimeout = 30
     propTypeToGetterMap = {
         'blob': 'getBLOB',
