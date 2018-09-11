@@ -53,7 +53,7 @@ class RemoteObservatoryFSM(StateMachine, Base):
     def __init__(
             self,
             manager,
-            state_machine_file='simple_state_table.yaml',
+            state_machine_file='conf_files/simple_state_table.yaml',
             messaging=False,
             **kwargs):
 

@@ -44,7 +44,7 @@ class BaseScheduler(Base):
         assert isinstance(observer, Observer)
 
         if fields_file is None:
-            fields_file = 'default_targets.yaml'
+            fields_file = './conf_files/default_targets.yaml'
         self._fields_file = fields_file
         self._fields_list = fields_list
         self._observations = dict()
