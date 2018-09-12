@@ -40,7 +40,7 @@ class BaseScheduler(Base):
             *args: Arguments to be passed to `PanBase`
             **kwargs: Keyword args to be passed to `PanBase`
         """
-        self.logger = logging.getLogger(__name__)
+        Base.__init__(self)
         assert isinstance(observer, Observer)
 
         if fields_file is None:

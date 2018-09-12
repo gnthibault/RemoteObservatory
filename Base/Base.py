@@ -45,7 +45,8 @@ class Base:
         self._check_config(_config)
         self.config = _config
 
-        self.logger = kwargs.get('logger') or logging.getLogger(__name__)
+        self.logger = kwargs.get('logger') or (
+            logging.getLogger(self.__class__.__name__))
 
         # Get passed DB or set up new connection
         _db = kwargs.get('db', None)

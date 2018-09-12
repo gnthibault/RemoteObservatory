@@ -6,11 +6,14 @@ import threading
 # Indi stuff
 import PyIndi
 
+# Local
+from Base.Base import Base
+
 # configure global variables
 global indiClientGlobalBlobEvent
 indiClientGlobalBlobEvent = threading.Event()
 
-class IndiClient(PyIndi.BaseClient):
+class IndiClient(PyIndi.BaseClient, Base):
   '''
     This Indi Client class can be used as a singleton, so that it can be used
     to interact with multiple devices, instead of declaring one client per
@@ -20,13 +23,12 @@ class IndiClient(PyIndi.BaseClient):
     C++ thread, and not by the python main thread, so be careful.
   '''
 
-  def __init__(self, configFileName=None, logger=None):
-      self.logger = logger or logging.getLogger(__name__)
-      
+  def __init__(self, configFileName=None):
+      # Init "our" Base class
+      Base.__init__(self)
+
       # Call indi client base classe ctor
-      self.logger.debug('starting constructing base class')
-      super(IndiClient, self).__init__()
-      self.logger.debug('finished constructing base class')
+      PyIndi.BaseClient.__init__(self)
 
       if configFileName is None:
           self.configFileName = './conf_files/IndiClient.json'

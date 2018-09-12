@@ -36,10 +36,13 @@ from astroplan.scheduling import Transitioner
 import matplotlib
 import matplotlib.pyplot as plt
 
+# Local
+from Base.Base import Base
+
 # Locally defined constraints
 from ObservationPlanner.LocalHorizonConstraint import LocalHorizonConstraint
 
-class ObservationPlanner:
+class ObservationPlanner(Base):
 
     WheelToPltColors = {
         'Luminance' : 'orchid',
@@ -56,9 +59,9 @@ class ObservationPlanner:
 
     def __init__(self, ntpServ, obs, configFileName=None, path='.',
                  logger=None):
+        Base.__init__(self)
         self.ntpServ = ntpServ
         self.obs = obs
-        self.logger = logger or logging.getLogger(__name__)
         
         if configFileName is None:
             self.configFileName = './conf_files/TargetList.json'

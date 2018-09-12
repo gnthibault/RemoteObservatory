@@ -19,7 +19,7 @@ class IndiDevice(Base):
         'text': 'getText'
     }
     def __init__(self, logger, deviceName, indiClient):
-        self.logger = logger or logging.getLogger(__name__)
+        Base.__init__(self)
     
         self.deviceName = deviceName
         self.indiClient = indiClient

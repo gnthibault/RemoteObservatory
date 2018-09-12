@@ -74,7 +74,7 @@ class Manager(Base):
         Starts up the observatory. Reads config file, sets up location,
         dates, mount, cameras, and weather station
         """
-        self.logger = logging.getLogger(__name__)
+        Base.__init__(self)
         self.logger.info('Initializing observatory manager')
 
         # Image directory and other ios

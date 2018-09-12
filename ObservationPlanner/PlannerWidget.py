@@ -15,6 +15,9 @@ from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as NavigationToolbar
 import matplotlib.pyplot as plt
 
+# Local Base
+from Base.Base import Base
+
 # Local stuff : Service
 from Service.NTPTimeService import NTPTimeService
 
@@ -25,14 +28,14 @@ from Observatory.ShedObservatory import ShedObservatory
 from ObservationPlanner.ObservationPlanner import ObservationPlanner
 
 
-class AltazPlannerWidget(QFrame):
+class AltazPlannerWidget(QFrame, Base):
 
     schedule_ready_trigger = pyqtSignal(object)
 
     def __init__(self, parent=None, observatory=None, serv_time=None,
                  logger=None):
+        Base.__init__(self)
         super(QFrame, self).__init__(parent)
-        self.logger = logger or logging.getLogger(__name__)
 
         # a figure instance to plot on
         self.figure = plt.figure(figsize=(20,4))#6 should work

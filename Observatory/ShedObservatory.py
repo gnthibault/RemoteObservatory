@@ -13,12 +13,15 @@ from astroplan import Observer
 import pytz
 from tzwhere import tzwhere
 
-class ShedObservatory:
+# Local
+from Base.Base import Base
+
+class ShedObservatory(Base):
     """Shed Observatory 
     """
 
     def __init__(self, configFileName=None, logger=None, servWeather=None):
-        self.logger = logger or logging.getLogger(__name__)
+        Base.__init__(self)
         
         if configFileName is None:
             self.configFileName = './conf_files/ShedObservatory.json'

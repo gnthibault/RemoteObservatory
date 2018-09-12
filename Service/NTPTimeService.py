@@ -18,13 +18,15 @@ from astropy.time import Time as ATime
 from Service.BaseService import BaseService
 
 class NTPTimeService(BaseService):
-    ''' NTPTime Service:
+    ''' NTPTime Service: one of the only service class that does not inherit
+        from Base, because Base needs a time service. That would generate a
+        circular dependency.
+        Just in case, we designed a BaseService for this purpose
     '''
     DEFAULT_TIMEZONE_STR = 'Europe/Paris'
 
     def __init__(self, configFileName=None, obs=None, logger=None):
-        self.logger = logger or logging.getLogger(__name__)
-
+        BaseService.__init__(self)
         if configFileName is None:
             # Default file is ntp.json
             self.configFileName = './conf_files/ntp.json'

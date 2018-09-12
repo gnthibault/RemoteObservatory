@@ -44,8 +44,7 @@ class AbstractMount(Base):
 
     def __init__(self, location, serv_time, commands=None, logger=None, *args,
                  **kwargs):
-        super(AbstractMount, self).__init__(*args, **kwargs)
-        self.logger = logger or logging.getLogger(__name__)
+        Base.__init__(self, args, kwargs)
         assert isinstance(location, EarthLocation)
 
         # Needed for time reference

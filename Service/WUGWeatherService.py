@@ -3,7 +3,6 @@ import logging
 import json
 import traceback
 
-
 # Local stuff
 from Service.WUGService import WUGService
 

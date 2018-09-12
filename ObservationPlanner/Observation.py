@@ -44,7 +44,7 @@ class Observation(Base):
                 (default: {100})
 
         """
-        self.logger = logging.getLogger(__name__)
+        Base.__init__(self)
         assert isinstance(field, Field), self.logger.error(
             "Must be a valid Field instance")
 

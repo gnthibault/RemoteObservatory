@@ -13,7 +13,6 @@ from Observatory.VirtualObservatory import VirtualObservatory
 from Observatory.ShedObservatory import ShedObservatory
 
 # Local stuff : Service
-from Service.VirtualService import VirtualService
 from Service.WUGWeatherService import WUGWeatherService
 from Service.NTPTimeService import NTPTimeService
 from Service.NovaAstrometryService import NovaAstrometryService

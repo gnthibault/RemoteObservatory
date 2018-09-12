@@ -30,7 +30,10 @@ from email.mime.base import MIMEBase
 from email.mime.application  import MIMEApplication
 from email.encoders import encode_noop
 
-class NovaAstrometryService():
+# Local stuff
+from Base.Base import Base
+
+class NovaAstrometryService(Base):
     """ Nova Astrometry Service """
     # API request engine
     defaultAPIURL = 'http://nova.astrometry.net/api/'
@@ -38,7 +41,8 @@ class NovaAstrometryService():
     defaultLocalKey = 'XXXXXXXX'
 
     def __init__(self, configFileName=None, logger=None, apiURL=defaultAPIURL):
-        self.logger = logger or logging.getLogger(__name__)
+        Base.__init__(self)
+        self.logger = logger or logging.getLogger(self.__class__.__name__)
 
         if configFileName is 'local':
             apiURL=NovaAstrometryService.defaultLocalAPIURL

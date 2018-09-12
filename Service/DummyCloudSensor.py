@@ -15,33 +15,26 @@ import numpy as np
 import astropy.units as u
 
 # Local stuff
+from Base.Base import Base
 from Service.NTPTimeService import NTPTimeService
-
 from utils.config import load_config
 #from utils.messaging import PanMessaging
 
-def get_db():
-    from utils.database import DB
-    return DB()
-
-class DummyCloudSensor:
+class DummyCloudSensor(Base):
 
     def __init__(self, store_result=True):
         print('Initializing cloud sensor')
+        Base.__init__(self)
         self.name = 'Random weather generator'
         self.safe_dict = None
         self.serv_time = NTPTimeService()
         self.weather_entries = []
         self.safety_delay = 60
-
-        self.db = None
-        if store_result:
-            self.db = get_db()
+        self.store_result = store_result
 
     def capture(self, store_result=False, send_message=False, **kwargs):
         """ Query the CloudWatcher """
         
-        self.logger = kwargs.get('logger', logging.getLogger(__name__))
         self.logger.debug("Updating weather")
 
         data = {}
@@ -74,9 +67,7 @@ class DummyCloudSensor:
         if send_message:
             self.send_message({'data': data}, channel='weather')
 
-        if store_result:
-            if self.db is None:
-                self.db = get_db()
+        if store_result and self.store_result:
             self.db.insert_current('weather', data)
 
         return data
