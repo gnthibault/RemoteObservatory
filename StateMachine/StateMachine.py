@@ -10,10 +10,11 @@ from transitions import State
 from transitions.extensions import GraphMachine as Machine
 
 # Local stuff
+from Base.Base import Base
 from utils import listify
 from utils import load_module
 
-class StateMachine(Machine):
+class StateMachine(Machine, Base):
     """ A finite state machine class initially written by PANOPTES project
     members
     The state machine guides the overall action of the unit.
@@ -54,7 +55,7 @@ class StateMachine(Machine):
 
     def __init__(self, state_machine_table, **kwargs):
 
-        self.logger = logging.getLogger(__name__)
+        Base.__init__(self)
         if isinstance(state_machine_table, str):
             self.logger.info("Loading state table: {}".format(
                 state_machine_table))

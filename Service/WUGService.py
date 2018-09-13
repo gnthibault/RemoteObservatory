@@ -11,38 +11,38 @@ import requests_cache
 from Base.Base import Base
 
 class WUGService(Base):
-  """ WUG Service """
-  # API request engine
-  defaultBaseAPIURL = 'http://api.wunderground.com/api'
-  #update request only once every 3 min 
-  defaultCacheTimeSec = 3*60
+    """ WUG Service """
+    # API request engine
+    defaultBaseAPIURL = 'http://api.wunderground.com/api'
+    #update request only once every 3 min 
+    defaultCacheTimeSec = 3*60
 
-  def __init__(self, configFileName=None, logger=None):
-      Base.__init__(self)
-      self.gpsCoordinates = {'latitude': '0.0', 'longitude': '0.0'}
+    def __init__(self, configFileName=None):
+        Base.__init__(self)
+        self.gpsCoordinates = {'latitude': '0.0', 'longitude': '0.0'}
 
-      requests_cache.install_cache('wug_cache', backend='sqlite',\
-      expire_after=self.defaultCacheTimeSec) 
+        requests_cache.install_cache('wug_cache', backend='sqlite',\
+        expire_after=self.defaultCacheTimeSec) 
 
-      if configFileName is None:
-          # Default file is ~/.wug.json
-          home = Path.home()
-          config = home / '.wug.json'
-          self.configFileName = str(config)
-      else:
-          self.configFileName = configFileName
+        if configFileName is None:
+            # Default file is ~/.wug.json
+            home = Path.home()
+            config = home / '.wug.json'
+            self.configFileName = str(config)
+        else:
+            self.configFileName = configFileName
 
-      # Now configuring
-      self.logger.debug('Configuring WUG Service with file %s',\
-          self.configFileName)
+        # Now configuring
+        self.logger.debug('Configuring WUG Service with file %s',\
+            self.configFileName)
 
-      # Get key from json
-      with open(self.configFileName) as jsonFile:  
-          data = json.load(jsonFile)
-          self.key = data['key']
-      
-      # Finished configuring
-      self.logger.debug('Configured WUG service successfully')
+        # Get key from json
+        with open(self.configFileName) as jsonFile:  
+            data = json.load(jsonFile)
+            self.key = data['key']
+        
+        # Finished configuring
+        self.logger.debug('Configured WUG service successfully')
 
     def setGpsCoordinates(self,gpsCoordinates):
         self.gpsCoordinates = gpsCoordinates

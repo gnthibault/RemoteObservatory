@@ -42,7 +42,6 @@ class NovaAstrometryService(Base):
 
     def __init__(self, configFileName=None, logger=None, apiURL=defaultAPIURL):
         Base.__init__(self)
-        self.logger = logger or logging.getLogger(self.__class__.__name__)
 
         if configFileName is 'local':
             apiURL=NovaAstrometryService.defaultLocalAPIURL

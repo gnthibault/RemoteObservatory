@@ -10,19 +10,18 @@ import traceback
 from astropy.io import fits
 
 # Local stuff
+from Base.Base import Base
 
-class FitsWriter():
+class FitsWriter(Base):
     """
       Check FITS manipulation with astropy:
       http://docs.astropy.org/en/stable/io/fits/
     """
 
-    def __init__(self, logger=None, observatory=None, servWeather=None,
-                 servTime=None, servAstrometry=None, filterWheel=None,
-                 telescope=None, camera=None, path='./images'):
-        self.logger = logger or logging.getLogger(__name__)
+    def __init__(self, observatory=None, servWeather=None, servTime=None,
+                 servAstrometry=None, filterWheel=None, telescope=None,
+                 camera=None, path='./images'):
         self.logger.debug('Configuring FitsWriter')
-
         self.imgIdx = 0
         self.observatory = observatory
         self.servWeather = servWeather

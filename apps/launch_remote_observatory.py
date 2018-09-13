@@ -63,7 +63,6 @@ class RemoteObservatoryFSM(StateMachine, Base):
         Base.__init__(self, **kwargs)
 
         # local init
-        self.logger = logging.getLogger(__name__)
         self.name = 'gntibault\'s Remote Observatory'
         self.logger.info('Initializing Remote Observatory - {}'.format(
                          self.name))

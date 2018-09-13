@@ -7,21 +7,18 @@ import threading
 import PyIndi
 
 # Local stuff
-from helper import IndiClient
+from Base.Base import Base
+from helper.IndiClient import IndiClient
 
-class Indi3DSimulatorClient(IndiClient.IndiClient):
+class Indi3DSimulatorClient(IndiClient):
   '''
     We designed this class, derived from Indiclient, in order to catch all
     the numbers/text that can help us to update the simulation status
   '''
 
-  def __init__(self, simulator, configFileName=None, logger=None):
-      self.logger = logger or logging.getLogger(__name__)
-      
+  def __init__(self, simulator, configFileName=None):
       # Call indi client base classe ctor
-      self.logger.debug('starting constructing base class')
-      super(IndiClient.IndiClient, self).__init__()
-      self.logger.debug('finished constructing base class')
+      IndiClient.__init__(self)
 
       #Dictionary of callbacks, key=device, value=conditions + callback
       self.number_callbacks = []
