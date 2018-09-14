@@ -18,7 +18,7 @@ def on_enter(event_data):
     model.next_state = 'parking'
 
     try:
-        model.logger.debug("Taking pointing picture.")
+        model.say.debug("Taking pointing picture.")
         observation = model.manager.current_observation
         fits_headers = model.manager.get_standard_headers(
             observation=observation
@@ -52,7 +52,7 @@ def on_enter(event_data):
             while not all([event.is_set() for event in camera_events.values()]):
                 model.check_messages()
                 if model.interrupted:
-                    model.logger.debug("Observation interrupted!")
+                    model.say("Observation interrupted!")
                     break
 
                 model.logger.debug('Waiting for images: {} seconds'.format(
@@ -77,6 +77,8 @@ def on_enter(event_data):
                 #pointing_image.solve_field()
                 #observation.pointing_image = pointing_image
                 #model.logger.debug("Pointing file: {}".format(pointing_image))
+                #model.say('Ok, I've got the pointing picture, '
+                #          'let's see how close we are.')
                 #model.logger.debug('Pointing Coords: {}',
                 #                   pointing_image.pointing)
                 #model.logger.debug('Pointing Error: {}',
@@ -86,5 +88,5 @@ def on_enter(event_data):
         model.next_state = 'tracking'
 
     except Exception as e:
-        model.logger.debug('Hmm, I had a problem checking the pointing error. '
-                           'Going to park. {}'.format(e))
+        model.say('Hmm, I had a problem checking the pointing error. '
+                  'Going to park. {}'.format(e))

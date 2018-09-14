@@ -16,8 +16,7 @@ from utils import load_module
 
 class StateMachine(Machine, Base):
     """ A finite state machine class initially written by PANOPTES project
-    members
-    The state machine guides the overall action of the unit.
+    members, the state machine guides the overall action of the unit.
 
     Why don't we use a separate model class to store the logic, but instead put
     everything into the statemachine ? Here is the answer in the relevant part
@@ -30,8 +29,8 @@ class StateMachine(Machine, Base):
     whole bunch of new methods into the Matter class), it can also get annoying
     , since it requires you to keep track of which methods are called on the
     state machine, and which ones are called on the model that the state
-    machine is bound to
-    (e.g., lump.on_enter_StateA() vs. machine.add_transition() ).
+    machine is bound to (e.g., lump.on_enter_StateA() vs.
+                               machine.add_transition() ).
     Fortunately, Transitions is flexible, and supports two other initialization
     patterns.
     First, you can create a standalone state machine that doesn't require
@@ -50,7 +49,83 @@ class StateMachine(Machine, Base):
     in a separate controller.
     An alternative (potentially better) approach is to have the model inherit
     from the Machine class. Transitions is designed to support inheritance
-    seamlessly. (just be sure to override class Machine 's __init__ method!):
+    seamlessly. (just be sure to override class Machine 's __init__ method!)
+
+
+    Here is a list of useful attributes / method that can be used in a derived
+    class. along with some comments:
+
+    ####### Control flow attributes #######
+    self._connected: used in inherited, set to True in inherited __init__
+        is called. It is actually the value returned by overriden connected()
+        method. Set to false in inherited.power_down
+    self.connected: @property defined in inherited, actually returns _connected
+    self._initialized: used in inherited, set to False when inherited __init__
+        is called. Set to tru in inherited.initialize. returned by overriden 
+        property is_initialized in inherited. Set to False in
+        inherited.power_down
+    self._keep_running: used in inherited. Initialized to False in
+        StateMachine.__init__, but initialized to True in
+        inherited.__init__. Eventually set to false in inherited.power_down
+    self._do_states: used in both StateMachine and inherited. Initialized to
+        True in StateMachine.__init__, eventually set to
+             -False in inherited.power_down.
+             -True in StateMachine.__init__.
+             -True in StateMachine.run
+             -False in StateMachine.stop_states
+        Mainly used in StateMachine, where it is initialize
+    self.do_state: @property defined in StateMachine, simply returne _do_state
+    self._retry_attempts: used in inherited, default retry number of retry, set
+        to 3 by default in inherited.
+    self._obs_run_retries: used in inherited, initialized at
+        self._retry_attempts, whenever reset_observation_run is called.
+        In the main run loop in StateMachine, this counter is decremented
+        whenever an "Attempt" of the main FSM loop has run, most likely
+        because of an exception somwhere in the state/trnsition
+    self._interrupted: used in inherited. Initialized to False when inherited 
+        __init__ is called. Set to true if _interrupt_and_park or
+        _interrupt_and_shutdown is called. It is actually the value returned
+        by overriden @interrupted property is called
+    self.interrupted: @property defined in inherited, actually returns
+        _interrupted. used in the following states:
+        observing state:
+        pointing state:
+
+    ####### State/safety/info related attributes #######
+    self._is_safe:
+    self.state: mainly used in stateMachine, but also used in inherited
+    self._next_state: mainly used in StateMachine 
+    self.run_once: used in StateMachine.run
+        also used in:
+        scheduling state: if run_once, then go park directly, do not check for
+                          other possible observation (tracking if same of slew-
+                          ing if another target is the next observation)
+        parked state: if no valid observation and run_once, it means that
+                      the run already took place, and that no additional check
+                      for wake up should be performed.
+    self.force_reschedule = used in inherited, initialized to False in
+        inherited constructor. Might be used for instance if an error/data
+        quality requirement is not met during the previous observation
+        acquisition. Then we might force to reschedule. This value is for
+        instance checked inside of the analyzing state.
+    self.should_retry: @property that returns wether the self_obs_run_retries
+        counter is >=0 or not. defined in inherited.
+        used in states:
+        -parked: like run_once, if should not retry, but observation list was 
+                 not void, then go to housekeeping before sleeping
+        -sleeping: if False, it means that something must have gone wrong, so
+                   instead of going back to ready state after resetting the
+                   observing run, and waiting for a timed transition
+                   just triggers the stop_state method
+
+
+    ####### Control flow method not related to state #######
+    self.reset_observation_run: Defined in inherited, just reset
+        the _obs_run_retry attribute to its default value: self._retry_attempts
+
+
+
+
     """
 
     def __init__(self, state_machine_table, **kwargs):
@@ -257,7 +332,6 @@ class StateMachine(Machine, Base):
         call_method = self._lookup_trigger()
 
         self.logger.debug("Transition method: {}".format(call_method))
-
         caller = getattr(self, call_method, self.park)
         state_changed = caller()
         self.db.insert_current('state', {"source": self.state,

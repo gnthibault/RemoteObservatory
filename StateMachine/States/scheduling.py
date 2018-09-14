@@ -14,10 +14,10 @@ def on_enter(event_data):
     model.next_state = 'parking'
 
     if model.run_once and len(model.manager.scheduler.observed_list) > 0:
-        model.logger.debug('Looks like we only wanted to run once, parking now')
+        model.say('Looks like we only wanted to run once, parking now')
     else:
 
-        model.logger.debug("Ok, I'm finding something good to look at...")
+        model.say("Ok, I'm finding something good to look at...")
         existing_observation = model.manager.current_observation
 
         # Get the next observation
@@ -25,20 +25,20 @@ def on_enter(event_data):
             observation = model.manager.get_observation()
             model.logger.info("Observation: {}".format(observation))
         except error.NoObservation as e:
-            model.logger.debug('No valid observations found. Cannot schedule. '
-                               'Going to park.')
+            model.say('No valid observations found. Cannot schedule. '
+                      'Going to park.')
         except Exception as e:
             model.logger.warning("Error in scheduling: {}".format(e))
         else:
 
             if existing_observation and (observation.name == 
                                          existing_observation.name):
-                model.logger.debug('I am sticking with observation {}'.format(
-                                   observation.name))
+                model.say('I am sticking with observation {}'.format(
+                          observation.name))
                 model.next_state = 'tracking'
             else:
-                model.logger.debug('Got it! I am going to check out:'
-                                   '{}'.format(observation.name))
+                model.say('Got it! I am going to check out:'
+                          '{}'.format(observation.name))
 
                 model.logger.debug('Setting Observation coords: {}'.format(
                                    observation.field))

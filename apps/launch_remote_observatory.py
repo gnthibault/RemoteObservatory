@@ -70,7 +70,7 @@ class RemoteObservatoryFSM(StateMachine, Base):
         self._has_messaging = None
         self.has_messaging = messaging
 
-        # Loop delay
+        # default loop delay. safety delay take precedence for safety sleep
         self._sleep_delay = kwargs.get('sleep_delay', 2.5)  
         # Safety check delay
         self._safe_delay = kwargs.get('safe_delay', 60 * 5)
@@ -200,6 +200,9 @@ class RemoteObservatoryFSM(StateMachine, Base):
         """
         if self.has_messaging:
             self._msg_publisher.send_message(channel, msg)
+        else:
+            # TODO TN this alternative is temporary only
+            self.logger.info('MESSAGE #{}: {}'.format(channel,msg))
 
     def check_messages(self):
         """ Check messages for the system
@@ -260,7 +263,8 @@ class RemoteObservatoryFSM(StateMachine, Base):
 
             for name, proc in self._processes.items():
                 if proc.is_alive():
-                    self.logger.debug('Terminating {} - PID {}'.format(name, proc.pid))
+                    self.logger.debug('Terminating {} - PID {}'.format(
+                        name, proc.pid))
                     proc.terminate()
 
             self._keep_running = False
@@ -321,7 +325,9 @@ class RemoteObservatoryFSM(StateMachine, Base):
                 self.logger.warning('Safety failed so sending to park')
                 self.park() #FSM trigger
 
-        return safe
+        #return safe
+        # TODO TN urgent: corriger
+        return True
 
     def is_dark(self):
         """Is it dark
@@ -415,7 +421,7 @@ class RemoteObservatoryFSM(StateMachine, Base):
 ################################################################################
 
     def sleep(self, delay=2.5, with_status=True):
-        """ Send POCS to sleep
+        """ Send system to sleep
 
         Loops for `delay` number of seconds. If `delay` is more than 10.0 seconds,
         `check_messages` will be called every 10.0 seconds in order to allow for
@@ -456,7 +462,6 @@ class RemoteObservatoryFSM(StateMachine, Base):
             self.sleep(delay=self._safe_delay)
 
 
-
 ###############################################################################
 # Class Methods
 ###############################################################################
@@ -464,31 +469,13 @@ class RemoteObservatoryFSM(StateMachine, Base):
     @classmethod
     def check_environment(cls):
         """ Checks to see if environment is set up correctly
-
-        There are a number of environmental variables that are expected
-        to be set in order for PANOPTES to work correctly. This method just
-        sanity checks our environment and shuts down otherwise.
-
-            PANDIR    Base directory for PANOPTES
-            POCS      Base directory for POCS
         """
-        #if sys.version_info[:2] < (3, 0):  # pragma: no cover
-        #    warnings.warn("POCS requires Python 3.x to run")
+        if sys.version_info[:2] < (3, 0):  # pragma: no cover
+            warnings.warn("Remote Observatory requires Python 3.x to run")
 
-        #pandir = os.getenv('PANDIR')
-        #if not os.path.exists(pandir):
-        #    sys.exit("$PANDIR dir does not exist or is empty: {}".format(pandir))
-
-        #pocs = os.getenv('POCS')
-        #if pocs is None:  # pragma: no cover
-        #    sys.exit('Please make sure $POCS environment variable is set')
-
-        #if not os.path.exists(pocs):
-        #    sys.exit("$POCS directory does not exist or is empty: {}".format(pocs))
-
-        #if not os.path.exists("{}/logs".format(pandir)):
-        #    print("Creating log dir at {}/logs".format(pandir))
-        #    os.makedirs("{}/logs".format(pandir))
+        #if not os.path.exists("{}/logs".format(mydir)):
+        #    print("Creating log dir at {}/logs".format(mydir))
+        #    os.makedirs("{}/logs".format(mydir))
 
 ###############################################################################
 # Private Methods

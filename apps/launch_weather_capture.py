@@ -96,4 +96,5 @@ if __name__ == '__main__':
             break
 
         time.sleep(args.delay)
-
+# launch with
+# PYTHONPATH=. python ./apps/launch_weather_capture.py
