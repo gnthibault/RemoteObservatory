@@ -6,8 +6,9 @@ def on_enter(event_data):
     model = event_data.model
     model.logger.debug("Ok, I'm all set up and ready to go!")
 
-    if model.manager.has_ror and not model.manager.open_ror():
-        model.logger.error("Failed to open the ror while entering state 'ready'")
+    if not model.manager.observatory.open_everything():
+        model.logger.error('Failed to open observatory while entering state'
+                           'ready')
         model.next_state = 'parking'
     else:
         model.manager.mount.unpark()

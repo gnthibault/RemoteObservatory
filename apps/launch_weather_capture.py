@@ -74,7 +74,7 @@ if __name__ == '__main__':
     parser.add_argument('--serial-port', dest='serial_port', default=None,
                         help='Serial port to connect')
     parser.add_argument('--store-result', action='store_true',
-                        default=False, help="Save to db")
+                        default=True, help="Save to db")
     parser.add_argument('--send-message', action='store_true',
                         default=False, help="Send message")
     args = parser.parse_args()

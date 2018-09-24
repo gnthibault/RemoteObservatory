@@ -8,11 +8,9 @@ def on_enter(event_data):
 
     model.next_state = 'parked'
 
-    if model.manager.has_ror:
-        model.logger.debug('Closing ror')
-        if not model.manager.close_ror():
-            model.logger.critical('Unable to close ror!')
-            model.logger.debug('Unable to close ror!')
+    if not model.manager.observatory.close_everything():
+        model.logger.critical('Unable to close dome!')
+        model.logger.debug('Unable to close dome!')
 
     model.logger.debug("Taking it on home and then parking.")
     model.manager.mount.park()

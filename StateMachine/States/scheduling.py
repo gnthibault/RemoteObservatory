@@ -13,37 +13,33 @@ def on_enter(event_data):
     model = event_data.model
     model.next_state = 'parking'
 
-    if model.run_once and len(model.manager.scheduler.observed_list) > 0:
-        model.say('Looks like we only wanted to run once, parking now')
+    model.say("Ok, I'm finding something good to look at...")
+    existing_observation = model.manager.current_observation
+
+    # Get the next observation
+    try:
+        observation = model.manager.get_observation()
+        model.logger.info("Observation: {}".format(observation))
+    except error.NoObservation as e:
+        model.say('No valid observations found. Cannot schedule. '
+                  'Going to park.')
+    except Exception as e:
+        model.logger.warning("Error in scheduling: {}".format(e))
     else:
 
-        model.say("Ok, I'm finding something good to look at...")
-        existing_observation = model.manager.current_observation
-
-        # Get the next observation
-        try:
-            observation = model.manager.get_observation()
-            model.logger.info("Observation: {}".format(observation))
-        except error.NoObservation as e:
-            model.say('No valid observations found. Cannot schedule. '
-                      'Going to park.')
-        except Exception as e:
-            model.logger.warning("Error in scheduling: {}".format(e))
+        if existing_observation and (observation.name == 
+                                     existing_observation.name):
+            model.say('I am sticking with observation {}'.format(
+                      observation.name))
+            model.next_state = 'tracking'
         else:
+            model.say('Got it! I am going to check out:'
+                      '{}'.format(observation.name))
 
-            if existing_observation and (observation.name == 
-                                         existing_observation.name):
-                model.say('I am sticking with observation {}'.format(
-                          observation.name))
-                model.next_state = 'tracking'
+            model.logger.debug('Setting Observation coords: {}'.format(
+                               observation.field))
+            if model.manager.mount.set_target_coordinates(
+                                   observation.field):
+                model.next_state = 'slewing'
             else:
-                model.say('Got it! I am going to check out:'
-                          '{}'.format(observation.name))
-
-                model.logger.debug('Setting Observation coords: {}'.format(
-                                   observation.field))
-                if model.manager.mount.set_target_coordinates(
-                                       observation.field):
-                    model.next_state = 'slewing'
-                else:
-                    model.logger.warning("Field not properly set. Parking.")
+                model.logger.warning("Field not properly set. Parking.")

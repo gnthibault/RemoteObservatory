@@ -95,7 +95,7 @@ class StateMachine(Machine, Base):
     self._is_safe:
     self.state: mainly used in stateMachine, but also used in inherited
     self._next_state: mainly used in StateMachine 
-    self.run_once: used in StateMachine.run
+    self.run_once: used in StateMachine.run (not used anymore)
         also used in:
         scheduling state: if run_once, then go park directly, do not check for
                           other possible observation (tracking if same of slew-
@@ -179,7 +179,6 @@ class StateMachine(Machine, Base):
         self._state_machine_table = state_machine_table
         self._next_state = None
         self._keep_running = False
-        self._run_once = kwargs.get('run_once', False)
         self._do_states = True
 
         self.logger.debug("State machine created")
@@ -195,10 +194,6 @@ class StateMachine(Machine, Base):
     @property
     def do_states(self):
         return self._do_states
-
-    @property
-    def run_once(self):
-        return self._run_once
 
     @property
     def next_state(self):
@@ -235,7 +230,7 @@ class StateMachine(Machine, Base):
 # Methods
 ###############################################################################
 
-    def run(self, exit_when_done=False, run_once=False):
+    def run(self, exit_when_done=False):
         """Runs the state machine loop
 
         This runs the state machine in a loop. Setting the machine property
@@ -268,7 +263,6 @@ class StateMachine(Machine, Base):
 
         self._keep_running = True
         self._do_states = True
-        run_once = run_once or self.run_once
 
         # Start with `get_ready`
         self.next_state = 'ready'
@@ -317,8 +311,6 @@ class StateMachine(Machine, Base):
                 if self.state == 'ready':
                     self._obs_run_retries -= 1
 
-                if self.state == 'sleeping' and run_once:
-                    self.stop_states()
             elif exit_when_done:
                 break
             elif not self.interrupted:
@@ -415,7 +407,7 @@ class StateMachine(Machine, Base):
         This is used as a conditional check when transitioning between certain
         states.
         """
-        return self.mount.is_initialized
+        return self.manager.mount.is_initialized
 
 ###############################################################################
 # Callback Methods
@@ -609,7 +601,6 @@ class StateMachine(Machine, Base):
 
         # Add `check_safety` as the first transition for all states
         conditions = listify(transition.get('conditions', []))
-
         conditions.insert(0, 'check_safety')
         transition['conditions'] = conditions
 

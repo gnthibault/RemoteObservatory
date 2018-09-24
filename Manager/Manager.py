@@ -40,11 +40,7 @@ from helper.IndiClient import IndiClient
 from Mount.IndiAbstractMount import IndiAbstractMount
 
 # Local stuff: Observation planning
-from ObservationPlanner.Constraint import Duration
-from ObservationPlanner.Constraint import MoonAvoidance
-from ObservationPlanner.Constraint import Altitude
-from ObservationPlanner import Horizon as horizon_utils
-from ObservationPlanner.ObservationPlanner import ObservationPlanner
+from ObservationPlanner.Scheduler import Scheduler
 
 # Local stuff: Observatory
 from Observatory.ShedObservatory import ShedObservatory
@@ -107,7 +103,7 @@ class Manager(Base):
 
         # Setup observation planner
         self.logger.info('\tSetting up observation planner')
-        self._setup_observation_planner()
+        self._setup_scheduler()
 
         self.logger.info('\t Observatory initialized')
 
@@ -122,11 +118,6 @@ class Manager(Base):
     @property
     def earth_location(self):
         return self.observatory.getAstropyEarthLocation()
-
-    #TODO TN
-    #@property
-    #def scheduler(self):
-    #    return self.observation_planner.
 
     @property
     def is_dark(self):
@@ -163,10 +154,6 @@ class Manager(Base):
     def current_observation(self, new_observation):
         self.scheduler.current_observation = new_observation
 
-    @property
-    def has_dome(self):
-        return self.dome is not None
-
 ##########################################################################
 # Methods
 ##########################################################################
@@ -201,8 +188,7 @@ class Manager(Base):
                         self.observer.target_hour_angle(t, 
                             self.mount.get_target_coordinates()))
 
-            if self.has_dome:
-                status['dome'] = self.dome.status
+            status['observatory'] = self.observatory.status
 
             if self.current_observation:
                 status['observation'] = self.current_observation.status()
@@ -626,10 +612,10 @@ class Manager(Base):
 
         return autofocus_events
 
-    def open_dome(self):
-        """Open the dome, if there is one.
+    def open_observatory(self):
+        """Open the observatory, if there is one.
 
-        Returns: False if there is a problem opening the dome,
+        Returns: False if there is a problem opening the observatory,
                  else True if open (or if not exists).
         """
         try:
@@ -637,13 +623,13 @@ class Manager(Base):
             return True
         except Exception as e:
             self.logger.error(
-                "Problem opening dome: {}".format(e))
+                "Problem opening observatory: {}".format(e))
             return False
 
-    def close_dome(self):
-        """Close the dome, if there is one.
+    def close_observatory(self):
+        """Close the observatory, if there is one.
 
-        Returns: False if there is a problem closing the dome,
+        Returns: False if there is a problem closing the observatory,
                  else True if closed (or if not exists).
         """
         try:
@@ -651,7 +637,7 @@ class Manager(Base):
             return True
         except Exception as e:
             self.logger.error(
-                "Problem closing dome: {}".format(e))
+                "Problem closing observatory: {}".format(e))
             return False
 
 ##########################################################################
@@ -701,7 +687,6 @@ class Manager(Base):
         """
         try:
             self.observatory = ShedObservatory()
-            self.dome = None #TODO TN integrate latter
         except Exception:
             raise RuntimeError('Problem setting up observatory')
 
@@ -753,42 +738,14 @@ class Manager(Base):
             raise RuntimeError('Problem setting up filterwheel')
 
 
-    def _setup_observation_planner(self):
+    def _setup_scheduler(self):
         """
             Sets up the scheduler that will be used by the observatory
         """
         
-        # Legacy mode that I wrote quite a while ago (TN)
         try:
-            self.observation_planner = ObservationPlanner(
-                ntpServ=self.serv_time, obs=self.observatory)
+            self.scheduler = Scheduler(ntpServ=self.serv_time,
+                                       obs=self.observatory)
         except Exception:
             raise RuntimeError('Problem setting up observation planner')
 
-        # Target as defined in the Panoptes project
-        try:
-            module = load_module(
-                'ObservationPlanner.{}'.format('Scheduler'))
-
-            obstruction_list = list()
-            default_horizon = 30 * u.degree
-
-            horizon_line = horizon_utils.Horizon(
-                obstructions=obstruction_list,
-                default_horizon=default_horizon.value
-            )
-
-            # Simple constraint for now
-            constraints = [
-                Altitude(horizon=horizon_line),
-                MoonAvoidance(),
-                Duration(default_horizon)
-            ]
-
-            # Create the Scheduler instance
-            self.scheduler = module.BaseScheduler(
-                self.observer, self.serv_time, fields_file=None,
-                constraints=constraints)
-            self.logger.debug("Scheduler created")
-        except ImportError as e:
-            raise error.NotFound(msg=e)

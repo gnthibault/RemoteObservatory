@@ -50,26 +50,11 @@ class AbstractMount(Base):
         # Needed for time reference
         self.serv_time = serv_time
 
-        # Create an object for just the mount config items
-        #self.config.get('mount')
 
-        self.logger.debug("Mount config: {}".format(self.mount_config))
-
-        # setup commands for mount
-        self.logger.debug("Setting up commands for mount")
-        if commands is None:
-            commands = dict()
-        self.commands = self._setup_commands(commands)
-        self.logger.debug("Mount commands set up")
+        #self.logger.debug("Mount config: {}".format(self.mount_config))
 
         # Set the initial location
-        self._location = location
-
-        # We set some initial mount properties. May come from config
-        self.non_sidereal_available = self.mount_config.setdefault(
-            'non_sidereal_available', False)
-        self.PEC_available = self.mount_config.setdefault('PEC_available',
-            False)
+        #self._location = location
 
         # Initial states
         self._is_connected = False
@@ -90,22 +75,8 @@ class AbstractMount(Base):
         self._tracking = 'Sidereal'
         self._movement_speed = ''
 
-        self._status_lookup = dict()
-
-        # Set initial coordinates
+        # Set target coordinates
         self._target_coordinates = None
-        self._current_coordinates = None
-        self._park_coordinates = None
-
-    def connect(self):  # pragma: no cover
-        raise NotImplementedError
-
-    def disconnect(self):
-        self.logger.info('Connecting to mount')
-        if not self.is_parked:
-            self.park()
-
-        self._is_connected = False
 
     def status(self):
         status = {}
@@ -127,16 +98,12 @@ class AbstractMount(Base):
         except Exception as e:
             self.logger.debug('Problem getting mount status: {}'.format(e))
 
-        status.update(self._update_status())
         return status
 
-    def initialize(self, *arg, **kwargs):  # pragma: no cover
-        raise NotImplementedError
 
-
-##################################################################################################
+###############################################################################
 # Properties
-##################################################################################################
+###############################################################################
 
     @property
     def location(self):
@@ -212,9 +179,9 @@ class AbstractMount(Base):
         """ Set the tracking rate """
         self._tracking_rate = value
 
-##################################################################################################
+###############################################################################
 # Methods
-##################################################################################################
+###############################################################################
 
     def set_park_coordinates(self, ha=-170 * u.degree, dec=-10 * u.degree):
         """ Calculates the RA-Dec for the the park position.
@@ -297,13 +264,14 @@ class AbstractMount(Base):
         """ Reads out the current coordinates from the mount.
 
         Note:
-            See `_mount_coord_to_skycoord` and `_skycoord_to_mount_coord` for translation of
-            mount specific coordinates to astropy.coordinates.SkyCoord
+            See `_mount_coord_to_skycoord` and `_skycoord_to_mount_coord` for
+            translation of mount specific coordinates to
+            astropy.coordinates.SkyCoord
 
         Returns:
             astropy.coordinates.SkyCoord
         """
-        # self.logger.debug('Getting current mount coordinates')
+        self.logger.debug('Getting current mount coordinates')
 
         mount_coords = self.query('get_coordinates')
 
@@ -399,11 +367,9 @@ class AbstractMount(Base):
             self.logger.info("Target Coordinates not set")
         else:
             success = self.query('slew_to_target')
-
             self.logger.debug("Mount response: {}".format(success))
             if success:
                 self.logger.debug('Slewing to target')
-
             else:
                 self.logger.warning('Problem with slew_to_target')
 
@@ -428,90 +394,6 @@ class AbstractMount(Base):
 
         return response
 
-    def slew_to_zero(self):
-        """ Calls `slew_to_home` in base class. Can be overridden.  """
-        self.slew_to_home()
-
-    def park(self):
-        """ Slews to the park position and parks the mount.
-
-        Note:
-            When mount is parked no movement commands will be accepted.
-
-        Returns:
-            bool: indicating success
-        """
-
-        self.set_park_coordinates()
-        self.set_target_coordinates(self._park_coordinates)
-
-        response = self.query('park')
-
-        if response:
-            self.logger.debug('Slewing to park')
-        else:
-            self.logger.warning('Problem with slew_to_park')
-
-        while not self._at_mount_park:
-            self.status()
-            time.sleep(2)
-
-        self._is_parked = True
-
-        return response
-
-    def unpark(self):
-        """ Unparks the mount. Does not do any movement commands but makes them available again.
-
-        Returns:
-            bool: indicating success
-        """
-
-        response = self.query('unpark')
-
-        if response:
-            self._is_parked = False
-            self.logger.debug('Mount unparked')
-        else:
-            self.logger.warning('Problem with unpark')
-
-        return response
-
-    def move_direction(self, direction='north', seconds=1.0):
-        """ Move mount in specified `direction` for given amount of `seconds`
-
-        """
-        seconds = float(seconds)
-        assert direction in ['north', 'south', 'east', 'west']
-
-        move_command = 'move_{}'.format(direction)
-        self.logger.debug("Move command: {}".format(move_command))
-
-        try:
-            now = self.self.serv_time.getAstropyTimeFromUTC()
-            self.logger.debug("Moving {} for {} seconds. ".format(direction, seconds))
-            self.query(move_command)
-
-            time.sleep(seconds)
-
-            self.logger.debug("{} seconds passed before stop".format(
-                (self.self.serv_time.getAstropyTimeFromUTC() - now).sec))
-            self.query('stop_moving')
-            self.logger.debug("{} seconds passed total".format(
-                (self.self.serv_time.getAstropyTimeFromUTC() - now).sec))
-        except KeyboardInterrupt:
-            self.logger.warning('Keyboard interrupt, stopping movement.')
-        except Exception as e:
-            self.logger.warning('Problem moving command!! Make sure mount has '
-                                'stopped moving: {}'.format(e))
-        finally:
-            # Note: We do this twice. That's fine.
-            self.logger.debug("Stopping movement")
-            self.query('stop_moving')
-
-    def set_tracking_rate(self, direction='ra', delta=1.0):
-        """Sets the tracking rate for the mount """
-        raise NotImplementedError
 
     def get_ms_offset(self, offset, axis='ra'):
         """ Get offset in milliseconds at current speed
@@ -531,95 +413,3 @@ class AbstractMount(Base):
         guide_rate = rates[axis]
 
         return (offset / (self.sidereal_rate * guide_rate)).to(u.ms)
-
-    def query(self, cmd, params=None):
-        """Sends a query to the mount and returns response.
-
-        Performs a send and then returns response. Will do a translate on cmd
-        first. This should be the major serial utility for commands. Accepts an
-        additional args that is passed along with the command. Checks for and
-        only accepts one args param.
-
-        Args:
-            cmd (str): A command to send to the mount. This should be one of the
-                commands listed in the mount commands yaml file.
-            params (str, optional): Params to pass to serial connection
-
-        Examples:
-            >>> mount.query('set_local_time', '101503')  #doctest: +SKIP
-            '1'
-            >>> mount.query('get_local_time')            #doctest: +SKIP
-            '101503'
-
-        Returns:
-            bool: indicating success
-
-        Deleted Parameters:
-            *args: Parameters to be sent with command if required.
-        """
-        assert self.is_initialized, self.logger.warning('Mount has not been '
-               'initialized')
-
-        full_command = self._get_command(cmd, params=params)
-        self.write(full_command)
-
-        response = self.read()
-
-        # expected_response = self._get_expected_response(cmd)
-        # if str(response) != str(expected_response):
-        #     self.logger.warning("Expected: {}\tGot: {}".format(
-        #                         expected_response, response))
-
-        return response
-
-    def write(self, cmd):
-        raise NotImplementedError
-
-    def read(self, *args):
-        raise NotImplementedError
-
-###############################################################################
-# Private Methods
-###############################################################################
-
-    def _get_expected_response(self, cmd):
-        """ Looks up appropriate response for command for telescope """
-        # self.logger.debug('Mount Response Lookup: {}'.format(cmd))
-
-        response = ''
-
-        # Get the actual command
-        cmd_info = self.commands.get(cmd)
-
-        if cmd_info is not None:
-            response = cmd_info.get('response')
-            # self.logger.debug('Mount Command Response: {}'.format(response))
-        else:
-            raise error.InvalidMountCommand(
-                'No result for command {}'.format(cmd))
-
-        return response
-
-    def _setup_location_for_mount(self):  # pragma: no cover
-        """ Sets the current location details for the mount. """
-        raise NotImplementedError
-
-    def _setup_commands(self, commands):  # pragma: no cover
-        """ Sets the current location details for the mount. """
-        raise NotImplementedError
-
-    def _set_zero_position(self):  # pragma: no cover
-        """ Sets the current position as the zero (home) position. """
-        raise NotImplementedError
-
-    def _get_command(self, cmd, params=None):  # pragma: no cover
-        raise NotImplementedError
-
-    def _mount_coord_to_skycoord(self):  # pragma: no cover
-        raise NotImplementedError
-
-    def _skycoord_to_mount_coord(self):  # pragma: no cover
-        raise NotImplementedError
-
-    def _update_status(self):  # pragma: no cover
-        return {}

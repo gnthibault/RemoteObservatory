@@ -2,7 +2,6 @@
 from collections import OrderedDict
 import logging
 import os
-import yaml
 
 # Astropy stuff
 from astropy import units as u
@@ -12,79 +11,36 @@ from astroplan import Observer
 
 # Local stuff
 from Base.Base import Base
-from ObservationPlanner.Field import Field
+from ObservationPlanner.ObservationPlanner import ObservationPlanner
 from ObservationPlanner.Observation import Observation
 
 
 class BaseScheduler(Base):
 
-    def __init__(self, observer, serv_time, fields_list=None, fields_file=None,
-                 constraints=list(), *args, **kwargs):
+    def __init__(self, ntpServ, obs, config_file_name=None, path='.'):
         """Loads `~pocs.scheduler.field.Field`s from a field
 
         Note:
-            `~pocs.scheduler.field.Field` configurations passed via the
-            `fields_list` will not be saved but will instead be turned into
-            `~pocs.scheduler.observation.Observations`.
+            We convert the targetList from the config file into a list of
+            observations
 
             Further `Observations` should be added directly via the
             `add_observation` method.
 
         Args:
-            observer (`astroplan.Observer`): The physical location the
+            obs : The observatory, provides the physical location the
                 scheduling will take place from.
             fields_list (list, optional): A list of valid field configurations.
-            fields_file (str): YAML file containing field parameters.
+            config_file (str): YAML file containing field parameters.
             constraints (list, optional): List of `Constraints` to apply to each
                 observation.
             *args: Arguments to be passed to `PanBase`
             **kwargs: Keyword args to be passed to `PanBase`
-        """
-        Base.__init__(self)
-        assert isinstance(observer, Observer)
 
-        if fields_file is None:
-            fields_file = './conf_files/default_targets.yaml'
-        self._fields_file = fields_file
-        self._fields_list = fields_list
-        self._observations = dict()
+            Description of some attributes:
 
-        self.observer = observer
-        self.serv_time = serv_time
-
-        self.constraints = constraints
-
-        self._current_observation = None
-        self.observed_list = OrderedDict()
-
-        self.read_field_list()
-
-
-##########################################################################
-# Properties
-##########################################################################
-
-    @property
-    def observations(self):
-        """Returns a dict of `scheduler.observation.Observation` objects
-        with `ischeduler.observation.Observation.field.field_name` as the key
-
-        Note:
-            `read_field_list` is called if list is None
-        """
-        if self.has_valid_observations is False:
-            self.read_field_list()
-
-        return self._observations
-
-    @property
-    def has_valid_observations(self):
-        return len(self._observations.keys()) > 0
-
-    @property
-    def current_observation(self):
-        """The observation that is currently selected by the scheduler
-
+        current_observation:    
+        The observation that is currently selected by the scheduler
         Upon setting a new observation the `seq_time` is set to the current time
         and added to the `observed_list`. An old observation is reset (so that
         it can be used again - see `~pocs.scheduler.observation.reset`). If the
@@ -92,11 +48,36 @@ class BaseScheduler(Base):
         new observation can also be set to `None` to specify there is no current
         observation.
         """
-        return self._current_observation
 
-    @current_observation.setter
-    def current_observation(self, new_observation):
+        Base.__init__(self)
 
+        if config_file_name is None:
+            self.config_file_name = './conf_files/TargetList.json'
+        else:
+            self.config_file_name = config_file_name
+
+        self.obs = obs
+        self.target_list = dict()
+        self.observations = dict()
+        self.current_observation = None
+        self.observed_list = OrderedDict()
+
+        # Initialize obse planner, that does the main job
+        self.obs_planner = ObservationPlanner(ntpServ, obs, config_file, path)
+
+        # Initialize a list of targets
+        self.initialize_target_list()
+
+
+##########################################################################
+# Properties
+##########################################################################
+
+    @property
+    def has_valid_observations(self):
+        return len(self.observations.keys()) > 0
+
+    def set_current_observation(self, new_observation):
         if self.current_observation is None:
             # If we have no current observation but do need a new one, set
             # seq_time and add to the list
@@ -120,58 +101,7 @@ class BaseScheduler(Base):
                     self.observed_list[new_observation.seq_time] = new_observation
 
         self.logger.info("Setting new observation to {}".format(new_observation))
-        self._current_observation = new_observation
-
-    @property
-    def fields_file(self):
-        """Field configuration file
-
-        A YAML list of config items, specifying a minimum of `name` and `position`
-        for the `~pocs.scheduler.field.Field`. `Observation`s will be built from
-        the list of fields.
-
-        A file will be read by `~pocs.scheduler.priority.read_field_list` upon
-        being set.
-
-        Note:
-            Setting a new `fields_file` will clear all existing fields
-
-        """
-        return self._fields_file
-
-    @fields_file.setter
-    def fields_file(self, new_file):
-        self.clear_available_observations()
-
-        self._fields_file = new_file
-        if new_file is not None:
-            assert os.path.exists(new_file), \
-                self.logger.error("Cannot load field list: {}".format(new_file))
-            self.read_field_list()
-
-    @property
-    def fields_list(self):
-        """List of field configuration items
-
-        A YAML list of config items, specifying a minimum of `name` and `position`
-        for the `~pocs.scheduler.field.Field`. `Observation`s will be built from
-        the list of fields.
-
-        A file will be read by `~pocs.scheduler.priority.read_field_list` upon
-        being set.
-
-        Note:
-            Setting a new `fields_list` will clear all existing fields
-
-        """
-        return self._fields_list
-
-    @fields_list.setter
-    def fields_list(self, new_list):
-        self.clear_available_observations()
-
-        self._fields_list = new_list
-        self.read_field_list()
+        self.current_observation = new_observation
 
 ##########################################################################
 # Methods
@@ -181,7 +111,7 @@ class BaseScheduler(Base):
         """Reset the list of available observations"""
         # Clear out existing list and observations
         self.current_observation = None
-        self._observations = dict()
+        self.observations = []
 
     def get_observation(self, time=None, show_all=False):
         """Get a valid observation
@@ -219,60 +149,62 @@ class BaseScheduler(Base):
         return self.observer.target_is_up(time, observation.field,
                                           horizon=30 * u.degree)
 
-    def add_observation(self, field_config):
+    def add_observation(self, observing_block):
         """Adds an `Observation` to the scheduler
-
         Args:
-            field_config (dict): Configuration items for `Observation`
+            target_name (str): Name of the target, should be referenced in a
+                               catalog (star, sky object, ...)
         """
-        if 'exp_time' in field_config:
-            field_config['exp_time'] = float(field_config['exp_time']) * (
-                u.second)
-
-        self.logger.debug("Adding {} to scheduler".format(field_config['name']))
-        field = Field(field_config['name'], field_config['position'])
 
         try:
-            obs = Observation(field, **field_config)
+            obs = Observation(observing_block)
         except Exception as e:
-            self.logger.warning('Skipping invalid field config: {}'.format(
-                                field_config))
+            self.logger.warning('Skipping invalid observing_block: {}'.format(
+                                observing_block))
             self.logger.warning(e)
         else:
-            if field.name in self._observations:
-                self.logger.debug('Overriding existing entry for {}'.format(
-                                  field.name))
-            self._observations[field.name] = obs
+            self.observations[hash(observing_block)] = obsserving_block
 
-    def remove_observation(self, field_name):
-        """Removes an `Observation` from the scheduler
-
-        Args:
-            field_name (str): Field name corresponding to entry key in `observations`
-
-        """
-        try:
-            obs = self._observations[field_name]
-            del self._observations[field_name]
-            self.logger.debug("Observation removed: {}".format(obs))
-        except Exception:
-            pass
-
-    def read_field_list(self):
+    def initialize_target_list(self):
         """Reads the field file and creates valid `Observations` """
-        if self._fields_file is not None:
-            self.logger.debug('Reading fields from file: {}'.format(self.fields_file))
+        if self.config_file_name is not None:
+            self.logger.debug('Reading target lists from file: {}'.format(
+                              self.config_file_name))
 
-            if not os.path.exists(self.fields_file):
+            if not os.path.exists(self.config_file_name):
                 raise FileNotFoundError
 
-            with open(self.fields_file, 'r') as f:
-                self._fields_list = yaml.load(f.read())
+            # Get config from json
+            with open(self.config_file_name) as json_file:
+                self.target_list = json.load(json_file)
+                self.logger.debug('ObservationPlanner, target_list is: is '
+                                  ' {}'.format(self.target_list))
 
-        if self._fields_list is not None:
-            for field_config in self._fields_list:
-                try:
-                    self.add_observation(field_config)
+        # Now add observation to the list
+        if self.target_list is not None:
+            #TODO TN readout time, get that info from camera
+            camera_time = 1*AU.second
+            for target_name, config in self.targetList.items():
+                #target = FixedTarget.from_name(target_name)
+                target = FixedTarget(SkyCoord(239*AU.deg, 49*AU.deg))
+                for filter_name, (count, exp_time_sec) in config.items():
+                    # We split big observing blocks into smaller blocks for better
+                    # granularity
+                    while count > 0:
+                        l_count = max(1, min(count,
+                            self.MaximumSlotDurationSec//exp_time_sec))
+                        exp_time = exp_time_sec*AU.second
+                    
+                        #TODO TN retrieve priority from the file ?
+                        priority = 0 if (filter_name=='Luminance') else 1
+                        b = ObservingBlock.from_exposures(
+                                target, priority, exp_time, l_count,
+                                camera_time,
+                                configuration={'filter': filter_name},
+                                constraints=self.constraint)
+                        self.add_observation(b)
+                        count -= l_count
+                    
                 except AssertionError:
                     self.logger.debug("Skipping duplicate field.")
 

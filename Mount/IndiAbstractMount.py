@@ -66,7 +66,7 @@ class IndiAbstractMount(IndiMount, AbstractMount):
 
     @property
     def non_sidereal_available(self):
-        return vself._non_sidereal_available
+        return self._non_sidereal_available
 
     @non_sidereal_available.setter
     def non_sidereal_available(self, val):
@@ -97,37 +97,52 @@ class IndiAbstractMount(IndiMount, AbstractMount):
 ###############################################################################
     def connect(self):  # pragma: no cover
         IndiMount.connect(self)
+        self._is_connected = True
+
+    def disconnect(self):
+        if not self.is_parked:
+            self.park()
+
+        self._is_connected = False
 
     def initialize(self, *arg, **kwargs):  # pragma: no cover
-        self.logger.debug('initializing, {}, {}'.format(arg, kwargs))
+        self.logger.debug('Initializing mount with args {}, {}'.format(
+                          arg, kwargs))
         self.connect()
         self._is_initialized = True
 
-    def set_tracking_rate(self, direction='ra', delta=1.0):
-        """Sets the tracking rate for the mount """
-        self.logger.debug('set_tracking_rate, {}, {}'.format(direction, delta))
+    def park(self):
+        """ Slews to the park position and parks the mount.
+        Note:
+            When mount is parked no movement commands will be accepted.
+        Returns:
+            bool: indicating success
+        """
+        try:
+            IndiMount.park(self)
+            self._is_parked = True
+        except Exception as e:
+            self.logger.warning('Problem with park')
+            # by default, we assume that mount is in the "worst" situation
+            self._is_parked = False
+            return False
 
-    def write(self, cmd):
-        self.logger.debug('write {}'.format(cmd))
+        return self.is_parked
 
-    def read(self, *args):
-        self.logger.debug('read {}'.format(args))
+    def unpark(self):
+        """ Unparks the mount. Does not do any movement commands but makes
+            them available again.
+        Returns:
+            bool: indicating success
+        """
+        try:
+            IndiMount.unpark(self)
+            self._is_parked = False
+        except Exception as e:
+            self.logger.warning('Problem with unpark')
+            return False
 
-    def _setup_location_for_mount(self):  # pragma: no cover
-        """ Sets the current location details for the mount. """
-        self.logger.debug('_setup_location_for_mount')
-
-    def _setup_commands(self, commands):  # pragma: no cover
-        """ Sets the current location details for the mount. """
-        self.logger.debug('_setup_commands {}'.format(commands))
-
-    def _set_zero_position(self):  # pragma: no cover
-        """ Sets the current position as the zero (home) position. """
-        self.logger.debug('_set_zero_position')
-
-    def _get_command(self, cmd, params=None):  # pragma: no cover
-        self.logger.debug('_get_command {}, {}'.format(cmd, params))
-        return 'command for {}({})'.format(cmd, params)
+        return not self.is_parked
 
     def _mount_coord_to_skycoord(self):  # pragma: no cover
         self.logger.debug('_mount_coord_to_skycoord')

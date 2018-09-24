@@ -181,8 +181,8 @@ class RemoteObservatoryFSM(StateMachine, Base):
             msg(str): Message to be sent
         """
         if self.has_messaging is False:
-            self.logger.info('Unit says: {}', msg)
-        self.send_message(msg, channel='CHAT')
+            self.logger.info('Unit says: {}'.format(msg))
+        self.send_message('{}'.format(msg), channel='CHAT')
 
     def send_message(self, msg, channel='CHAT'):
         """ Send a message

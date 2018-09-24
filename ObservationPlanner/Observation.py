@@ -12,10 +12,8 @@ from ObservationPlanner.Field import Field
 
 class Observation(Base):
 
-    @u.quantity_input(exp_time=u.second)
-    def __init__(self, field, exp_time=120 * u.second, min_nexp=60,
-                 exp_set_size=10, priority=100, **kwargs):
-        """ An observation of a given `~pocs.scheduler.field.Field`.
+    def __init__(self, observing_block):
+        """ An observation of a given target.
 
         An observation consists of a minimum number of exposures (`min_nexp`)
         that must be taken at a set exposure time (`exp_time`). These exposures
@@ -26,27 +24,12 @@ class Observation(Base):
             An observation may consist of more exposures than `min_nexp` but
             exposures will always come in groups of `exp_set_size`.
 
-        Decorators:
-            u.quantity_input
-
         Arguments:
-            field {`pocs.scheduler.field.Field`} -- An object representing the
-            field to be captured
 
         Keyword Arguments:
-            exp_time {u.second} -- Exposure time for individual exposures
-                (default: {120 * u.second})
-            min_nexp {int} -- The minimum number of exposures to be taken for a
-                given field (default: 60)
-            exp_set_size {int} -- Number of exposures to take per set
-                (default: {10})
-            priority {int} -- Overall priority for field, with 1.0 being highest
-                (default: {100})
-
         """
         Base.__init__(self)
-        assert isinstance(field, Field), self.logger.error(
-            "Must be a valid Field instance")
+
 
         assert exp_time > 0.0, self.logger.error('Exposure time (exp_time) '
             'must be greater than 0')
