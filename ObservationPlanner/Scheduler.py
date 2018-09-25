@@ -7,6 +7,7 @@ import os
 from astropy import units as u
 
 # Astroplan stuff
+from astroplan import is_observable
 from astroplan import Observer
 
 # Local stuff
@@ -15,7 +16,7 @@ from ObservationPlanner.ObservationPlanner import ObservationPlanner
 from ObservationPlanner.Observation import Observation
 
 
-class BaseScheduler(Base):
+class Scheduler(Base):
 
     def __init__(self, ntpServ, obs, config_file_name=None, path='.'):
         """Loads `~pocs.scheduler.field.Field`s from a field
@@ -61,9 +62,10 @@ class BaseScheduler(Base):
         self.observations = dict()
         self.current_observation = None
         self.observed_list = OrderedDict()
+        self.constraints = []
 
         # Initialize obse planner, that does the main job
-        self.obs_planner = ObservationPlanner(ntpServ, obs, config_file, path)
+        #self.obs_planner = ObservationPlanner(ntpServ, obs, config_file, path)
 
         # Initialize a list of targets
         self.initialize_target_list()
@@ -111,7 +113,7 @@ class BaseScheduler(Base):
         """Reset the list of available observations"""
         # Clear out existing list and observations
         self.current_observation = None
-        self.observations = []
+        self.observations = {}
 
     def get_observation(self, time=None, show_all=False):
         """Get a valid observation
@@ -129,7 +131,7 @@ class BaseScheduler(Base):
 
     def status(self):
         return {
-            'constraints': self.constraints,
+            #'constraints': self.constraints,
             'current_observation': self.current_observation,
         }
 
@@ -138,7 +140,7 @@ class BaseScheduler(Base):
         self.logger.debug('Resetting observed list')
         self.observed_list = OrderedDict()
 
-    def observation_available(self, observation, time):
+    def observation_available(self, observation, time_range):
         """Check if observation is available at given time
 
         Args:
@@ -146,8 +148,10 @@ class BaseScheduler(Base):
             time (astropy.time.Time): The time at which to check observation
 
         """
-        return self.observer.target_is_up(time, observation.field,
-                                          horizon=30 * u.degree)
+        return  is_observable(self.constraints,
+                              self.obs.getAstroplanObserver(),
+                              [observation.observing_block.target],
+                              time_range=time_range)
 
     def add_observation(self, observing_block):
         """Adds an `Observation` to the scheduler
@@ -157,13 +161,14 @@ class BaseScheduler(Base):
         """
 
         try:
-            obs = Observation(observing_block)
+            observation = Observation(observing_block)
         except Exception as e:
             self.logger.warning('Skipping invalid observing_block: {}'.format(
                                 observing_block))
             self.logger.warning(e)
         else:
-            self.observations[hash(observing_block)] = obsserving_block
+            key = observation.name+'_'+str(hash(observation))
+            self.observations[key] = observation
 
     def initialize_target_list(self):
         """Reads the field file and creates valid `Observations` """
@@ -183,17 +188,17 @@ class BaseScheduler(Base):
         # Now add observation to the list
         if self.target_list is not None:
             #TODO TN readout time, get that info from camera
-            camera_time = 1*AU.second
+            camera_time = 1*u.second
             for target_name, config in self.targetList.items():
                 #target = FixedTarget.from_name(target_name)
-                target = FixedTarget(SkyCoord(239*AU.deg, 49*AU.deg))
+                target = FixedTarget(SkyCoord(239*u.deg, 49*u.deg))
                 for filter_name, (count, exp_time_sec) in config.items():
                     # We split big observing blocks into smaller blocks for better
                     # granularity
                     while count > 0:
                         l_count = max(1, min(count,
                             self.MaximumSlotDurationSec//exp_time_sec))
-                        exp_time = exp_time_sec*AU.second
+                        exp_time = exp_time_sec*u.second
                     
                         #TODO TN retrieve priority from the file ?
                         priority = 0 if (filter_name=='Luminance') else 1
