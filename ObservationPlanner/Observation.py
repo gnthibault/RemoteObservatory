@@ -31,11 +31,13 @@ class Observation(Base):
         # Initialize thyself
         self.observing_block = observing_block
         self.current_exp = 0
+        self.merit = 0 #Merit is != priority: highest is scheduled first
         #self.exp_time = exp_time
         #self.min_nexp = min_nexp
         self.exposure_list = OrderedDict()
         self.pointing_image = None
         self._seq_time = None
+        self.id = self.name+'_'+str(hash(self))
 
         self.logger.debug("Observation created: {}".format(self))
 
@@ -49,14 +51,6 @@ class Observation(Base):
         """ Amount of time per set of exposures """
         return (self.observing_block.number_exposures *
                 self.observing_block.time_per_exposure)
-
-    @property
-    def merit(self):
-        """ Amount of time per set of exposures """
-        return self.observing_block.priority
-    @merit.setter
-    def merit(self, value):
-        self.observing_block.priority = value
 
     @property
     def name(self):
@@ -109,7 +103,8 @@ class Observation(Base):
 ###############################################################################
 
     def reset(self):
-        """Resets the exposure values for the observation """
+        """Resets the exposure values for the observation
+        """
         self.logger.debug("Resetting observation {}".format(self))
 
         self.current_exp = 0

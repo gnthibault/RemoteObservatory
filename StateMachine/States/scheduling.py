@@ -27,19 +27,19 @@ def on_enter(event_data):
         model.logger.warning("Error in scheduling: {}".format(e))
     else:
 
-        if existing_observation and (observation.name == 
-                                     existing_observation.name):
+        if existing_observation and (observation.id == 
+                                     existing_observation.id):
             model.say('I am sticking with observation {}'.format(
-                      observation.name))
+                      observation.id))
             model.next_state = 'tracking'
         else:
             model.say('Got it! I am going to check out:'
                       '{}'.format(observation.name))
 
             model.logger.debug('Setting Observation coords: {}'.format(
-                               observation.field))
+                               observation.observing_block.target.coord))
             if model.manager.mount.set_target_coordinates(
-                                   observation.field):
+                               observation.observing_block.target.coord):
                 model.next_state = 'slewing'
             else:
                 model.logger.warning("Field not properly set. Parking.")

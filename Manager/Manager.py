@@ -40,7 +40,7 @@ from helper.IndiClient import IndiClient
 from Mount.IndiAbstractMount import IndiAbstractMount
 
 # Local stuff: Observation planning
-from ObservationPlanner.Scheduler import Scheduler
+from ObservationPlanner.DefaultScheduler import DefaultScheduler
 
 # Local stuff: Observatory
 from Observatory.ShedObservatory import ShedObservatory
@@ -744,8 +744,8 @@ class Manager(Base):
         """
         
         try:
-            self.scheduler = Scheduler(ntpServ=self.serv_time,
-                                       obs=self.observatory)
+            self.scheduler = DefaultScheduler(ntpServ=self.serv_time,
+                                              obs=self.observatory)
         except Exception:
             raise RuntimeError('Problem setting up observation planner')
 

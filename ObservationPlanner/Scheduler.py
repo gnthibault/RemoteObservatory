@@ -60,7 +60,7 @@ class Scheduler(Base):
         self.obs = obs
         self.target_list = dict()
         self.observations = dict()
-        self.current_observation = None
+        self._current_observation = None
         self.observed_list = OrderedDict()
         self.constraints = []
 
@@ -79,7 +79,25 @@ class Scheduler(Base):
     def has_valid_observations(self):
         return len(self.observations.keys()) > 0
 
-    def set_current_observation(self, new_observation):
+    @property
+    def has_valid_observations(self):
+        return len(self._observations.keys()) > 0
+
+    @property
+    def current_observation(self):
+        """The observation that is currently selected by the scheduler
+
+        Upon setting a new observation the `seq_time` is set to the current time
+        and added to the `observed_list`. An old observation is reset (so that
+        it can be used again - see `~pocs.scheduelr.observation.reset`). If the
+        new observation is the same as the old observation, nothing is done. The
+        new observation can also be set to `None` to specify there is no current
+        observation.
+        """
+        return self._current_observation
+
+    @current_observation.setter
+    def current_observation(self, new_observation):
         if self.current_observation is None:
             # If we have no current observation but do need a new one, set
             # seq_time and add to the list
@@ -95,14 +113,16 @@ class Scheduler(Base):
                 self.current_observation.reset()
             else:
                 # If we have a new observation, check if same as old observation
-                if self.current_observation.name != new_observation.name:
+                if self.current_observation.id != new_observation.id:
                     self.current_observation.reset()
                     new_observation.seq_time = self.serv_time.flat_time()
 
                     # Add the new observation to the list
-                    self.observed_list[new_observation.seq_time] = new_observation
+                    self.observed_list[new_observation.seq_time] = (
+                        new_observation)
 
-        self.logger.info("Setting new observation to {}".format(new_observation))
+        self.logger.info("Setting new observation to {}".format(
+            new_observation))
         self.current_observation = new_observation
 
 ##########################################################################
@@ -153,6 +173,7 @@ class Scheduler(Base):
                               [observation.observing_block.target],
                               time_range=time_range)
 
+
     def add_observation(self, observing_block):
         """Adds an `Observation` to the scheduler
         Args:
@@ -167,8 +188,7 @@ class Scheduler(Base):
                                 observing_block))
             self.logger.warning(e)
         else:
-            key = observation.name+'_'+str(hash(observation))
-            self.observations[key] = observation
+            self.observations[observation.id] = observation
 
     def initialize_target_list(self):
         """Reads the field file and creates valid `Observations` """
