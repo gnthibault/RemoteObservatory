@@ -50,7 +50,7 @@ class ScheduleSequencer:
 
         # Then specific startup routine #TODO TN ISOLATE THOSE INSIDE CLASS
         self.seq_builder.add_function(
-            lambda : self.seq_builder.mount.unPark())
+            lambda : self.seq_builder.mount.unpark())
         self.seq_builder.add_function(
             lambda : self.seq_builder.camera.prepareShoot())
         self.seq_builder.add_function(

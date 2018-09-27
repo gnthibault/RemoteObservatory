@@ -187,7 +187,7 @@ class ObservationRun(QThread):
         mount.set_slew_rate('SLEW_FIND')
 
         # Unpark if you want something useful to actually happen
-        mount.unPark()
+        mount.unpark()
 
         #Do a slew and stop
         c = SkyCoord(ra=10*u.hour, dec=60*u.degree, frame='icrs')

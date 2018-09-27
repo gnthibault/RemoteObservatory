@@ -1,22 +1,30 @@
 #Generic stuff
 from collections import OrderedDict
+import json
 import logging
 import os
 
 # Astropy stuff
 from astropy import units as u
+from astropy.coordinates import SkyCoord
 
 # Astroplan stuff
+from astroplan import FixedTarget
 from astroplan import is_observable
 from astroplan import Observer
+from astroplan import ObservingBlock
 
 # Local stuff
 from Base.Base import Base
-from ObservationPlanner.ObservationPlanner import ObservationPlanner
+#from ObservationPlanner.ObservationPlanner import ObservationPlanner
 from ObservationPlanner.Observation import Observation
 
 
 class Scheduler(Base):
+
+    # Max value for which a scheduling slot is programmed, otherwise
+    # we split into smaller slots
+    MaximumSlotDurationSec = 300
 
     def __init__(self, ntpServ, obs, config_file_name=None, path='.'):
         """Loads `~pocs.scheduler.field.Field`s from a field
@@ -58,6 +66,7 @@ class Scheduler(Base):
             self.config_file_name = config_file_name
 
         self.obs = obs
+        self.serv_time = ntpServ
         self.target_list = dict()
         self.observations = dict()
         self._current_observation = None
@@ -81,7 +90,7 @@ class Scheduler(Base):
 
     @property
     def has_valid_observations(self):
-        return len(self._observations.keys()) > 0
+        return len(self.observations.keys()) > 0
 
     @property
     def current_observation(self):
@@ -123,7 +132,7 @@ class Scheduler(Base):
 
         self.logger.info("Setting new observation to {}".format(
             new_observation))
-        self.current_observation = new_observation
+        self._current_observation = new_observation
 
 ##########################################################################
 # Methods
@@ -202,36 +211,41 @@ class Scheduler(Base):
             # Get config from json
             with open(self.config_file_name) as json_file:
                 self.target_list = json.load(json_file)
-                self.logger.debug('ObservationPlanner, target_list is: is '
-                                  ' {}'.format(self.target_list))
+                self.logger.debug('Target list: {}'.format(self.target_list))
 
         # Now add observation to the list
-        if self.target_list is not None:
-            #TODO TN readout time, get that info from camera
-            camera_time = 1*u.second
-            for target_name, config in self.targetList.items():
-                #target = FixedTarget.from_name(target_name)
-                target = FixedTarget(SkyCoord(239*u.deg, 49*u.deg))
-                for filter_name, (count, exp_time_sec) in config.items():
-                    # We split big observing blocks into smaller blocks for better
-                    # granularity
-                    while count > 0:
-                        l_count = max(1, min(count,
-                            self.MaximumSlotDurationSec//exp_time_sec))
-                        exp_time = exp_time_sec*u.second
-                    
-                        #TODO TN retrieve priority from the file ?
-                        priority = 0 if (filter_name=='Luminance') else 1
+        if self.target_list is None:
+            self.logger.warning('Target list seems to be empty')
+            return
+
+        #TODO TN readout time, get that info from camera
+        camera_time = 1*u.second
+        for target_name, config in self.target_list.items():
+            #target = FixedTarget.from_name(target_name)
+            target = FixedTarget(SkyCoord(5.33*u.deg, 46.0*u.deg))
+            for filter_name, (count, exp_time_sec) in config.items():
+                # We split big observing blocks into smaller blocks for better
+                # granularity
+                while count > 0:
+                    l_count = max(1, min(count,
+                        self.MaximumSlotDurationSec//exp_time_sec))
+                    exp_time = exp_time_sec*u.second
+                
+                    #TODO TN retrieve priority from the file ?
+                    priority = 0 if (filter_name=='Luminance') else 1
+
+                    try:
                         b = ObservingBlock.from_exposures(
                                 target, priority, exp_time, l_count,
                                 camera_time,
                                 configuration={'filter': filter_name},
-                                constraints=self.constraint)
+                                constraints=self.constraints)
                         self.add_observation(b)
                         count -= l_count
-                    
-                except AssertionError:
-                    self.logger.debug("Skipping duplicate field.")
+                
+                    except AssertionError as e:
+                        self.logger.debug("Error whil adding target : {}"
+                                          "".format(e))
 
 ##########################################################################
 # Utility Methods

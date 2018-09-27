@@ -289,15 +289,15 @@ class AbstractMount(Base):
         """
         assert isinstance(coords, tuple), self.logger.warning(
             'slew_to_coordinates expects RA-Dec coords')
-
         response = 0
-
         if not self.is_parked:
             # Set the coordinates
             if self.set_target_coordinates(coords):
                 response = self.slew_to_target()
             else:
                 self.logger.warning("Could not set target_coordinates")
+        else:
+            self.logger.warning("Cannot slew when parked")
 
         return response
 

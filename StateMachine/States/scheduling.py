@@ -1,3 +1,6 @@
+# Generic stuff
+import traceback
+
 # Local stuff
 from utils import error
 
@@ -24,7 +27,8 @@ def on_enter(event_data):
         model.say('No valid observations found. Cannot schedule. '
                   'Going to park.')
     except Exception as e:
-        model.logger.warning("Error in scheduling: {}".format(e))
+        model.logger.warning("Error in scheduling: {}, {}".format(e,
+            traceback.format_exc()))
     else:
 
         if existing_observation and (observation.id == 

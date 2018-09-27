@@ -128,8 +128,8 @@ class IndiMount(IndiDevice):
         self.logger.debug('Slewing to Park')
         self.setSwitch('TELESCOPE_PARK', ['PARK'])
 
-    def unPark(self):
-        self.logger.debug('unPark')
+    def unpark(self):
+        self.logger.debug('unpark')
         self.setSwitch('TELESCOPE_PARK', ['UNPARK'])
 
     def set_slew_rate(self, slew_rate='SLEW_FIND'):

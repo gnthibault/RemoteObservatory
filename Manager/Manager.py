@@ -234,8 +234,7 @@ class Manager(Base):
 
         # If observation list is empty or a reread is requested
         if (self.scheduler.has_valid_observations is False or
-                kwargs.get('reread_fields_file', False) or
-                self.config['scheduler'].get('check_file', False)):
+                kwargs.get('reread_fields_file', False)):
             self.scheduler.read_field_list()
 
         # This will set the `current_observation`

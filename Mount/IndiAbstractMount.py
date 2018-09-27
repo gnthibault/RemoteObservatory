@@ -135,20 +135,9 @@ class IndiAbstractMount(IndiMount, AbstractMount):
         Returns:
             bool: indicating success
         """
-        try:
-            IndiMount.unpark(self)
-            self._is_parked = False
-        except Exception as e:
-            self.logger.warning('Problem with unpark')
-            return False
+        IndiMount.unpark(self)
+        self._is_parked = False
 
-        return not self.is_parked
-
-    def _mount_coord_to_skycoord(self):  # pragma: no cover
-        self.logger.debug('_mount_coord_to_skycoord')
-
-    def _skycoord_to_mount_coord(self):  # pragma: no cover
-        self.logger.debug('_skycoord_to_mount_coord')
 
 ###############################################################################
 # Monitoring related stuff

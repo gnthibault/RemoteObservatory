@@ -26,24 +26,21 @@ def on_enter(event_data):
         model.say('Going to stay parked for half an hour then '
                   'will try again.')
 
-            while True:
-                model.sleep(delay=1800)  # 30 minutes = 1800 seconds
+        while True:
+            model.sleep(delay=1800)  # 30 minutes = 1800 seconds
 
-                # We might have shutdown during previous sleep.
-                if not model.connected:
-                    break
-                elif model.is_safe():
-                    model.reset_observing_run()
-                    model.next_state = 'ready'
-                    break
-                elif model.is_dark() is False:
-                    model.logger.debug('Looks like it is not dark anymore. '
-                                       'Going to clean up.')
-                    model.next_state = 'housekeeping'
-                    break
-                else:
-                    model.say('Does not looks like it is safe now, '
-                              'waiting another 30 minutes.')
-        else:
-            model.say('Only wanted to run once so cleaning up!')
-            model.next_state = 'housekeeping'
+            # We might have shutdown during previous sleep.
+            if not model.connected:
+                break
+            elif model.is_safe():
+                model.reset_observing_run()
+                model.next_state = 'ready'
+                break
+            elif model.is_dark() is False:
+                model.logger.debug('Looks like it is not dark anymore. '
+                                   'Going to clean up.')
+                model.next_state = 'housekeeping'
+                break
+            else:
+                model.say('Does not looks like it is safe now, '
+                          'waiting another 30 minutes.')

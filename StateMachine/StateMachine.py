@@ -2,6 +2,7 @@
 import logging
 import os
 import time
+import traceback
 import yaml
 
 # FSM stuff
@@ -284,9 +285,9 @@ class StateMachine(Machine, Base):
                 try:
                     state_changed = self.goto_next_state()
                 except Exception as e:
-                    self.logger.warning('Problem going from {} to {}, '
-                                        'exiting loop [{!r}]'.format(
-                                        self.state, self.next_state, e))
+                    self.logger.warning('Problem going from {} to {}, exiting '
+                        'loop: {}:{}'.format(self.state, self.next_state, e,
+                        traceback.format_exc()))
                     self.stop_states()
                     break
 

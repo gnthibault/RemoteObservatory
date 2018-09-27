@@ -13,6 +13,8 @@ from astroplan.constraints import MoonSeparationConstraint
 from ObservationPlanner.Scheduler import Scheduler
 from utils import listify
 
+# Locally defined constraints
+from ObservationPlanner.LocalHorizonConstraint import LocalHorizonConstraint
 
 class DefaultScheduler(Scheduler):
 
@@ -23,7 +25,7 @@ class DefaultScheduler(Scheduler):
         self.constraints = [
             AirmassConstraint(max=3, boolean_constraint=True),
             AtNightConstraint.twilight_astronomical(),
-            MoonSeparationConstraint(min=45*AU.deg),
+            MoonSeparationConstraint(min=45*u.deg),
             LocalHorizonConstraint(horizon=self.obs.get_horizon(),
                                            boolean_constraint=True)]
 
@@ -51,12 +53,12 @@ class DefaultScheduler(Scheduler):
             tuple or list: A tuple (or list of tuples) with name and score of
             ranked observations
         """
-        if reread_fields_file:
+        if reread_target_file:
             self.logger.debug("Rereading target file")
             self.initialize_target_list()
 
         if time is None:
-            time = self.ntpServ.getUTCFromNTP()
+            time = self.serv_time.getAstropyTimeFromUTC() #getUTCFromNTP()
 
         # dictionary where key is obs key and value is priority (aka merit)
         valid_obs = {obs: 1.0 for obs in self.observations}
@@ -65,8 +67,6 @@ class DefaultScheduler(Scheduler):
         observer = self.obs.getAstroplanObserver()
 
         common_properties = {
-            'end_of_night': observer.tonight(time=time, horizon=-18 *
-                                             u.degree)[-1],
             'moon': get_moon(time, observer.location),
             'observed_list': self.observed_list
         }
@@ -76,20 +76,18 @@ class DefaultScheduler(Scheduler):
             for obs_key, observation in self.observations.items():
                 if obs_key in valid_obs:
                     self.logger.debug("\tObservation: {}".format(obs_key))
-
-                    #TODO TN: this is so weird, why do we need common_prop ?
-                    veto, score = constraint.get_score(
-                        time, observer, observation, **common_properties)
-
-                    self.logger.debug("\t\tScore: {:.05f}\tVeto: {}".format(
-                        score, veto))
-
-                    if veto:
-                        self.logger.debug("\t\t{} vetoed by {}".format(
-                            obs_key, constraint))
-                        # if not valid, remove from valid_obs
-                        del valid_obs[obs_key]
-                        continue
+                    score = constraint.compute_constraint(time, observer,
+                        observation.observing_block.target.coord)
+                    if isinstance(score, bool):
+                        self.logger.debug("\t\tVeto: : {}".format(score))
+                        if not score:
+                            self.logger.debug("\t\t{} vetoed by {}".format(
+                                obs_key, constraint))
+                            # if not valid, remove from valid_obs
+                            del valid_obs[obs_key]
+                            continue
+                    else:
+                        self.logger.debug("\t\tScore: {:.05f}".format(score))
                     # if valid, update score to valid_obs reference (default 1)
                     valid_obs[obs_key] += score
 

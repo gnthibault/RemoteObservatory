@@ -34,7 +34,7 @@ if __name__ == '__main__':
     #ps = mount.get_pier_side()
 
     # Unpark if you want something useful to actually happen
-    mount.unPark()
+    mount.unpark()
 
     # Do a slew and track
     c = SkyCoord(ra=11.5*u.hour, dec=78.9*u.degree, frame='icrs')

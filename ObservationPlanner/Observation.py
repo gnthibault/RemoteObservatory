@@ -57,7 +57,8 @@ class Observation(Base):
         """ Name of the `~pocs.scheduler.field.Field` associated with the 
             observation
         """
-        return self.observing_block.target.name
+        name = self.observing_block.target.name
+        return name if name else 'generic'
 
     @property
     def seq_time(self):
