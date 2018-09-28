@@ -511,7 +511,7 @@ class StateMachine(Machine, Base):
 
             # Only make the file once
             if not os.path.exists(fn):
-                model.graph.draw(fn, prog='dot')
+                model.get_graph().draw(fn, prog='dot')
 
             # Link current image
             if os.path.exists(ln_fn):

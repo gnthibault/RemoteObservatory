@@ -58,8 +58,8 @@ class IndiAbstractMount(IndiMount, AbstractMount):
 
     @property
     def is_parked(self):
-        ret = IndiMount.is_parked(self)
-        if ret != AbstractMount.is_parked(self):
+        ret = IndiMount.is_parked.fget(self)
+        if ret != AbstractMount.is_parked.fget(self):
             self.logger.error('It looks like the software maintained stated is'
                               ' different from the Indi maintained state')
         return ret
@@ -71,14 +71,6 @@ class IndiAbstractMount(IndiMount, AbstractMount):
     @non_sidereal_available.setter
     def non_sidereal_available(self, val):
         self._non_sidereal_available = val
-
-    @property #Todo TN, check how to do this in INDI
-    def PEC_available(self):
-        return self._PEC_available
-
-    @PEC_available.setter
-    def PEC_available(self, val):
-        self._PEC_available = val
 
 ###############################################################################
 # Overriding methods for efficiency/consistency

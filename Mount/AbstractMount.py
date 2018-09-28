@@ -23,8 +23,6 @@ class AbstractMount(Base):
 
         Sets the following properies:
 
-            - self.non_sidereal_available = False
-            - self.PEC_available = False
             - self._is_initialized = False
 
         Args:
@@ -270,36 +268,6 @@ class AbstractMount(Base):
 ###############################################################################
 # Movement methods
 ###############################################################################
-
-    def slew_to_coordinates(self, coords, ra_rate=15.0, dec_rate=0.0):
-        """ Slews to given coordinates.
-
-        Note:
-            Slew rates are not implemented yet.
-
-        Args:
-            coords (astropy.SkyCoord): Coordinates to slew to
-            ra_rate (Optional[float]): Slew speed - RA tracking rate in
-                arcsecond per second. Defaults to 15.0
-            dec_rate (Optional[float]): Slew speed - Dec tracking rate in
-                arcsec per second. Defaults to 0.0
-
-        Returns:
-            bool: indicating success
-        """
-        assert isinstance(coords, tuple), self.logger.warning(
-            'slew_to_coordinates expects RA-Dec coords')
-        response = 0
-        if not self.is_parked:
-            # Set the coordinates
-            if self.set_target_coordinates(coords):
-                response = self.slew_to_target()
-            else:
-                self.logger.warning("Could not set target_coordinates")
-        else:
-            self.logger.warning("Cannot slew when parked")
-
-        return response
 
     def home_and_park(self):
         """ Convenience method to first slew to the home position and then park.

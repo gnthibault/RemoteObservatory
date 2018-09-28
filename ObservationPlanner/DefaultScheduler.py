@@ -1,3 +1,6 @@
+# Numerical stuff
+import numpy as np
+
 # Astropy stuff
 from astropy.coordinates import get_moon
 from astropy.time import Time
@@ -78,7 +81,8 @@ class DefaultScheduler(Scheduler):
                     self.logger.debug("\tObservation: {}".format(obs_key))
                     score = constraint.compute_constraint(time, observer,
                         observation.observing_block.target.coord)
-                    if isinstance(score, bool):
+                    if np.any([isinstance(score, ty) for ty in
+                              [bool, np.bool, np.bool_]]):
                         self.logger.debug("\t\tVeto: : {}".format(score))
                         if not score:
                             self.logger.debug("\t\t{} vetoed by {}".format(

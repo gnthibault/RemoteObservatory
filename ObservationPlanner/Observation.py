@@ -148,7 +148,7 @@ class Observation(Base):
 ###############################################################################
 
     def __str__(self):
-        return ('{}: {} exposures in blocks of {}, priority '
+        return ('{}: {} exposures, time per exposure {}, priority '
                 '{:.0f}'.format(
                 self.observing_block.target,
                 self.observing_block.number_exposures,
