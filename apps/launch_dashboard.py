@@ -104,9 +104,13 @@ div_observatory = html.Div(
     id='div_observatory',
     style=default_style,
     children = [
-        html.H2(style=default_title_style,
-                children='Observatory Building',
-        ),
+        html.H2(
+            style=default_title_style,
+            children='Observatory',
+            ),
+        html.Div(
+            id='observatory_state'
+            ),
         html.Div(
             children = [
                 html.H4(children='Observatory table'),
@@ -251,6 +255,16 @@ def update_weather_graph(data_names):
 ###############################################################
 
 @app.callback(
+    Output('observatory_state', 'children'),
+    events=[Event('observatory_update', 'interval')])
+def update_observatory_state():
+    image_filename = 'state.png'
+    encoded_image = base64.b64encode(open(image_filename, 'rb').read())
+    return html.Img(src='data:image/png;base64,{}'.format(
+        encoded_image.decode()),
+        style={'width': '1440px'})
+
+@app.callback(
     Output('observatory_tables', 'children'),
     events=[Event('observatory_update', 'interval')])    
 def update_observatory_table():
@@ -258,8 +272,6 @@ def update_observatory_table():
     return dcc.Graph(
         id='observatory_sensor_table',
         figure=ff.create_table(df, index=True))
-
-
 
 #############################################################
 # Interaction Between Components / Controller : Telescope tab

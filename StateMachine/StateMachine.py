@@ -496,7 +496,7 @@ class StateMachine(Machine, Base):
     def _update_status(self, event_data):
         self.status()
 
-    def _update_graph(self, event_data):  # pragma: no cover
+    def _update_graph(self, event_data, ext=['png', 'svg']): # pragma: no cover
         model = event_data.model
 
         try:
@@ -506,18 +506,19 @@ class StateMachine(Machine, Base):
             image_dir = '.' #self.config['directories']['images']
             os.makedirs('{}/state_images/'.format(image_dir), exist_ok=True)
 
-            fn = '{}/state_images/{}.svg'.format(image_dir, state_id)
-            ln_fn = '{}/state.svg'.format(image_dir)
+            for fext in ext:
+                fn = '{}/state_images/{}.{}'.format(image_dir, state_id, fext)
+                ln_fn = '{}/state.{}'.format(image_dir, fext)
 
-            # Only make the file once
-            if not os.path.exists(fn):
-                model.get_graph().draw(fn, prog='dot')
+                # Only make the file once
+                if not os.path.exists(fn):
+                    model.get_graph().draw(fn, prog='dot')
 
-            # Link current image
-            if os.path.exists(ln_fn):
-                os.remove(ln_fn)
+                # Link current image
+                if os.path.exists(ln_fn):
+                    os.remove(ln_fn)
 
-            os.symlink(fn, ln_fn)
+                os.symlink(fn, ln_fn)
 
         except Exception as e:
             self.logger.warning("Can't generate state graph: {}".format(e))
