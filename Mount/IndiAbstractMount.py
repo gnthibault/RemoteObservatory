@@ -37,19 +37,18 @@ class IndiAbstractMount(IndiMount, AbstractMount):
         ALT Altitude, degrees above horizon
         AZ Azimuth, degrees E of N
     """
-    def __init__(self, indiClient, location, serv_time, logger=None,
+    def __init__(self, indiClient, location, serv_time,
                  configFileName=None):
-        logger = logger or logging.getLogger(__name__)
-        
 
         # device related intialization
-        IndiMount.__init__(self, indiClient=indiClient, logger=logger,
-                           configFileName=configFileName, connectOnCreate=False)
+        IndiMount.__init__(self, indiClient=indiClient,
+                           configFileName=configFileName, 
+                           connectOnCreate=False)
         # setup AbstractMount config
         self._setup_abstract_config()
         #Setup AbstractMount
-        AbstractMount.__init__(self, location=location, serv_time=serv_time,
-                               logger=logger)
+        AbstractMount.__init__(self, location=location,
+                               serv_time=serv_time)
 
 
 
@@ -149,13 +148,20 @@ class IndiAbstractMount(IndiMount, AbstractMount):
             self.logger.warning("Target Coordinates not set, cannot slew")
         else:
             try:
+                was_tracking = self.is_tracking
+                was_slewing = self.is_slewing
+                self._is_tracking = False
+                self._is_slewing = True
                 IndiMount.slew_to_coord_and_track(self,
                     self.get_target_coordinates())
                 success = True
+                self._is_slewing = False
+                self._is_tracking = True
             except Exception as e:
                 self.logger.error("Error in slewing to target: {}, {}"
                     "".format(e, traceback.format_exc()))
-
+                self._is_slewing = was_slewing
+                self._is_tracking = was_tracking
                 success = False
         return success
 

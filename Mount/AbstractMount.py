@@ -40,8 +40,7 @@ class AbstractMount(Base):
 
     """
 
-    def __init__(self, location, serv_time, commands=None, logger=None, *args,
-                 **kwargs):
+    def __init__(self, location, serv_time, commands=None, *args, **kwargs):
         Base.__init__(self, args, kwargs)
         assert isinstance(location, EarthLocation)
 

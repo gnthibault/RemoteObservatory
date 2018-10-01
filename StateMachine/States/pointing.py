@@ -1,5 +1,6 @@
 # Generic
 from time import sleep
+import traceback
 
 # Local
 #from pocs.images import Image
@@ -18,7 +19,7 @@ def on_enter(event_data):
     model.next_state = 'parking'
 
     try:
-        model.say.debug("Taking pointing picture.")
+        model.say("Taking pointing picture.")
         observation = model.manager.current_observation
         fits_headers = model.manager.get_standard_headers(
             observation=observation
@@ -46,7 +47,7 @@ def on_enter(event_data):
 
                     except Exception as e:
                         model.logger.error('Problem waiting for images: '
-                                           '{}'.format(e))
+                            '{}:{}'.format(e,traceback.format_exc()))
 
             wait_time = 0.
             while not all([event.is_set() for event in camera_events.values()]):
@@ -89,4 +90,4 @@ def on_enter(event_data):
 
     except Exception as e:
         model.say('Hmm, I had a problem checking the pointing error. '
-                  'Going to park. {}'.format(e))
+                  'Going to park. {}:{}'.format(e, traceback.format_exc()))

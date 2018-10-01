@@ -400,7 +400,7 @@ class StateMachine(Machine, Base):
         This is used as a conditional check when transitioning between certain
         states.
         """
-        return self.mount.is_tracking
+        return self.manager.mount.is_tracking
 
     def mount_is_initialized(self, event_data):
         """ Transitional check for mount.

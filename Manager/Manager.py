@@ -521,38 +521,34 @@ class Manager(Base):
         assert observation is not None, self.logger.warning(
             "No observation, can't get headers")
 
-        field = observation.field
-
+        target = observation.observing_block.target
         self.logger.debug("Getting headers for : {}".format(observation))
-
         t0 = self.serv_time.getAstropyTimeFromUTC()
         moon = get_moon(t0, self.observer.location)
 
         headers = {
-            'airmass': self.observer.altaz(t0, field).secz.value,
+            'airmass': self.observer.altaz(t0, target).secz.value,
             'creator': "RemoteObservatoryV{}".format(self.__version__),
-            'elevation': self.location.get('elevation').value,
-            'ha_mnt': self.observer.target_hour_angle(t0, field).value,
-            'latitude': self.location.get('latitude').value,
-            'longitude': self.location.get('longitude').value,
+            'elevation': self.earth_location.height.value,
+            'ha_mnt': self.observer.target_hour_angle(t0, target).value,
+            'latitude': self.earth_location.lat.value,
+            'longitude': self.earth_location.lon.value,
             'moon_fraction': self.observer.moon_illumination(t0),
-            'moon_separation': field.coord.separation(moon).value,
+            'moon_separation': target.coord.separation(moon).value,
             'observer': self.config.get('name', ''),
             'origin': 'gnthibault',
-            'tracking_rate_ra': self.mount.getTrackRate()
+            #'tracking_rate_ra': self.mount.getTrackRate()
+            #TODO TN is that stuff worth implementing ?
         }
 
         # Add observation metadata
         headers.update(observation.status())
-
         # Explicitly convert EQUINOX to float
         try:
             equinox = float(headers['equinox'].replace('J', ''))
         except BaseException:
             equinox = 2000.  # We assume J2000
-
         headers['equinox'] = equinox
-
         return headers
 
     def autofocus_cameras(self, camera_list=None, coarse=False):
