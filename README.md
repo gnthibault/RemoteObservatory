@@ -51,6 +51,7 @@ pip install dash dash-core-components dash-html-components dash-renderer plotly
 
 ## TODO: WORK IN PROGRESS: DO NOT USE BEFORE THIS IS DONE
 make sure we are correctly scoring all constraints (not only binary values) in ObservationPlanner/Scheduler
+Also remove the stuf in DefaultScheduler for defining the constraints
 Correct the stub inside of launch_remote_observatory that returns safe even if not safe
 re-integrate the simulator mode that returns fines, even if not fines
 Make a proper integration between our IndiMount and abstractMount inside of IndiAbstractMount, because right now it is a mess

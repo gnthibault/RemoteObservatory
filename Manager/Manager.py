@@ -5,6 +5,8 @@ from glob import glob
 import logging
 import os
 import time
+import traceback
+
 
 # Asynchronous stuff
 from threading import Event
@@ -194,7 +196,7 @@ class Manager(Base):
                 status['observation'] = self.current_observation.status()
                 status['observation']['field_ha'] = (
                     self.observer.target_hour_angle(t,
-                        self.current_observation.field))
+                        self.current_observation.observing_block.target))
 
             evening_astro_time = self.observer.twilight_evening_astronomical(t,
                                  which='next')
@@ -215,8 +217,8 @@ class Manager(Base):
             }
 
         except Exception as e:  # pragma: no cover
-            self.logger.warning("Can't get observatory status: {}".format(e))
-
+            self.logger.warning("Can't get observatory status: {}-{}".format(e,
+                traceback.format_exc()))
         return status
 
     def get_observation(self, *args, **kwargs):

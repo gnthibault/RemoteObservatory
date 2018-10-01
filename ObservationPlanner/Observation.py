@@ -136,7 +136,7 @@ class Observation(Base):
             'field_ra': self.observing_block.target.coord.ra.value,
             'field_dec': self.observing_block.target.coord.dec.value,
             'merit': self.merit,
-            'priority': self.priority,
+            'priority': self.observing_block.priority,
             'seq_time': self.seq_time,
         }
 

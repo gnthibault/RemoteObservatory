@@ -300,21 +300,7 @@ class AbstractMount(Base):
         Returns:
             bool: indicating success
         """
-        success = False
-
-        if self.is_parked:
-            self.logger.info("Mount is parked")
-        elif not self.has_target:
-            self.logger.info("Target Coordinates not set")
-        else:
-            success = self.query('slew_to_target')
-            self.logger.debug("Mount response: {}".format(success))
-            if success:
-                self.logger.debug('Slewing to target')
-            else:
-                self.logger.warning('Problem with slew_to_target')
-
-        return success
+        raise NotImplementedError 
 
     def slew_to_home(self):
         """ Slews the mount to the home position.

@@ -25,12 +25,16 @@ class DefaultScheduler(Scheduler):
         """ Inherit from the `Base Scheduler` """
         Scheduler.__init__(self, ntpServ, obs, config_file_name=None, path='.')
 
+        # TODO TN add non boolean Airmass Constraint, Local horizon and Moon
+        # Separation
+        #self.constraints = [
+        #    AirmassConstraint(max=3, boolean_constraint=True),
+        #    AtNightConstraint.twilight_astronomical(),
+        #    MoonSeparationConstraint(min=45*u.deg),
+        #    LocalHorizonConstraint(horizon=self.obs.get_horizon(),
+        #                                   boolean_constraint=True)]
         self.constraints = [
-            AirmassConstraint(max=3, boolean_constraint=True),
-            AtNightConstraint.twilight_astronomical(),
-            MoonSeparationConstraint(min=45*u.deg),
-            LocalHorizonConstraint(horizon=self.obs.get_horizon(),
-                                           boolean_constraint=True)]
+            AirmassConstraint(max=6, boolean_constraint=True)]
 
 ##########################################################################
 # Properties

@@ -2,6 +2,7 @@
 import io
 import json
 import logging
+import traceback
 
 # Indi stuff
 import PyIndi
@@ -130,6 +131,33 @@ class IndiAbstractMount(IndiMount, AbstractMount):
         IndiMount.unpark(self)
         self._is_parked = False
 
+    def slew_to_target(self):
+        """ Slews to the current _target_coordinates
+
+        Args:
+            on_finish(method):  A callback method to be executed when mount has
+            arrived at destination
+
+        Returns:
+            bool: indicating success
+        """
+        success = False
+
+        if self.is_parked:
+            self.logger.warning("Mount is parked, cannot slew")
+        elif not self.has_target:
+            self.logger.warning("Target Coordinates not set, cannot slew")
+        else:
+            try:
+                IndiMount.slew_to_coord_and_track(self,
+                    self.get_target_coordinates())
+                success = True
+            except Exception as e:
+                self.logger.error("Error in slewing to target: {}, {}"
+                    "".format(e, traceback.format_exc()))
+
+                success = False
+        return success
 
 ###############################################################################
 # Monitoring related stuff
