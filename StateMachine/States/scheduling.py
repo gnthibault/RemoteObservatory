@@ -41,9 +41,9 @@ def on_enter(event_data):
                       '{}'.format(observation.name))
 
             model.logger.debug('Setting Observation coords: {}'.format(
-                               observation.observing_block.target.coord))
+                               observation.target.coord))
             if model.manager.mount.set_target_coordinates(
-                               observation.observing_block.target.coord):
+                               observation.target.coord):
                 model.next_state = 'slewing'
             else:
                 model.logger.warning("Field not properly set. Parking.")

@@ -84,7 +84,7 @@ class DefaultScheduler(Scheduler):
                 if obs_key in valid_obs:
                     self.logger.debug("\tObservation: {}".format(obs_key))
                     score = constraint.compute_constraint(time, observer,
-                        observation.observing_block.target.coord)
+                        observation.target.coord)
                     if np.any([isinstance(score, ty) for ty in
                               [bool, np.bool, np.bool_]]):
                         self.logger.debug("\t\tVeto: : {}".format(score))
@@ -102,7 +102,7 @@ class DefaultScheduler(Scheduler):
         # Now add initial priority
         for obs_key, score in valid_obs.items():
             valid_obs[obs_key] = (score +
-                self.observations[obs_key].observing_block.priority)
+                self.observations[obs_key].priority)
 
         # if there are actually valid observation remaining
         if len(valid_obs) > 0:

@@ -49,8 +49,8 @@ class Observation(Base):
     @property
     def set_duration(self):
         """ Amount of time per set of exposures """
-        return (self.observing_block.number_exposures *
-                self.observing_block.time_per_exposure)
+        return (self.number_exposures *
+                self.time_per_exposure)
 
     @property
     def name(self):
@@ -98,6 +98,21 @@ class Observation(Base):
         except IndexError:
             self.logger.warning("No exposure available")
 
+    @property
+    def time_per_exposure(self):
+        return self.observing_block.time_per_exposure
+
+    @property
+    def number_exposures(self):
+        return self.observing_block.number_exposures
+
+    @property
+    def target(self):
+        return self.observing_block.target
+
+    @property
+    def priority(self):
+        return self.observing_block.priority
 
 ###############################################################################
 # Methods
@@ -120,23 +135,23 @@ class Observation(Base):
         """
 
         try:
-            equinox = self.observing_block.target.coord.equinox.value
+            equinox = self.target.coord.equinox.value
         except AttributeError:
-            equinox = self.observing_block.target.coord.equinox
+            equinox = self.target.coord.equinox
         except Exception as e:
             equinox = 'J2000'
 
         status = {
             'current_exp': self.current_exp,
             'equinox': equinox,
-            'number exposure': self.observing_block.number_exposures,
-            'time_per_exposure': self.observing_block.time_per_exposure,
+            'number exposure': self.number_exposures,
+            'time_per_exposure': self.time_per_exposure,
             'total_exposure': self.set_duration,
-            'field_name': self.observing_block.target.name,
-            'field_ra': self.observing_block.target.coord.ra.value,
-            'field_dec': self.observing_block.target.coord.dec.value,
+            'field_name': self.target.name,
+            'field_ra': self.target.coord.ra.value,
+            'field_dec': self.target.coord.dec.value,
             'merit': self.merit,
-            'priority': self.observing_block.priority,
+            'priority': self.priority,
             'seq_time': self.seq_time,
         }
 
@@ -150,7 +165,7 @@ class Observation(Base):
     def __str__(self):
         return ('{}: {} exposures, time per exposure {}, priority '
                 '{:.0f}'.format(
-                self.observing_block.target,
-                self.observing_block.number_exposures,
-                self.observing_block.time_per_exposure,
-                self.observing_block.priority))
+                self.target,
+                self.number_exposures,
+                self.time_per_exposure,
+                self.priority))

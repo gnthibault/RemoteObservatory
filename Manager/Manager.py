@@ -196,7 +196,7 @@ class Manager(Base):
                 status['observation'] = self.current_observation.status()
                 status['observation']['field_ha'] = (
                     self.observer.target_hour_angle(t,
-                        self.current_observation.observing_block.target))
+                        self.current_observation.target))
 
             evening_astro_time = self.observer.twilight_evening_astronomical(t,
                                  which='next')
@@ -521,7 +521,7 @@ class Manager(Base):
         assert observation is not None, self.logger.warning(
             "No observation, can't get headers")
 
-        target = observation.observing_block.target
+        target = observation.target
         self.logger.debug("Getting headers for : {}".format(observation))
         t0 = self.serv_time.getAstropyTimeFromUTC()
         moon = get_moon(t0, self.observer.location)
@@ -705,7 +705,8 @@ class Manager(Base):
         """
         self.cameras = OrderedDict()
         try:
-            cam = IndiCamera(indiClient=self.indi_client,
+            cam = IndiCamera(serv_time=self.serv_time,
+                             indiClient=self.indi_client,
                              connectOnCreate=True)
 
             # test indi camera class on a old EOS350D
