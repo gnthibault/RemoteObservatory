@@ -1,12 +1,19 @@
 # Basic stuff
+import io
+import os
+import threading
+
+# Imaging and Fits stuff
+from astropy import units as u
+from astropy.io import fits
 
 # Local stuff
 from Camera.AbstractCamera import AbstractCamera
 from Camera.IndiCamera import IndiCamera
 
 class IndiAbstractCamera(IndiCamera, AbstractCamera):
-    def __init__(self, indiClient, configFileName=None, connectOnCreate=True,
-                 primary=False, serv_time):
+    def __init__(self, serv_time, indiClient, configFileName=None, connectOnCreate=True,
+                 primary=False):
 
         # Parent initialization
         AbstractCamera.__init__(self, serv_time=serv_time, primary=primary)
@@ -16,3 +23,28 @@ class IndiAbstractCamera(IndiCamera, AbstractCamera):
                            configFileName=configFileName,
                            connectOnCreate=connectOnCreate)
 
+    # TODO TN: setup event based acquisition properly
+    def shootAsyncWithEvent(self, exp_time_sec, filename, exposure_event):
+        self.setExpTimeSec(exp_time_sec)
+        self.shootAsync()
+        self.synchronizeWithImageReception() 
+        image = self.getReceivedImage()
+        try:
+            with open(filename, "wb") as f:
+                image.writeto(f, overwrite=True)
+        except Exception as e:
+            self.logger.error('Error while writing file {} : {}'
+                              ''.format(filename,e))
+        exposure_event.set()
+
+    def take_exposure(self, exposure_time, filename, *args, **kwargs):
+        """
+        Should return an event
+        """
+        exposure_event = threading.Event()
+        w = threading.Thread(target=self.shootAsyncWithEvent,
+                             args=(exposure_time.to(u.second).value,
+                                   filename,
+                                   exposure_event))
+        w.start()
+        return exposure_event 

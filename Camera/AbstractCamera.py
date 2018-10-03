@@ -1,5 +1,6 @@
 # Generic
 import logging
+import os
 from threading import Event
 from threading import Thread
 
@@ -20,6 +21,7 @@ class AbstractCamera(Base):
 
         self.serv_time = serv_time
         self.is_primary = primary
+        self.filter_type = 'no-filter'
         self._file_extension = 'fit'
         self._serial_number = '0123456789'
 
@@ -79,8 +81,8 @@ class AbstractCamera(Base):
 
         exp_time, file_path, image_id, metadata = self._setup_observation(
             observation, headers, filename, *args, **kwargs)
-
-        exposure_event = self.take_exposure(seconds=exp_time,
+       
+        exposure_event = self.take_exposure(exposure_time=exp_time,
             filename=file_path, *args, **kwargs)
 
         # Add most recent exposure to list
@@ -102,12 +104,13 @@ class AbstractCamera(Base):
         start_time = headers.get('start_time', self.serv_time.flat_time())
 
         # Get the filename
-        image_dir = "{}/fields/{}/{}/{}/".format(
+        image_dir = "{}/targets/{}/{}/{}/".format(
             self.config['directories']['images'],
             observation.target.name,
             self.uid,
             observation.seq_time,
         )
+        os.makedirs(image_dir, exist_ok=True)
 
         # Get full file path
         if filename is None:
@@ -141,7 +144,7 @@ class AbstractCamera(Base):
         metadata = {
             'camera_name': self.name,
             'camera_uid': self.uid,
-            'field_name': observation.field.field_name,
+            'target_name': observation.target.name,
             'file_path': file_path,
             'filter': self.filter_type,
             'image_id': image_id,
@@ -152,6 +155,7 @@ class AbstractCamera(Base):
         metadata.update(headers)
 
         exp_time = kwargs.get('exp_time', observation.time_per_exposure.value)
+
         metadata['exp_time'] = exp_time
 
         return exp_time, file_path, image_id, metadata
@@ -187,10 +191,11 @@ class AbstractCamera(Base):
         self.logger.debug("Processing {}".format(image_id))
 
         try:
-            #TODO TN Do something here, like write to fit
+            #TODO TN Do something here, like write to fits
             pass
         except Exception as e:
-            self.logger.warning('Problem with extracting pretty image: {}'.format(e))
+            self.logger.warning('Problem with extracting pretty image: '
+                                '{}'.format(e))
 
         file_path = self._process_fits(file_path, info)
         try:
@@ -212,7 +217,7 @@ class AbstractCamera(Base):
 
         self.db.insert('observations', {
             'data': info,
-            'date': current_time(datetime=True),
+            'date': self.serv_time.getUTCFromNTP(),
             'sequence_id': seq_id,
         })
 

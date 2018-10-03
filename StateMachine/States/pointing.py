@@ -2,10 +2,13 @@
 from time import sleep
 import traceback
 
+# Astropy
+import astropy.units as u
+
 # Local
 #from pocs.images import Image
 
-wait_interval = 3.
+wait_interval = 5.
 timeout = 150.
 
 num_pointing_images = 1
@@ -39,7 +42,7 @@ def on_enter(event_data):
                         camera_event = camera.take_observation(
                             observation,
                             fits_headers,
-                            exp_time=30.,
+                            exp_time=30.*u.second,
                             filename='pointing{:02d}'.format(img_num)
                         )
 

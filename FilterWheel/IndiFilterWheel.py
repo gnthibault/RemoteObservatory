@@ -61,12 +61,12 @@ class IndiFilterWheel(IndiDevice):
         self.setNumber('FILTER_SLOT', {'FILTER_SLOT_VALUE': number})
 
     def currentFilter(self):
-        ctl = self.getPropertyVector('FILTER_SLOT', 'number')
+        ctl = self.get_prop('FILTER_SLOT', 'number')
         number = int(ctl[0].value)
         return number, self.filterName(number)
 
     def filters(self):
-        ctl = self.getPropertyVector('FILTER_NAME', 'text')
+        ctl = self.get_prop('FILTER_NAME', 'text')
         filters = [(x.text, IndiFilterWheel.__name2number(x.name)) for x in ctl]
         return dict(filters)
 

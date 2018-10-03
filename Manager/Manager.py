@@ -25,7 +25,7 @@ from astroplan import Observer
 from Base.Base import Base
 
 # Local stuff: Camera
-from Camera.IndiCamera import IndiCamera
+from Camera.IndiAbstractCamera import IndiAbstractCamera
 from Camera.IndiEos350DCamera import IndiEos350DCamera
 
 # Local stuff: FilterWheel
@@ -304,8 +304,8 @@ class Manager(Base):
 
             try:
                 # Start the exposures
-                cam_event = self.take_observation(
-                    camera, self.current_observation, headers)
+                cam_event = camera.take_observation(
+                    camera, self.current_observation, headers=headers)
 
                 camera_events[cam_name] = cam_event
 
@@ -313,63 +313,6 @@ class Manager(Base):
                 self.logger.error("Problem waiting for images: {}".format(e))
 
         return camera_events
-
-    def take_observation(self, camera, observation, headers):
-        """Take an observation
-
-        Gathers various header information, sets the file path, and calls
-            `take_exposure`. Also creates a `threading.Event` object and a
-            `threading.Thread` object. The Thread calls `process_exposure`
-            after the exposure had completed and the Event is set once
-            `process_exposure` finishes.
-
-        Args:
-            observation (~pocs.scheduler.observation.Observation): Object
-                describing the observation
-            headers (dict, optional): Header data to be saved along with the
-                file.
-            filename (str, optional): pass a filename for the output FITS file
-                to overrride the default file naming system
-
-        Returns:
-            threading.Event: An event to be set when the image is done
-                processing
-        """
-
-        #exp_time, file_path, image_id, metadata = self._setup_observation(observation,
-        #                                                                  headers,
-        #                                                                  filename,
-        #                                                                  *args,
-
-        # TODO TN, for now, just a dummy wait, no image is written
-        exposure_event = Event()
-        #camera.prepareShoot()
-        #camera.shootAsyncWithEvent(
-        # seconds=exp_time, filename=file_path, *args, **kwargs)
-        image_id = 1
-        file_path = '/tmp/dummy.fit'
-
-        def moc_exposure(sleep_sec, exp_event):
-            time.sleep(sleep_sec)
-            exp_event.set()
-        t = Thread(target=moc_exposure, args=(observation.exp_time.value,
-                                               exposure_event))
-        t.name = '{}Thread'.format(self.name)
-        
-
-        # Add most recent exposure to list
-        if self.is_primary:
-            observation.exposure_list[image_id] = file_path
-
-        # Process the exposure once readout is complete
-        #observation_event = Event()
-        #t2 = Thread(target=self.process_exposure, args=(metadata,
-        #                                                observation_event,
-        #                                                exposure_event))
-        #t2.name = '{}Thread'.format(self.name)
-        #t2.start()
-
-        return exposure_event
 
     def analyze_recent(self):
         """Analyze the most recent exposure
@@ -705,10 +648,11 @@ class Manager(Base):
         """
         self.cameras = OrderedDict()
         try:
-            cam = IndiCamera(serv_time=self.serv_time,
-                             indiClient=self.indi_client,
-                             connectOnCreate=True)
-
+            cam = IndiAbstractCamera(serv_time=self.serv_time,
+                                     indiClient=self.indi_client,
+                                     primary=True,
+                                     connectOnCreate=True)
+            cam.prepareShoot()
             # test indi camera class on a old EOS350D
             #cam = IndiEos350DCamera(indiClient=self.indi_client,\
             #                        configFileName='IndiEos350DCamera.json',

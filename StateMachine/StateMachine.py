@@ -503,7 +503,7 @@ class StateMachine(Machine, Base):
             state_id = 'state_{}_{}'.format(event_data.event.name,
                                             event_data.state.name)
 
-            image_dir = '.' #self.config['directories']['images']
+            image_dir = self.config['directories']['images']
             os.makedirs('{}/state_images/'.format(image_dir), exist_ok=True)
 
             for fext in ext:

@@ -88,13 +88,15 @@ class IndiCamera(IndiDevice):
         self.logger.debug('Indi client will register to server in order to '
                           'receive blob CCD1 when it is ready')
         self.indiClient.setBLOBMode(PyIndi.B_ALSO, self.deviceName, 'CCD1')
-        self.frameBlob=self.getPropertyVector(propName='CCD1', propType='blob')
+        self.frameBlob=self.get_prop(propName='CCD1', propType='blob')
 
     def synchronizeWithImageReception(self):
         try:
             global indiClientGlobalBlobEvent
+            self.logger.debug('synchronizeWithImageReception: Start waiting')
             indiClientGlobalBlobEvent.wait()
             indiClientGlobalBlobEvent.clear()
+            self.logger.debug('synchronizeWithImageReception: Done')
         except Exception as e:
             self.logger.error('Indi Camera Error in '
                 'synchronizeWithImageReception: {}'.format(e))
@@ -102,6 +104,8 @@ class IndiCamera(IndiDevice):
     def getReceivedImage(self):
         try:
             ret = []
+            self.logger.debug('getReceivedImage frameBlob: {}'.format(
+                self.frameBlob))
             for blob in self.frameBlob:
                 self.logger.debug('Indi camera, processing blob with name: {},'
                                    ', size: {}, format: {}'.format(
@@ -122,11 +126,6 @@ class IndiCamera(IndiDevice):
         except Exception as e:
             self.logger.error('Indi Camera Error in shoot: {}'.format(e))
 
-    # TODO TN: setup event based acquisition properly
-    def shootAsyncWithEvent(self, exp_time, exposure_event):
-        self.shootAsync()
-        self.synchronizeWithImageReception() 
-        exposure_event.set()
 
     def abortShoot(self, sync=True):
         self.setNumber('CCD_ABORT_EXPOSURE', {'ABORT': 1}, sync=sync)
@@ -170,14 +169,14 @@ class IndiCamera(IndiDevice):
                        { 'CCD_TEMPERATURE_VALUE' : temperature },
                        timeout=1200)
 
-    #def setCoolingOn(self):
-    #    self.setSwitch('CCD_COOLER',['COOLER_ON'])
+    def setCoolingOn(self):
+        self.setSwitch('CCD_COOLER',['COOLER_ON'])
 
-    #def setCoolingOff(self):
-    #    self.setSwitch('CCD_COOLER',['COOLER_OFF'])
+    def setCoolingOff(self):
+        self.setSwitch('CCD_COOLER',['COOLER_OFF'])
 
-    #def getFrameType(self):
-    #    return self.getPropertyVector('CCD_FRAME_TYPE','switch')
+    def getFrameType(self):
+        return self.get_prop('CCD_FRAME_TYPE','switch')
 
     def setFrameType(self, frame_type):
         """

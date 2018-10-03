@@ -14,33 +14,34 @@ from astropy.io import fits
 from helper.IndiClient import IndiClient
 
 # Local stuff : Camera
-from Camera.IndiVirtualCamera import IndiVirtualCamera
+from Camera.IndiCamera import IndiCamera
 
 
 if __name__ == '__main__':
 
     # load the logging configuration
     logging.config.fileConfig('logging.ini')
-    logger = logging.getLogger('mainLogger')
 
     # test indi client
-    indiCli = IndiClient(logger=logger)
+    indiCli = IndiClient()
     indiCli.connect()
 
     # test indi virtual camera class
-    cam = IndiVirtualCamera(logger=logger, indiClient=indiCli,
-                            configFileName=None, connectOnCreate=False)
+    cam = IndiCamera(indiClient=indiCli, configFileName=None,
+                     connectOnCreate=False)
     cam.connect()
 
     # Play with camera configuration
     cam.setRoi({'X':256, 'Y':480, 'WIDTH':512, 'HEIGHT':640})
-    print('Current camera ROI is: {}'.format(cam.getRoi()))
+    # getRoi Not implemented, TODO TN
+    #print('Current camera ROI is: {}'.format(cam.getRoi()))
     cam.setRoi({'X':0, 'Y':0, 'WIDTH':1280, 'HEIGHT':1024})
-    print('Current camera ROI is: {}'.format(cam.getRoi()))
+    # getRoi Not implemented, TODO TN
+    #print('Current camera ROI is: {}'.format(cam.getRoi()))
 
-    cam.setTemperature(-22.22)
+    #cam.setTemperature(-22.22)
     print('Current camera temperature is: {}'.format(cam.getTemperature()))
-    cam.setTemperature(-1)
+    #cam.setTemperature(-1)
     print('Current camera temperature is: {}'.format(cam.getTemperature()))
 
     #cam.setCoolingOn()
