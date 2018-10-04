@@ -183,7 +183,7 @@ class Scheduler(Base):
                               time_range=time_range)
 
 
-    def add_observation(self, observing_block):
+    def add_observation(self, observing_block, exp_set_size=None):
         """Adds an `Observation` to the scheduler
         Args:
             target_name (str): Name of the target, should be referenced in a
@@ -191,7 +191,7 @@ class Scheduler(Base):
         """
 
         try:
-            observation = Observation(observing_block)
+            observation = Observation(observing_block, exp_set_size)
         except Exception as e:
             self.logger.warning('Skipping invalid observing_block: {}'.format(
                                 observing_block))
@@ -224,28 +224,22 @@ class Scheduler(Base):
             #target = FixedTarget.from_name(target_name)
             target = FixedTarget(SkyCoord(5.33*u.deg, 46.0*u.deg))
             for filter_name, (count, exp_time_sec) in config.items():
-                # We split big observing blocks into smaller blocks for better
-                # granularity
-                while count > 0:
-                    l_count = max(1, min(count,
+                exp_time = exp_time_sec*u.second
+                #TODO TN retrieve priority from the file ?
+                priority = 0 if (filter_name=='Luminance') else 1
+                try:
+                    exp_set_size = max(1, min(count,
                         self.MaximumSlotDurationSec//exp_time_sec))
-                    exp_time = exp_time_sec*u.second
-                
-                    #TODO TN retrieve priority from the file ?
-                    priority = 0 if (filter_name=='Luminance') else 1
-
-                    try:
-                        b = ObservingBlock.from_exposures(
-                                target, priority, exp_time, l_count,
-                                camera_time,
-                                configuration={'filter': filter_name},
-                                constraints=self.constraints)
-                        self.add_observation(b)
-                        count -= l_count
-                
-                    except AssertionError as e:
-                        self.logger.debug("Error whil adding target : {}"
-                                          "".format(e))
+                    b = ObservingBlock.from_exposures(
+                            target, priority, exp_time, count,
+                            camera_time,
+                            configuration={'filter': filter_name},
+                            constraints=self.constraints)
+                    self.add_observation(b, exp_set_size)
+            
+                except AssertionError as e:
+                    self.logger.debug("Error whil adding target : {}"
+                                      "".format(e))
 
 ##########################################################################
 # Utility Methods

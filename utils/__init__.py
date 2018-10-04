@@ -21,7 +21,17 @@ class Timeout(object):
     """
 
     def __init__(self, duration):
-        """Initialize a timeout with given duration (seconds)."""
+        """Initialize a timeout with given duration.
+
+        Args:
+            duration: Amount of time to before time expires. May be numeric seconds
+                (int or float) or an Astropy time duration (e.g. 1 * u.minute).
+        """
+        if isinstance(duration, u.Quantity):
+            duration = duration.to(u.second).value
+        elif not isinstance(duration, (int, float)):
+            raise ValueError(
+                'duration (%r) is not a supported type: %s' % (duration, type(duration)))
         assert duration >= 0
         self.is_non_blocking = (duration == 0)
         self.duration = duration
@@ -47,7 +57,6 @@ class Timeout(object):
     def restart(self):
         """Restart the timed duration."""
         self.target_time = time.monotonic() + self.duration
-
 
 def listify(obj):
     """ Given an object, return a list

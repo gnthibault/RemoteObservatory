@@ -33,8 +33,9 @@ class DefaultScheduler(Scheduler):
         #    MoonSeparationConstraint(min=45*u.deg),
         #    LocalHorizonConstraint(horizon=self.obs.get_horizon(),
         #                                   boolean_constraint=True)]
-        self.constraints = [
-            AirmassConstraint(max=6, boolean_constraint=True)]
+        #self.constraints = [
+        #    AirmassConstraint(max=6, boolean_constraint=True)]
+        self.constraints = []
 
 ##########################################################################
 # Properties

@@ -1,5 +1,6 @@
 # Generic
-from time import sleep
+import time
+import traceback
 
 # Astropy
 from astropy import units as u
@@ -65,7 +66,8 @@ def on_enter(event_data):
         model.logger.warning('Timeout while waiting for images. Something'
                              ' wrong with camera, going to park.')
     except Exception as e:
-        model.logger.warning("Problem with imaging: {}".format(e))
+        model.logger.warning("Problem with imaging, {}: {}".format(e,
+                             traceback.format_exc()))
         model.say("Hmm, I'm not sure what happened with that exposure.")
     else:
         model.manager.current_observation.current_exp += 1

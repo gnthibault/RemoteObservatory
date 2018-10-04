@@ -6,7 +6,7 @@ import traceback
 import astropy.units as u
 
 # Local
-#from pocs.images import Image
+from Imaging.Image import Image
 
 wait_interval = 5.
 timeout = 150.
@@ -71,23 +71,22 @@ def on_enter(event_data):
 
             if model.manager.current_observation is not None:
                 #TODO Integrate this feature with our own solver class
-                #pointing_id, pointing_path = (
-                #    model.manager.current_observation.last_exposure)
-                #pointing_image = Image(
-                #    pointing_path,
-                #    location=model.manager.earth_location
-                #)
+                pointing_id, pointing_path = (
+                    model.manager.current_observation.last_exposure)
+                pointing_image = Image(
+                    pointing_path,
+                    location=model.manager.earth_location
+                )
 
-                #pointing_image.solve_field()
-                #observation.pointing_image = pointing_image
-                #model.logger.debug("Pointing file: {}".format(pointing_image))
-                #model.say('Ok, I've got the pointing picture, '
-                #          'let's see how close we are.')
-                #model.logger.debug('Pointing Coords: {}',
-                #                   pointing_image.pointing)
-                #model.logger.debug('Pointing Error: {}',
-                #                   pointing_image.pointing_error)
-                model.logger.debug('Analyzing and checking pointing image')
+                pointing_image.solve_field(verbose=True)
+                observation.pointing_image = pointing_image
+                model.logger.debug("Pointing file: {}".format(pointing_image))
+                model.say('Ok, I\'ve got the pointing picture, '
+                          'let\'s see how close we are.')
+                model.logger.debug('Pointing Coords: {}'.format(
+                                   pointing_image.pointing))
+                model.logger.debug('Pointing Error: {}'.format(
+                                   pointing_image.pointing_error))
 
         model.next_state = 'tracking'
 

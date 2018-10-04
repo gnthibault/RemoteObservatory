@@ -4,6 +4,9 @@ import os
 from threading import Event
 from threading import Thread
 
+# Astropy
+import astropy.units as u
+
 # Local
 from Base.Base import Base
 from Imaging import fits as fits_utils
@@ -22,7 +25,7 @@ class AbstractCamera(Base):
         self.serv_time = serv_time
         self.is_primary = primary
         self.filter_type = 'no-filter'
-        self._file_extension = 'fit'
+        self._file_extension = 'fits'
         self._serial_number = '0123456789'
 
 ###############################################################################
@@ -104,9 +107,9 @@ class AbstractCamera(Base):
         start_time = headers.get('start_time', self.serv_time.flat_time())
 
         # Get the filename
-        image_dir = "{}/targets/{}/{}/{}/".format(
+        image_dir = "{}/targets/{}/{}/{}".format(
             self.config['directories']['images'],
-            observation.target.name,
+            observation.name,
             self.uid,
             observation.seq_time,
         )
@@ -144,7 +147,7 @@ class AbstractCamera(Base):
         metadata = {
             'camera_name': self.name,
             'camera_uid': self.uid,
-            'target_name': observation.target.name,
+            'target_name': observation.name,
             'file_path': file_path,
             'filter': self.filter_type,
             'image_id': image_id,
@@ -154,9 +157,9 @@ class AbstractCamera(Base):
         }
         metadata.update(headers)
 
-        exp_time = kwargs.get('exp_time', observation.time_per_exposure.value)
+        exp_time = kwargs.get('exp_time', observation.time_per_exposure)
 
-        metadata['exp_time'] = exp_time
+        metadata['exp_time'] = exp_time.to(u.second).value
 
         return exp_time, file_path, image_id, metadata
 
@@ -204,11 +207,14 @@ class AbstractCamera(Base):
             pass
 
         if info['is_primary']:
-            self.logger.debug("Adding current observation to db: {}".format(image_id))
+            self.logger.debug("Adding current observation to db: {}".format(
+                              image_id))
             try:
-                self.db.insert_current('observations', info, store_permanently=False)
+                self.db.insert_current('observations', info,
+                                       store_permanently=False)
             except Exception as e:
-                self.logger.error('Problem adding observation to db: {}'.format(e))
+                self.logger.error('Problem adding observation to db: {}'
+                                  ''.format(e))
         else:
             self.logger.debug('Compressing {}'.format(file_path))
             fits_utils.fpack(file_path)

@@ -10,7 +10,7 @@ from Base.Base import Base
 
 class Observation(Base):
 
-    def __init__(self, observing_block):
+    def __init__(self, observing_block, exp_set_size=None):
         """ An observation of a given target.
 
         An observation consists of a minimum number of exposures (`min_nexp`)
@@ -32,6 +32,7 @@ class Observation(Base):
         self.observing_block = observing_block
         self.current_exp = 0
         self.merit = 0 #Merit is != priority: highest is scheduled first
+        self.exp_set_size = exp_set_size or self.number_exposures
         #self.exp_time = exp_time
         #self.min_nexp = min_nexp
         self.exposure_list = OrderedDict()
@@ -145,11 +146,13 @@ class Observation(Base):
             'current_exp': self.current_exp,
             'equinox': equinox,
             'number exposure': self.number_exposures,
-            'time_per_exposure': self.time_per_exposure,
-            'total_exposure': self.set_duration,
-            'field_name': self.target.name,
+            'time_per_exposure': self.time_per_exposure.to(u.second).value,
+            'total_exposure': self.set_duration.to(u.second).value,
+            'field_name': self.name,
             'field_ra': self.target.coord.ra.value,
+            'ra_mnt': self.target.coord.ra.value,
             'field_dec': self.target.coord.dec.value,
+            'dec_mnt': self.target.coord.dec.value,
             'merit': self.merit,
             'priority': self.priority,
             'seq_time': self.seq_time,

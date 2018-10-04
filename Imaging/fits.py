@@ -27,8 +27,7 @@ def solve_field(fname, timeout=15, solve_opts=None, **kwargs):
     if verbose:
         print("Entering solve_field")
 
-    solve_field_script = "{}/scripts/solve_field.sh".format(
-        os.getenv('POCS'), '/var/panoptes/POCS')
+    solve_field_script = "{}/scripts/solve_field.sh".format(os.getcwd())
 
     if not os.path.exists(solve_field_script):  # pragma: no cover
         raise error.InvalidSystemCommand(
@@ -43,6 +42,7 @@ def solve_field(fname, timeout=15, solve_opts=None, **kwargs):
             '--cpulimit', str(timeout),
             '--no-verify',
             '--no-plots',
+            '--no-fits2fits',
             '--crpix-center',
             '--match', 'none',
             '--corr', 'none',

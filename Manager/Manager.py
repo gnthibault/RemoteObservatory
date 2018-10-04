@@ -237,7 +237,7 @@ class Manager(Base):
         # If observation list is empty or a reread is requested
         if (self.scheduler.has_valid_observations is False or
                 kwargs.get('reread_fields_file', False)):
-            self.scheduler.read_field_list()
+            self.scheduler.initialize_target_list()
 
         # This will set the `current_observation`
         self.scheduler.get_observation(*args, **kwargs)
@@ -305,12 +305,13 @@ class Manager(Base):
             try:
                 # Start the exposures
                 cam_event = camera.take_observation(
-                    camera, self.current_observation, headers=headers)
+                    observation=self.current_observation, headers=headers)
 
                 camera_events[cam_name] = cam_event
 
             except Exception as e:
-                self.logger.error("Problem waiting for images: {}".format(e))
+                self.logger.error("Problem waiting for images, {}: {}".format(
+                    e, traceback.format_exc()))
 
         return camera_events
 
