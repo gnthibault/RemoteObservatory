@@ -260,9 +260,9 @@ class Manager(Base):
         for seq_time, observation in self.scheduler.observed_list.items():
             self.logger.debug("Housekeeping for {}".format(observation))
 
-            #for cam_name, camera in self.cameras.items():
-            #    self.logger.debug('Cleanup for camera {} [{}]'.format(
-            #        cam_name, camera.uid))
+            for cam_name, camera in self.cameras.items():
+                self.logger.debug('Cleanup for camera {} [{}]'.format(
+                    cam_name, camera.uid))
 
             #    dir_name = "{}/fields/{}/{}/{}/".format(
             #        self.config['directories']['images'],
@@ -273,8 +273,8 @@ class Manager(Base):
 
             #    img_utils.clean_observation_dir(dir_name)
 
-            #    if upload_images is True:
-            #        self.logger.debug("Uploading directory to google cloud storage")
+                if upload_images is True:
+                    self.logger.debug("Uploading directory to cloud storage")
             #        img_utils.upload_observation_dir(pan_id, dir_name)
 
             self.logger.debug('Cleanup finished')

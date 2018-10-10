@@ -158,27 +158,27 @@ class IndiCamera(IndiDevice):
         """
         self.setNumber('CCD_FRAME', roi)
    
-    def getTemperature(self):
+    def get_temperature(self):
         #return self.getPropertyValueVector('CCD_TEMPERATURE',
         #                                   'number')['CCD_TEMPERATURE_VALUE']
         return self.get_number('CCD_TEMPERATURE')['CCD_TEMPERATURE_VALUE']
 
-    def setTemperature(self, temperature):
+    def set_temperature(self, temperature):
         """ It may take time to lower the temperature of a ccd """
         self.setNumber('CCD_TEMPERATURE',
                        { 'CCD_TEMPERATURE_VALUE' : temperature },
                        timeout=1200)
 
-    def setCoolingOn(self):
+    def set_cooling_on(self):
         self.setSwitch('CCD_COOLER',['COOLER_ON'])
 
-    def setCoolingOff(self):
+    def set_cooling_off(self):
         self.setSwitch('CCD_COOLER',['COOLER_OFF'])
 
-    def getFrameType(self):
+    def get_frame_type(self):
         return self.get_prop('CCD_FRAME_TYPE','switch')
 
-    def setFrameType(self, frame_type):
+    def set_frame_type(self, frame_type):
         """
         FRAME_LIGHT Take a light frame exposure
         FRAME_BIAS Take a bias frame exposure

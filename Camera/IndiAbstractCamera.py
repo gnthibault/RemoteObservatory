@@ -12,8 +12,8 @@ from Camera.AbstractCamera import AbstractCamera
 from Camera.IndiCamera import IndiCamera
 
 class IndiAbstractCamera(IndiCamera, AbstractCamera):
-    def __init__(self, serv_time, indiClient, configFileName=None, connectOnCreate=True,
-                 primary=False):
+    def __init__(self, serv_time, indiClient, configFileName=None,
+                 connectOnCreate=True, primary=False):
 
         # Parent initialization
         AbstractCamera.__init__(self, serv_time=serv_time, primary=primary)
@@ -46,5 +46,45 @@ class IndiAbstractCamera(IndiCamera, AbstractCamera):
                              args=(exposure_time.to(u.second).value,
                                    filename,
                                    exposure_event))
+        self.setFrameType('FRAME_LIGHT')
         w.start()
-        return exposure_event 
+        return exposure_event
+
+    def take_bias_exposure(self, exposure_time, filename, *args, **kwargs):
+        """
+        Should return an event
+        """
+        exposure_event = threading.Event()
+        w = threading.Thread(target=self.shootAsyncWithEvent,
+                             args=(exposure_time.to(u.second).value,
+                                   filename,
+                                   exposure_event))
+        self.setFrameType('FRAME_BIAS')
+        w.start()
+        return exposure_event
+
+    def take_dark_exposure(self, exposure_time, filename, *args, **kwargs):
+        """
+        Should return an event
+        """
+        exposure_event = threading.Event()
+        w = threading.Thread(target=self.shootAsyncWithEvent,
+                             args=(exposure_time.to(u.second).value,
+                                   filename,
+                                   exposure_event))
+        self.setFrameType('FRAME_DARK')
+        w.start()
+        return exposure_event
+
+    def take_flat_exposure(self, exposure_time, filename, *args, **kwargs):
+        """
+        Should return an event
+        """
+        exposure_event = threading.Event()
+        w = threading.Thread(target=self.shootAsyncWithEvent,
+                             args=(exposure_time.to(u.second).value,
+                                   filename,
+                                   exposure_event))
+        self.setFrameType('FRAME_FLAT')
+        w.start()
+        return exposure_event  
