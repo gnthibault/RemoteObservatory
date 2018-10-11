@@ -175,6 +175,10 @@ class IndiCamera(IndiDevice):
     def set_cooling_off(self):
         self.setSwitch('CCD_COOLER',['COOLER_OFF'])
 
+    def set_gain(self, value):
+
+    def get_gain(self, value):
+
     def get_frame_type(self):
         return self.get_prop('CCD_FRAME_TYPE','switch')
 
@@ -235,12 +239,6 @@ class IndiCamera(IndiDevice):
 
     def setExpTimeSec(self, exp_time_sec):
         self.exp_time_sec = self.sanitize_exp_time(exp_time_sec)
-
-    def getGain(self):
-        return self.gain
-
-    def setGain(self):
-        return self.gain
 
     def __str__(self):
         return 'INDI Camera "{0}"'.format(self.name)
