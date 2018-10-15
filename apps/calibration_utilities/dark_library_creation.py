@@ -216,6 +216,27 @@ class DarkLibraryBuilder():
                     'Mean thermal signal PSNR in dB', psnrfigname)
                 io.imsave(psnrfilename, thermal_psnr_map)
 
+    def self.compute_defect_map(self):
+        """ First try to do a (feature=time) affine regression, pixel wise
+            then on resulting a and b regression parameter map, perform a 
+            statistical test to find outliers
+            outliers on a are hot/warm and cold/cool pixels
+            b is supposed to be the bias
+        """
+        for temperature in self.temp_list:
+            sigfigname, sigfilename = self.gen_ther_sig_figname(temperature)
+            stdfigname, stdfilename = self.gen_therm_std_figname(temperature)
+            psnrfigname, psnrfilename = self.gen_therm_psnr_figname(temperature)
+            if not os.path.exists(figname):
+                map_shape = (len(self.exp_time_list), len(self.gain_list))
+                thermal_signal_map = np.zeros(map_shape)
+                thermal_std_map = np.zeros(map_shape)
+                thermal_psnr_map = np.zeros(map_shape)
+                for gi, gain in enumerate(self.gain_list):
+                    for ei, exp_time in enumerate(self.exp_time_list):
+
+
+
     def acquire_images(self):
         self.cam.setFrameType('FRAME_DARK')
         self.cam.prepareShoot()
@@ -254,10 +275,21 @@ class DarkLibraryBuilder():
         # exp-time series:
         # by doing a linear regression for each gain over the exp-time series,
         # we can find the theoretical offset map (b in ax+b)
-        # we can find the linearity map (a in ax+b)
+        # we can find the gain map (a in ax+b)
         # chi2 test on spatial offset data at 5% gives the 2D map of hot pixels
-        # chi2 test on spatial linearity data 5%, minus the hot pixels,
+        # chi2 test on spatial linearity data 5%, and excluding the hot pixels,
         # gives the 2D map of warm
+        # please notice that doing the regression directly on the master dark
+        # (denoised) value instead of the full point cloud should make the
+        # method slightly less robust to noise in case we have very few points
+        # but more robust to heteroskedasticity in case it arise 
+        # Indeed, when working with master dark, each datapoint has equal weight
+        # if working with the full point cloud, then high variance point might
+        # dictate the regression.
+        # Another approach would be to use weighted least square. That would
+        # definitely be the best solution, but computational burden would be
+        # quite high
+        self.compute_defect_map()
 
         # From there, we can compute the graph of hot pixels where x-axis is
         # gain, and y-axis is number of hot pixels, and numerous temperature
