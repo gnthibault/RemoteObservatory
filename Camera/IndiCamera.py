@@ -11,6 +11,9 @@ from helper.IndiClient import indiClientGlobalBlobEvent
 # Imaging and Fits stuff
 from astropy.io import fits
 
+# Astropy
+import astropy.units as u
+
 # Local stuff: Focuser
 from Focuser.IndiFocuser import IndiFocuser
 
@@ -161,10 +164,13 @@ class IndiCamera(IndiDevice):
     def get_temperature(self):
         #return self.getPropertyValueVector('CCD_TEMPERATURE',
         #                                   'number')['CCD_TEMPERATURE_VALUE']
-        return self.get_number('CCD_TEMPERATURE')['CCD_TEMPERATURE_VALUE']
+        return self.get_number(
+            'CCD_TEMPERATURE')['CCD_TEMPERATURE_VALUE']['value']
 
     def set_temperature(self, temperature):
         """ It may take time to lower the temperature of a ccd """
+        if isinstance(temperature, u.Quantity):
+            temperature = temperature.to(u.deg_C).value
         self.setNumber('CCD_TEMPERATURE',
                        { 'CCD_TEMPERATURE_VALUE' : temperature },
                        timeout=1200)
@@ -176,8 +182,12 @@ class IndiCamera(IndiDevice):
         self.setSwitch('CCD_COOLER',['COOLER_OFF'])
 
     def set_gain(self, value):
+        self.setNumber('CCD_GAIN', [value])
 
-    def get_gain(self, value):
+    def get_gain(self):
+        gain = self.get_number('CCD_GAIN')
+        print('returned Gain is {}'.format(gain))
+        return gain
 
     def get_frame_type(self):
         return self.get_prop('CCD_FRAME_TYPE','switch')
@@ -190,9 +200,6 @@ class IndiCamera(IndiDevice):
         FRAME_FLAT Take a flat field frame exposure
         """
         self.setSwitch('CCD_FRAME_TYPE', [frame_type])
-
-    def getCCDControls(self):
-        return self.getPropertyValueVector('CCD_CONTROLS', 'number')
 
     def setCCDControls(self, controls):
         self.setNumber('CCD_CONTROLS', controls)
