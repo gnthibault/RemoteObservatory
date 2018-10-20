@@ -1,5 +1,6 @@
 __pycache__
 
+*.cr2
 *.fits
 *.html
 *.png*
