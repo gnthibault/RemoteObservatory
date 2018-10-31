@@ -85,7 +85,7 @@ def analyze_ep(directory):
         ra_y=df[' RA Error (arcsec)']
         dec_y=df[' DE Error (arcsec)']
         #Add new entry
-        datas[filename]={'x':x, 'ra_y':ra_y, 'dec_y':dec_y}
+        datas[filename]={'x':x, 'y_ra':ra_y, 'y_dec':dec_y}
         #plot_data(x, ra_y, ra_ax, ra_ax2, ra_ax3, filename)
         #plot_data(x, dec_y, dec_ax, dec_ax2, dec_ax3, filename)
 
@@ -107,7 +107,7 @@ def analyze_ep(directory):
         x = data['x']
         timesteps.append(np.mean(np.roll(x,-1)[:-1]-x[:-1]))
         weights.append(len(x))
-    timestep = (np.array(timesteps)*np.array(weight)).sum()/sum(weights)
+    timestep = (np.array(timesteps)*np.array(weights)).sum()/sum(weights)
 
     # resample all signals exactly on the same regular grid
     for key, data in datas.items():
@@ -148,8 +148,8 @@ def analyze_ep(directory):
 
     # Set ticks/cosmetic stuff
     #ax.locator_params(which='x', tight=True, nbins=4)
-    for fig in [ra_fig, dec_fig]:
-        fig.tight_layout()
+    #for fig in [ra_fig, dec_fig]:
+        #fig.tight_layout()
     legend_fontsize=6
     for ax in [ra_ax, ra_ax2, ra_ax3, dec_ax, dec_ax2, dec_ax3]:
         ax.legend(fontsize=legend_fontsize)
