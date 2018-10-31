@@ -4,7 +4,9 @@ import numpy as np
 import os
 import pandas as pd
 import scipy.interpolate
-import  scipy.signal 
+import scipy.signal 
+import scipy.optimize
+
 
 # time stuff
 from dateutil.parser import parse
@@ -95,7 +97,10 @@ def analyze_ep(directory):
         for dataname in ['y_ra', 'y_dec']:
             y = data[dataname]
             pol = np.polyfit(x, y, deg=1)
-            y2 = y-np.sum([pol[pol.size-1-i]*(x**i) for i in range(pol.size)],
+            pol = scipy.optimize.least_squares(lambda m, x, y: m[1]+m[0]*x-y,
+                pol, loss='soft_l1',args=(x, y))['x']
+            #print('pol is {}'.format(pol))
+            y2 = y-np.sum([pol[len(pol)-1-i]*(x**i) for i in range(len(pol))],
                           axis=0)
             data[dataname+'_highpass'] = y2
 
@@ -131,9 +136,11 @@ def analyze_ep(directory):
     # Now, find the lag with respect to reference(fp number)
     for key, data in datas.items():
         y = data[dataname]
-        lag = np.argmax(scipy.signal.correlate(ref_y, y))
+        if key==longest_time_serie:
+            lag = 0
+        else:
+            lag = np.argmax(np.convolve(y[::-1],ref_y,mode='valid')) * timestep
         #Now that lag is given, we may pad with nans ?
-        #c_sig = np.roll(b, shift=int(np.ceil(lag)))
         data['lag'] = lag
         data['x_resampled_lag'] = data['x_resampled']+lag
 
