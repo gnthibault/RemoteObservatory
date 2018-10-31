@@ -98,7 +98,7 @@ def analyze_ep(directory):
             y = data[dataname]
             pol = np.polyfit(x, y, deg=1)
             pol = scipy.optimize.least_squares(lambda m, x, y: m[1]+m[0]*x-y,
-                pol, loss='soft_l1',args=(x, y))['x']
+                pol, loss='huber', args=(x, y))['x'] #loss='soft_l1'
             #print('pol is {}'.format(pol))
             y2 = y-np.sum([pol[len(pol)-1-i]*(x**i) for i in range(len(pol))],
                           axis=0)
