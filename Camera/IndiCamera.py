@@ -3,6 +3,9 @@ import io
 import json
 import logging
 
+# Numerical stuff
+import numpy as np
+
 # Indi stuff
 import PyIndi
 from helper.IndiDevice import IndiDevice
@@ -160,7 +163,10 @@ class IndiCamera(IndiDevice):
             ex: cam.setRoi({'X':256, 'Y':480, 'WIDTH':512, 'HEIGHT':640})
         """
         self.setNumber('CCD_FRAME', roi)
-   
+
+    def get_dynamic(self):
+        return get_number('CCD_INFO')['CCD_BITSPERPIXEL']['value']
+
     def get_temperature(self):
         #return self.getPropertyValueVector('CCD_TEMPERATURE',
         #                                   'number')['CCD_TEMPERATURE_VALUE']
@@ -171,9 +177,10 @@ class IndiCamera(IndiDevice):
         """ It may take time to lower the temperature of a ccd """
         if isinstance(temperature, u.Quantity):
             temperature = temperature.to(u.deg_C).value
-        self.setNumber('CCD_TEMPERATURE',
-                       { 'CCD_TEMPERATURE_VALUE' : temperature },
-                       timeout=1200)
+        if np.isfinite(temperature):
+            self.setNumber('CCD_TEMPERATURE',
+                           { 'CCD_TEMPERATURE_VALUE' : temperature },
+                           sync=True, timeout=1200)
 
     def set_cooling_on(self):
         self.setSwitch('CCD_COOLER',['COOLER_ON'])
@@ -182,7 +189,9 @@ class IndiCamera(IndiDevice):
         self.setSwitch('CCD_COOLER',['COOLER_OFF'])
 
     def set_gain(self, value):
-        self.setNumber('CCD_GAIN', [value])
+        pass
+        #TODO TN, Try to solve this
+        #self.setNumber('DETECTOR_GAIN', [{'Gain': value}])
 
     def get_gain(self):
         gain = self.get_number('CCD_GAIN')
@@ -220,26 +229,28 @@ class IndiCamera(IndiDevice):
         return 1
 
     def sanitize_exp_time(self, exp_time_sec):
-        if not isinstance(exp_time_sec, int):
+        if isinstance(exp_time_sec, u.Quantity):
+            exp_time_sec = exp_time_sec.to(u.s).value
+        if not isinstance(exp_time_sec, float):
             try:
-                int_exp_time_sec = int(exp_time_sec)
+                float_exp_time_sec = float(exp_time_sec)
             except Exception as e:
-                int_exp_time_sec = self.DEFAULT_EXP_TIME_SEC
+                float_exp_time_sec = self.DEFAULT_EXP_TIME_SEC
         elif exp_time_sec < 0:
-            int_exp_time_sec = abs(int_exp_time_sec)
+            float_exp_time_sec = abs(float_exp_time_sec)
         elif exp_time_sec == 0:
-            int_exp_time_sec = self.DEFAULT_EXP_TIME_SEC
+            float_exp_time_sec = self.DEFAULT_EXP_TIME_SEC
         elif exp_time_sec > self.MAXIMUM_EXP_TIME_SEC:
-            int_exp_time_sec = self.MAXIMUM_EXP_TIME_SEC
+            float_exp_time_sec = self.MAXIMUM_EXP_TIME_SEC
         else:
-            int_exp_time_sec = exp_time_sec
+            float_exp_time_sec = exp_time_sec
         # Show warning if needed
-        if int_exp_time_sec != exp_time_sec:
+        if float_exp_time_sec != exp_time_sec:
             self.logger.warning('Sanitizing exposition time: cannot accept'
                                 ' {}, using {} instead'.format(exp_time_sec
-                                , int_exp_time_sec))
+                                , float_exp_time_sec))
 
-        return int_exp_time_sec
+        return float_exp_time_sec
 
     def getExpTimeSec(self):
         return self.sanitize_exp_time(self.exp_time_sec)

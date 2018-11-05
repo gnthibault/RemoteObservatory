@@ -30,8 +30,6 @@ from utils import error
 from utils import Timeout
 
 class DarkLibraryBuilder():
-    TEMPERATURE_WAITING_DELAY_S = 5
-    MAX_TEMP_WAIT_S = 500 #8m20s
 
     def __init__(self, camera, exp_time_list, gain_list, temp_list=[np.NaN],
                  outdir=None, nb_image=100):
@@ -54,7 +52,7 @@ class DarkLibraryBuilder():
             print('Now settting camera to temperature {}'.format(temperature))
             self.cam.set_temperature(temperature)
 
-    def cleanup_device():
+    def cleanup_device(self):
         self.cam.set_cooling_off()
 
     def gen_report_temp_basedirname(self, temperature):
@@ -64,7 +62,7 @@ class DarkLibraryBuilder():
                          self.cam.name,
                          temperature.to(u.Celsius).value
                   ))
-    def gen_calib_basedirname(self, temperature, gain, exp_time, index):
+    def gen_calib_basedirname(self, temperature, gain, exp_time):
         return ("{}/calibration/{}/camera_{}/temperature_{}/gain_{}/exp_time_{}"
                "".format(self.outdir,
                          'dark',
@@ -75,50 +73,55 @@ class DarkLibraryBuilder():
                   ))
 
     def gen_calib_filename(self, temperature, gain, exp_time, index):
-        image_dir = self.gen_calib_basedirname(temperature, gain, exp_time,
-                                               index)
+        image_dir = self.gen_calib_basedirname(temperature, gain, exp_time)
         os.makedirs(image_dir, exist_ok=True)
         image_name = os.path.join(image_dir,str(index)+'.fits')
         return image_name
 
-    def gen_calib_mastername(temperature, gain, exp_time):
+    def gen_calib_mastername(self, temperature, gain, exp_time):
         image_dir = self.gen_calib_basedirname(temperature, gain, exp_time)
         os.makedirs(image_dir, exist_ok=True)
         master_name = os.path.join(image_dir, 'master.tif')
         return master_name
 
-    def gen_calib_masterstdname(temperature, gain, exp_time):
+    def gen_calib_masterstdname(self, temperature, gain, exp_time):
         image_dir = self.gen_calib_basedirname(temperature, gain, exp_time)
         os.makedirs(image_dir, exist_ok=True)
         master_std_name = os.path.join(image_dir, 'master_std.tif')
         return master_std_name
 
-    def gen_NLF_figname(temperature, gain, exp_time):
+    def gen_calib_masterpsnrname(self, temperature, gain, exp_time):
+        image_dir = self.gen_calib_basedirname(temperature, gain, exp_time)
+        os.makedirs(image_dir, exist_ok=True)
+        master_psnr_name = os.path.join(image_dir, 'master_psnr.tif')
+        return master_psnr_name
+
+    def gen_NLF_figname(self, temperature, gain, exp_time):
         base_dir = self.gen_calib_basedirname(temperature, gain, exp_time)
         os.makedirs(base_dir, exist_ok=True)
         conv_check = os.path.join(base_dir, 'NLF_conv_check.png')
         regression = os.path.join(base_dir, 'NLF_regression.png')
         return conv_check, regression
 
-    def gen_therm_sig_figname(temperature):
+    def gen_therm_sig_figname(self, temperature):
         image_dir = self.gen_report_temp_basedirname(temperature)
         os.makedirs(image_dir, exist_ok=True)
         basename = os.path.join(image_dir, 'thermal_signal_map')
         return basename+'.png', basename+'.tif'
 
-    def gen_therm_std_figname(temperature):
+    def gen_therm_std_figname(self, temperature):
         image_dir = self.gen_report_temp_basedirname(temperature)
         os.makedirs(image_dir, exist_ok=True)
         basename = os.path.join(image_dir, 'thermal_std_map')
         return basename+'.png', basename+'.tif'
 
-    def gen_therm_psnr_figname(temperature):
+    def gen_therm_psnr_figname(self, temperature):
         image_dir = self.gen_report_temp_basedirname(temperature)
         os.makedirs(image_dir, exist_ok=True)
         basename = os.path.join(image_dir, 'thermal_psnr_map')
         return basename+'.png', basename+'.tif'
 
-    def draw_NLF(mean, var, regfigname, nlffigname, order=1):
+    def draw_NLF(self, mean, var, regfigname, nlffigname, order=1):
         """
         we would like to perform a polynomial regression
         in order to be able to link the thermal signal (dark current)
@@ -220,7 +223,7 @@ class DarkLibraryBuilder():
         var = np.mean(var**2, axis=2, dtype=np.float32)
 
         # better safe than sorry
-        psnr = np.divide(self.camera.dynamic**2, var, out=np.zeros_like(std),
+        psnr = np.divide((2**self.cam.get_dynamic())**2, var, out=np.zeros_like(std),
                          where=var!=0)
         psnr = 10*np.log10(psnr, out=np.zeros_like(psnr), where=(psnr!=0))
         return mean, np.sqrt(var), psnr
@@ -356,6 +359,8 @@ class DarkLibraryBuilder():
                 self.cam.set_gain(gain)
                 for exp_time in self.exp_time_list:
                     for i in range(self.nb_image):
+                        print('Temperature {}, gain {}, exp time {}, Acquiring'
+                              ' image {}'.format(temperature,gain,exp_time,i))
                         fname = self.gen_calib_filename(temperature, gain,
                                                         exp_time,i)
                         if not os.path.exists(fname):
@@ -471,8 +476,9 @@ def main(cam_name='IndiCamera'):
     # launch stuff
     exp_time_list = np.linspace(1, 30, 8)*u.second
     gain_list = np.linspace(0,100,10, dtype=np.int32)
-    b = DarkLibraryBuilder(cam, exp_time_list, temp_list=[np.NaN],
-                           gain_list=[0,2,5,10,20,30,40,50,60,70,80,90,100],
+    temp_list = [np.NaN*u.Celsius]
+    b = DarkLibraryBuilder(cam, exp_time_list, temp_list=temp_list,
+                           gain_list=[0,2,5,10,20],
                            outdir='./dark_calibration',
                            nb_image=16)
     b.build()
