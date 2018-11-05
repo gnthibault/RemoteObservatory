@@ -10,6 +10,7 @@ This project either uses, or is directly inspired by:
 * Astropy: https://github.com/astropy/astropy
 * Astroplan: https://github.com/astropy/astroplan (Brett Morris + contributors)
 * Astrometry.net: https://github.com/dstndstn/astrometry.net (Dustin Lang + contributors)
+* spectroDB: https://github.com/tlemoult/spectroDb (Thierry Lemoult + contributors)
 
 ## Install
 sudo apt-add-repository ppa:mutlaqja/ppa

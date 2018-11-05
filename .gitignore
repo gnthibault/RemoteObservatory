@@ -9,7 +9,8 @@ __pycache__
 *.swo
 *.swp
 
-/conf_files
 /.idea
+/conf_files
+/dark_calibration
 /state_images
 

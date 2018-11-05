@@ -223,8 +223,8 @@ class DarkLibraryBuilder():
         var = np.mean(var**2, axis=2, dtype=np.float32)
 
         # better safe than sorry
-        psnr = np.divide((2**self.cam.get_dynamic())**2, var, out=np.zeros_like(std),
-                         where=var!=0)
+        psnr = np.divide((2**self.cam.get_dynamic())**2, var,
+                         out=np.zeros_like(var), where=var!=0)
         psnr = 10*np.log10(psnr, out=np.zeros_like(psnr), where=(psnr!=0))
         return mean, np.sqrt(var), psnr
 
