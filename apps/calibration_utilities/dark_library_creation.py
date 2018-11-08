@@ -14,6 +14,7 @@ import scipy.stats as scs
 
 # Viz stuff
 import matplotlib.pyplot as plt
+from matplotlib.ticker import FormatStrFormatter
 
 # Miscellaneous ios
 from skimage import io
@@ -56,11 +57,19 @@ class DarkLibraryBuilder():
         self.cam.set_cooling_off()
 
     def gen_report_temp_basedirname(self, temperature):
-        return ("{}/calibration/{}/camera_{}/temperature_{}}"
+        return ("{}/calibration/{}/camera_{}/temperature_{}"
                "".format(self.outdir,
                          'dark',
                          self.cam.name,
                          temperature.to(u.Celsius).value
+                  ))
+    def gen_report_gain_basedirname(self, temperature, gain):
+        return ("{}/calibration/{}/camera_{}/temperature_{}/gain_{}"
+               "".format(self.outdir,
+                         'dark',
+                         self.cam.name,
+                         temperature.to(u.Celsius).value,
+                         gain
                   ))
     def gen_calib_basedirname(self, temperature, gain, exp_time):
         return ("{}/calibration/{}/camera_{}/temperature_{}/gain_{}/exp_time_{}"
@@ -103,6 +112,19 @@ class DarkLibraryBuilder():
         regression = os.path.join(base_dir, 'NLF_regression.png')
         return conv_check, regression
 
+    def gen_defectmap_name(self, temperature, gain):
+        base_dir = self.gen_report_gain_basedirname(temperature, gain)
+        os.makedirs(base_dir, exist_ok=True)
+        defectmap_filename = os.path.join(base_dir, 'defectmap.tif')
+        regparpcfname = os.path.join(base_dir,
+            'regression_pointcloud.png')
+        regparama_a_name = os.path.join(base_dir, 'regparam_a.tif')
+        regparama_b_name = os.path.join(base_dir, 'regparam_b.tif')
+        return dict(defectmap_filename=defectmap_filename,
+                    regression_param_pointcloud_figname=regparpcfname,
+                    regparama_a_name=regparama_a_name,
+                    regparama_b_name=regparama_b_name)
+
     def gen_therm_sig_figname(self, temperature):
         image_dir = self.gen_report_temp_basedirname(temperature)
         os.makedirs(image_dir, exist_ok=True)
@@ -126,7 +148,7 @@ class DarkLibraryBuilder():
         we would like to perform a polynomial regression
         in order to be able to link the thermal signal (dark current)
         with the variance, to see if wether behaviour is heteroskedastic
-        or homoskedastic. This function is also called the nois level function
+        or homoskedastic. This function is also called the noise level function
         """
         A = np.concatenate([mean.reshape(-1,1)**i for i in range(order+1)],
                            axis=1)
@@ -141,11 +163,11 @@ class DarkLibraryBuilder():
         def prox_f(x):
             return np.maximum(x,0)
         #Run Chambolle-Pock algorithm
-        Anorm = 1.1*np.linalg.norm(A)**2 #take 10% margin
+        Anorm = 1.1*np.linalg.norm(A)#**2 #take 10% margin
         tau = 1./Anorm
         sigma = 1./Anorm
-        rho = 1.1 #rho > 1 allows to speed up through momentum effect
-        nbIter = 100000
+        rho = 1.05 #rho > 1 allows to speed up through momentum effect
+        nbIter = 1000
         xk = np.zeros_like(xhat)  #primal var at current iteration
         xk_m1 = np.zeros_like(xhat)
         xk_tilde = np.zeros_like(xk)  #primal var estimator
@@ -163,7 +185,8 @@ class DarkLibraryBuilder():
         # Plot convergence
         fig = plt.figure(figsize=(15,10))
         ax = fig.add_subplot(211)
-        ax.set_title("NLF LAD estimation: value of the composite objective along the iterations")
+        ax.set_title("NLF LAD estimation: value of the composite objective "
+                     "along the iterations")
         ax.set_xlabel("Iteration index")
         ax.set_ylabel("Primal objective value")
         ax.plot(range(nbIter),(primObj),label="Primal objective")
@@ -187,8 +210,9 @@ class DarkLibraryBuilder():
                                     replace=False)
         x = mean.reshape(-1)[sampling]
         y = var.reshape(-1)[sampling]
+        y_reg = np.sum([xk[i]*x**i for i in range(order+1)], axis=0)
         ax.scatter(x,y,label="Actual values", alpha=0.2, marker='x')
-        ax.plot(x, np.dot(A,xk)[sampling], label="LAD regression")
+        ax.plot(x, y_reg, label="LAD regression")
         ax.legend()
         if self.show_plot:
             plt.show()
@@ -223,7 +247,7 @@ class DarkLibraryBuilder():
         var = np.mean(var**2, axis=2, dtype=np.float32)
 
         # better safe than sorry
-        psnr = np.divide((2**self.cam.get_dynamic())**2, var,
+        psnr = np.divide(self.cam.dynamic**2, var,
                          out=np.zeros_like(var), where=var!=0)
         psnr = 10*np.log10(psnr, out=np.zeros_like(psnr), where=(psnr!=0))
         return mean, np.sqrt(var), psnr
@@ -240,7 +264,10 @@ class DarkLibraryBuilder():
         ax.set_yticks(np.arange(len(self.gain_list)))
         # ... and label them with the respective list entries
         ax.set_xticklabels(self.exp_time_list)
+        ax.xaxis.set_major_formatter(FormatStrFormatter('%.2f'))
         ax.set_yticklabels(self.gain_list)
+        ax.yaxis.set_major_formatter(FormatStrFormatter('%.2f'))
+
 
         # Rotate the tick labels and set their alignment.
         plt.setp(ax.get_xticklabels(), rotation=45, ha="right",
@@ -265,8 +292,9 @@ class DarkLibraryBuilder():
         for temperature in self.temp_list:
             for gi, gain in enumerate(self.gain_list):
                 for ei, exp_time in enumerate(self.exp_time_list):
-                    regfigname, nlffigname = gen_NLF_figname(temperature, gain,
-                                                             exp_time)
+                    regfigname, nlffigname = self.gen_NLF_figname(temperature,
+                                                                  gain,
+                                                                  exp_time)
                     if not (os.path.exists(regfigname) and os.path.exists(
                             nlffigname)):
                         # TODO might be worth excluding defect map
@@ -279,7 +307,6 @@ class DarkLibraryBuilder():
                         self.draw_NLF(mean, std**2, regfigname, nlffigname,
                                       order=1)
 
-
     def compute_thermal_signal_map(self):
         """ 2D map of thermal signal: x-axis is time, y-axis is gain
             and z axis is mean value expressed in % of full dynamic
@@ -290,7 +317,7 @@ class DarkLibraryBuilder():
             psnrfigname, psnrfilename = self.gen_therm_psnr_figname(temperature)
             if not (os.path.exists(sigfigname) and os.path.exists(stdfigname)
                 and os.path.exists(psnrfigname)):
-                map_shape = (len(self.exp_time_list), len(self.gain_list))
+                map_shape = (len(self.gain_list), len(self.exp_time_list))
                 thermal_signal_map = np.zeros(map_shape)
                 thermal_std_map = np.zeros(map_shape)
                 thermal_psnr_map = np.zeros(map_shape)
@@ -334,21 +361,20 @@ class DarkLibraryBuilder():
             outliers on a are hot/warm and cold/cool pixels
             b is supposed to be the bias
         """
-        #defectmap_figname = self.gen_defectmap_figname()
         for temperature in self.temp_list:
-            afigname, afilename = self.gen_a_figname(temperature)
-            bfigname, bfilename = self.gen_b_figname(temperature)
-            defectmapfilename = self.gen_defectmap_filename(temperature)
-            if not os.path.exists(figname):
-                map_shape = (len(self.exp_time_list), len(self.gain_list))
-                thermal_signal_map = np.zeros(map_shape)
-                thermal_std_map = np.zeros(map_shape)
-                thermal_psnr_map = np.zeros(map_shape)
-                for gi, gain in enumerate(self.gain_list):
-                    for ei, exp_time in enumerate(self.exp_time_list):
-                        pass
-
-
+            for gi, gain in enumerate(self.gain_list):
+                features = None
+                names = self.gen_defectmap_name(temperature, gain)
+                if not all(map(lambda x:os.path.exists(x), names.values())):
+                     for ei, exp_time in enumerate(self.exp_time_list):
+                        master_name = self.gen_calib_mastername(
+                            temperature, gain, exp_time)
+                        im = io.imread(master_name)
+                        if features is None:
+                            features = im
+                        else:
+                            features = np.dstack((features, im))
+                     # Now perform the regression
 
     def acquire_images(self):
         self.cam.set_frame_type('FRAME_DARK')
@@ -447,7 +473,7 @@ class DarkLibraryBuilder():
                         #Now perform statistics (ie denoise, using
                         # mean+sigma clipping)
                         mean, std, psnr = self.compute_master_dark_stat(master)
-                        io.imsave(master_name, master)
+                        io.imsave(master_name, mean)
                         io.imsave(master_std_name, std)
                         io.imsave(master_psnr_name, psnr)
 

@@ -78,6 +78,10 @@ class IndiCamera(IndiDevice):
         # Finished configuring
         self.logger.debug('Configured Indi Camera successfully')
 
+    @property
+    def dynamic(self):
+        return 2**self.get_dynamic()
+
     def onEmergency(self):
         self.logger.debug('on emergency routine started...')
         self.abortShoot(sync=False)
