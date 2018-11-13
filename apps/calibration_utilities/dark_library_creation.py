@@ -118,12 +118,12 @@ class DarkLibraryBuilder():
         defectmap_filename = os.path.join(base_dir, 'defectmap.tif')
         regparpcfname = os.path.join(base_dir,
             'regression_pointcloud.png')
-        regparama_a_name = os.path.join(base_dir, 'regparam_a.tif')
-        regparama_b_name = os.path.join(base_dir, 'regparam_b.tif')
+        regparam_a_name = os.path.join(base_dir, 'regparam_a.tif')
+        regparam_b_name = os.path.join(base_dir, 'regparam_b.tif')
         return dict(defectmap_filename=defectmap_filename,
                     regression_param_pointcloud_figname=regparpcfname,
-                    regparama_a_name=regparama_a_name,
-                    regparama_b_name=regparama_b_name)
+                    regparam_a_name=regparam_a_name,
+                    regparam_b_name=regparam_b_name)
 
     def gen_therm_sig_figname(self, temperature):
         image_dir = self.gen_report_temp_basedirname(temperature)
@@ -252,7 +252,6 @@ class DarkLibraryBuilder():
         psnr = 10*np.log10(psnr, out=np.zeros_like(psnr), where=(psnr!=0))
         return mean, np.sqrt(var), psnr
 
-
     def draw_gain_exp_heatmap(self, temperature, info_map, map_title, figname):
         """ x-axis is time, y-axis is gain
         """
@@ -344,14 +343,14 @@ class DarkLibraryBuilder():
                 # notice that we save ADU values but show in % of dynamic
                 self.draw_gain_exp_heatmap(temperature,
                     thermal_signal_map/self.cam.dynamic,
-                    'Mean thermal signal in % of dynamic', sigfigname)
+                    'Mean thermal signal \n in % of dynamic', sigfigname)
                 io.imsave(sigfilename, thermal_signal_map)
                 self.draw_gain_exp_heatmap(temperature,
                     thermal_std_map/self.cam.dynamic,
-                    'Mean thermal noise std in % of dynamic', stdfigname)
+                    'Mean thermal noise std \n in % of dynamic', stdfigname)
                 io.imsave(stdfilename, thermal_std_map)
                 self.draw_gain_exp_heatmap(temperature, thermal_psnr_map,
-                    'Mean thermal signal PSNR in dB', psnrfigname)
+                    'Mean thermal signal \n PSNR in dB', psnrfigname)
                 io.imsave(psnrfilename, thermal_psnr_map)
 
     def compute_defect_map(self):
@@ -366,7 +365,7 @@ class DarkLibraryBuilder():
                 features = None
                 names = self.gen_defectmap_name(temperature, gain)
                 if not all(map(lambda x:os.path.exists(x), names.values())):
-                     for ei, exp_time in enumerate(self.exp_time_list):
+                    for ei, exp_time in enumerate(self.exp_time_list):
                         master_name = self.gen_calib_mastername(
                             temperature, gain, exp_time)
                         im = io.imread(master_name)
@@ -374,7 +373,43 @@ class DarkLibraryBuilder():
                             features = im
                         else:
                             features = np.dstack((features, im))
-                     # Now perform the regression
+                    # Now perform the regression a*exp_time+b for each pixel
+                    amap = np.zeros(features.shape[:2])
+                    bmap = np.zeros(features.shape[:2])
+                    for i in range(features.shape[0]):
+                        for j in range(features.shape[1]):
+                            x = features[i,j]
+                            M = np.concatenate((x.reshape(-1,1),
+                                np.ones_like(x).reshape(-1,1)), axis=1)
+                            # use Moore-penrose pseudo inverse to solve ls
+                            amap[i,j],bmap[i,j] = np.dot(np.linalg.pinv(M),x)
+                    # Now write output
+                    io.imsave(names['regparam_a_name'],amap)
+                    io.imsave(names['regparam_b_name'],bmap)
+                    # Now plot regression param scattering
+                    fig = plt.figure(figsize=(15,15))
+                    ax = fig.add_subplot(111)
+                    ax.set_title('Affine regression parameters: offset and '
+                                 'gain at hardware gain {} and temperature'
+                                 ' '.format(gain, temperature))
+                    ax.set_xlabel("Offset")
+                    ax.set_ylabel("Gain")
+                    #sampling maximum k points
+                    sampling = np.random.choice(amap.size,
+                        min(self.plot_sampling, amap.size), replace=False)
+                    x = bmap.reshape(-1)[sampling]
+                    y = amap.reshape(-1)[sampling]
+                    ax.scatter(x,y,label="Regression parameters", alpha=0.2,
+                               marker='x')
+                    ax.legend()
+                    if self.show_plot:
+                        plt.show()
+                    fig.tight_layout()
+                    fig.savefig(names['regression_param_pointcloud_figname'],
+                                dpi=fig.dpi)
+
+                    # perform statistical test
+                    #io.imsave(names['defectmap_filename'],)
 
     def acquire_images(self):
         self.cam.set_frame_type('FRAME_DARK')
@@ -433,7 +468,7 @@ class DarkLibraryBuilder():
         # Another approach would be to use weighted least square. That would
         # definitely be the best solution, but computational burden would be
         # quite high
-        #self.compute_defect_map()
+        self.compute_defect_map()
 
         # From there, we can compute the graph of hot pixels where x-axis is
         # gain, and y-axis is number of hot pixels, and numerous temperature
