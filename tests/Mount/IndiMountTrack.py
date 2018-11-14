@@ -41,15 +41,3 @@ if __name__ == '__main__':
     # Check coordinates
     c = mount.get_current_coordinates()
     print('Coordinates are now: {}'.format(c))
-
-    # Sync
-    c = SkyCoord(ra=11.53*u.hour, dec=79*u.degree, frame='icrs')
-    mount.sync_to_coord(c)
-
-    #Do a slew and stop
-    c = SkyCoord(ra=10*u.hour, dec=60*u.degree, frame='icrs')
-    mount.slew_to_coord_and_stop(c)
-
-    # Park before standby
-    mount.park()
-

@@ -256,16 +256,17 @@ class DarkLibraryBuilder():
         """ x-axis is time, y-axis is gain
         """
         fig, ax = plt.subplots()
-        im = ax.imshow(info_map)
+        heatmap = ax.pcolor(info_map, cmap=plt.cm.autumn)
+        plt.colorbar(heatmap, format=FormatStrFormatter('%.2e'))
 
         # We want to show all ticks...
         ax.set_xticks(np.arange(len(self.exp_time_list)))
         ax.set_yticks(np.arange(len(self.gain_list)))
         # ... and label them with the respective list entries
         ax.set_xticklabels(self.exp_time_list)
-        ax.xaxis.set_major_formatter(FormatStrFormatter('%.2f'))
+        ax.xaxis.set_major_formatter(FormatStrFormatter('%.2e'))
         ax.set_yticklabels(self.gain_list)
-        ax.yaxis.set_major_formatter(FormatStrFormatter('%.2f'))
+        ax.yaxis.set_major_formatter(FormatStrFormatter('%.2e'))
 
 
         # Rotate the tick labels and set their alignment.

@@ -133,6 +133,13 @@ class IndiMount(IndiDevice):
         self.setSwitch('TELESCOPE_PARK', ['UNPARK'])
 
     def set_slew_rate(self, slew_rate='SLEW_FIND'):
+        """
+        Should be one of (by order of speed):
+            -SLEW_GUIDE
+            -SLEW_CENTERING
+            -SLEW_FIND
+            -SLEW_MAX
+        """
         self.logger.debug('Setting slewing rate: {}'.format(
                           slew_rate))
         self.setSwitch('TELESCOPE_SLEW_RATE', [slew_rate])
