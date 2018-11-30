@@ -4,6 +4,7 @@
 # One can draw a graph with e- / s on y axis, and temperature on x axis
 
 # Basic stuff
+import argparse
 import collections
 import os
 from time import sleep
@@ -24,6 +25,8 @@ from astropy.io import fits
 import astropy.units as u
 
 # Local stuff
+#TODO temporary stuff, use an auto load
+from Camera.IndiASI120MCCamera import IndiASI120MCCamera
 from Camera.IndiCamera import IndiCamera
 from helper.IndiClient import IndiClient
 from Service.NTPTimeService import NTPTimeService
@@ -520,7 +523,7 @@ class DarkLibraryBuilder():
         print('Starting dark calibration image analysis')
         self.compute_statistics()
 
-def main(cam_name='IndiCamera'):
+def main(config_file='./jsonModel/IndiCCDSimulatorCamera.json'):
     # Instanciate indiclient, in order to connect to camera
     indiCli = IndiClient()
     indiCli.connect()
@@ -529,22 +532,35 @@ def main(cam_name='IndiCamera'):
     serv_time = NTPTimeService()    
 
     # test indi virtual camera class
-    cam = IndiCamera(indiClient=indiCli,
-        configFileName='./jsonModel/IndiCCDSimulatorCamera.json',
+    # TODO TN temporary
+    #cam = IndiCamera(indiClient=indiCli,
+    cam = IndiASI120MCCamera(indiClient=indiCli,
+        config_filename=config_file,
         connectOnCreate=False)
-#        configFileName='./jsonModel/DatysonT7MC.json', connectOnCreate=True)
     cam.connect()
+
+    # just some tests
+    #print('Dynamic is {}'.format(cam.dynamic))
+    #g=10
+    #print('Now setting gain to {}'.format(g))
+    #cam.set_gain(g)
+    #print('Done')
+    #print('Gain is now {}'.format(cam.get_gain()))
 
     # launch stuff
     exp_time_list = np.linspace(1, 30, 8)*u.second
-    gain_list = np.linspace(0,100,10, dtype=np.int32)
+    gain_list = np.linspace(0,100,10, dtype=np.int32).tolist()
     temp_list = [np.NaN*u.Celsius]
     b = DarkLibraryBuilder(cam, exp_time_list, temp_list=temp_list,
-                           gain_list=[0,2,5,10,20],
+                           gain_list=gain_list,
                            outdir='./dark_calibration',
-                           nb_image=16)
+                           nb_image=25)
     b.build()
 
 
 if __name__ == '__main__':
-    main()
+  parser = argparse.ArgumentParser()
+  parser.add_argument("--config_file", help="Path to the config file of the camera",
+                      default='./conf_files/IndiDatysonT7MC.json')
+  args = parser.parse_args()
+  main(args.config_file)
