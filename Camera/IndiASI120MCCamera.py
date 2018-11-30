@@ -24,11 +24,25 @@ class IndiASI120MCCamera(IndiCamera):
 
         # Finished configuring
         self.logger.debug('Configured Indi ASI120MC camera successfully')
+        
+        # Always use maximum dynamic
+        dyn = self.get_dynamic()
+        max_dyn = self.get_maximum_dynamic()
+        if dyn != max_dyn:
+            self.logger.warn('Camera {} using format {} with dynamic {} although it is capable '
+                             'of {}. Trying to set maximum bit depth'.format(self.name,
+                                 self.get_current_format(), dyn, max_dyn))
+            self.setSwitch('CCD_VIDEO_FORMAT', ['ASI_IMG_RAW16'])
+            self.logger.info('Now camera {} has format {} allowing for dynamic {}'.format(
+                self.name, self.get_current_format(), self.get_dynamic()))
 
     '''
       Indi CCD related stuff
     '''
-    def get_dynamic(self):
+    def get_current_format(self):
+        return [key for key, val in self.get_switch('CCD_VIDEO_FORMAT').items() if val['value']]
+
+    def get_maximum_dynamic(self):
         return self.get_number('ADC_DEPTH')['BITS']['value']
 
     def set_gain(self, value):
@@ -38,3 +52,8 @@ class IndiASI120MCCamera(IndiCamera):
     def get_gain(self):
         return self.get_number('CCD_CONTROLS')['Gain']['value']
 
+    def get_temperature(self):
+        return np.nan
+
+    def set_temperature(self, temperature):
+        pass

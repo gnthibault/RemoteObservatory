@@ -171,6 +171,9 @@ class IndiCamera(IndiDevice):
     def get_dynamic(self):
         return self.get_number('CCD_INFO')['CCD_BITSPERPIXEL']['value']
 
+    def get_maximum_dynamic(self):
+        return get_dynamic()
+
     def get_temperature(self):
         return self.get_number(
             'CCD_TEMPERATURE')['CCD_TEMPERATURE_VALUE']['value']
