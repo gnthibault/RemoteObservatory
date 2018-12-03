@@ -171,9 +171,10 @@ class IndiCamera(IndiDevice):
     def get_dynamic(self):
         return self.get_number('CCD_INFO')['CCD_BITSPERPIXEL']['value']
 
+    def get_maximum_dynamic(self):
+        return get_dynamic()
+
     def get_temperature(self):
-        #return self.getPropertyValueVector('CCD_TEMPERATURE',
-        #                                   'number')['CCD_TEMPERATURE_VALUE']
         return self.get_number(
             'CCD_TEMPERATURE')['CCD_TEMPERATURE_VALUE']['value']
 
@@ -213,9 +214,6 @@ class IndiCamera(IndiDevice):
         FRAME_FLAT Take a flat field frame exposure
         """
         self.setSwitch('CCD_FRAME_TYPE', [frame_type])
-
-    def setCCDControls(self, controls):
-        self.setNumber('CCD_CONTROLS', controls)
 
     def setUploadTo(self, uploadTo = 'local'):
         uploadTo = IndiCamera.UploadModeDict[upload_to]
