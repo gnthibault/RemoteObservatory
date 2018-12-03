@@ -188,7 +188,7 @@ class AbstractCamera(Base):
         return dark_event
 
     def get_dark_calibration_directory(self, temperature, exp_time,
-                                calibration_ref=None, filename=None)
+                                calibration_ref=None, filename=None):
         calibration_name='dark'
         if headers is None:
             headers = {}
@@ -242,9 +242,9 @@ class AbstractCamera(Base):
             'is_primary': self.is_primary,
             'sequence_id': sequence_id,
             'start_time': start_time,
-            'exp_time' = exp_time.to(u.second).value,
-            'temperature_target_degC' = temperature.to(u.Celsius).value,
-            'temperature_actual_degC' = self.get_temperature().to(u.Celsius).value
+            'exp_time' : exp_time.to(u.second).value,
+            'temperature_target_degC' : temperature.to(u.Celsius).value,
+            'temperature_actual_degC' : self.get_temperature().to(u.Celsius).value
         }
         metadata.update(headers)
         return file_path, metadata
