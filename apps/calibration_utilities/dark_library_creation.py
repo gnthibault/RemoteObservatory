@@ -401,6 +401,11 @@ class DarkLibraryBuilder():
                     y = amap.reshape(-1)[sampling]
                     ax.scatter(x,y,label="Regression parameters", alpha=0.2,
                                marker='x')
+                    # Set limits for the plot not to be disturbed by outliers
+                    xmean, xstd = x.mean(), x.std()
+                    ax.set_xlim(left=xmean-5*xstd, right=xmean+5*xstd)
+                    ymean, ystd = y.mean(), y.std()
+                    ax.set_ylim(left=ymean-5*ystd, right=ymean+5*ystd)
                     ax.legend()
                     if self.show_plot:
                         plt.show()
