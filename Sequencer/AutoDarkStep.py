@@ -47,7 +47,7 @@ class AutoDarkSequence:
 
     def run(self):
         self.logger.debug('Dark Sequence is going to run')
-        self.camera.setFrameType('FRAME_DARK')
+        self.camera.set_frame_type('FRAME_DARK')
         for exposure in self.autoDarkCalculator.exposures:
             if self.count is None:
                 count = self.autoDarkCalculator.getRelevantCount(exposure)
@@ -60,7 +60,7 @@ class AutoDarkSequence:
             seq.callbacks = self.callbacks
             seq.run()
         self.autoDarkCalculator.reset() 
-        self.camera.setFrameType('FRAME_LIGHT')
+        self.camera.set_frame_type('FRAME_LIGHT')
 
     def __str__(self):
         return 'AutoDarkSequence (exposures: {})'.format(

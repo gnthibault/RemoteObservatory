@@ -45,7 +45,7 @@ class AutoFlatSequence:
         self.logger.debug('AutoFlatSequence: Flat Sequence is going to run '
                           'for the following set of filters {}'.format(
                           self.autoFlatCalculator.filterNames))
-        self.camera.setFrameType('FRAME_FLAT')
+        self.camera.set_frame_type('FRAME_FLAT')
         for filterName in self.autoFlatCalculator.filterNames:
             self.logger.debug('AutoFlatSequence: processing filter {}'.format(
                               filterName))
@@ -60,7 +60,7 @@ class AutoFlatSequence:
             seq.callbacks = self.callbacks
             seq.run()
         self.autoFlatCalculator.reset() 
-        self.camera.setFrameType('FRAME_LIGHT')
+        self.camera.set_frame_type('FRAME_LIGHT')
 
     def __str__(self):
         return 'AutoFlatSequence (filterNames: {})'.format(
