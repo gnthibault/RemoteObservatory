@@ -427,7 +427,7 @@ class DarkLibraryBuilder():
                     xmean, xstd = x.mean(), x.std()
                     ax.set_xlim(left=xmean-5*xstd, right=xmean+5*xstd)
                     ymean, ystd = y.mean(), y.std()
-                    ax.set_ylim(left=ymean-5*ystd, right=ymean+5*ystd)
+                    ax.set_ylim(bottom=ymean-5*ystd, top=ymean+5*ystd)
                     ax.legend()
                     if self.show_plot:
                         plt.show()
