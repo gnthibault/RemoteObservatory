@@ -25,13 +25,9 @@ from astropy.io import fits
 import astropy.units as u
 
 # Local stuff
-#TODO temporary stuff, use an auto load
-from Camera.IndiASI120MCCamera import IndiASI120MCCamera
-from Camera.IndiCamera import IndiCamera
 from helper.IndiClient import IndiClient
 from Service.NTPTimeService import NTPTimeService
-from utils import error
-from utils import Timeout
+from utils import load_module
 
 class DarkLibraryBuilder():
 
@@ -523,7 +519,8 @@ class DarkLibraryBuilder():
         print('Starting dark calibration image analysis')
         self.compute_statistics()
 
-def main(config_file='./jsonModel/IndiCCDSimulatorCamera.json'):
+def main(config_file='./jsonModel/IndiCCDSimulatorCamera.json',
+         cam_class='IndiCamera'):
     # Instanciate indiclient, in order to connect to camera
     indiCli = IndiClient()
     indiCli.connect()
@@ -531,12 +528,18 @@ def main(config_file='./jsonModel/IndiCCDSimulatorCamera.json'):
     # Instanciate a time server as well
     serv_time = NTPTimeService()    
 
-    # test indi virtual camera class
-    # TODO TN temporary
-    #cam = IndiCamera(indiClient=indiCli,
-    cam = IndiASI120MCCamera(indiClient=indiCli,
-        config_filename=config_file,
-        connectOnCreate=False)
+    #cam = IndiASI120MCCamera(indiClient=indiCli,
+    try:
+        cam_module = load_module('Camera.{}'.format(cam_class))
+        cam_ctor = getattr(cam_module, cam_class)
+        print('cam_ctor is {}'.format(cam_ctor))
+        cam = cam_ctor(indiClient=indiCli,
+            config_filename=config_file,
+            connectOnCreate=False)
+    except RuntimeError as e:
+        raise RuntimeError('Please provide a valid cam_class. current one is '
+                           '{} and error is {}'.format(cam_class, e))
+
     cam.connect()
 
     # just some tests
@@ -560,7 +563,10 @@ def main(config_file='./jsonModel/IndiCCDSimulatorCamera.json'):
 
 if __name__ == '__main__':
   parser = argparse.ArgumentParser()
-  parser.add_argument("--config_file", help="Path to the config file of the camera",
-                      default='./conf_files/IndiDatysonT7MC.json')
+  parser.add_argument('--config_file', help='Path to the config file of the '
+                      'camera', default='./conf_files/IndiDatysonT7MC.json')
+  parser.add_argument('--cam_class', help='Name of the class of the camera '
+                      'can be IndiCamera or IndiASI120MCCamera',
+                      default='IndiCamera')
   args = parser.parse_args()
-  main(args.config_file)
+  main(args.config_file, args.cam_class)

@@ -30,27 +30,27 @@ class IndiCamera(IndiDevice):
     DEFAULT_EXP_TIME_SEC = 5
     MAXIMUM_EXP_TIME_SEC = 3601
 
-    def __init__(self, indiClient, logger=None, configFileName=None,
+    def __init__(self, indiClient, logger=None, config_filename=None,
                  connectOnCreate=True):
         logger = logger or logging.getLogger(__name__)
         
-        if configFileName is None:
-            self.configFileName = './conf_files/IndiCCDSimulatorCamera.json'
+        if config_filename is None:
+            self.config_filename = './conf_files/IndiCCDSimulatorCamera.json'
         else:
-            self.configFileName = configFileName
+            self.config_filename = config_filename
 
         # Now configuring class
         logger.debug('Configuring Indi Camera with file {}'.format(
-                      self.configFileName))
+                      self.config_filename))
 
         self.focuser = None
         # Get key from json
-        with open(self.configFileName) as jsonFile:
+        with open(self.config_filename) as jsonFile:
             data = json.load(jsonFile)
             deviceName = data['cameraName']
             if 'focuserCfg' in data:
                 self.focuser = IndiFocuser(indiClient=indiClient,
-                                           configFileName=data['focuserCfg'],
+                                           config_filename=data['focuserCfg'],
                                            connectOnCreate=connectOnCreate)
 
         logger.debug('Indi camera, camera name is: {}'.format(deviceName))

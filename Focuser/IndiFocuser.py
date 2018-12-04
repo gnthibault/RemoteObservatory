@@ -12,20 +12,20 @@ class IndiFocuser(IndiDevice):
     """
 
     """
-    def __init__(self, indiClient, logger=None, configFileName=None,
+    def __init__(self, indiClient, logger=None, config_filename=None,
                  connectOnCreate=True):
         logger = logger or logging.getLogger(__name__)
         
-        if configFileName is None:
-          self.configFileName = './conf_files/IndiSimulatorFocuser.json'
+        if config_filename is None:
+          self.config_filename = './conf_files/IndiSimulatorFocuser.json'
         else:
-          self.configFileName = configFileName
+          self.config_filename = config_filename
 
         # Now configuring class
         logger.debug('Indi Focuser, configuring with file {}'.format(
-          self.configFileName))
+          self.config_filename))
         # Get config from json
-        with open(self.configFileName) as jsonFile:
+        with open(self.config_filename) as jsonFile:
           data = json.load(jsonFile)
           deviceName = data['FocuserName']
 
