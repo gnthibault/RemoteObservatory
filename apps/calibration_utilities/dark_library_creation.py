@@ -16,6 +16,7 @@ import scipy.stats as scs
 # Viz stuff
 import matplotlib.pyplot as plt
 from matplotlib.ticker import FormatStrFormatter
+from matplotlib.colors import LogNorm
 
 # Miscellaneous ios
 from skimage import io
@@ -43,7 +44,7 @@ class DarkLibraryBuilder():
         self.outdir = outdir or './dark_calibration' #TODO TN replace
         self.nb_image = nb_image
         self.show_plot = False
-        self.plot_sampling = 4096
+        self.plot_sampling = 65536 #8192
 
     def set_temperature(self, temperature):
         if temperature is np.NaN :
@@ -152,9 +153,22 @@ class DarkLibraryBuilder():
         A = np.concatenate([mean.reshape(-1,1)**i for i in range(order+1)],
                            axis=1)
         b = var.reshape(-1)
+        xk = np.linalg.lstsq(A, b)[0]
+        self.plot_NLF(A, b, xk, nlffigname, order)
+
+    def draw_NLF2(self, mean, var, regfigname, nlffigname, order=1):
+        """
+        we would like to perform a polynomial regression
+        in order to be able to link the thermal signal (dark current)
+        with the variance, to see if wether behaviour is heteroskedastic
+        or homoskedastic. This function is also called the noise level function
+        """
+        A = np.concatenate([mean.reshape(-1,1)**i for i in range(order+1)],
+                           axis=1)
+        b = var.reshape(-1)
  
         # Optimization stuff, see https://github.com/gnthibault/Optimisation-Python
-        xhat=np.random.rand(order+1)
+        xhat=np.ones(order+1) #np.random.rand(order+1)
         # define the proximity operator that we need:
         def prox_g_conj(u, gamma):
             tmp = u-gamma*b
@@ -162,11 +176,11 @@ class DarkLibraryBuilder():
         def prox_f(x):
             return np.maximum(x,0)
         #Run Chambolle-Pock algorithm
-        Anorm = 1.1*np.linalg.norm(A)#**2 #take 10% margin
+        Anorm = 0.8*np.linalg.norm(A)#**2 #take 1% margin
         tau = 1./Anorm
         sigma = 1./Anorm
         rho = 1.05 #rho > 1 allows to speed up through momentum effect
-        nbIter = 1000
+        nbIter = 10000
         xk = np.zeros_like(xhat)  #primal var at current iteration
         xk_m1 = np.zeros_like(xhat)
         xk_tilde = np.zeros_like(xk)  #primal var estimator
@@ -196,7 +210,9 @@ class DarkLibraryBuilder():
             plt.show()
         fig.tight_layout()
         fig.savefig(regfigname, dpi=fig.dpi)
+        self.plot_NLF(A, b, xk, nlffigname, order)
 
+    def plot_NLF(self, A, b, xk, nlffigname, order):
         # Now plot regression
         fig = plt.figure(figsize=(15,15))
         ax = fig.add_subplot(111)
@@ -207,8 +223,11 @@ class DarkLibraryBuilder():
         #sampling maximum k points
         sampling = np.random.choice(b.size, min(self.plot_sampling, b.size),
                                     replace=False)
-        x = mean.reshape(-1)[sampling]
-        y = var.reshape(-1)[sampling]
+        x = A[:,1][sampling]
+        y = b[sampling]
+        idxsorted = np.argsort(x)
+        x = x[idxsorted]
+        y = y[idxsorted]
         y_reg = np.sum([xk[i]*x**i for i in range(order+1)], axis=0)
         ax.scatter(x,y,label="Actual values", alpha=0.2, marker='x')
         ax.plot(x, y_reg, label="LAD regression")
@@ -255,18 +274,20 @@ class DarkLibraryBuilder():
         """ x-axis is time, y-axis is gain
         """
         fig, ax = plt.subplots()
-        heatmap = ax.pcolor(info_map, cmap=plt.cm.autumn)
+        heatmap = ax.pcolor(info_map,
+                            norm=LogNorm(vmin=info_map.min(), vmax=info_map.max()),
+                            cmap=plt.cm.autumn)
         plt.colorbar(heatmap, format=FormatStrFormatter('%.2e'))
 
         # We want to show all ticks...
         ax.set_xticks(np.arange(len(self.exp_time_list)))
         ax.set_yticks(np.arange(len(self.gain_list)))
         # ... and label them with the respective list entries
-        ax.set_xticklabels(self.exp_time_list)
-        ax.xaxis.set_major_formatter(FormatStrFormatter('%.2e'))
-        ax.set_yticklabels(self.gain_list)
-        ax.yaxis.set_major_formatter(FormatStrFormatter('%.2e'))
-
+        formatter = lambda x: "{:.2E}".format(x)
+        ax.set_xticklabels(map(formatter, self.exp_time_list))
+        #ax.xaxis.set_major_formatter(FormatStrFormatter('%.2e'))
+        ax.set_yticklabels(map(formatter, self.gain_list))
+        #ax.yaxis.set_major_formatter(FormatStrFormatter('%.2e'))
 
         # Rotate the tick labels and set their alignment.
         plt.setp(ax.get_xticklabels(), rotation=45, ha="right",
@@ -304,7 +325,7 @@ class DarkLibraryBuilder():
                             temperature, gain, exp_time)
                         std = io.imread(master_std_name)
                         self.draw_NLF(mean, std**2, regfigname, nlffigname,
-                                      order=1)
+                                      order=2)
 
     def compute_thermal_signal_map(self):
         """ 2D map of thermal signal: x-axis is time, y-axis is gain
@@ -362,27 +383,28 @@ class DarkLibraryBuilder():
         """
         for temperature in self.temp_list:
             for gi, gain in enumerate(self.gain_list):
-                features = None
+                dark_signal = None
                 names = self.gen_defectmap_name(temperature, gain)
                 if not all(map(lambda x:os.path.exists(x), names.values())):
                     for ei, exp_time in enumerate(self.exp_time_list):
                         master_name = self.gen_calib_mastername(
                             temperature, gain, exp_time)
                         im = io.imread(master_name)
-                        if features is None:
-                            features = im
+                        if dark_signal is None:
+                            dark_signal = im
                         else:
-                            features = np.dstack((features, im))
+                            dark_signal = np.dstack((dark_signal, im))
                     # Now perform the regression a*exp_time+b for each pixel
-                    amap = np.zeros(features.shape[:2])
-                    bmap = np.zeros(features.shape[:2])
-                    for i in range(features.shape[0]):
-                        for j in range(features.shape[1]):
-                            x = features[i,j]
-                            M = np.concatenate((x.reshape(-1,1),
-                                np.ones_like(x).reshape(-1,1)), axis=1)
+                    amap = np.zeros(dark_signal.shape[:2])
+                    bmap = np.zeros(dark_signal.shape[:2])
+                    for i in range(dark_signal.shape[0]):
+                        for j in range(dark_signal.shape[1]):
+                            x = self.exp_time_list
+                            y = dark_signal[i,j]
+                            M = np.concatenate((y.reshape(-1,1),
+                                np.ones_like(y).reshape(-1,1)), axis=1)
                             # use Moore-penrose pseudo inverse to solve ls
-                            amap[i,j],bmap[i,j] = np.dot(np.linalg.pinv(M),x)
+                            amap[i,j],bmap[i,j] = np.linalg.lstsq(M,x)[0]
                     # Now write output
                     io.imsave(names['regparam_a_name'],amap)
                     io.imsave(names['regparam_b_name'],bmap)
@@ -575,3 +597,5 @@ if __name__ == '__main__':
                       default='IndiCamera')
   args = parser.parse_args()
   main(args.config_file, args.cam_class)
+
+#PYTHONPATH=. python ./apps/calibration_utilities/dark_library_creation.py --config_file ./conf_files/IndiDatysonT7MC.json --cam_class IndiASI120MCCamera

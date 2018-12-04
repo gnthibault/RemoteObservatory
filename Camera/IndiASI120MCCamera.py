@@ -20,7 +20,7 @@ class IndiASI120MCCamera(IndiCamera):
 
         # device related intialization
         IndiCamera.__init__(self, indiClient, logger=logger,
-                            configFileName=config_filename)
+                            config_filename=config_filename)
 
         # Finished configuring
         self.logger.debug('Configured Indi ASI120MC camera successfully')
@@ -39,6 +39,12 @@ class IndiASI120MCCamera(IndiCamera):
     '''
       Indi CCD related stuff
     '''
+    def set_cooling_on(self):
+        pass
+
+    def set_cooling_off(self):
+        pass
+
     def get_current_format(self):
         return [key for key, val in self.get_switch('CCD_VIDEO_FORMAT').items() if val['value']]
 
