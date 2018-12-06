@@ -113,14 +113,18 @@ class DarkLibraryBuilder():
         return conv_check, regression
 
     def gen_defectmap_name(self, temperature, gain):
+        tbase_dir = self.gen_report_temp_basedirname(temperature)
         base_dir = self.gen_report_gain_basedirname(temperature, gain)
         os.makedirs(base_dir, exist_ok=True)
         defectmap_filename = os.path.join(base_dir, 'defectmap.tif')
+        mainregparpcfname = os.path.join(tbase_dir,
+            'mainregression_pointcloud.png')
         regparpcfname = os.path.join(base_dir,
             'regression_pointcloud.png')
         regparam_a_name = os.path.join(base_dir, 'regparam_a.tif')
         regparam_b_name = os.path.join(base_dir, 'regparam_b.tif')
         return dict(defectmap_filename=defectmap_filename,
+                    main_regression_param_pointcloud_figname=mainregparpcfname,
                     regression_param_pointcloud_figname=regparpcfname,
                     regparam_a_name=regparam_a_name,
                     regparam_b_name=regparam_b_name)
@@ -232,8 +236,8 @@ class DarkLibraryBuilder():
         ax.scatter(x,y,label="Actual values", alpha=0.2, marker='x')
         ax.plot(x, y_reg, label="LAD regression")
         ax.legend()
-        if self.show_plot:
-            plt.show()
+        #if self.show_plot:
+        #    plt.show()
         fig.tight_layout()
         fig.savefig(nlffigname, dpi=fig.dpi)
 
@@ -382,6 +386,18 @@ class DarkLibraryBuilder():
             b is supposed to be the bias
         """
         for temperature in self.temp_list:
+            # for each temperature, show a point cloud (with different 
+            # temperature for each gain) of the ofset/gain
+            figmain = plt.figure(figsize=(15,15))
+            axmain = figmain.add_subplot(111)
+            axmain.set_title('Affine regression parameters: offset and '
+                          'gain at temperature'.format(temperature))
+            axmain.set_xlabel("Offset")
+            axmain.set_ylabel("Gain")
+            mainxmin, mainxmax, mainymin, mainymax = 4*[None]
+            cm = plt.get_cmap('gist_rainbow')
+            colors = [cm(1.*i/len(self.gain_list)) for i in
+                      range(len(self.gain_list))]
             for gi, gain in enumerate(self.gain_list):
                 dark_signal = None
                 names = self.gen_defectmap_name(temperature, gain)
@@ -423,20 +439,43 @@ class DarkLibraryBuilder():
                     y = amap.reshape(-1)[sampling]
                     ax.scatter(x,y,label="Regression parameters", alpha=0.2,
                                marker='x')
+                    sampling = np.random.choice(x.size, min(1024, x.size), replace=False)
+                    axmain.scatter(x[sampling], y[sampling],
+                                   label="Gain = {}".format(gain), alpha=0.2,
+                                   marker='x', color=colors[gi])
                     # Set limits for the plot not to be disturbed by outliers
-                    xmean, xstd = x.mean(), x.std()
-                    ax.set_xlim(left=xmean-5*xstd, right=xmean+5*xstd)
-                    ymean, ystd = y.mean(), y.std()
-                    ax.set_ylim(bottom=ymean-5*ystd, top=ymean+5*ystd)
+                    minmarger = lambda s : (1-np.sign(s)*0.25)*s
+                    maxmarger = lambda s : 1.25*s
+                    xmin, xmax = np.percentile(x,[1, 99])
+                    ymin, ymax = np.percentile(y,[1, 99])
+                    xmin, ymin = map(minmarger, (xmin, ymin))
+                    xmax, ymax = map(maxmarger, (xmax, ymax))
+                    ax.set_xlim(left=xmin, right=xmax)
+                    ax.set_ylim(bottom=ymin, top=ymax)
+                    if any(np.array([mainxmin, mainxmax, mainymin, mainymax])==None):
+                        mainxmin, mainxmax = xmin, xmax
+                        mainymin, mainymax = ymin, ymax
+                    else:
+                        mainxmin, mainxmax = min(xmin,mainxmin), max(xmax,mainxmax)
+                        mainymin, mainymax = min(ymin,mainymin), max(ymax,mainymax)
                     ax.legend()
-                    if self.show_plot:
-                        plt.show()
+                    #if self.show_plot:
+                    #    plt.show()
                     fig.tight_layout()
                     fig.savefig(names['regression_param_pointcloud_figname'],
                                 dpi=fig.dpi)
 
                     # perform statistical test
                     #io.imsave(names['defectmap_filename'],)
+            #Now draw all the points on the same graph
+            axmain.legend()
+            axmain.set_xlim(left=mainxmin, right=mainxmax)
+            axmain.set_ylim(bottom=mainymin, top=mainymax)
+            if self.show_plot:
+                plt.show()
+            figmain.tight_layout()
+            figmain.savefig(names['main_regression_param_pointcloud_figname'],
+                        dpi=fig.dpi)
 
     def acquire_images(self):
         self.cam.set_frame_type('FRAME_DARK')
@@ -547,7 +586,7 @@ class DarkLibraryBuilder():
         self.compute_statistics()
 
 def main(config_file='./jsonModel/IndiCCDSimulatorCamera.json',
-         cam_class='IndiCamera'):
+         cam_class='IndiCamera', show_plot=False):
     # Instanciate indiclient, in order to connect to camera
     indiCli = IndiClient()
     indiCli.connect()
@@ -585,8 +624,16 @@ def main(config_file='./jsonModel/IndiCCDSimulatorCamera.json',
                            gain_list=gain_list,
                            outdir='./dark_calibration',
                            nb_image=25)
+    b.show_plot = show_plot
     b.build()
 
+def str2bool(v):
+    if v.lower() in ('yes', 'true', 't', 'y', '1'):
+        return True
+    elif v.lower() in ('no', 'false', 'f', 'n', '0'):
+        return False
+    else:
+        raise argparse.ArgumentTypeError('Boolean value expected.')
 
 if __name__ == '__main__':
   parser = argparse.ArgumentParser()
@@ -595,7 +642,8 @@ if __name__ == '__main__':
   parser.add_argument('--cam_class', help='Name of the class of the camera '
                       'can be IndiCamera or IndiASI120MCCamera',
                       default='IndiCamera')
+  parser.add_argument('--show_plot', default='False')
   args = parser.parse_args()
-  main(args.config_file, args.cam_class)
+  main(args.config_file, args.cam_class, str2bool(args.show_plot))
 
 #PYTHONPATH=. python ./apps/calibration_utilities/dark_library_creation.py --config_file ./conf_files/IndiDatysonT7MC.json --cam_class IndiASI120MCCamera
