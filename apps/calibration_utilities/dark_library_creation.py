@@ -276,7 +276,7 @@ class DarkLibraryBuilder():
         fig, ax = plt.subplots()
         heatmap = ax.pcolor(info_map,
                             norm=LogNorm(vmin=info_map.min(), vmax=info_map.max()),
-                            cmap=plt.cm.autumn)
+                            cmap='jet')
         plt.colorbar(heatmap, format=FormatStrFormatter('%.2e'))
 
         # We want to show all ticks...
