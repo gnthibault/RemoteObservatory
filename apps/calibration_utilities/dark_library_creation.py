@@ -617,13 +617,15 @@ def main(config_file='./jsonModel/IndiCCDSimulatorCamera.json',
     #print('Gain is now {}'.format(cam.get_gain()))
 
     # launch stuff
-    exp_time_list = np.linspace(1, 30, 8)*u.second
-    gain_list = np.linspace(0,100,10, dtype=np.int32).tolist()
+#    exp_time_list = np.linspace(1, 30, 8)*u.second
+    exp_time_list = np.array([1,5,10,30,60,120])*u.second
+#    gain_list = np.linspace(0,100,10, dtype=np.int32).tolist()
+    gain_list = [0,25,50,75,100]
     temp_list = [np.NaN*u.Celsius]
     b = DarkLibraryBuilder(cam, exp_time_list, temp_list=temp_list,
                            gain_list=gain_list,
                            outdir='./dark_calibration',
-                           nb_image=25)
+                           nb_image=19)
     b.show_plot = show_plot
     b.build()
 
@@ -641,7 +643,7 @@ if __name__ == '__main__':
                       'camera', default='./conf_files/IndiDatysonT7MC.json')
   parser.add_argument('--cam_class', help='Name of the class of the camera '
                       'can be IndiCamera or IndiASI120MCCamera',
-                      default='IndiCamera')
+                      default='IndiASI120MCCamera')
   parser.add_argument('--show_plot', default='False')
   args = parser.parse_args()
   main(args.config_file, args.cam_class, str2bool(args.show_plot))
