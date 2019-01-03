@@ -2,7 +2,6 @@
 import io
 import logging
 import logging.config
-import sys
 
 #For test purpose
 import matplotlib.pyplot as plt
@@ -14,8 +13,6 @@ from astropy.io import fits
 
 #Astroquery stuff
 from astroquery.skyview import SkyView
-
-sys.path.append('.')
 
 # Local stuff : Astrometry server
 from Service.NovaAstrometryService import NovaAstrometryService

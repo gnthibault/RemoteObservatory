@@ -17,7 +17,7 @@ from PyQt5.Qt3DRender import QTechnique, QFilterKey, QGraphicsApiFilter
 from PyQt5.QtSvg import QSvgRenderer
 
 # Local stuff
-from Catalogs import load_bright_star_5
+from ScopeSimulator.Catalogs import load_bright_star_5
 
 class DPolynom:
 

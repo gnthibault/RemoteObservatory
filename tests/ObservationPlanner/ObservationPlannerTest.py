@@ -3,9 +3,6 @@ import datetime
 import logging
 import logging.config
 import threading
-import sys
-
-sys.path.append('.')
 
 # Local stuff : Service
 from Service.NTPTimeService import NTPTimeService

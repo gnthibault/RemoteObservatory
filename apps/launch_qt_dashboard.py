@@ -34,19 +34,18 @@ from Mount.IndiMount import IndiMount
 # Local stuff : Observatory
 from Observatory.ShedObservatory import ShedObservatory
 
-# Local stuff: Observation planner Widget
-from ObservationPlanner.PlannerWidget import AltazPlannerWidget
-
 # Local stuff : Service
 from Service.NTPTimeService import NTPTimeService
 
+
 class MainWindow(QMainWindow):
-    def __init__(self, planner, view3D):
+    def __init__(self, view3D, camera_widget=None, dashboard_widget=None):
         super().__init__()
 
         # Various views/widgets
-        self.planner = planner
         self.view3D = view3D
+        self.camera_widget = camera_widget
+        self.dashboard_widget = dashboard_widget
 
         # Change visual parameters and setup widgets on the main window
         self.resize(2048, 1024)#, 480)
@@ -87,14 +86,21 @@ class MainWindow(QMainWindow):
         self.setCentralWidget(self.widget3D)
         #self.layout.addWidget(self.widget3D)
 
-        # Dock planner
-        self.dock_planner = QDockWidget('Observation planner', self)
-        self.addDockWidget(Qt.BottomDockWidgetArea, self.dock_planner)
-        #self.planner.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
-        self.dock_planner.setWidget(self.planner)        
-
         # Dock safety camera
+        if self.camera_widget:
+            self.dock_camera = QDockWidget('Surveillance camera', self)
+            self.addDockWidget(Qt.BottomDockWidgetArea, self.dock_camera)
+            self.camera_widget.setSizePolicy(QSizePolicy.Fixed,
+                                             QSizePolicy.Fixed)
+            self.dock_camera.setWidget(self.camera_widget)        
 
+        # Dock webbrowser for dashboard
+        if self.dashboard_widget:
+            self.dock_dashboard = QDockWidget('Main dashboard', self)
+            self.addDockWidget(Qt.BottomDockWidgetArea, self.dock_dashboard)
+            self.dashboard_widget.setSizePolicy(QSizePolicy.Fixed,
+                                                QSizePolicy.Fixed)
+            self.dock_dashboard.setWidget(self.dashboard_widget)        
 
         # Global stuff
         self.setLayout(self.layout)
@@ -125,22 +131,24 @@ class MainWindow(QMainWindow):
 
 class GuiLoop():
 
-    def __init__(self, gps_coord, mount, observatory, serv_time):
+    def __init__(self, serv_time, gps_coord, mount):
         self.gps_coord = gps_coord
         self.mount = mount
-        self.observatory = observatory
         self.serv_time = serv_time
 
     def run(self):
         app = QApplication([])
 
         # Initialize various widgets/views
-        planner = AltazPlannerWidget(observatory=self.observatory,
-                                     serv_time=self.serv_time )
         view3D = View3D.View3D(serv_time=self.serv_time)
+        #camera_widget = IPCameraWidget(dns='localhost', port='3040'
+        #dashboard_widget = DashboardWidget.DashboardWidget(dns='localhost',
+        #                                                   port='8080')
 
         # Now initialize main window
-        self.main_window = MainWindow(planner=planner, view3D=view3D)
+        self.main_window = MainWindow(view3D=view3D,
+                                      camera_widget=None,
+                                      dashboard_widget=None)
 
         indiCli.register_number_callback(
             device_name = self.mount.deviceName,
@@ -151,9 +159,6 @@ class GuiLoop():
         self.main_window.view3D.initialiseCamera()
         self.main_window.view3D.window.show()
 
-        thread = ObservationRun(self.mount)
-        thread.start()
-        
         # Everything ends when program is over
         status = app.exec_()
         thread.wait()
@@ -163,33 +168,6 @@ class GuiLoop():
     def update_coord(self, coord):
         self.main_window.view3D.model.setHA(coord['RA'])
         self.main_window.view3D.model.setDEC(coord['DEC'])
-
-class ObservationRun(QThread):
-
-    def __init__(self,  mount):
-        super(ObservationRun, self).__init__()
-        self.mount = mount
-
-    def __del__(self):
-        print('Backend thread is going to exit')
-
-    @pyqtSlot()
-    def run(self):
-        ''' Keep in min that backend thred should not do anything because
-            every action should be launched asynchronously from the gui
-        '''
-        # Now start to do stuff
-        mount.set_slew_rate('SLEW_FIND')
-
-        # Unpark if you want something useful to actually happen
-        mount.unpark()
-
-        #Do a slew and stop
-        c = SkyCoord(ra=10*u.hour, dec=60*u.degree, frame='icrs')
-        mount.slew_to_coord_and_stop(c)
-
-        # Park before standby
-        mount.park()
 
 if __name__ == "__main__":
 
@@ -208,8 +186,10 @@ if __name__ == "__main__":
 
     # Build the Mount
     mount = IndiMount(indiClient=indiCli,
-                      configFileName=None, connectOnCreate=True)
+                      configFileName=None,
+                      connectOnCreate=True)
+
     gps_coord = obs.getGpsCoordinates()
 
-    main_loop = GuiLoop(gps_coord, mount, obs, serv_time)
+    main_loop = GuiLoop(serv_time, gps_coord, mount)
     main_loop.run()

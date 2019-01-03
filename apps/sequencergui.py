@@ -25,9 +25,6 @@ from astropy.utils.iers import conf
 conf.auto_max_age = None
 
 # Local stuff
-sys.path.append('.')
-
-sys.path.append('ScopeSimulator')
 from ScopeSimulator import View3D
 
 # Local stuff : IndiClient

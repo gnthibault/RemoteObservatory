@@ -2,9 +2,6 @@
 import logging
 import logging.config
 import threading
-import sys
-
-sys.path.append('.')
 
 # Miscellaneous
 import io

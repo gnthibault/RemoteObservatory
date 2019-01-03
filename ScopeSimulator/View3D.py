@@ -1,6 +1,5 @@
 # Generic stuff
 import sys
-sys.path.append('/home/gnthibault/projects/RemoteObservatory')
 
 # PyQt stuff
 from PyQt5.QtGui import QColor, QVector3D
