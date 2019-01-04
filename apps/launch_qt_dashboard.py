@@ -25,6 +25,10 @@ from astropy.utils.iers import conf
 # Local stuff: rendering tools
 from ScopeSimulator import View3D
 
+# Local stuff: Dashboard widget
+from Dashboard.CameraWidget import CameraWidget
+from Dashboard.DashboardWidget import DashboardWidget
+
 # Local stuff : IndiClient
 from helper.Indi3DSimulatorClient import Indi3DSimulatorClient
 
@@ -86,20 +90,20 @@ class MainWindow(QMainWindow):
         self.setCentralWidget(self.widget3D)
         #self.layout.addWidget(self.widget3D)
 
-        # Dock safety camera
-        if self.camera_widget:
+        # Dock safety camera on the right
+        if self.camera_widget is not None:
             self.dock_camera = QDockWidget('Surveillance camera', self)
-            self.addDockWidget(Qt.BottomDockWidgetArea, self.dock_camera)
-            self.camera_widget.setSizePolicy(QSizePolicy.Fixed,
-                                             QSizePolicy.Fixed)
-            self.dock_camera.setWidget(self.camera_widget)        
+            self.addDockWidget(Qt.LeftDockWidgetArea, self.dock_camera)
+            #self.camera_widget.setSizePolicy(QSizePolicy.Fixed,
+            #                                 QSizePolicy.Fixed)
+            self.dock_camera.setWidget(self.camera_widget)
 
-        # Dock webbrowser for dashboard
-        if self.dashboard_widget:
+        # Dock webbrowser for dashboard on the right
+        if self.dashboard_widget is not None:
             self.dock_dashboard = QDockWidget('Main dashboard', self)
-            self.addDockWidget(Qt.BottomDockWidgetArea, self.dock_dashboard)
-            self.dashboard_widget.setSizePolicy(QSizePolicy.Fixed,
-                                                QSizePolicy.Fixed)
+            self.addDockWidget(Qt.RightDockWidgetArea, self.dock_dashboard)
+            #self.dashboard_widget.setSizePolicy(QSizePolicy.Fixed,
+            #                                    QSizePolicy.Fixed)
             self.dock_dashboard.setWidget(self.dashboard_widget)        
 
         # Global stuff
@@ -141,14 +145,13 @@ class GuiLoop():
 
         # Initialize various widgets/views
         view3D = View3D.View3D(serv_time=self.serv_time)
-        #camera_widget = IPCameraWidget(dns='localhost', port='3040'
-        #dashboard_widget = DashboardWidget.DashboardWidget(dns='localhost',
-        #                                                   port='8080')
+        camera_widget = CameraWidget(url=0)
+        dashboard_widget = DashboardWidget(url='http://free.fr')
 
         # Now initialize main window
         self.main_window = MainWindow(view3D=view3D,
-                                      camera_widget=None,
-                                      dashboard_widget=None)
+                                      camera_widget=camera_widget,
+                                      dashboard_widget=dashboard_widget)
 
         indiCli.register_number_callback(
             device_name = self.mount.deviceName,
@@ -161,7 +164,6 @@ class GuiLoop():
 
         # Everything ends when program is over
         status = app.exec_()
-        thread.wait()
         sys.exit(status)
 
     # callback for updating model
