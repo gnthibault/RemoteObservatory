@@ -17,7 +17,7 @@ from Base.Base import Base
 from Manager.Manager import Manager
 from StateMachine.StateMachine import StateMachine
 from utils import get_free_space
-#from utils.messaging import Messaging
+from utils.messaging import PanMessaging
 
 
 class RemoteObservatoryFSM(StateMachine, Base):
