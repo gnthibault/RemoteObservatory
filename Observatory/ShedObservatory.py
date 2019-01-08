@@ -183,7 +183,7 @@ class ShedObservatory(Base):
         status = {'owner': self.owner_name,
                   'location': self.gpsCoordinates,
                   'altitude': self.altitudeMeter,
-                  'timezone': self.timezone
+                  'timezone': str(self.timezone) # not directly serializable
                  }
 
         if self.has_dome:

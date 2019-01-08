@@ -1,14 +1,18 @@
 name: gnthibault remote observatory
 location:
-    name: Mauna Loa Observatory
-    latitude: 19.54 # Degrees
-    longitude: -155.58 # Degrees
-    elevation: 3400.0 # Meters
-    utc_offset: -10.00 # Hours
+    name: gnthibault remote observatory
+    latitude: 46.204391 # Degrees
+    longitude: 6.143158 # Degrees
+    elevation: 600.0 # Meters
+    # UTC+1 CET Central European Time,
+    # UTC +2  CEST Central European Summer Time
+    utc_offset: 1 # Hours
     horizon: 30 # Degrees
     twilight_horizon: -18 # Degrees
-    timezone: US/Hawaii
-    gmt_offset: -600
+    timezone: Europe/Paris
+    # Paris is in the Central European Time Zone ( CET ) is 1 hours ahead of
+    # Greenwich Mean Time ( GMT+1 ).
+    gmt_offset: 60 # Minutes
 directories:
     base: /var/RemoteObservatory
     images: images

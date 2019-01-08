@@ -146,7 +146,7 @@ class GuiLoop():
         # Initialize various widgets/views
         view3D = View3D.View3D(serv_time=self.serv_time)
         camera_widget = CameraWidget(url=0)
-        dashboard_widget = DashboardWidget(url='http://free.fr')
+        dashboard_widget = DashboardWidget(url='http://localhost:8888')
 
         # Now initialize main window
         self.main_window = MainWindow(view3D=view3D,

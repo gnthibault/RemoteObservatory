@@ -190,7 +190,7 @@ class Manager(Base):
                         self.observer.target_hour_angle(t, 
                             self.mount.get_target_coordinates()))
 
-            status['observatory'] = self.observatory.status
+            status['observatory'] = self.observatory.status()
 
             if self.current_observation:
                 status['observation'] = self.current_observation.status()

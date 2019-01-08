@@ -54,7 +54,7 @@ class RemoteObservatoryFSM(StateMachine, Base):
             self,
             manager,
             state_machine_file='conf_files/simple_state_table.yaml',
-            messaging=False,
+            messaging=True,
             **kwargs):
 
         assert isinstance(manager, Manager)
@@ -166,7 +166,7 @@ class RemoteObservatoryFSM(StateMachine, Base):
             status['system'] = {
                 'free_space': get_free_space().value,
             }
-            status['manager'] = self.manager.status()
+            status['observatory'] = self.manager.status()
         except Exception as e:  # pragma: no cover
             self.logger.warning("Can't get status: {}".format(e))
         else:
@@ -182,9 +182,9 @@ class RemoteObservatoryFSM(StateMachine, Base):
         """
         if self.has_messaging is False:
             self.logger.info('Unit says: {}'.format(msg))
-        self.send_message('{}'.format(msg), channel='CHAT')
+        self.send_message('{}'.format(msg), channel='PANCHAT')
 
-    def send_message(self, msg, channel='CHAT'):
+    def send_message(self, msg, channel='POCS'):
         """ Send a message
 
         This will use the `self._msg_publisher` to send a message

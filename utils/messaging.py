@@ -126,7 +126,7 @@ class PanMessaging(object):
             current_time = self.serv_time.getUTCFromNTP()
             message = {
                 'message': message,
-                'timestamp': current_time.isot.replace(
+                'timestamp': current_time.isoformat().replace(
                     'T',
                     ' ').split('.')[0]}
         else:
