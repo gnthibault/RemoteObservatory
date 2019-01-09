@@ -4,7 +4,7 @@ This project either uses, or is directly inspired by:
 
 * KStars: https://github.com/KDE/kstars
 * Indi: https://github.com/indilib/indi (Jasem Mutlaq + contributors)
-* Indi-lite-tools: https://github.com/GuLinux/indi-lite-tools (Marco Gulino)
+* Starquew: https://github.com/GuLinux/StarQuew/tree/master/backend/indi (Marco Gulino)
 * npindi: https://github.com/geehalel/npindi (Geehalel)
 * Panoptes: https://github.com/panoptes/POCS
 * Astropy: https://github.com/astropy/astropy
