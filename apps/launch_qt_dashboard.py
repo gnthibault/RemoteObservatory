@@ -14,7 +14,7 @@ from PyQt5.QtWidgets import QApplication, QMainWindow, QAction, QDockWidget
 from PyQt5.QtWidgets import QWidget, QSizePolicy, QVBoxLayout, QMessageBox
 from PyQt5.QtGui import QVector3D
 from PyQt5.Qt3DExtras import Qt3DWindow, QOrbitCameraController
-from PyQt5.QtCore import Qt, QThread, pyqtSlot
+from PyQt5.QtCore import Qt, QThread, pyqtSignal, pyqtSlot
 
 # Astropy stuff
 from astropy import units as u
@@ -43,12 +43,16 @@ from Service.NTPTimeService import NTPTimeService
 
 
 class MainWindow(QMainWindow):
-    def __init__(self, view3D, camera_widget=None, dashboard_widget=None):
+
+    closing = pyqtSignal()
+ 
+    def __init__(self, view3D=None, camera_widget=None, dashboard_widget=None):
         super().__init__()
 
         # Various views/widgets
         self.view3D = view3D
         self.camera_widget = camera_widget
+        self.closing.connect(self.camera_widget.close)
         self.dashboard_widget = dashboard_widget
 
         # Change visual parameters and setup widgets on the main window
@@ -79,18 +83,18 @@ class MainWindow(QMainWindow):
         self.helpMenu.addAction(self.creditsAct)
 
         # General layout
-        self.layout = QVBoxLayout()
+        #self.layout = QVBoxLayout()
 
-        # 3D view
-        #self.dock_view3D = QDockWidget('Mount simulator', self)
-        #self.addDockWidget(Qt.BottomDockWidgetArea, self.dock_view3D)
-        self.widget3D = QWidget.createWindowContainer(self.view3D.window, self)
-        #self.widget3D.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
-        #self.dock_view3D.setWidget(self.widget3D)
-        self.setCentralWidget(self.widget3D)
-        #self.layout.addWidget(self.widget3D)
+        # Webbrowser for dashboard should be the main widget
+        if self.dashboard_widget is not None:
+            #self.dock_dashboard = QDockWidget('Main dashboard', self)
+            #self.addDockWidget(Qt.RightDockWidgetArea, self.dock_dashboard)
+            #self.dashboard_widget.setSizePolicy(QSizePolicy.Fixed,
+            #                                    QSizePolicy.Fixed)
+            #self.dock_dashboard.setWidget(self.dashboard_widget)
+            self.setCentralWidget(self.dashboard_widget)
 
-        # Dock safety camera on the right
+        # Dock safety camera on the Left
         if self.camera_widget is not None:
             self.dock_camera = QDockWidget('Surveillance camera', self)
             self.addDockWidget(Qt.LeftDockWidgetArea, self.dock_camera)
@@ -98,20 +102,24 @@ class MainWindow(QMainWindow):
             #                                 QSizePolicy.Fixed)
             self.dock_camera.setWidget(self.camera_widget)
 
-        # Dock webbrowser for dashboard on the right
-        if self.dashboard_widget is not None:
-            self.dock_dashboard = QDockWidget('Main dashboard', self)
-            self.addDockWidget(Qt.RightDockWidgetArea, self.dock_dashboard)
-            #self.dashboard_widget.setSizePolicy(QSizePolicy.Fixed,
-            #                                    QSizePolicy.Fixed)
-            self.dock_dashboard.setWidget(self.dashboard_widget)        
+        # 3D view set as right widget
+        if self.view3D is not None:
+            self.widget3D = QWidget.createWindowContainer(self.view3D.window, self)
+            self.dock_view3D = QDockWidget('Mount simulator', self)
+            self.addDockWidget(Qt.RightDockWidgetArea, self.dock_view3D)
+            #self.widget3D.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
+            self.dock_view3D.setWidget(self.widget3D)
+            #self.setCentralWidget(self.widget3D)
+            #self.layout.addWidget(self.widget3D)
 
         # Global stuff
-        self.setLayout(self.layout)
+        #self.setLayout(self.layout)
         self.setWindowTitle('Remote observatory dashboard')
         self.show()
 
     def closeEvent(self, event):
+        # emit a signal for registered custom slot to perform cleanup if needed
+        self.closing.emit()
         self.quit()
 
     def quit(self):
@@ -172,6 +180,14 @@ class GuiLoop():
         self.main_window.view3D.model.setDEC(coord['DEC'])
 
 if __name__ == "__main__":
+
+    def trap_exc_during_debug(*args):
+        # when app raises uncaught exception, print info
+        print(args)
+
+    # install exception hook: without this, uncaught exception would cause
+    # application to exit
+    sys.excepthook = trap_exc_during_debug
 
     # load the logging configuration
     logging.config.fileConfig('logging.ini')

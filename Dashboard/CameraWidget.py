@@ -11,13 +11,20 @@ class Thread(QThread):
     changePixmap = pyqtSignal(QImage)
 
     def __init__(self, parent=None, url=0):
-      super(QThread, self).__init__(parent)
-      self.url = url
+        super(QThread, self).__init__(parent)
+        self.url = url
+        self.is_running = True
+        self.cap = None
+
+    def stop(self):
+        if self.cap is not None:
+            self.cap.release()
+        self.is_running = False
 
     def run(self):
-        cap = cv2.VideoCapture(self.url)
-        while True:
-            ret, frame = cap.read()
+        self.cap = cv2.VideoCapture(self.url)
+        while self.is_running:
+            ret, frame = self.cap.read()
             if ret:
                 rgbImage = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
                 convertToQtFormat = QImage(rgbImage.data,
@@ -27,7 +34,15 @@ class Thread(QThread):
                 p = convertToQtFormat.scaled(640, 480, Qt.KeepAspectRatio)
                 self.changePixmap.emit(p)
 
+            if self.isInterruptionRequested():
+                self.stop()
+
 class CameraWidget(QFrame):
+    """
+        From the documentation: The QFrame class is the base class of widgets
+        that can have a frame.
+
+    """
     def __init__(self, parent=None, url='rtsp://192.168.1.64/1'):
         super().__init__()
         self.url=url
@@ -36,6 +51,10 @@ class CameraWidget(QFrame):
     @pyqtSlot(QImage)
     def setImage(self, image):
         self.label.setPixmap(QPixmap.fromImage(image))
+
+    def close(self):
+        self.thread.requestInterruption()
+        self.thread.wait()
 
     def init_UI(self):
         #self.setWindowTitle(self.title)
@@ -52,6 +71,6 @@ class CameraWidget(QFrame):
         self.setLayout(layout)
 
         # Start acquisition thread
-        th = Thread(self, self.url)
-        th.changePixmap.connect(self.setImage)
-        th.start()
+        self.thread = Thread(self, self.url)
+        self.thread.changePixmap.connect(self.setImage)
+        self.thread.start()
