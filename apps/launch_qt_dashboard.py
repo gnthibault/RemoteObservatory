@@ -104,7 +104,7 @@ class MainWindow(QMainWindow):
 
         # 3D view set as right widget
         if self.view3D is not None:
-            self.widget3D = QWidget.createWindowContainer(self.view3D.window, self)
+            self.widget3D = QWidget.createWindowContainer(self.view3D.window)
             self.dock_view3D = QDockWidget('Mount simulator', self)
             self.addDockWidget(Qt.RightDockWidgetArea, self.dock_view3D)
             #self.widget3D.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
