@@ -4,6 +4,9 @@ import shutil
 import subprocess
 from warnings import warn
 
+# More generic image io
+import skimage.io as io
+
 # Astropy
 from astropy.io import fits
 from astropy.wcs import WCS
@@ -345,6 +348,14 @@ def write_fits(data, header, filename, logger, exposure_event=None):
         if exposure_event is not None:
             exposure_event.set()
 
+def update_thumbnail(file_path, latest_path):
+    with fits.open(file_path, 'readonly') as f:
+        print('Just openeed file {}'.format(file_path))
+        hdu = f[0]
+        data = hdu.data
+        print('Data size is {} and type {}'.format(data.shape, data.dtype))
+        print('About to save the data to {}'.format(latest_path))
+        io.imsave(latest_path, data)
 
 def update_headers(file_path, info):
     with fits.open(file_path, 'update') as f:

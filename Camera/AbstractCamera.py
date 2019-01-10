@@ -290,8 +290,9 @@ class AbstractCamera(Base):
         self.logger.debug("Processing {}".format(image_id))
 
         try:
-            #TODO TN Do something here, like write a thumbnail or jpeg ?
-            pass
+            latest_path = '{}/latest.jpg'.format(
+                self.config['directories']['images'])
+            fits_utils.update_thumbnail(file_path, latest_path)
         except Exception as e:
             self.logger.warning('Problem with extracting pretty image: '
                                 '{}'.format(e))

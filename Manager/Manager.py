@@ -586,17 +586,17 @@ class Manager(Base):
 ##########################################################################
 
     def _setup_image_directory(self, path='.'):
-        path_idx = 0
-
         #Create a new path, whatever the input is
-        path = os.path.realpath(path)
-        test_path = path
-        while os.path.exists(test_path):
-            test_path = (path+'-'+str(datetime.now().date())+'-'+
-                         str(path_idx))
-            path_idx += 1
-        os.makedirs(test_path, exist_ok=False)
-        self._image_dir = test_path
+        #path = os.path.realpath(path)
+        #test_path = path
+        #path_idx = 0
+        #while os.path.exists(test_path):
+        #    test_path = (path+'-'+str(datetime.now().date())+'-'+
+        #                 str(path_idx))
+        #    path_idx += 1
+        #os.makedirs(test_path, exist_ok=False)
+        #self._image_dir = test_path
+        self._image_dir = self.config['directories']['images']
 
     def _setup_indi_client(self):
         """
