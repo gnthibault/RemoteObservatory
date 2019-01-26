@@ -24,7 +24,7 @@ class Scheduler(Base):
 
     # Max value for which a scheduling slot is programmed, otherwise
     # we split into smaller slots
-    MaximumSlotDurationSec = 300
+    MaximumSlotDurationSec = 60 * 15
 
     def __init__(self, ntpServ, obs, config_file_name=None, path='.'):
         """Loads `~pocs.scheduler.field.Field`s from a field
@@ -73,7 +73,7 @@ class Scheduler(Base):
         self.observed_list = OrderedDict()
         self.constraints = []
 
-        # Initialize obse planner, that does the main job
+        # Initialize obs planner, that does the main job
         #self.obs_planner = ObservationPlanner(ntpServ, obs, config_file, path)
 
         # Initialize a list of targets
@@ -205,9 +205,6 @@ class Scheduler(Base):
             self.logger.debug('Reading target lists from file: {}'.format(
                               self.config_file_name))
 
-            if not os.path.exists(self.config_file_name):
-                raise FileNotFoundError
-
             # Get config from json
             with open(self.config_file_name) as json_file:
                 self.target_list = json.load(json_file)
@@ -221,21 +218,26 @@ class Scheduler(Base):
         #TODO TN readout time, get that info from camera
         camera_time = 1*u.second
         for target_name, config in self.target_list.items():
-            #target = FixedTarget.from_name(target_name)
-            target = FixedTarget(SkyCoord(5.33*u.deg, 46.0*u.deg))
+            target = FixedTarget.from_name(target_name)
+            #target = FixedTarget(SkyCoord(5.33*u.deg, 46.0*u.deg))
             for filter_name, (count, exp_time_sec) in config.items():
                 exp_time = exp_time_sec*u.second
                 #TODO TN retrieve priority from the file ?
                 priority = 0 if (filter_name=='Luminance') else 1
                 try:
+                    # number of image per scheduled "round" of imaging
+                    # min number of exposure must be an integer number of times
+                    # this number
                     exp_set_size = max(1, min(count,
                         self.MaximumSlotDurationSec//exp_time_sec))
+                    min_nexp = (count+exp_set_size-1)//exp_time_sec
+                    min_nexp = min_nexp * exp_set_size
                     b = ObservingBlock.from_exposures(
-                            target, priority, exp_time, count,
+                            target, priority, exp_time, exp_set_size,
                             camera_time,
                             configuration={'filter': filter_name},
                             constraints=self.constraints)
-                    self.add_observation(b, exp_set_size)
+                    self.add_observation(b,)
             
                 except AssertionError as e:
                     self.logger.debug("Error whil adding target : {}"

@@ -73,7 +73,7 @@ class RemoteObservatoryFSM(StateMachine, Base):
         # default loop delay. safety delay take precedence for safety sleep
         self._sleep_delay = kwargs.get('sleep_delay', 2.5)  
         # Safety check delay
-        self._safe_delay = kwargs.get('safe_delay', 60 * 5)
+        self._safe_delay = kwargs.get('safe_delay', 60 * 1)
         self._is_safe = False
 
         StateMachine.__init__(self, state_machine_file, **kwargs)
@@ -139,9 +139,6 @@ class RemoteObservatoryFSM(StateMachine, Base):
         """
 
         if not self._initialized:
-            self.logger.info('*' * 80)
-            self.logger.info("Initializing the system")
-
             try:
                 self.logger.debug("Initializing manager")
                 self.manager.initialize()

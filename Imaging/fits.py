@@ -350,11 +350,8 @@ def write_fits(data, header, filename, logger, exposure_event=None):
 
 def update_thumbnail(file_path, latest_path):
     with fits.open(file_path, 'readonly') as f:
-        print('Just openeed file {}'.format(file_path))
         hdu = f[0]
         data = hdu.data
-        print('Data size is {} and type {}'.format(data.shape, data.dtype))
-        print('About to save the data to {}'.format(latest_path))
         io.imsave(latest_path, data)
 
 def update_headers(file_path, info):
