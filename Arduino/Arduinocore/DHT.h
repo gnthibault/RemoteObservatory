@@ -6,12 +6,15 @@ written by Adafruit Industries
 #ifndef DHT_H
 #define DHT_H
 
-#if ARDUINO >= 100
- #include "Arduino.h"
-#else
- #include "WProgram.h"
-#endif
+// Standard
+#include <stdint.h> 
+#include <stdlib.h>
 
+// Arduino
+#include <Arduino.h>
+
+// Local include
+#include "PinUtils.h"
 
 // Uncomment to enable printing out nice debug messages.
 //#define DHT_DEBUG
@@ -34,7 +37,6 @@ written by Adafruit Industries
 #define DHT21 21
 #define AM2301 21
 
-
 class DHT {
   public:
    DHT(uint8_t pin, uint8_t type, uint8_t count=6, bool useCelsius=true);
@@ -44,7 +46,7 @@ class DHT {
    float convertFtoC(float);
    float computeHeatIndex(float temperature, float percentHumidity);
    float readHumidity(bool force=false);
-   boolean read(bool force=false);
+   bool read(bool force=false);
 
  private:
   uint8_t data[5];

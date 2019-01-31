@@ -1,3 +1,6 @@
+// Standard
+#include <stdint.h> 
+
 class RelayHandler {
   public:
     RelayHandler(uint8_t pin, const char* name);

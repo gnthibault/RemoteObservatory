@@ -1,11 +1,14 @@
+// Arduino
+#include <Arduino.h>
+
 // Local
 #include "led_handler.h"
 #include "PinUtils.h"
 
-LedHandler::LedHandler() {}
+LedHandler::LedHandler(uint32_t milli_delay, uint8_t pin):
+  milli_delay_(milli_delay), pin_(pin) {}
 
 void LedHandler::init() {
-  pin_ = LED_BUILTIN; 
   pinMode(pin_, OUTPUT);
   digitalWrite(pin_, false);
 
@@ -30,7 +33,7 @@ void LedHandler::update() {
   unsigned long now = millis();
   if (next_change_ms_ <= now) {
     toggle_led();
-    next_change_ms_ += (Serial ? 1000 : 100);
+    next_change_ms_ += (Serial ? milli_delay_ : milli_delay_);
     if (next_change_ms_ <= now) {
       next_change_ms_ = now;
     }

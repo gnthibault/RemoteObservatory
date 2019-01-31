@@ -1,11 +1,12 @@
 
 // Arduino libs
+#include <Arduino.h>
 
 // Local
 #include "relay_handler.h"
 
 RelayHandler::RelayHandler(uint8_t pin, const char* name) :
-  pin_(pin), status_(false), name_(name) {}
+  pin_(pin), name_(name), status_(false) {}
 
 void RelayHandler::Init() {
   pinMode(this->pin_, OUTPUT);
