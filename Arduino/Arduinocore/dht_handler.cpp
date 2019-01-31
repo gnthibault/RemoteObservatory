@@ -4,11 +4,11 @@ DHTHandler::DHTHandler(uint8_t pin, uint8_t type, const char* name)
     : dht_(pin, type), humidity_(-1000), temperature_(-1000),
       name_(name) {}
 
-void DHTHandler::Init() {
+void DHTHandler::init() {
   dht_.begin();
 }
 
-void DHTHandler::Collect() {
+void DHTHandler::collect() {
   // Force readHumidity to actually talk to the device;
   // otherwise will read at most every 2 seconds, which
   // is sometimes just a little too far apart.
@@ -20,7 +20,7 @@ void DHTHandler::Collect() {
   temperature_ = dht_.readTemperature();
 }
 
-void DHTHandler::Report() {
+void DHTHandler::report() {
   // This is being added to a JSON dictionary, so print a comma
   // before the quoted name, which is then followed by a colon.
   Serial.print(", \"humidity_name_\":"); //TODO TN

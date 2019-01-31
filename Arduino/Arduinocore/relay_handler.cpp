@@ -8,7 +8,7 @@
 RelayHandler::RelayHandler(uint8_t pin, const char* name) :
   pin_(pin), name_(name), status_(false) {}
 
-void RelayHandler::Init() {
+void RelayHandler::init() {
   pinMode(this->pin_, OUTPUT);
 }
 
@@ -20,11 +20,11 @@ void RelayHandler::setValue(int value) {
   }
 }
 
-void RelayHandler::Collect() {
+void RelayHandler::collect() {
   status_ = digitalRead(this->pin_);
 }
 
-void RelayHandler::Report() {
+void RelayHandler::report() {
   Serial.print(", \"name_\":"); //TODO TN
   Serial.print(status_);
 }

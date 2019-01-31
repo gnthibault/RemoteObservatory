@@ -13,13 +13,13 @@ class DHTHandler {
     DHTHandler(uint8_t pin, uint8_t type, const char* name);
 
     // Initialize communication to the sensor.
-    void Init();
+    void init();
 
     // Read the current values from the sensor.
-    void Collect();
+    void collect();
 
     // Print the values. Requires that Collect has been called.
-    void Report();
+    void report();
 
     float getHumidity() const { return humidity_; }
     float getTemperature() const { return temperature_; }

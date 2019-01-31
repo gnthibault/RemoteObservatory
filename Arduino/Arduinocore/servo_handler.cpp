@@ -8,7 +8,7 @@
 ServoHandler::ServoHandler(uint8_t pin) : pin_(pin), servo_() {}
 
 
-void ServoHandler::Init() {
+void ServoHandler::init() {
   servo_.attach(pin_);
 }
 

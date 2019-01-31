@@ -1,7 +1,7 @@
 class ServoHandler {
   public:
     ServoHandler(uint8_t pin);
-    void Init();
+    void init();
     void setValue(int value);
 
   protected:

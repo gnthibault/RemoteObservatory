@@ -29,12 +29,12 @@ const int FINDER_SERVO_DUSTCAP = 8;//finderscope dustcap
 
 // Timers
 unsigned long end_setup_millis;
-unsigned long next_report_millis;
-const int interval = 1000;
-int report_num = 0;
+uint64_t next_report_millis;
+const uint64_t interval = 1000;
+unsigned int report_num = 0;
 
 // Names, to be used in Serial communications
-const char* relay_cam_name = "camera_00";
+const char* relay_cam_name = "camera_0";
 const char* relay_scope_name = "scope_dew";
 const char* relay_finder_name = "finder_dew";
 const char* relay_fan_name = "scope_fan";
@@ -75,7 +75,7 @@ void setup() {
 
 
 void main_loop() {
-  unsigned long now = millis();
+  uint64_t now = millis();
   if (next_report_millis <= now) {
     // Schedule the next report for `interval' milliseconds from the last
     // report unless we've fallen behind.
@@ -88,27 +88,27 @@ void main_loop() {
     // updating the LEDs appropriately.
     // TODO TN: Could probably be done with an interrupt handler instead.
     report_num++;
-    //dht_air_handler.Collect();
-    //dht_box_handler.Collect();
-    //dht_scope_handler.Collect();
-    //relay_scope_dew_handler.Collect();
-    //relay_finder_dew_handler.Collect();
-    //relay_camera_handler.Collect();
+    //dht_air_handler.collect();
+    //dht_box_handler.collect();
+    //dht_scope_handler.collect();
+    //relay_scope_dew_handler.collect();
+    //relay_finder_dew_handler.collect();
+    //relay_camera_handler.collect();
     //bool cam_relay_stat = digitalRead(CAMERA_RELAY);
 
-    // Format/output the results.
-    Serial.print("{\"name\":\"camera_board\", \"count\":");
-    Serial.print(millis() - end_setup_millis);
-    Serial.print(", \"num\":");
+    // Format/output the results: main entry: 
+    Serial.print("{\"name\":\"scope_controller\", \"uptime\":");
+    Serial.print((millis() - end_setup_millis)/1000);
+    Serial.print("s , \"num\":");
     Serial.print(report_num);
 
-    // output reports
-    //dht_air_handler.Report();
-    //dht_box_handler.Report();
-    //dht_scope_handler.Report();
-    //relay_scope_dew_handler.Report();
-    //relay_finder_dew_handler.Report();
-    //relay_camera_handler.Report();
+    // Then each device report its own status
+    //dht_air_handler.report();
+    //dht_box_handler.report();
+    //dht_scope_handler.report();
+    //relay_scope_dew_handler.report();
+    //relay_finder_dew_handler.report();
+    //relay_camera_handler.report();
 
     Serial.println("}");
     Serial.flush();
@@ -150,9 +150,10 @@ void main_loop() {
 int main() {
   init();
   setup();
-  led_handler.update();
   if (Serial) {
-    main_loop();
+    for(;;) {
+      main_loop();
+    }
   }
 }
 
