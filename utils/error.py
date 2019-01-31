@@ -121,22 +121,13 @@ class SolveError(NotFound):
     """ Camera cannot be imported """
     pass
 
+class BadSerialConnection(Error):
 
-class TheSkyXError(Error):
-    """ Errors from TheSkyX """
+    """ Error raised when serial command is bad """
     pass
 
 
-class TheSkyXKeyError(TheSkyXError):
-    """ Errors from TheSkyX because bad key passed """
+class ArduinoDataError(Error):
+    """Error raised when there is something very wrong with Arduino information."""
     pass
 
-
-class TheSkyXTimeout(TheSkyXError):
-    """ Errors from TheSkyX because bad key passed """
-    pass
-
-
-class GoogleCloudError(Error):
-    """ Errors related to google cloud """
-    pass
