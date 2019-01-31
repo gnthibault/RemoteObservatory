@@ -33,6 +33,7 @@ set(sources_official
   ${ARDUINO_SDK_PATH}/hardware/arduino/avr/cores/arduino/wiring_digital.c
   ${ARDUINO_SDK_PATH}/hardware/arduino/avr/cores/arduino/wiring_pulse.c
   ${ARDUINO_SDK_PATH}/hardware/arduino/avr/cores/arduino/wiring_shift.c
+  ${ARDUINO_SDK_PATH}/hardware/arduino/avr/cores/arduino/WMath.cpp
   ${ARDUINO_SDK_PATH}/hardware/arduino/avr/cores/arduino/WString.cpp
   ${ARDUINO_SDK_PATH}/libraries/Servo/src/avr/Servo.cpp
 )

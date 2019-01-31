@@ -1,7 +1,4 @@
 
-// Arduino libs
-#include <Servo.h>
-
 // Local
 #include "servo_handler.h"
 
@@ -13,6 +10,7 @@ void ServoHandler::init() {
 }
 
 void ServoHandler::setValue(int value) {
+  // Value should be in between 0 and 180
   servo_.write(value);
 }
 

@@ -9,7 +9,7 @@
 //#include "dht_handler.h"
 #include "led_handler.h"
 //#include "relay_handler.h"
-//#include "servo_handler.h"
+#include "servo_handler.h"
 
 // DHT22 temperature sensor
 #define DHTTYPE DHT22       // DHT 22  (AM2302)
@@ -25,7 +25,7 @@ const int SCOPE_FAN_RELAY       = 6;//main telescope prim. mirror fans
 
 // PWMs
 const int SCOPE_SERVO_DUSTCAP  = 7;//main telescope dustcap
-const int FINDER_SERVO_DUSTCAP = 8;//finderscope dustcap
+const int FINDER_SERVO_DUSTCAP = 9;//finderscope dustcap
 
 // Timers
 unsigned long end_setup_millis;
@@ -52,7 +52,7 @@ LedHandler led_handler;
 //RelayHandler relay_camera_handler(CAMERA_RELAY, relay_cam_name);
 //RelayHandler relay_camera_handler(CAMERA_RELAY, relay_cam_name);
 //ServoHandler servo_scope_dustcap(SCOPE_SERVO_DUSTCAP);
-//ServoHandler servo_finder_dustcap(FINDER_SERVO_DUSTCAP);
+ServoHandler servo_finder_dustcap(FINDER_SERVO_DUSTCAP);
 
 void setup() {
   Serial.begin(9600);
@@ -67,7 +67,7 @@ void setup() {
   //relay_finder_dew_handler.init();
   //relay_camera_handler.init();
   //servo_scope_dustcap.init();
-  //servo_finder_dustcap.init();
+  servo_finder_dustcap.init();
 
   Serial.println("EXIT setup()");
   next_report_millis = end_setup_millis = millis();
@@ -124,6 +124,10 @@ void main_loop() {
   while (Serial.available() > 0) {
     int pin_num = Serial.parseInt();
     int pin_status = Serial.parseInt();
+    Serial.print("pin_num was ");
+    Serial.print(pin_num);
+    Serial.print(" and status was ");
+    Serial.print(pin_status);
 
     switch (pin_num) {
       case LED_BUILTIN:
@@ -137,11 +141,8 @@ void main_loop() {
       case SCOPE_SERVO_DUSTCAP:
         //servo_scope_dustcap.setValue(pin_status);
       case FINDER_SERVO_DUSTCAP:
-        //servo_finder_dustcap.setValue(pin_status);
-        Serial.print("pin_num was ");
-        Serial.print(pin_num);
-        Serial.print(" and status was ");
-        Serial.print(pin_status);
+        // Value between 0 and 180
+        servo_finder_dustcap.setValue(pin_status);
         break;
     }
   }

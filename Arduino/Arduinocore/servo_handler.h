@@ -1,3 +1,6 @@
+// Arduino libs
+#include <Servo.h>
+
 class ServoHandler {
   public:
     ServoHandler(uint8_t pin);
