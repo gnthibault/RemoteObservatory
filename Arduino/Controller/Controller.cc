@@ -8,7 +8,7 @@
 #include <cxa_pure_virtual.h>
 //#include "dht_handler.h"
 #include "led_handler.h"
-//#include "relay_handler.h"
+#include "relay_handler.h"
 #include "servo_handler.h"
 
 // DHT22 temperature sensor
@@ -18,14 +18,18 @@ const int DHT_AIR_PIN   = 1;//outside air temperature
 const int DHT_BOX_PIN   = 2;//control box temperature
 
 // Relay
-const int SCOPE_DEW_HEAT_RELAY  = 3;//main telescope dew heater
+const int SCOPE_DEW_HEAT_RELAY  = 11;//main telescope dew heater
 const int FINDER_DEW_HEAT_RELAY = 4;//finderscope dew heater
 const int CAMERA_RELAY          = 5;//EOS camera power supply
 const int SCOPE_FAN_RELAY       = 6;//main telescope prim. mirror fans
 
 // PWMs
-const int SCOPE_SERVO_DUSTCAP  = 7;//main telescope dustcap
-const int FINDER_SERVO_DUSTCAP = 9;//finderscope dustcap
+const int SCOPE_SERVO_DUSTCAP  = 9;    //main telescope dustcap
+const int SCOPE_SERVO_MIN_PULSE = 780; //For futaba S3050
+const int SCOPE_SERVO_MAX_PULSE = 2180;//For futaba S3050
+const int FINDER_SERVO_DUSTCAP = 10;   //finderscope dustcap
+const int FINDER_SERVO_MIN_PULSE = 550; //For futaba S3003
+const int FINDER_SERVO_MAX_PULSE = 2350;//For futaba S3003
 
 // Timers
 unsigned long end_setup_millis;
@@ -47,12 +51,14 @@ const char* dht_box_name = "box";
 //DHTHandler dht_box_handler(DHT_BOX_PIN, DHTTYPE, dht_box_name);
 //DHTHandler dht_scope_handler(DHT_SCOPE_PIN, DHTTYPE, dht_scope_name);
 LedHandler led_handler;
-//RelayHandler relay_scope_dew_handler(SCOPE_DEW_HEAT_RELAY, relay_scope_name);
+RelayHandler relay_scope_dew_handler(SCOPE_DEW_HEAT_RELAY, relay_scope_name);
 //RelayHandler relay_finder_dew_handler(FINDER_DEW_HEAT_RELAY, relay_finder_name);
 //RelayHandler relay_camera_handler(CAMERA_RELAY, relay_cam_name);
-//RelayHandler relay_camera_handler(CAMERA_RELAY, relay_cam_name);
-//ServoHandler servo_scope_dustcap(SCOPE_SERVO_DUSTCAP);
-ServoHandler servo_finder_dustcap(FINDER_SERVO_DUSTCAP);
+//RelayHandler relay_scope_fan_handler(SCOPE_FAN_RELAY, relay_cam_name);
+ServoHandler servo_scope_dustcap(SCOPE_SERVO_DUSTCAP, SCOPE_SERVO_MIN_PULSE,
+                                 SCOPE_SERVO_MAX_PULSE);
+ServoHandler servo_finder_dustcap(FINDER_SERVO_DUSTCAP, FINDER_SERVO_MIN_PULSE,
+                                  FINDER_SERVO_MAX_PULSE);
 
 void setup() {
   Serial.begin(9600);
@@ -63,10 +69,11 @@ void setup() {
   //dht_box_handler.init();
   //dht_scope_handler.init();
   led_handler.init();
-  //relay_scope_dew_handler.init();
+  relay_scope_dew_handler.init();
   //relay_finder_dew_handler.init();
   //relay_camera_handler.init();
-  //servo_scope_dustcap.init();
+  //relay_scope_fan_handler.init();
+  servo_scope_dustcap.init();
   servo_finder_dustcap.init();
 
   Serial.println("EXIT setup()");
@@ -100,7 +107,7 @@ void main_loop() {
     Serial.print("{\"name\":\"scope_controller\", \"uptime\":");
     Serial.print((millis() - end_setup_millis)/1000);
     Serial.print("s , \"num\":");
-    Serial.print(report_num);
+    Serial.println(report_num);
 
     // Then each device report its own status
     //dht_air_handler.report();
@@ -127,22 +134,33 @@ void main_loop() {
     Serial.print("pin_num was ");
     Serial.print(pin_num);
     Serial.print(" and status was ");
-    Serial.print(pin_status);
+    Serial.println(pin_status);
+    Serial.flush();
 
     switch (pin_num) {
       case LED_BUILTIN:
         //led_handler.setValue(pin_status);
+        break;
       case SCOPE_DEW_HEAT_RELAY:
-        //relay_scope_dew_handler.setValue(pin_status);
+        relay_scope_dew_handler.setValue(pin_status);
+        break;
       case FINDER_DEW_HEAT_RELAY:
         //relay_finder_dew_handler.setValue(pin_status);
+        break;
       case CAMERA_RELAY:
         //relay_camer_handler.setValue(pin_status);
+        break;
       case SCOPE_SERVO_DUSTCAP:
-        //servo_scope_dustcap.setValue(pin_status);
+        // Value between 0 and 180
+        servo_scope_dustcap.setValue(pin_status);
+        break;
       case FINDER_SERVO_DUSTCAP:
         // Value between 0 and 180
         servo_finder_dustcap.setValue(pin_status);
+        break;
+      default:
+        Serial.print("Invalid pin id: ");
+        Serial.println(pin_num);
         break;
     }
   }
