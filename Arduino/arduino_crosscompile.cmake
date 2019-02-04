@@ -9,9 +9,14 @@ SET(CWARN "-Wall -Wstrict-prototypes")
 SET(CARCH  "-DARDUINO_ARCH_AVR")
 SET(CTUNING "-funsigned-char -funsigned-bitfields -fpack-struct -fshort-enums")
 SET(COPT "-Os")
-SET(CINCS "-I${ARDUINO_SDK_PATH}/hardware/arduino/avr/variants/standard -I${ARDUINO_SDK_PATH}/hardware/arduino/avr/cores/arduino -I${ARDUINO_SDK_PATH}/libraries/Servo/src/ -I${ARDUINO_BASE_DIR}/Arduinocore ")
+SET(CINCS "-I${ARDUINO_BASE_DIR}/Arduinocore\
+           -I${ARDUINO_SDK_PATH}/hardware/arduino/avr/cores/arduino\
+           -I${ARDUINO_SDK_PATH}/hardware/arduino/avr/libraries/Wire/src\
+           -I${ARDUINO_SDK_PATH}/hardware/arduino/avr/variants/standard\
+           -I${ARDUINO_SDK_PATH}/libraries/Firmata\
+           -I${ARDUINO_SDK_PATH}/libraries/Servo/src")
 SET(CMCU "-mmcu=atmega168")
-SET(CDEFS "-DF_CPU=16000000")
+SET(CDEFS "-DF_CPU=16000000 -DARDUINO=106")
 
 
 SET(CFLAGS "${CMCU} ${CARCH} ${CDEBUG} ${CDEFS} ${CINCS} ${COPT} ${CWARN} ${CSTANDARD} ${CEXTRA}")

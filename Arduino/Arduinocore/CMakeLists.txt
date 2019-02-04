@@ -35,6 +35,11 @@ set(sources_official
   ${ARDUINO_SDK_PATH}/hardware/arduino/avr/cores/arduino/wiring_shift.c
   ${ARDUINO_SDK_PATH}/hardware/arduino/avr/cores/arduino/WMath.cpp
   ${ARDUINO_SDK_PATH}/hardware/arduino/avr/cores/arduino/WString.cpp
+  ${ARDUINO_SDK_PATH}/hardware/arduino/avr/libraries/Wire/src/Wire.cpp
+  ${ARDUINO_SDK_PATH}/hardware/arduino/avr/libraries/Wire/src/utility/twi.c
+  ${ARDUINO_SDK_PATH}/libraries/Firmata/Firmata.cpp
+  ${ARDUINO_SDK_PATH}/libraries/Firmata/FirmataMarshaller.cpp
+  ${ARDUINO_SDK_PATH}/libraries/Firmata/FirmataParser.cpp
   ${ARDUINO_SDK_PATH}/libraries/Servo/src/avr/Servo.cpp
 )
 
