@@ -139,7 +139,6 @@ class ArduinoIO(Base):
         Base.__init__(self)
 
         self.board = board.lower()
-        self.port = serial_data.port
         self._serial_data = serial_data
         self._pub = pub
         self._sub = sub
@@ -147,6 +146,10 @@ class ArduinoIO(Base):
         self._report_next_reading = True
         self._cmd_channel = "{}:commands".format(board)
         self._keep_running = True
+
+    @property
+    def port(self):
+        return self._serial_data.port
 
     def run(self):
         """Main loop for recording data and reading commands.
@@ -174,7 +177,7 @@ class ArduinoIO(Base):
             # Consider adding an error counter.
             if not self._report_next_reading:
                 self.logger.warning('Unable to read from {}. Will report when '
-                                    'next successful read.', self.port)
+                                    'next successful read.'.format(self.port))
                 self._report_next_reading = True
             return False
         if self._report_next_reading:
