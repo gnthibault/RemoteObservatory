@@ -23,7 +23,6 @@ def reset_global_config():
 
 
 class Base:
-
     """ Base class for other classes within the PANOPTES ecosystem
 
     Defines common properties for each class (e.g. logger, config).

@@ -41,7 +41,7 @@ class AbstractDB(metaclass=abc.ABCMeta):
         if collection not in self.collection_names:
             msg = 'Collection type {!r} not available'.format(collection)
             self._warn(msg)
-            # Can't import pocs.utils.error earlier
+            # Can't import utils.error earlier
             from utils.error import InvalidCollection
             raise InvalidCollection(msg)
 
@@ -187,7 +187,7 @@ class DB():
 
         # Pre-defined list of collections that are valid.
         collection_names = [
-            'camera_board',
+            'scope_controller',
             'config',
             'current',
             'drift_align',

@@ -7,18 +7,24 @@ set(headers_arduino
   DHT.h
   dht_handler.h
   led_handler.h
+  LM335.h
+  Moonlite.h
   PinUtils.h
   relay_handler.h
   servo_handler.h
+  StepperControl_A4988.h
 )
 
 set(sources_arduino
   DHT.cpp
   dht_handler.cpp
   led_handler.cpp
+  LM335.cpp
+  Moonlite.cpp
   PinUtils.cpp
   relay_handler.cpp
   servo_handler.cpp
+  StepperControl_A4988.cpp
 )
 
 # Reference stuff
@@ -37,9 +43,6 @@ set(sources_official
   ${ARDUINO_SDK_PATH}/hardware/arduino/avr/cores/arduino/WString.cpp
   ${ARDUINO_SDK_PATH}/hardware/arduino/avr/libraries/Wire/src/Wire.cpp
   ${ARDUINO_SDK_PATH}/hardware/arduino/avr/libraries/Wire/src/utility/twi.c
-  ${ARDUINO_SDK_PATH}/libraries/Firmata/Firmata.cpp
-  ${ARDUINO_SDK_PATH}/libraries/Firmata/FirmataMarshaller.cpp
-  ${ARDUINO_SDK_PATH}/libraries/Firmata/FirmataParser.cpp
   ${ARDUINO_SDK_PATH}/libraries/Servo/src/avr/Servo.cpp
 )
 

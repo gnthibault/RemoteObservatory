@@ -104,10 +104,11 @@ void main_loop() {
     //bool cam_relay_stat = digitalRead(CAMERA_RELAY);
 
     // Format/output the results: main entry: 
-    Serial.print("{\"name\":\"scope_controller\", \"uptime\":");
+    Serial.print("{\"name\":\"scope_controller\", \"uptime\": \"");
     Serial.print((millis() - end_setup_millis)/1000);
-    Serial.print("s , \"num\":");
-    Serial.println(report_num);
+    Serial.print("s\" , \"num\":\"");
+    Serial.print(report_num);
+    Serial.print("\"");
 
     // Then each device report its own status
     //dht_air_handler.report();
@@ -118,7 +119,6 @@ void main_loop() {
     //relay_camera_handler.report();
 
     Serial.println("}");
-    Serial.flush();
   }
 
   // Read any serial input
@@ -174,5 +174,6 @@ int main() {
       main_loop();
     }
   }
+  return EXIT_SUCCESS;
 }
 

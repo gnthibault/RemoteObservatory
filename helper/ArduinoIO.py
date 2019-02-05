@@ -10,6 +10,8 @@ import serial
 from serial import serialutil
 import traceback
 
+# Local stuff
+from Base.Base import Base
 from utils.error import ArduinoDataError
 from utils import rs232
 
@@ -70,7 +72,8 @@ def detect_board_on_port(port, logger=None):
             if not reading:
                 return None
             (ts, data) = reading
-            if isinstance(data, dict) and 'name' in data and isinstance(data['name'], str):
+            if isinstance(data, dict) and 'name' in data and isinstance(
+                                                            data['name'], str):
                 return data['name']
             logger.warning('Unable to find board name in reading: {}', reading)
             return None
@@ -99,11 +102,12 @@ def open_serial_device(port, serial_config=None, **kwargs):
     # Using a long timeout (2 times the report interval) rather than
     # retries which can just break a JSON line into two unparseable
     # fragments.
-    defaults = dict(baudrate=9600, retry_limit=1, retry_delay=0, timeout=4.0, name=port)
-    params = collections.ChainMap(dict(port=port), kwargs, serial_config or {}, defaults)
+    defaults = dict(baudrate=9600, retry_limit=1, retry_delay=0, timeout=4.0,
+                    name=port)
+    params = collections.ChainMap(dict(port=port), kwargs, serial_config or {},
+                                  defaults)
     params = dict(**params)
     return rs232.SerialData(**params)
-
 
 class ArduinoIO(Base):
     """Supports reading from and writing to Arduinos.
@@ -113,7 +117,7 @@ class ArduinoIO(Base):
         {'name': self.board, 'timestamp': t, 'data': reading}
     """
 
-    def __init__(self, board, serial_data, db, pub, sub):
+    def __init__(self, board, serial_data, pub=None, sub=None):
         """Initialize for board on device.
 
         Args:
@@ -121,6 +125,7 @@ class ArduinoIO(Base):
                 The name of the board, used as the name of the database
                 table/collection to write to, and the name of the messaging
                 channels for readings or relay commands.
+                can be scope_controller
             serial_data:
                 A SerialData instance connected to the board.
             db:
@@ -131,10 +136,11 @@ class ArduinoIO(Base):
                 PanMessaging subscriber from which to read relay change
                 instructions.
         """
+        Base.__init__(self)
+
         self.board = board.lower()
         self.port = serial_data.port
         self._serial_data = serial_data
-        self._db = db
         self._pub = pub
         self._sub = sub
         self._last_reading = None
@@ -167,13 +173,13 @@ class ArduinoIO(Base):
         if not reading:
             # Consider adding an error counter.
             if not self._report_next_reading:
-                self.logger.warning(
-                    'Unable to read from {}. Will report when next successful read.',
-                    self.port)
+                self.logger.warning('Unable to read from {}. Will report when '
+                                    'next successful read.', self.port)
                 self._report_next_reading = True
             return False
         if self._report_next_reading:
-            self.logger.info('Succeeded in reading from {}; got:\n{}', self.port, reading)
+            self.logger.info('Succeeded in reading from {}; got:\n{}',
+                             self.port, reading)
             self._report_next_reading = False
         self.handle_reading(reading)
         return True
@@ -192,7 +198,8 @@ class ArduinoIO(Base):
             if self._serial_data.is_connected:
                 self._serial_data.disconnect()
         except Exception as e:
-            self.logger.error('Failed to disconnect from {} due to: {}', self.port, e)
+            self.logger.error('Failed to disconnect from {} due to: {}',
+                              self.port, e)
 
     def reconnect(self):
         """Disconnect from and connect to the serial port.
@@ -219,27 +226,30 @@ class ArduinoIO(Base):
         try:
             return self._serial_data.get_and_parse_reading(retry_limit=1)
         except serial.SerialException as e:
-            self.logger.error('Exception raised while reading from port {}', self.port)
-            self.logger.error('Exception: {}', "\n".join(traceback.format_exc()))
+            self.logger.error('Exception raised while reading from port {}',
+                              self.port)
+            self.logger.error('Exception: {}', "\n".join(
+                              traceback.format_exc()))
             if self.reconnect():
                 return None
             raise e
 
     def handle_reading(self, reading):
         """Saves a reading as the last_reading and writes to output_queue."""
-        # TODO(jamessynge): Discuss with Wilfred changing the timestamp to a datetime object
+        # TODO(jamessynge): Discuss with Wilfred changing timestamp to datetime
         # instead of a string. Obviously it needs to be serialized eventually.
         timestamp, data = reading
         if data.get('name', self.board) != self.board:
-            msg = 'Board reports name {}, expected {}'.format(data['name'], self.board)
+            msg = 'Board reports name {}, expected {}'.format(data['name'],
+                                                              self.board)
             self.logger.critical(msg)
             raise ArduinoDataError(msg)
         reading = dict(name=self.board, timestamp=timestamp, data=data)
         self._last_reading = copy.deepcopy(reading)
         if self._pub:
             self._pub.send_message(self.board, reading)
-        if self._db:
-            self._db.insert_current(self.board, reading)
+        if self.db:
+            self.db.insert_current(self.board, reading)
 
     def handle_commands(self):
         """Read and process commands for up to 1 second.
@@ -267,7 +277,8 @@ class ArduinoIO(Base):
         exists on this device.
         """
         if msg['command'] == 'shutdown':
-            self.logger.info('Received command to shutdown ArduinoIO for board {}', self.board)
+            self.logger.info('Received command to shutdown ArduinoIO for '
+                             'board {}', self.board)
             self._keep_running = False
         elif msg['command'] == 'write_line':
             line = msg['line'].rstrip('\r\n')
