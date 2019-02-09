@@ -19,6 +19,7 @@ observatory:
     gmt_offset: 60 # Minutes
     scope_controller:
         module : ArduiScopeController
+        board : scope_controller
         port : /dev/ttyACM0
     dome_controller:
         module : None

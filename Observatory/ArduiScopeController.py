@@ -5,8 +5,13 @@ import logging
 from Base.Base import Base
 
 class ArduiScopeController(Base):
-    def __init__(self):
+    def __init__(self, config=None):
         Base.__init__(self)
+
+        if config is None:
+            config = dict(
+            )
+
         self.latest_status = dict(main_status="inactive")
 
     def initialize(self):
