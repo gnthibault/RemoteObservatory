@@ -56,7 +56,7 @@ class Image(Base):
 
         # Location Information
         if location is None:
-            cfg_loc = self.config['location']
+            cfg_loc = self.config['observatory']
             location = EarthLocation(lat=cfg_loc['latitude'],
                                      lon=cfg_loc['longitude'],
                                      height=cfg_loc['elevation'],

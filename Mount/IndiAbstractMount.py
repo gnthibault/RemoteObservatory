@@ -38,11 +38,11 @@ class IndiAbstractMount(IndiMount, AbstractMount):
         AZ Azimuth, degrees E of N
     """
     def __init__(self, indiClient, location, serv_time,
-                 configFileName=None):
+                 config=None, connectOnCreate=True):
 
         # device related intialization
         IndiMount.__init__(self, indiClient=indiClient,
-                           configFileName=configFileName, 
+                           config=config, 
                            connectOnCreate=False)
         # setup AbstractMount config
         self._setup_abstract_config()
@@ -50,7 +50,8 @@ class IndiAbstractMount(IndiMount, AbstractMount):
         AbstractMount.__init__(self, location=location,
                                serv_time=serv_time)
 
-
+        if connectOnCreate:
+            self.connect()
 
 ###############################################################################
 # Overriding Properties

@@ -21,9 +21,9 @@ from ObservationPlanner.LocalHorizonConstraint import LocalHorizonConstraint
 
 class DefaultScheduler(Scheduler):
 
-    def __init__(self, ntpServ, obs, config_file_name=None, path='.'):
+    def __init__(self, ntpServ, obs, config=None, path='.'):
         """ Inherit from the `Base Scheduler` """
-        Scheduler.__init__(self, ntpServ, obs, config_file_name=None, path='.')
+        Scheduler.__init__(self, ntpServ, obs, config=config, path=path)
 
         # TODO TN add non boolean Airmass Constraint, Local horizon and Moon
         # Separation

@@ -5,7 +5,7 @@ import sys
 # Local stuff
 #from pocs import hardware
 from version import __version__
-from utils import config
+from utils.config import load_config
 from utils.database import DB
 
 # Global vars
@@ -33,7 +33,7 @@ class Base:
         global _config
         if _config is None:
             ignore_local_config = kwargs.get('ignore_local_config', False)
-            _config = config.load_config(ignore_local=ignore_local_config)
+            _config = load_config(ignore_local=ignore_local_config)
 
         self.__version__ = __version__
 

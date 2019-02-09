@@ -7,8 +7,8 @@ import io
 from Camera.IndiAbstractCamera import IndiAbstractCamera
 from Camera.IndiCamera import IndiCamera
 
-class IndiEos350DCamera(IndiAbstractCamera):
-    ''' Indi Camera class for eos 350D (3456 × 2304 apsc cmos) '''
+class IndiEos6DCamera(IndiAbstractCamera):
+    ''' Indi Camera class for eos 6D ( ×  full frame cmos) '''
 
     def __init__(self, indiClient, config=None,
                  connectOnCreate=True):
@@ -24,7 +24,7 @@ class IndiEos350DCamera(IndiAbstractCamera):
                             config=config)
 
         # Finished configuring
-        self.logger.debug('Configured Indi Eos 350D Camera successfully')
+        self.logger.debug('Configured Indi Eos 6D Camera successfully')
 
     '''
       Indi CCD related stuff

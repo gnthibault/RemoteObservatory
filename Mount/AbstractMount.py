@@ -54,7 +54,6 @@ class AbstractMount(Base):
         #self._location = location
 
         # Initial states
-        self._is_connected = False
         self._is_initialized = False
 
         self._is_slewing = False
@@ -119,13 +118,6 @@ class AbstractMount(Base):
         self._location = location
         # If the location changes we need to update the mount
         self._setup_location_for_mount()
-
-    @property
-    def is_connected(self):
-        """ bool: Checks the serial connection on the mount to determine if
-            connection is open
-        """
-        return self._is_connected
 
     @property
     def is_initialized(self):

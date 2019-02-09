@@ -1,5 +1,4 @@
 # Basic stuff
-import json
 import logging
 import os
 
@@ -22,29 +21,37 @@ class ShedObservatory(Base):
     """Shed Observatory 
     """
 
-    def __init__(self, configFileName=None, logger=None, servWeather=None):
+    def __init__(self, logger=None, servWeather=None, config=None):
         Base.__init__(self)
         
-        if configFileName is None:
-            self.configFileName = './conf_files/ShedObservatory.json'
-        else:
-            self.configFileName = configFileName
-
         # Now configuring class
-        self.logger.debug('Configuring ShedObservatory with file {}'.format(
-                          self.configFileName))
+        self.logger.debug('Configuring ShedObservatory')
 
-        # Get key from json
-        with open(self.configFileName) as jsonFile:
-            data = json.load(jsonFile)
-            self.gpsCoordinates = data['gpsCoordinates']
-            self.logger.debug('ShedObservatory gps coordinates are: {}'.format(
-                              self.gpsCoordinates))
-            self.altitudeMeter = int(data['altitudeMeter'])
-            self.horizon = data['horizon']
-            self.owner_name = data['ownerName']
-            dome_module_name = data['domeModuleName']
-            #flat_panel_module_name = data['flatPanelName']
+        if config is None:
+            config = dict(
+                investigator = 'gnthibault',
+                latitude = 45.01,  # Degrees
+                longitude = 3.01,  # Degrees
+                elevation = 600.0, # Meters
+                horizon = {    # Degrees
+                    0 : 30,
+                    90 : 30,
+                    180 : 30,
+                    270 : 30},
+                scope_controller = dict(
+                    module = 'ArduiScopeController',
+                    port = '/dev/ttyACM0'),
+                dome_controller = dict(
+                    module = None,
+                    port = '/dev/ttyACM1')
+            )
+
+        # Get info from config
+        self.gpsCoordinates = dict(latitude = config['latitude'],
+                                   longitude = config['longitude'])
+        self.altitudeMeter = config['elevation']
+        self.horizon = config['horizon']
+        self.investigator = config['investigator']
         
         # Now find the timezone from the gps coordinate
         tzw = tzwhere.tzwhere()
@@ -54,21 +61,27 @@ class ShedObservatory(Base):
         self.logger.debug('Found timezone for observatory: {}'.format(
                           self.timezone.zone))
 
-        # If dome is specified in the config, load dome
-        if dome_module_name is not 'None':
-            dome_module = load_module('Observatory.'+dome_module_name)
-            self.dome = getattr(dome_module, dome_module_name)()
-        else:
-            self.dome = None
+        # If scope controller is specified in the config, load
+        try:
+            cfg = config['scope_controller']
+            scope_controller_name = cfg['module']
+            scope_controller = load_module('Observatory.'+scope_controller_name)
+            self.scope_controller = getattr(scope_controller,
+                                            scope_controller_name)(cfg)
+        except Exception as e:
+            self.logger.warning("Cannot load scope module: {}".format(e))
+            self.scope_controller = None
 
-        # If flat panel is specified in the config, load flat_panel
-        #if flat_panel_module_name is not 'None':
-        #    flat_panel_module = load_module('Observatory.'+
-        #                                    flat_panel_module_name)
-        #    self.flat_panel = getattr(flat_panel_module,
-        #                              flat_panel_module_name)()
-        #else
-        self.flat_panel = None
+        # If dome controller is specified in the config, load
+        try:
+            cfg = config['dome_controller']
+            dome_controller_name = cfg['module']
+            dome_controller = load_module('Observatory.'+dome_controller_name)
+            self.dome_controller = getattr(dome_controller,
+                                           dome_controller_name)(cfg)
+        except Exception as e:
+            self.logger.warning("Cannot load dome module: {}".format(e))
+            self.dome_controller = None
 
         # Other services
         self.servWeather = servWeather
@@ -79,17 +92,17 @@ class ShedObservatory(Base):
     def initialize(self):
         self.logger.debug("Initializing observatory")
         if self.has_dome:
-            self.dome.initialize()
-        if self.has_flat_panel:
-            self.flat_panel.initialize()
+            self.dome_controller.initialize()
+        if self.has_scope:
+            self.scope_controller.initialize()
         self.logger.debug("Successfully initialized observatory")
 
     def deinitialize(self):
         self.logger.debug("Deinitializing observatory")
         if self.has_dome:
-            self.dome.deinitialize()
-        if self.has_flat_panel:
-            self.flat_panel.deinitialize()
+            self.dome_controller.deinitialize()
+        if self.has_scope:
+            self.scope_controller.deinitialize()
         self.logger.debug("Successfully deinitialized observatory")
 
     def getGpsCoordinates(self):
@@ -105,21 +118,23 @@ class ShedObservatory(Base):
         return self.horizon
 
     def getOwnerName(self):
-        return self.owner_name
+        return self.investigator
 
     @property
     def has_dome(self):
-        return self.dome is not None
+        return self.dome_controller is not None
 
     @property
-    def has_flat_panel(self):
-        return self.flat_panel is not None
+    def has_scope(self):
+        return self.scope_controller is not None
 
     def open_everything(self):
         try:
             self.logger.debug('ShedObservatory: open everything....')
             if self.has_dome:
-                self.dome.open()
+                self.dome_controller.open()
+            if self.has_scope:
+                self.scope_controller.open()
             self.logger.debug('ShedObservatory: everything opened')
         except Exception as e:
             self.logger.error('Failed opening everything, error: {}'.format(e))
@@ -130,7 +145,9 @@ class ShedObservatory(Base):
         try:
             self.logger.debug('ShedObservatory: close everything....')
             if self.has_dome:
-                self.dome.close()
+                self.dome_controller.close()
+            if self.has_scope:
+                self.scope_controller.close()
             self.logger.debug('ShedObservatory: everything closed')
         except Exception as e:
             self.logger.error('Failed closing everything, error: {}'.format(e))
@@ -142,16 +159,16 @@ class ShedObservatory(Base):
         self.close_everything()
         self.logger.debug('ShedObservatory: on emergency routine finished')
 
-    def switchOnFlatPannel(self):
-        if self.has_flat_panel:
+    def switch_on_flat_panel(self):
+        if self.has_scope_controller:
             self.logger.debug('ShedObservatory: Switching on flat pannel')
-            self.flat_panel.switch_on()
+            self.scope_controller.switch_on_flat_panel()
             self.logger.debug('ShedObservatory: Flat pannel switched on')
 
-    def switchOffFlatPannel(self):
-        if self.has_flat_panel:
+    def switch_off_flat_panel(self):
+        if self.has_scope_controller:
             self.logger.debug('ShedObservatory: Switching off flat pannel')
-            self.flat_panel.switch_off()
+            self.scope_controller.switch_off_flat_panel()
             self.logger.debug('ShedObservatory: Flat pannel switched off')
 
     def getAstropyEarthLocation(self):
@@ -169,7 +186,7 @@ class ShedObservatory(Base):
             relative_humidity = self.servWeather.getRelative_humidity()
             temperature = self.servWeather.getTemp_c() * AU.deg_C
 
-        observer = Observer(name=self.owner_name,
+        observer = Observer(name=self.investigator,
             location=location,
             pressure=pressure,
             relative_humidity=relative_humidity,
@@ -180,15 +197,14 @@ class ShedObservatory(Base):
         return observer
 
     def status(self):
-        status = {'owner': self.owner_name,
+        status = {'owner': self.investigator,
                   'location': self.gpsCoordinates,
                   'altitude': self.altitudeMeter,
                   'timezone': str(self.timezone) # not directly serializable
                  }
-
         if self.has_dome:
-            status['dome'] = self.dome.status()
-        if self.has_flat_panel:
-            status['flat_panel'] = self.flat_panel.status()
+            status['dome'] = self.dome_controller.status()
+        if self.has_scope:
+            status['scope'] = self.scope_controller.status()
 
         return status

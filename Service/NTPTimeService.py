@@ -9,6 +9,7 @@ from datetime import datetime
 from datetime import timedelta 
 import ntplib
 import pytz
+from tzwhere import tzwhere
 
 # Astropy stuff
 from astropy import units as AU
@@ -25,32 +26,48 @@ class NTPTimeService(BaseService):
     '''
     DEFAULT_TIMEZONE_STR = 'Europe/Paris'
 
-    def __init__(self, configFileName=None, obs=None, logger=None):
+    def __init__(self, tz=None, logger=None):
+        """ tz can be obtained by obs.get_time_zone()
+        """
+
         BaseService.__init__(self)
-        if configFileName is None:
-            # Default file is ntp.json
-            self.configFileName = './conf_files/ntp.json'
+
+        # Get ntp server from config
+        cfg = self.config['ntp']
+        self.logger.debug('NTPTimeservice config: {}'.format(cfg))
+        self.ntpserver = cfg['ntpserver']
+
+        if tz is not None:
+            try:
+                utc_test = datetime.utcnow()
+                test = utc_test.astimezone(self.timezone)
+            except Exception as e:
+                self.logger.warning('NTPTimeservice: wrong tz format provided'
+                                    ' :{}'.format(e))
+                self.tz = None
+            else:
+                self.tz = tz
         else:
-            self.configFileName = configFileName
+            try:
+                #try to get timezone from config file
+                gps = dict(latitude = self.config['observatory']['latitude'],
+                           longitude = self.config['observatory']['longitude'])
+                # Now find the timezone from the gps coordinate
+                tzw = tzwhere.tzwhere()
+                timezone_str = tzw.tzNameAt(gps['latitude'], gps['longitude'])
+                self.tz = pytz.timezone(timezone_str)
+            except Exception as e:
+                self.logger.warning('NTPTimeservice: cannot get tz from config'
+                                    ' :{}'.format(e))
+                self.tz = None
 
-        # Now configuring
-        self.logger.debug('Configuring NTP Time Service with file {}'.format(
-                          self.configFileName))
-
-        # Get ntp server from json
-        with open(self.configFileName) as jsonFile:  
-            data = json.load(jsonFile)
-            self.ntpserver = data['ntpserver']
-
-        self.obs = obs
-        
         # Finished configuring
         self.logger.debug('Configured NTP Time Service successfully')
 
     @property
     def timezone(self):
-        if not (self.obs is None):
-            return self.obs.get_time_zone()
+        if self.tz is not None:
+            return self.tz
         else:
             return pytz.timezone(self.DEFAULT_TIMEZONE_STR)
 
@@ -80,11 +97,9 @@ class NTPTimeService(BaseService):
         return self.getLocalTimeFromNTP().date()
 
     def getAstropyTimeFromUTC(self):
-        if self.obs is None:
-            return ATime(self.getUTCFromNTP())
-        else:
-            return ATime(self.getUTCFromNTP(),
-                         location=self.obs.getAstropyEarthLocation())
+        return ATime(self.getUTCFromNTP())
+        #return ATime(self.getUTCFromNTP(),
+        #    location=self.obs.getAstropyEarthLocation())
 
     def convert_to_local_time(self, utc_time):
         #If naive time, set to utc by default
@@ -92,7 +107,7 @@ class NTPTimeService(BaseService):
             utc_dt = pytz.utc.localize(utc_time, is_dst=None)
         else:
             utc_dt = copy.deepcopy(utc_time)
-        return utc_dt.astimezone()
+        return utc_dt.astimezone(self.timezone)
 
     def convert_to_utc_time(self, local_time):
         #If naive time, set to local by default

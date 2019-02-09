@@ -18,7 +18,7 @@ from astropy.io import fits
 import astropy.units as u
 
 # Local stuff: Focuser
-from Focuser.IndiFocuser import IndiFocuser
+from utils import load_module
 
 class IndiCamera(IndiDevice):
     """ Indi Camera """
@@ -30,28 +30,27 @@ class IndiCamera(IndiDevice):
     DEFAULT_EXP_TIME_SEC = 5
     MAXIMUM_EXP_TIME_SEC = 3601
 
-    def __init__(self, indiClient, logger=None, config_filename=None,
+    def __init__(self, indiClient, logger=None, config=None,
                  connectOnCreate=True):
         logger = logger or logging.getLogger(__name__)
         
-        if config_filename is None:
-            self.config_filename = './conf_files/IndiCCDSimulatorCamera.json'
-        else:
-            self.config_filename = config_filename
+        if config is None:
+            config = dict(
+                camera_name = 'CCD Simulator',
+                focuser = dict(
+                    module = "IndiFocuser",
+                    focuser_name = ""))
 
-        # Now configuring class
-        logger.debug('Configuring Indi Camera with file {}'.format(
-                      self.config_filename))
-
-        self.focuser = None
-        # Get key from json
-        with open(self.config_filename) as jsonFile:
-            data = json.load(jsonFile)
-            deviceName = data['cameraName']
-            if 'focuserCfg' in data:
-                self.focuser = IndiFocuser(indiClient=indiClient,
-                                           config_filename=data['focuserCfg'],
-                                           connectOnCreate=connectOnCreate)
+        deviceName = config['camera_name']
+        # If scope focuser is specified in the config, load
+        try:
+            cfg = config['focuser']
+            focuser_name = cfg['module']
+            focuser = load_module('Camera.'+focuser_name)
+            self.fouser = getattr(focuser, focuser_name)(cfg)
+        except Exception as e:
+            self.logger.warning("Cannot load focuser module: {}".format(e))
+            self.scope_controller = None
 
         logger.debug('Indi camera, camera name is: {}'.format(deviceName))
       

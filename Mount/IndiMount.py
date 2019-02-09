@@ -34,21 +34,13 @@ class IndiMount(IndiDevice):
         AZ Azimuth, degrees E of N
     """
     def __init__(self, indiClient, connectOnCreate=True, logger=None,
-                 configFileName=None):
+                 config=None):
         logger = logger or logging.getLogger(__name__)
         
-        if configFileName is None:
-            self.configFileName = 'conf_files/IndiSimulatorMount.json'
-        else:
-            self.configFileName = configFileName
+        if config is None:
+            config = dict(mount_name = "Telescope Simulator")
 
-        # Now configuring class
-        logger.debug('Indi Mount, configuring with file {}'.format(
-            self.configFileName))
-        # Get key from json
-        with open(self.configFileName) as jsonFile:
-            data = json.load(jsonFile)
-            deviceName = data['MountName']
+        deviceName = config['mount_name']
 
         logger.debug('Indi Mount, mount name is: {}'.format(
             deviceName))

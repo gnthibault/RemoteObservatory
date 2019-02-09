@@ -24,33 +24,14 @@ from astroplan import Observer
 # Local stuff: Base
 from Base.Base import Base
 
-# Local stuff: Camera
-from Camera.IndiAbstractCamera import IndiAbstractCamera
-from Camera.IndiEos350DCamera import IndiEos350DCamera
-
-# Local stuff: FilterWheel
-from FilterWheel.IndiFilterWheel import IndiFilterWheel
-
 # Local stuff: IndiClient
 from helper.IndiClient import IndiClient
-
-# Local stuff: Imaging tools
-#from Imaging.AsyncWriter import AsyncWriter
-#from Imaging.FitsWriter import FitsWriter
-
-# Local stuff: Mount
-from Mount.IndiAbstractMount import IndiAbstractMount
 
 # Local stuff: Observation planning
 from ObservationPlanner.DefaultScheduler import DefaultScheduler
 
 # Local stuff: Observatory
 from Observatory.ShedObservatory import ShedObservatory
-
-# Local stuff: Sequencer
-#from Sequencer.ShootingSequence import ShootingSequence
-#from Sequencer.SequenceBuilder import SequenceBuilder
-#from Sequencer.AutoDarkStep import AutoDarkCalculator, AutoDarkSequence
 
 # Local stuff: Service
 from Service.WUGWeatherService import WUGWeatherService
@@ -586,16 +567,6 @@ class Manager(Base):
 ##########################################################################
 
     def _setup_image_directory(self, path='.'):
-        #Create a new path, whatever the input is
-        #path = os.path.realpath(path)
-        #test_path = path
-        #path_idx = 0
-        #while os.path.exists(test_path):
-        #    test_path = (path+'-'+str(datetime.now().date())+'-'+
-        #                 str(path_idx))
-        #    path_idx += 1
-        #os.makedirs(test_path, exist_ok=False)
-        #self._image_dir = test_path
         self._image_dir = self.config['directories']['images']
 
     def _setup_indi_client(self):
@@ -603,7 +574,10 @@ class Manager(Base):
             setup the indi client that will communicate with devices
         """
         try:
-            self.indi_client = IndiClient()
+            #TODO TN: at some point, this is going to be removed, and each
+            # device will instanciate its own client, depending on which machine
+            # the physical device is attached to
+            self.indi_client = IndiClient(config=self.config['indiclient'])
             self.indi_client.connect()
         except Exception:
             raise RuntimeError('Problem setting up indi client')
@@ -627,7 +601,8 @@ class Manager(Base):
             setup an observatory that stands for the physical building
         """
         try:
-            self.observatory = ShedObservatory()
+            self.observatory = ShedObservatory(
+                config = self.config['observatory'])
         except Exception:
             raise RuntimeError('Problem setting up observatory')
 
@@ -635,12 +610,18 @@ class Manager(Base):
         """
             Setup a mount object.
         """
-        #try:
-        self.mount = IndiAbstractMount(indiClient=self.indi_client,
-                                       location=self.earth_location,
-                                       serv_time=self.serv_time)
-        #except Exception:
-        #    raise error.MountNotFound('Problem setting up mount')
+        try:
+            mount_name = self.config['mount']['module']
+            mount_module = load_module('Mount.'+mount_name)
+            self.mount = getattr(mount_module, mount_name)(
+                indiClient = self.indi_client,
+                location = self.earth_location,
+                serv_time = self.serv_time,
+                config = self.config['mount'])
+
+        except Exception as e:
+            self.logger.warning("Cannot load mount module: {}".format(e))
+            raise error.MountNotFound('Problem setting up mount')
 
     def _setup_cameras(self, **kwargs):
         """
@@ -649,15 +630,15 @@ class Manager(Base):
         """
         self.cameras = OrderedDict()
         try:
-            cam = IndiAbstractCamera(serv_time=self.serv_time,
-                                     indiClient=self.indi_client,
-                                     primary=True,
-                                     connectOnCreate=True)
+            cam_name = self.config['camera']['module']
+            cam_module = load_module('Camera.'+cam_name)
+            cam = getattr(cam_module, cam_name)(
+                serv_time=self.serv_time,
+                indiClient=self.indi_client,
+                config = self.config['camera'],
+                primary=True,
+                connectOnCreate=True)
             cam.prepareShoot()
-            # test indi camera class on a old EOS350D
-            #cam = IndiEos350DCamera(indiClient=self.indi_client,\
-            #                        configFileName='IndiEos350DCamera.json',
-            #                        connectOnCreate=True)
  
         except Exception as e:
             raise RuntimeError('Problem setting up camera: {}'.format(e))
@@ -675,8 +656,13 @@ class Manager(Base):
             Setup a filterwheel object.
         """
         try:
-            self.filterwheel = IndiFilterWheel(indiClient=self.indi_client,
-                                               connectOnCreate=True)
+            if 'filterwheel' in self.config:
+                fw_name = self.config['filterwheel']['module']
+                fw_module = load_module('FilterWheel.'+fw_name)
+                self.filterwheel = getattr(fw_module, fw_name)(
+                    indiClient = self.indi_client,
+                    config = self.config['filterwheel'],
+                    connectOnCreate=True)
         except Exception:
             raise RuntimeError('Problem setting up filterwheel')
 

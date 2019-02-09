@@ -23,26 +23,19 @@ class IndiClient(PyIndi.BaseClient, Base):
     C++ thread, and not by the python main thread, so be careful.
   '''
 
-  def __init__(self, configFileName=None):
+  def __init__(self, config):
       # Init "our" Base class
       Base.__init__(self)
 
       # Call indi client base classe ctor
       PyIndi.BaseClient.__init__(self)
 
-      if configFileName is None:
-          self.configFileName = './conf_files/IndiClient.json'
-      else:
-          self.configFileName = configFileName
-
-      # Now configuring class
-      self.logger.debug('Configuring Indiclient with file {}'.format(
-          self.configFileName))
-      # Get key from json
-      with open(self.configFileName) as jsonFile:
-          data = json.load(jsonFile)
-          self.remoteHost = data['remoteHost']
-          self.remotePort = int(data['remotePort'])
+      if config is None:
+            config = dict(indi_host = "localhost",
+                          indi_port = 7624)
+     
+      self.remoteHost = config['indi_host']
+      self.remotePort = int(config['indi_port'])
 
       self.setServer(self.remoteHost,self.remotePort)  
       self.logger.debug('Indi Client, remote host is: {} : {}'.format(

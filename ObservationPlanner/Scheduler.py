@@ -18,7 +18,7 @@ from astroplan import ObservingBlock
 from Base.Base import Base
 #from ObservationPlanner.ObservationPlanner import ObservationPlanner
 from ObservationPlanner.Observation import Observation
-
+from utils.config import load_config
 
 class Scheduler(Base):
 
@@ -26,7 +26,7 @@ class Scheduler(Base):
     # we split into smaller slots
     MaximumSlotDurationSec = 60 * 15
 
-    def __init__(self, ntpServ, obs, config_file_name=None, path='.'):
+    def __init__(self, ntpServ, obs, config=None, path='.'):
         """Loads `~pocs.scheduler.field.Field`s from a field
 
         Note:
@@ -60,11 +60,6 @@ class Scheduler(Base):
 
         Base.__init__(self)
 
-        if config_file_name is None:
-            self.config_file_name = './conf_files/TargetList.json'
-        else:
-            self.config_file_name = config_file_name
-
         self.obs = obs
         self.serv_time = ntpServ
         self.target_list = dict()
@@ -72,6 +67,12 @@ class Scheduler(Base):
         self._current_observation = None
         self.observed_list = OrderedDict()
         self.constraints = []
+
+        if config is None:
+            self.target_list = load_config(config_files=['targets'])
+        else:
+            self.target_list = config
+        self.logger.debug('Target list: {}'.format(self.target_list))
 
         # Initialize obs planner, that does the main job
         #self.obs_planner = ObservationPlanner(ntpServ, obs, config_file, path)
@@ -201,17 +202,9 @@ class Scheduler(Base):
 
     def initialize_target_list(self):
         """Reads the field file and creates valid `Observations` """
-        if self.config_file_name is not None:
-            self.logger.debug('Reading target lists from file: {}'.format(
-                              self.config_file_name))
-
-            # Get config from json
-            with open(self.config_file_name) as json_file:
-                self.target_list = json.load(json_file)
-                self.logger.debug('Target list: {}'.format(self.target_list))
 
         # Now add observation to the list
-        if self.target_list is None:
+        if not self.target_list:
             self.logger.warning('Target list seems to be empty')
             return
 

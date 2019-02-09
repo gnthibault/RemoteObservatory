@@ -21,7 +21,7 @@ class LocalHorizonConstraint(Constraint):
         """
         self.boolean_constraint = boolean_constraint
         self.hor_az = np.sort(list(map(int,horizon.keys())))
-        self.hor_alt = (np.array([int(horizon[str(i)]) for i in self.hor_az])*
+        self.hor_alt = (np.array([int(horizon[i]) for i in self.hor_az])*
                         AU.deg)
         #self.hor_alt = np.zeros(360)*AU.deg
 
