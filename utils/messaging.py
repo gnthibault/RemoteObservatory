@@ -12,7 +12,6 @@ from json import loads
 
 #from pocs.utils import current_time
 from Service.NTPTimeService import NTPTimeService
-#from pocs.utils.logger import get_root_logger
 
 
 class PanMessaging(object):
@@ -70,7 +69,6 @@ class PanMessaging(object):
             A ZMQ PUB socket
         """
         obj = cls()
-
         obj.logger.debug("Creating publisher. Binding to port {} ".format(port))
 
         socket = obj.context.socket(zmq.PUB)
@@ -94,7 +92,8 @@ class PanMessaging(object):
 
         """
         obj = cls()
-        obj.logger.debug("Creating subscriber. Port: {} \tChannel: {}".format(port, channel))
+        obj.logger.debug("Creating subscriber. Port: {} \tChannel: {}".format(
+            port, channel))
 
         socket = obj.context.socket(zmq.SUB)
 
@@ -160,7 +159,7 @@ class PanMessaging(object):
             flags = flags | zmq.NOBLOCK
         try:
             message = self.socket.recv_string(flags=flags)
-        except Exception:
+        except Exception as e:
             pass
         else:
             msg_type, msg = message.split(' ', maxsplit=1)

@@ -21,6 +21,9 @@ observatory:
         module : ArduiScopeController
         board : scope_controller
         port : /dev/ttyACM0
+        pin_scope_dustcap : 10
+        pin_finder_dustcap : 11
+        pin_flat_panel : 12
     dome_controller:
         module : None
         port : /dev/ttyACM1
@@ -41,7 +44,8 @@ indiclient: #To be removed, each device can have its own client
     indi_host : localhost
     indi_port : 7624
 mount:
-    #IndiG11
+    #module: IndiG11
+    #mount_name: Losmandy Gemini
     module: IndiAbstractMount
     mount_name : Telescope Simulator
     indi_host : localhost

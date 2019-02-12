@@ -24,7 +24,7 @@ def main(board, port, cmd_port, msg_port):
     serial_data = ArduinoIO.open_serial_device(
         port, serial_config=serial_config, name=board)
     sub = PanMessaging.create_subscriber(cmd_port)
-    pub = PanMessaging.create_publisher(msg_port)
+    pub = PanMessaging.create_publisher(msg_port, bind=True)
     aio = ArduinoIO.ArduinoIO(board, serial_data, pub, sub)
     aio.run()
 

@@ -31,10 +31,10 @@ const int FINDER_SERVO_DUSTCAP = 10;   //finderscope dustcap
 const int FINDER_SERVO_MIN_PULSE = 550; //For futaba S3003
 const int FINDER_SERVO_MAX_PULSE = 2350;//For futaba S3003
 
-// Timers
+// Timers, interval between reports
 unsigned long end_setup_millis;
 uint64_t next_report_millis;
-const uint64_t interval = 1000;
+const uint64_t interval = 5000;
 unsigned int report_num = 0;
 
 // Names, to be used in Serial communications
@@ -51,8 +51,9 @@ const char* dht_box_name = "box";
 //DHTHandler dht_box_handler(DHT_BOX_PIN, DHTTYPE, dht_box_name);
 //DHTHandler dht_scope_handler(DHT_SCOPE_PIN, DHTTYPE, dht_scope_name);
 LedHandler led_handler;
-RelayHandler relay_scope_dew_handler(SCOPE_DEW_HEAT_RELAY, relay_scope_name);
+//RelayHandler relay_scope_dew_handler(SCOPE_DEW_HEAT_RELAY, relay_scope_name);
 //RelayHandler relay_finder_dew_handler(FINDER_DEW_HEAT_RELAY, relay_finder_name);
+//RelayHandler relay_gpu_dew_handler(GPU_DEW_HEAT_RELAY, relay_gpu_name);
 //RelayHandler relay_camera_handler(CAMERA_RELAY, relay_cam_name);
 //RelayHandler relay_scope_fan_handler(SCOPE_FAN_RELAY, relay_cam_name);
 ServoHandler servo_scope_dustcap(SCOPE_SERVO_DUSTCAP, SCOPE_SERVO_MIN_PULSE,
@@ -69,12 +70,13 @@ void setup() {
   //dht_box_handler.init();
   //dht_scope_handler.init();
   led_handler.init();
-  relay_scope_dew_handler.init();
+  //relay_scope_dew_handler.init();
   //relay_finder_dew_handler.init();
+  //relay_gpu_dew_handler.init();
   //relay_camera_handler.init();
   //relay_scope_fan_handler.init();
-  servo_scope_dustcap.init();
-  servo_finder_dustcap.init();
+  //servo_scope_dustcap.init();
+  //servo_finder_dustcap.init();
 
   Serial.println("EXIT setup()");
   next_report_millis = end_setup_millis = millis();
@@ -100,6 +102,7 @@ void main_loop() {
     //dht_scope_handler.collect();
     //relay_scope_dew_handler.collect();
     //relay_finder_dew_handler.collect();
+    //relay_gpu_dew_handler.collect();
     //relay_camera_handler.collect();
     //bool cam_relay_stat = digitalRead(CAMERA_RELAY);
 
@@ -116,6 +119,7 @@ void main_loop() {
     //dht_scope_handler.report();
     //relay_scope_dew_handler.report();
     //relay_finder_dew_handler.report();
+    //relay_gpu_dew_handler.report();
     //relay_camera_handler.report();
 
     Serial.println("}");
@@ -139,10 +143,10 @@ void main_loop() {
 
     switch (pin_num) {
       case LED_BUILTIN:
-        //led_handler.setValue(pin_status);
+        led_handler.setValue(pin_status);
         break;
       case SCOPE_DEW_HEAT_RELAY:
-        relay_scope_dew_handler.setValue(pin_status);
+        //relay_scope_dew_handler.setValue(pin_status);
         break;
       case FINDER_DEW_HEAT_RELAY:
         //relay_finder_dew_handler.setValue(pin_status);
@@ -152,11 +156,11 @@ void main_loop() {
         break;
       case SCOPE_SERVO_DUSTCAP:
         // Value between 0 and 180
-        servo_scope_dustcap.setValue(pin_status);
+        //servo_scope_dustcap.setValue(pin_status);
         break;
       case FINDER_SERVO_DUSTCAP:
         // Value between 0 and 180
-        servo_finder_dustcap.setValue(pin_status);
+        //servo_finder_dustcap.setValue(pin_status);
         break;
       default:
         Serial.print("Invalid pin id: ");
