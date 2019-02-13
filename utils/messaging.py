@@ -19,6 +19,39 @@ class PanMessaging(object):
     """Messaging class for PANOPTES project. Creates a new ZMQ
     context that can be shared across parent application.
 
+    Bind vs Connect, extract of 0MZ doc:
+
+    **Why do I see different behavior when I bind a socket versus connect a socket?
+
+    ZeroMQ creates queues per underlying connection, e.g. if your socket is
+    connected to 3 peer sockets there are 3 messages queues.
+    With bind, you allow peers to connect to you, thus you don't know how many
+    peers there will be in the future and you cannot create the queues in advance.
+    Instead, queues are created as individual peers connect to the bound socket.
+
+    With connect, ZeroMQ knows that there's going to be at least a single peer
+    and thus it can create a single queue immediately. This applies to all
+    socket types except ROUTER, where queues are only created after the peer
+    we connect to has acknowledge our connection.
+
+    Consequently, when sending a message to bound socket with no peers, or a
+    ROUTER with no live connections, there's no queue to store the message to.
+
+    **When should I use bind and when connect?
+
+    As a very general advice: use bind on the most stable points in your
+    architecture and connect from the more volatile endpoints. For
+    request/reply the service provider might be point where you bind and the
+    client uses connect. Like plain old TCP.
+
+    If you can't figure out which parts are more stable (i.e. peer-to-peer)
+    think about a stable device in the middle, where boths sides can connect to.
+
+    The question of bind or connect is often overemphasized. It's really just
+    a matter of what the endpoints do and if they live long — or not. And this
+    depends on your architecture. So build your architecture to fit your
+    problem, not to fit the tool.
+
     """
     logger = logging.getLogger('PanMessaging')
     #TODO TN URGENT
