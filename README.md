@@ -44,12 +44,15 @@ or
 
 conda install -c conda-forge pygobject
 
-## Support for the Dash dashboard:
+## Support for the Dash dashboard (legacy, not used anymore):
 
 pip install dash dash-core-components dash-html-components dash-renderer plotly
 
 
-
+## Support for openPHD2
+sudo add-apt-repository ppa:pch/phd2
+sudo apt-get update
+sudo apt-get install phd2
 
 
 ## TODO: WORK IN PROGRESS: DO NOT USE BEFORE THIS IS DONE

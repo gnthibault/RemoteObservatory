@@ -1,7 +1,8 @@
-#out libraries
-import socket
+#Standard stuff
 import json
 from transitions import Machine
+import socket
+import sys
 
 #local libs
 from Base.Base import Base
@@ -28,9 +29,10 @@ class GuiderPHD2(Base):
         Paused       PHD is paused
         Looping      PHD is looping exposures
     """
-    states = ['NotConnected', 'Guiding', 'Paused', 'Calibrating', 'Looping',
-              'Stopped']
+    states = ['NotConnected', 'Connected', 'Guiding', 'Paused', 'Calibrating',
+              'Looping', 'Stopped']
     transitions = [
+        { 'trigger': 'connection_trig', 'source': '*', 'dest': 'Connected' },
         { 'trigger': 'GuideStep', 'source': '*', 'dest': 'Guiding' },
         { 'trigger': 'Paused', 'source': '*', 'dest': 'Paused' },
         { 'trigger': 'StartCalibration', 'source': '*', 'dest': 'Calibrating' },
@@ -40,24 +42,167 @@ class GuiderPHD2(Base):
         { 'trigger': 'ConnectionLost', 'source': '*', 'dest': 'NotConnected' }
         ]
 
-    def __init__(self, name, config=None):
+    def __init__(self, config=None):
+        super().__init__()
         if config is None:
             config = dict(
-                phd_port = 4400,
+                host = "localhost",
+                port = 4400,
             )
+
+        self.host = config["host"]
+        self.port = config["port"]
+        self.sock = None
+        self.id = 1
+        self.mount = None
+
         # Initialize the state machine
         self.machine = Machine(model = self,
                                states = GuiderPHD2.states,
                                transitions = GuiderPHD2.transitions,
                                initial = GuiderPHD2.states[0])
+    def connect(self):
+        self.logger.info("Connect to server PHD2 {}:{}".format(self.host,
+                         self.port))
+        # Create a socket (SOCK_STREAM means a TCP socket)
+        self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.sock.settimeout(1.0)
+
+        try:
+            # Connect to server and send data
+            self.sock.connect((self.host, self.port))
+        except:
+            self.logger.error("Connection failed server PHD2 {}:{}".format(
+                              self.host,self.port))
+            print(sys.exc_info()[0])
+        self.receive()
+        self.connection_trig()
+
+    def send_request(self, req):
+        base = dict(jsonrpc="2.0")
+        base.update(req)
+        json_txt = json.dumps(base)+'\r\n'
+        self.logger.debug("sending msg {}".format(json_txt[:-2]))
+        try:
+            self.sock.sendall(json_txt.encode())
+        except Exception as e:
+            self.logger.error("send_request failed: {}".format(e))
+
+    def disconnect(self):
+        self.logger.info("Closing connection to server PHD2 {}:{}".format(
+                         self.host,self.port))
+        self.sock.close()
+
+    def clear_calibration(self):
+        json_txt = ('{"jsonrpc":"2.0", "method": "clear_calibration", "params"'
+                    ': {"mount": "{}"}, "id":{}  } \r\n'.format(self.mount))
+        self.id+=1
+        self.send_json(json_txt)
+
+    def dither(self, pixels=3.0):
+        json_txt = ('{"jsonrpc":"2.0", "method": "dither", "params"'
+                    ': {"PIXELS": "{}"}, "id":{}  } \r\n'.format(pixels))
+        self.id+=1
+        self.send_json(json_txt)
+        
+    def find_star(self):
+        req={"method": "find_star",
+             "params": [],
+             "id":self.id}
+        self.id+=1
+        self.send_request(req)
+        status = self.receive()
+        if result in status:
+            if not status["result"]:
+                self.logger.error("PHD2 find_star failed")
+        else:
+            #TODO get pixel coordinates
+            print("Actual status of find star is {}".format(status))
+            self.lock_coordinates = status
+
+    def set_lock_position(self, pos_x, pos_y):
+        json_txt=('{"jsonrpc":"2.0", "method": "set_lock_position", "params": '
+                 '{"x":{:.1f} , "y":{:.1f} }, "id":{} } \r\n'.format(
+                 pos_x, pos_y, self.id))
+        self.id+=1
+        self.send_json(json_txt)
+
+    def set_exposure(self, exp_time_sec):
+        exp_time_milli = exp_time_sec*1000
+        json_txt=('{"jsonrpc":"2.0", "method": "set_exposure", "params": [{}],'
+                 ' "id": {}} \r\n'.format(expo_time_milli, self.id))
+        self.id+=1
+        self.send_json(json_txt)
+
+    def loop(self):
+        json_txt=('{"jsonrpc":"2.0", "method": "loop", "params": [], "id":{} }'
+                 ' \r\n'.format(self.id))
+        self.id+=1
+        self.send_json(json_txt)
+
+    def stop(self):
+        json_txt=('{"jsonrpc":"2.0", "method": "stop_capture", "params": [], '
+                 '"id":{} } \r\n'.format(self.id))
+        self.id+=1
+        self.send_json(json_txt)
+
+    def guide(self):
+        json_txt=('{"jsonrpc":"2.0", "method": "guide", "params": '
+                 '[{"pixels": 1.5, "time": 8, "timeout": 40}, false],'
+                 ' "id":{} } \r\n'.format(self.id))
+        self.id+=1
+        self.send_json(json_txt)
+
+    #### Getters ####
+    def get_app_state(self):
+        json_txt=('{"jsonrpc":"2.0", "method": "get_app_state", "params": [], '
+                 '"id":{} } \r\n'.format(self.id))
+        self.id+=1
+        self.send_json(json_txt)
+        data = self.receive()
+
+    def get_calibrated(self):
+        json_txt=('{"jsonrpc":"2.0", "method": "get_calibrated", "params": [], '
+                 '"id":{} } \r\n'.format(self.id))
+        self.id+=1
+        self.send_json(json_txt)
+        data = self.receive()
+
+    def get_connected(self):
+        req={"method": "get_connected",
+             "params": [],
+             "id":self.id}
+        self.id+=1
+        self.send_request(req)
+        data = self.receive()
+
+
+    #### Some specific handle code for decoding messages ####
+
+    def receive(self):
+        # Receive data from the server
+        try:
+            received = self.sock.recv(1024)
+            msg = received.decode().split("\r\n")[0]
+        except socket.timeout:
+            self.logger.warning("PHD2 Timeout: No response from server")
+            return ""
+        try:
+            event = json.loads(msg)
+            self.handle_event(event)
+            return event
+        except Exception as e:
+            self.logger.error("PHD2 error on message {}:{}".format(msgs, e))
+            return ""
 
     def handle_event(self, event):
-        method_name = "handle_{}.format"(event["event"])
-        if hasattr(self, method_name):
-            getattr(self, method_name)(event)
-        else:
-            self.logger.warning("No method called {} to handle event !".format(
-                method_name))
+        if "Event" in event:
+            method_name = "handle_{}".format(event["Event"])
+            if hasattr(self, method_name):
+                getattr(self, method_name)(event)
+            else:
+                self.logger.warning("No method called {} to handle event !"
+                    "".format(method_name))
 
     def handle_Version(self, event):
         """Describes the PHD and message protocol versions.
@@ -68,6 +213,10 @@ class GuiderPHD2(Base):
                               The current version is 1. We will bump this
                               number if the message protocol changes
         """
+        self.logger.debug("Received version {}:{} - msg ver {}".format(
+                          *[event[key] for key in ["PHDVersion","PHDSubver",
+                                                   "MsgVersion"]]))
+
     def handle_LockPositionSet(self, event):
         """The lock position has been established.
            Attribute Type    Description
@@ -75,7 +224,7 @@ class GuiderPHD2(Base):
            Y         number  lock position Y-coordinate
         """
         self.logger.debug("Lock position X:{} , Y:{} has been established"
-                          "".format(event["X"], event["Y"])
+                          "".format(event["X"], event["Y"]))
                           
     def handle_Calibrating(self, event):
         """ Attribute Type            Description
@@ -91,7 +240,7 @@ class GuiderPHD2(Base):
         """
         self.logger.debug("Calibrating mount {}, on star position {}, "
             "step number {}, current state {} ".format(
-            [event[key] for key in ["Mount","pos","step","State"]]))
+            *[event[key] for key in ["Mount","pos","step","State"]]))
 
 
 
@@ -142,7 +291,7 @@ class GuiderPHD2(Base):
             StarLost                 LostLock
         """
         self.logger.debug("PHD2 state is {}".format(event["State"]))
-        
+        self.machine.set_state(event["State"])    
 
     def handle_CalibrationFailed(self, event):
         """Calibration failed.
@@ -152,7 +301,7 @@ class GuiderPHD2(Base):
         self.logger.debug("Calibration failed ! Reason: {}".format(
             event["Reason"]))
 
-    def handle_CalibrationDataFlipped
+    def handle_CalibrationDataFlipped(self, event):
         """Calibration data has been flipped.
            Attribute   Type    Description
            Mount       string  the name of the mount
@@ -174,6 +323,7 @@ class GuiderPHD2(Base):
            (no event attributes)
         """
         self.logger.debug("Looping exposure has stopped ")
+        self.LoopingExposureStopped()
 
     def handle_SettleBegin(self, event):
         """Sent when settling begins after a dither or guide method invocation.
@@ -198,7 +348,7 @@ class GuiderPHD2(Base):
         """
         self.logger.debug("Still in the process of settling, current distance "
             " is {}, time since settling process started {}/{}. Target guiding "
-            " star status (is found?): {}".format([event[key] for key in
+            " star status (is found?): {}".format(*[event[key] for key in
             ["Distance", "Time", "SettleTime", "StarLocked"]]))
 
     def handle_SettleDone(self, event):
@@ -215,7 +365,7 @@ class GuiderPHD2(Base):
                                  star not found) while settling
         """
         self.logger.debug("Done with settling,  status: {}. Dropped frames: "
-            "{}/{}. Error: {}".format([event[key] for key in
+            "{}/{}. Error: {}".format(*[event[key] for key in
             ["Status","DroppedFrames","TotalFrames","Error"]]))
 
     def handle_StarLost(self, event):
@@ -232,9 +382,8 @@ class GuiderPHD2(Base):
            Status     string  error message
         """
         self.logger.debug("Error {}: {}. Frame {} dropped because of lost star"
-            " SNR was {} and average distance was {}".format([event[key] for
+            " SNR was {} and average distance was {}".format(*[event[key] for
             key in ["ErrorCode","Status","Frame","SNR","AvgDist"]]))
-            event[""]))
 
     def handle_GuidingStopped(self, event):
         """Guiding has stopped.
@@ -286,8 +435,8 @@ class GuiderPHD2(Base):
            ErrorCode        number  the star finder error code
         """
         self.logger.debug("Guiding frame {}, for mount {} received."
-            "dx: {}, dy: {}, StarMass: {}, SNR".format([event[key] for key in
-            ["Frame","Mount","dx","dy","StarMass","SNR"]))
+            "dx: {}, dy: {}, StarMass: {}, SNR".format(*[event[key] for key in
+            ["Frame","Mount","dx","dy","StarMass","SNR"]]))
 
     def handle_GuidingDithered(self, event):
         """The lock position has been dithered.
@@ -296,7 +445,7 @@ class GuiderPHD2(Base):
            dy         number  the dither Y-offset in pixels
         """
         self.logger.debug("Dithering from current position by x:{} pix, and "
-            "y:{} pix".format([event[key] for key in ["dx", "dy"]]))
+            "y:{} pix".format(*[event[key] for key in ["dx", "dy"]]))
 
     def handle_LockPositionLost(self, event):
         """The lock position has been lost.
@@ -312,7 +461,7 @@ class GuiderPHD2(Base):
                               or "error"
         """
         self.logger.warning("PHD2 Alert {}:{}".format(
-            [event[key] for key in ["Msg","Type"]]))
+            *[event[key] for key in ["Msg","Type"]]))
 
     def handle_GuideParamChange(self, event):
         """A guiding parameter has been changed.
@@ -321,5 +470,4 @@ class GuiderPHD2(Base):
            Value      any     the new value of the parameter
         """
         self.logger.debug("PHD2 parameter {} changed: {}".format(
-            [event[key] for key in ["Name","Value"]]))
-
+            *[event[key] for key in ["Name","Value"]]))
