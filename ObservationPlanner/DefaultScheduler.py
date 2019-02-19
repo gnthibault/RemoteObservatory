@@ -23,19 +23,29 @@ class DefaultScheduler(Scheduler):
 
     def __init__(self, ntpServ, obs, config=None, path='.'):
         """ Inherit from the `Base Scheduler` """
-        Scheduler.__init__(self, ntpServ, obs, config=config, path=path)
+        super().__init__(self, ntpServ, obs, config=config, path=path)
 
-        # TODO TN add non boolean Airmass Constraint, Local horizon and Moon
-        # Separation
-        self.constraints = [
-            AirmassConstraint(max=3, boolean_constraint=True),
-            AtNightConstraint.twilight_astronomical(),
-            MoonSeparationConstraint(min=45*u.deg),
-            LocalHorizonConstraint(horizon=self.obs.get_horizon(),
-                                           boolean_constraint=True)]
-        #self.constraints = [
-        #    AirmassConstraint(max=6, boolean_constraint=True)]
-        #self.constraints = []
+        # Initialize constraints for scheduling
+        self.constraints.append(AtNightConstraint.twilight_astronomical())
+        try:
+            # TODO TN maybe non boolean Airmass Constraint
+            self.constraints.append(
+                AirmassConstraint(max=config["constraints"]["maxairmass"],
+                                  boolean_constraint=True))
+        except Exception as e:
+            self.logger.warning("Cannot add airmass constraint: {}".format(e))
+        try
+            self.constraints.append(
+                MoonSeparationConstraint(
+                    min=config["constraints"]["minmoonseparationdeg"]*u.deg))
+        except Exception as e:
+            self.logger.warning("Cannot add moon sep constraint: {}".format(e))
+        try
+            self.constraints.append(
+                LocalHorizonConstraint(horizon=self.obs.get_horizon(),
+                                       boolean_constraint=True))
+        except Exception as e:
+            self.logger.warning("Cannot add horizon constraint: {}".format(e))
 
 ##########################################################################
 # Properties

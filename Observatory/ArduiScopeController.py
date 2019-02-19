@@ -17,7 +17,8 @@ class ArduiScopeController(Base):
                 msg_port = 6510,
                 pin_scope_dustcap = 10,
                 pin_finder_dustcap = 11,
-                pin_flat_panel=13
+                pin_flat_panel=13,
+                pin_fan_primary=14,
             )
 
         self.config = config
@@ -60,31 +61,60 @@ class ArduiScopeController(Base):
         msg['line'] = '{} {}'.format(pin, value)
         self._pub.send_message(self._cmd_channel, msg)
 
+    def send_blocking_order(self, pin, value):
+        self.send_order(pin, value)
+        self.wait_feedback(pin, value)
+
+    def wait_feedback(self, pin, value):
+        is_confirmed = False
+
+        while not is_confirned:
+            mtype, mmsg = self._sub.receive_message(blocking=True)
+            for entry in mmsg:
+                try:
+                    cpin, cval = [entry[x] for x in ['pin_number', 'pin_value']]
+                except KeyError as ke:
+                    pass
+            is_confirmed = True if (cpin==pin) and (cval==value) else False
+        
+
     def open(self):
         """ blocking call: opens both main telescope and guiding scope dustcap
         """
         self.logger.debug("Opening ArduiScopeController")
-        self.send_order(self.config['pin_scope_dustcap'], 1)
-        self.send_order(self.config['pin_finder_dustcap'], 1)
+        self.send_blocking_order(self.config['pin_scope_dustcap'], 1)
+        self.send_blocking_order(self.config['pin_finder_dustcap'], 1)
 
     def close(self):
         """ blocking call: closes both main telescope and guiding scope dustcap
         """
         self.logger.debug("Closing ArduiScopeController")
-        self.send_order(self.config['pin_scope_dustcap'], 0)
-        self.send_order(self.config['pin_finder_dustcap'], 0)
+        self.send_blocking_order(self.config['pin_scope_dustcap'], 0)
+        self.send_blocking_order(self.config['pin_finder_dustcap'], 0)
 
     def switch_on_flat_panel(self):
         """ blocking call: switch on flip flat
         """
         self.logger.debug("Switching on flip flat")
-        self.send_order(self.config['pin_flat_panel'], 1)
+        self.send_blocking_order(self.config['pin_flat_panel'], 1)
 
     def switch_off_flat_panel(self):
         """ blocking call: switch off flip flat
         """
         self.logger.debug("Switching off flip flat")
-        self.send_order(self.config['pin_flat_panel'], 0)
+        self.send_blocking_order(self.config['pin_flat_panel'], 0)
+
+    def switch_on_scope_fan(self):
+        """ blocking call: switch on fan to cool down primary mirror
+        """
+        self.logger.debug("Switching on fan to cool down primary mirror")
+        self.send_blocking_order(self.config['pin_fan_primary'], 1)
+
+    def switch_off_scope_fan(self):
+        """ blocking call: switch off fan for primary mirror
+        """
+        self.logger.debug("Switching off telescope fan on primary mirror")
+        self.send_blocking_order(self.config['pin_fan_primary'], 0)
 
     def receive_status(self):
         try:

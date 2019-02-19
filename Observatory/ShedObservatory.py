@@ -21,7 +21,7 @@ class ShedObservatory(Base):
     """Shed Observatory 
     """
 
-    def __init__(self, logger=None, servWeather=None, config=None):
+    def __init__(self, servWeather=None, config=None):
         Base.__init__(self)
         
         # Now configuring class
@@ -144,10 +144,10 @@ class ShedObservatory(Base):
     def close_everything(self):
         try:
             self.logger.debug('ShedObservatory: close everything....')
-            if self.has_dome:
-                self.dome_controller.close()
             if self.has_scope:
                 self.scope_controller.close()
+            if self.has_dome:
+                self.dome_controller.close()
             self.logger.debug('ShedObservatory: everything closed')
         except Exception as e:
             self.logger.error('Failed closing everything, error: {}'.format(e))

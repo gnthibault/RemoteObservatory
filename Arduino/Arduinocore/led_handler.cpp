@@ -19,7 +19,6 @@ void LedHandler::init() {
       delay(50);
       toggle_led();
     }
-    Serial.println("LED blink complete");
   } else {
     // 2 seconds of slow blinks.
     for (int i = 0; i < 10; ++i) {
@@ -46,4 +45,16 @@ void LedHandler::setValue(int value) {
   } else {
     turn_pin_on(pin_);
   }
+}
+
+void LedHandler::collect() {
+}
+
+void LedHandler::report() {
+  val = 0; //TODO TN
+  Serial.print("{\"name\":\"led_handler\", \"pin_number\": \"");
+  Serial.print(pin_);
+  Serial.print(" , \"pin_value\": ");
+  Serial.print(value);
+  Serial.println("\"}");
 }

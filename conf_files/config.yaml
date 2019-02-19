@@ -24,6 +24,7 @@ observatory:
         pin_scope_dustcap : 10
         pin_finder_dustcap : 11
         pin_flat_panel : 12
+        pin_fan_primary : 13
     dome_controller:
         module : None
         port : /dev/ttyACM1

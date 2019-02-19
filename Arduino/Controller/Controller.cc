@@ -34,7 +34,7 @@ const int FINDER_SERVO_MAX_PULSE = 2350;//For futaba S3003
 // Timers, interval between reports
 unsigned long end_setup_millis;
 uint64_t next_report_millis;
-const uint64_t interval = 5000;
+const uint64_t interval = 1000;
 unsigned int report_num = 0;
 
 // Names, to be used in Serial communications
@@ -117,6 +117,7 @@ void main_loop() {
     //dht_air_handler.report();
     //dht_box_handler.report();
     //dht_scope_handler.report();
+    led_handler.report();
     //relay_scope_dew_handler.report();
     //relay_finder_dew_handler.report();
     //relay_gpu_dew_handler.report();
