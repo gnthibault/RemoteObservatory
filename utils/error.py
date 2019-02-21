@@ -26,6 +26,12 @@ class Error(AstropyWarning, Base):
         print("TERMINATING: {}".format(msg))
         sys.exit(1)
 
+class GuidingError(Error):
+
+    """ Error for a guiding system malfunction """
+
+    def __init__(self, msg='Guiding problem'):
+        super().__init__(msg)
 
 class InvalidSystemCommand(Error):
 
