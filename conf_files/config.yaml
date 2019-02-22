@@ -72,7 +72,15 @@ nofilterwheel: #maybe one day
         OIII : 6
         SII : 7
         LPR : 8
-
+guider:
+    exposure : 2.5
+    settle :
+        pixels : 1.5
+        time : 10
+        timeout : 60
+    dither :
+        pixels : 3.0
+        ra_only : False
 messaging:
     # Must match ports in peas.yaml.
     cmd_port: 6500

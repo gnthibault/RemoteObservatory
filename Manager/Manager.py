@@ -7,7 +7,6 @@ import os
 import time
 import traceback
 
-
 # Asynchronous stuff
 from threading import Event
 from threading import Thread
@@ -23,6 +22,9 @@ from astroplan import Observer
 
 # Local stuff: Base
 from Base.Base import Base
+
+# Local stuff: Guider
+from Guider.GuiderPHD2 import GuiderPHD2
 
 # Local stuff: IndiClient
 from helper.IndiClient import IndiClient
@@ -83,6 +85,10 @@ class Manager(Base):
         # Setup filter wheel
         self.logger.info('\tSetting up filterwheel')
         self._setup_filterwheel()
+
+        # setup guider
+        self.logger.info('\tSetting up guider')
+        self.setup_guider()
 
         # Setup observation planner
         self.logger.info('\tSetting up observation planner')
@@ -235,7 +241,6 @@ class Manager(Base):
         Loops through the `observed_list` performing cleanup tasks. Resets
         `observed_list` when done
 
-        """
         upload_images = False
 
         for seq_time, observation in self.scheduler.observed_list.items():
@@ -261,6 +266,8 @@ class Manager(Base):
             self.logger.debug('Cleanup finished')
 
         self.scheduler.reset_observed_list()
+        """
+        self.logger.warning("TODO TN SHOULD CLEANUP THE DATA HERE")
 
     def observe(self):
         """Take individual images for the current observation
@@ -359,7 +366,7 @@ class Manager(Base):
         should adjust in a given direction, one for each axis.
 
         Uses the `rate_adjustment` key from the `self.current_offset_info`
-        """
+        
         if self.current_offset_info is not None:
             self.logger.debug("Updating the tracking")
 
@@ -428,6 +435,17 @@ class Manager(Base):
 
                     self.logger.debug("Waiting for RA tracking adjustment")
                     time.sleep(0.1)
+        """
+        if self.guider is not None:
+            self.guider.dither(*self.config['guider']['dither'])
+
+
+    def initialize_tracking(self):
+        # start each observation by setting up the guider
+        if model.manager.guider is not None:
+            model.logger.info("Starting guider before observing")
+            model.manager.guider.reset_guiding()
+            model.manager.guider.guide()
 
     def get_standard_headers(self, observation=None):
         """Get a set of standard headers
@@ -555,11 +573,55 @@ class Manager(Base):
                  else True if closed (or if not exists).
         """
         try:
+            # close actual dome + everything managed by obsy
             self.observatory.close_everything()
+
+            #close running guider server and client
+            if self.guider is not None:
+                self.guider.disconnect()
+
             return True
         except Exception as e:
             self.logger.error(
                 "Problem closing observatory: {}".format(e))
+            return False
+
+    def unpark(self)
+        try:
+            # unpark the mount
+            self.mount.unpark()
+
+            # unpark the observatory
+            self.observatory.unpark()
+
+            #connect guider server and client
+            if self.guider is not None:
+                self.guider.launch_server()
+                self.guider.connect()
+
+            return True
+        except Exception as e:
+            self.logger.error(
+                "Problem parking: {}".format(e))
+            return False
+
+    def park(self)
+        try:
+            # park the mount
+            self.mount.park()
+
+            # park the observatory
+            self.observatory.park()
+
+            #close running guider server and client
+            if self.guider is not None:
+                self.guider.disconnect()
+                self.guider.terminate_server()
+
+            return True
+        except Exception as e:
+            self.logger.error(
+                "Problem parking: {}".format(e))
             return False
 
 ##########################################################################
@@ -665,6 +727,21 @@ class Manager(Base):
                     connectOnCreate=True)
         except Exception:
             raise RuntimeError('Problem setting up filterwheel')
+
+    def _setup_guider(self):
+        """
+            Setup a guider object.
+        """
+        try:
+            if 'guider' in self.config:
+                guider_exposure = self.config['guider']['exposure']
+                guider_settle = self.confi['guider']['settle']
+                self.guider = GuiderPHD2()
+#                self.guider = self.config['guider'], connect_on_create=True)
+                self.guider.set_exposure(guider_exposure)
+                self.guider.set_settle(*guider_settle)
+        except Exception:
+            raise RuntimeError('Problem setting up guider')
 
 
     def _setup_scheduler(self):

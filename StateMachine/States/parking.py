@@ -9,7 +9,7 @@ def on_enter(event_data):
     model.next_state = 'parked'
 
     model.logger.debug("Taking it on home and then parking.")
-    model.manager.mount.park()
+    model.manager.park()
     
     if not model.manager.observatory.close_everything():
         model.logger.critical('Unable to close dome!')

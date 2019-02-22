@@ -1,5 +1,6 @@
 #Standard stuff
 import json
+import os 
 from transitions import Machine
 import socket
 import sys
@@ -34,6 +35,7 @@ class GuiderPHD2(Base):
               'Looping', 'Stopped']
     transitions = [
         { 'trigger': 'connection_trig', 'source': '*', 'dest': 'Connected' },
+        { 'trigger': 'disconnection_trig', 'source': '*', 'dest': 'NotConnected' },
         { 'trigger': 'GuideStep', 'source': '*', 'dest': 'Guiding' },
         { 'trigger': 'Paused', 'source': '*', 'dest': 'Paused' },
         { 'trigger': 'StartCalibration', 'source': '*', 'dest': 'Calibrating' },
@@ -63,6 +65,13 @@ class GuiderPHD2(Base):
                                states = GuiderPHD2.states,
                                transitions = GuiderPHD2.transitions,
                                initial = GuiderPHD2.states[0])
+    def launch_server(self):
+        cmd = 'phd2' 
+        os.popen(cmd)
+
+    def terminate_server(self):
+        self.shutdown()
+
     def connect(self):
         self.logger.info("Connect to server PHD2 {}:{}".format(self.host,
                          self.port))
@@ -78,26 +87,27 @@ class GuiderPHD2(Base):
             self._receive({"Event":"AppState"}) # get state
             self.set_connected(True)
             # we make sure that we are starting from a "proper" state
-            self.stop_capture()
+            self.reset_guiding()
         except Exception as e:
             msg = "PHD2 error connecting: {}".format(e)
-            raise GuidingError(msg)
-
-    def send_request(self, req):
-        base = dict(jsonrpc="2.0")
-        base.update(req)
-        json_txt = json.dumps(base)+'\r\n'
-        self.logger.debug("sending msg {}".format(json_txt[:-2]))
-        try:
-            self.sock.sendall(json_txt.encode())
-        except Exception as e:
-            msg = "PHD2 error sending request: {}".format(e)
             raise GuidingError(msg)
 
     def disconnect(self):
         self.logger.info("Closing connection to server PHD2 {}:{}".format(
                          self.host,self.port))
+        self.reset_guiding()
         self.sock.close()
+        self.disconnection_trig()
+
+    def reset_guiding(self):
+        """
+            throw away calibration, current settle and current star
+        """
+        self.stop_capture()
+        self.clear_calibration()
+
+    def receive(self):
+        return self._receive()
 
     def set_settle(self, pixels, time, timeout):
         """
@@ -120,6 +130,23 @@ class GuiderPHD2(Base):
         self.settle = dict(pixels=pixels, time=time, timeout=timeout)
 
     ####    PHD2 rpc API methods ####
+
+    def shutdown(self):
+        """
+           params: none 
+           result: integer(0)
+           desc. : Close PHD2
+        """
+        req={"method": "shutdown",
+             "params": [],
+             "id":self.id}
+        self.id+=1
+        try:
+            self.send_request(req)
+            data = self._receive({"result":0})
+        except Exception as e:
+            msg = "PHD2 error shutdown: {}".format(e)
+            raise GuidingError(msg)
 
     def set_connected(self, connect=True):
         """
@@ -423,13 +450,6 @@ class GuiderPHD2(Base):
 
     #### Some specific handle code for decoding messages ####
 
-    def _check_event(self, event, expected=None):
-        if expected is None:
-            return
-        else:
-            for k,v in expected.items():
-                assert(event["k"]==v)
-
     def _receive(self, expected=None):
         # Receive data from the server
         try:
@@ -447,6 +467,24 @@ class GuiderPHD2(Base):
         except Exception as e:
             self.logger.error("PHD2 error on message {}:{}".format(msg, e))
             return ""
+
+    def _send_request(self, req):
+        base = dict(jsonrpc="2.0")
+        base.update(req)
+        json_txt = json.dumps(base)+'\r\n'
+        self.logger.debug("sending msg {}".format(json_txt[:-2]))
+        try:
+            self.sock.sendall(json_txt.encode())
+        except Exception as e:
+            msg = "PHD2 error sending request: {}".format(e)
+            raise GuidingError(msg)
+
+    def _check_event(self, event, expected=None):
+        if expected is None:
+            return
+        else:
+            for k,v in expected.items():
+                assert(event["k"]==v)
 
     def _handle_event(self, event):
         if "Event" in event:

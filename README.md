@@ -20,8 +20,6 @@ sudo apt-get install libcfitsio-dev libnova-dev swig indi-full libindi-dev libin
 # Python requirements
 pip install requests pyindi-client requests-cache watchdog astropy ntplib astroplan matplotlib tzwhere astroquery pymongo rawpy serial pyserial
 
-
-
 If you want to run the astrometry server locally, use:
 pip install django Pillow
 
@@ -48,11 +46,11 @@ conda install -c conda-forge pygobject
 
 pip install dash dash-core-components dash-html-components dash-renderer plotly
 
-
 ## Support for openPHD2
 sudo add-apt-repository ppa:pch/phd2
 sudo apt-get update
 sudo apt-get install phd2
+pip install json-rpc
 
 
 ## TODO: WORK IN PROGRESS: DO NOT USE BEFORE THIS IS DONE
