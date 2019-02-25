@@ -3,7 +3,7 @@ import json
 import os 
 from transitions import Machine
 # why the heck phd2 is not compliant with http based json rpc protocol
-#import requests
+#import jsonrpc_requests
 #import requests.sessions
 import socket
 import sys
@@ -54,13 +54,16 @@ class GuiderPHD2(Base):
             config = dict(
                 host = "localhost",
                 port = 4400,
+                profile_id = '2'
             )
 
         self.host = config["host"]
         self.port = config["port"]
         self.session = None
         self.sock = None
-        self.id = 1
+        self.recv_buffer = ''
+        self.id = 1                # message id
+        self.profile_id = config["profile_id"] # profile id for equipment
         self.mount = None
         self.settle = {"pixels": 1.5, "time": 10, "timeout": 60}
 
@@ -90,13 +93,13 @@ class GuiderPHD2(Base):
 
         try:
             # Connect to server and send data
-            self.session = requests.sessions.Session()
+            #self.session = requests.sessions.Session()
             self.sock.connect((self.host, self.port))
             self._receive({"Event":"Version"}) #get version
             self.connection_trig()
             self._receive({"Event":"AppState"}) # get state
-            self.set_connected(True)
             # we make sure that we are starting from a "proper" state
+            self.reset_profile(self.profile_id)
             self.reset_guiding()
         except Exception as e:
             msg = "PHD2 error connecting: {}".format(e)
@@ -108,6 +111,11 @@ class GuiderPHD2(Base):
         self.reset_guiding()
         self.sock.close()
         self.disconnection_trig()
+
+    def reset_profile(self, profile_id):
+        self.set_connected(False)
+        self.set_profile(profile_id)
+        self.set_connected(True)
 
     def reset_guiding(self):
         """
@@ -152,7 +160,7 @@ class GuiderPHD2(Base):
              "id":self.id}
         self.id+=1
         try:
-            self.send_request(req)
+            self._send_request(req)
             data = self._receive({"result":0})
         except Exception as e:
             msg = "PHD2 error shutdown: {}".format(e)
@@ -169,11 +177,31 @@ class GuiderPHD2(Base):
              "id":self.id}
         self.id+=1
         try:
-            self.send_request(req)
+            self._send_request(req)
             data = self._receive({"result":0})
         except Exception as e:
             msg = "PHD2 error set_connected: {}".format(e)
             raise GuidingError(msg)
+
+    def set_profile(self, profile_id=0):
+        """
+           params: integer: profile id
+           result: integer(0)
+           desc. : Select an equipment profile. All equipment must be
+                   disconnected before switching profiles.
+        """
+        params = [profile_id]
+        req={"method": "set_profile",
+             "params": params,
+             "id":self.id}
+        self.id+=1
+        try:
+            self._send_request(req)
+            data = self._receive({"result":0})
+        except Exception as e:
+            msg = "PHD2 error capturing frame: {}".format(e)
+            raise GuidingError(msg)
+
 
     def capture_single_frame(self, exp_time_sec=None):
         """
@@ -192,7 +220,7 @@ class GuiderPHD2(Base):
              "id":self.id}
         self.id+=1
         try:
-            self.send_request(req)
+            self._send_request(req)
             data = self._receive({"result":0})
         except Exception as e:
             msg = "PHD2 error capturing frame: {}".format(e)
@@ -212,7 +240,7 @@ class GuiderPHD2(Base):
              "id":self.id}
         self.id+=1
         try:
-            self.send_request(req)
+            self._send_request(req)
             data = self._receive({"result":0})
         except Exception as e:
             msg = "PHD2 error clearing calibration: {}".format(e)
@@ -241,7 +269,7 @@ class GuiderPHD2(Base):
              "params": params,
              "id":self.id}
         self.id+=1
-        self.send_request(req)
+        self._send_request(req)
         
     def find_star(self):
         """
@@ -254,7 +282,7 @@ class GuiderPHD2(Base):
              "params": [],
              "id":self.id}
         self.id+=1
-        self.send_request(req)
+        self._send_request(req)
         status = self._receive()
         if result in status:
             if not status["result"]:
@@ -276,7 +304,7 @@ class GuiderPHD2(Base):
              "id":self.id}
         self.id+=1
         try:
-            self.send_request(req)
+            self._send_request(req)
             data = self._receive({"result":0})
         except Exception as e:
             msg = "PHD2 error setting dec guide mode: {}".format(e)
@@ -302,7 +330,7 @@ class GuiderPHD2(Base):
              "id":self.id}
         self.id+=1
         try:
-            self.send_request(req)
+            self._send_request(req)
             data = self._receive({"result":0})
         except Exception as e:
             msg = "PHD2 error setting lock position: {}".format(e)
@@ -320,7 +348,7 @@ class GuiderPHD2(Base):
              "id":self.id}
         self.id+=1
         try:
-            self.send_request(req)
+            self._send_request(req)
             data = self._receive({"result":0})
         except Exception as e:
             msg = "PHD2 error setting exposure: {}".format(e)
@@ -338,7 +366,7 @@ class GuiderPHD2(Base):
              "id":self.id}
         self.id+=1
         try:
-            self.send_request(req)
+            self._send_request(req)
             data = self._receive({"result":0})
         except Exception as e:
             msg = "PHD2 error looping: {}".format(e)
@@ -355,7 +383,7 @@ class GuiderPHD2(Base):
              "id":self.id}
         self.id+=1
         try:
-            self.send_request(req)
+            self._send_request(req)
             data = self._receive({"result":0})
         except Exception as e:
             msg = "PHD2 error stoping capture: {}".format(e)
@@ -391,10 +419,10 @@ class GuiderPHD2(Base):
              "id":self.id}
         self.id+=1
         try:
-            self.send_request(req)
+            self._send_request(req)
             data = self._receive({"result":0})
             while self.state != 'Guiding':
-                self._receive()
+                self._receive(loop_mode=True)
         except Exception as e:
             msg = "PHD2 error guiding: {}".format(e)
             raise GuidingError(msg)
@@ -411,7 +439,7 @@ class GuiderPHD2(Base):
              "id":self.id}
         self.id+=1
         try:
-            self.send_request(req)
+            self._send_request(req)
             data = self._receive()
             return data["result"]
         except Exception as e:
@@ -429,13 +457,13 @@ class GuiderPHD2(Base):
              "id":self.id}
         self.id+=1
         try:
-            self.send_request(req)
+            self._send_request(req)
             data = self._receive()
             return data["result"]
         except Exception as e:
             msg = "PHD2 error getting calibration status: {}".format(e)
             raise GuidingError(msg)
-        self.send_request(req)
+        self._send_request(req)
         data = self._receive()
         return data["result"]
 
@@ -450,7 +478,7 @@ class GuiderPHD2(Base):
              "id":self.id}
         self.id+=1
         try:
-            self.send_request(req)
+            self._send_request(req)
             data = self._receive()
             return data["result"]
         except Exception as e:
@@ -458,33 +486,59 @@ class GuiderPHD2(Base):
             self.logger.warning(msg)
             return self.state != 'NotConnected'
 
+    def get_profiles(self):
+        """
+            params: none  
+            result: array of {"id":profile_id,"name":"profile_name"}
+            desc. : 
+        """
+        req={"method": "get_profiles",
+             "params": [],
+             "id":self.id}
+        self.id+=1
+        try:
+            self._send_request(req)
+            data = self._receive()
+            return data["result"]
+        except Exception as e:
+            msg = "PHD2 error getting profiles list: {}".format(e)
+            self.logger.warning(msg)
+            return ''
+
     #### Some specific handle code for decoding messages ####
 
-    def _receive(self, expected=None):
+    def _receive(self, expected=None, loop_mode=False):
         # Receive data from the server
-        try:
-            response = bytes()
-            decoded = None
-            while True:
-                response += self.sock.recv(1024)
-                decoded = response.decode()
-                if len(decoded) < self.delimiter_length:
-                    continue
-                elif decoded[-self.delimiter_length :] == self.delimiter:
-                    break
-            msg = received.decode().split("\r\n")[0]
-        except socket.timeout:
-            msg = "PHD2 Timeout: No response from server"
-            raise GuidingError(msg)
+        stop_receive = False
+        while not stop_receive:
+            try:
+                self.recv_buffer += self.sock.recv(1024).decode()
+            except socket.timeout:
+                if loop_mode:
+                    return
+                else:
+                    msg = "PHD2 Timeout: No response from server"
+                    raise GuidingError(msg)
+            except Exception as e:
+                self.logger.error("PHD2 error {}".format(e))
+                return ""
 
-        try:
-            event = json.loads(msg)
-            self._check_event(expected)
-            self._handle_event(event)
-            return event
-        except Exception as e:
-            self.logger.error("PHD2 error on message {}:{}".format(msg, e))
-            return ""
+            msgs = self.recv_buffer.split('\r\n')
+            if len(msgs) <= 1 :
+                self.recv_buffer = msgs[0]
+            else:
+                stop_receive = True
+        self.recv_buffer = msgs[-1]
+        event = ""
+        for msg in msgs[:-1]:          
+            try:
+                event = json.loads(msg)
+                self._check_event(expected)
+                self._handle_event(event)
+            except Exception as e:
+                self.logger.error("PHD2 error on message {}:{}".format(msg, e))
+                return ""
+        return event
 
     def _send_request(self, req):
         base = dict(jsonrpc="2.0")
