@@ -2,6 +2,9 @@
 import json
 import os 
 from transitions import Machine
+# why the heck phd2 is not compliant with http based json rpc protocol
+#import requests
+#import requests.sessions
 import socket
 import sys
 
@@ -55,6 +58,7 @@ class GuiderPHD2(Base):
 
         self.host = config["host"]
         self.port = config["port"]
+        self.session = None
         self.sock = None
         self.id = 1
         self.mount = None
@@ -65,6 +69,11 @@ class GuiderPHD2(Base):
                                states = GuiderPHD2.states,
                                transitions = GuiderPHD2.transitions,
                                initial = GuiderPHD2.states[0])
+
+    @property
+    def url(self):
+        return "http://{}:{}".format(self.host,self.port)
+
     def launch_server(self):
         cmd = 'phd2' 
         os.popen(cmd)
@@ -81,6 +90,7 @@ class GuiderPHD2(Base):
 
         try:
             # Connect to server and send data
+            self.session = requests.sessions.Session()
             self.sock.connect((self.host, self.port))
             self._receive({"Event":"Version"}) #get version
             self.connection_trig()
@@ -453,7 +463,15 @@ class GuiderPHD2(Base):
     def _receive(self, expected=None):
         # Receive data from the server
         try:
-            received = self.sock.recv(1024)
+            response = bytes()
+            decoded = None
+            while True:
+                response += self.sock.recv(1024)
+                decoded = response.decode()
+                if len(decoded) < self.delimiter_length:
+                    continue
+                elif decoded[-self.delimiter_length :] == self.delimiter:
+                    break
             msg = received.decode().split("\r\n")[0]
         except socket.timeout:
             msg = "PHD2 Timeout: No response from server"
