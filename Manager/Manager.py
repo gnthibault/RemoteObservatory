@@ -576,10 +576,6 @@ class Manager(Base):
             # close actual dome + everything managed by obsy
             self.observatory.close_everything()
 
-            #close running guider server and client
-            if self.guider is not None:
-                self.guider.disconnect()
-
             return True
         except Exception as e:
             self.logger.error(
