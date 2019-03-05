@@ -8,6 +8,7 @@ import collections
 import copy
 import serial
 from serial import serialutil
+import threading
 import traceback
 
 # Local stuff

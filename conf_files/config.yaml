@@ -21,6 +21,8 @@ observatory:
         module : ArduiScopeController
         board : scope_controller
         port : /dev/ttyACM0
+        cmd_port : 6502
+        msg_port : 6520
         pin_scope_dustcap : 10
         pin_finder_dustcap : 11
         pin_flat_panel : 12
@@ -73,7 +75,10 @@ nofilterwheel: #maybe one day
         SII : 7
         LPR : 8
 guider:
-    exposure : 2.5
+    host : localhost
+    port : 4400
+    profile_id : 2
+    exposure_time_sec : 2
     settle :
         pixels : 1.5
         time : 10

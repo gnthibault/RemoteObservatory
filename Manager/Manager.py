@@ -42,7 +42,7 @@ from Service.NovaAstrometryService import NovaAstrometryService
 
 # Local stuff: Utils
 from utils import error
-
+from utils.config import load_config
 #from pocs.utils import images as img_utils
 from utils import load_module
 
@@ -88,7 +88,7 @@ class Manager(Base):
 
         # setup guider
         self.logger.info('\tSetting up guider')
-        self.setup_guider()
+        self._setup_guider()
 
         # Setup observation planner
         self.logger.info('\tSetting up observation planner')
@@ -582,7 +582,7 @@ class Manager(Base):
                 "Problem closing observatory: {}".format(e))
             return False
 
-    def unpark(self)
+    def unpark(self):
         try:
             # unpark the mount
             self.mount.unpark()
@@ -601,7 +601,7 @@ class Manager(Base):
                 "Problem parking: {}".format(e))
             return False
 
-    def park(self)
+    def park(self):
         try:
             # park the mount
             self.mount.park()
@@ -722,7 +722,7 @@ class Manager(Base):
                     config = self.config['filterwheel'],
                     connectOnCreate=True)
         except Exception:
-            raise RuntimeError('Problem setting up filterwheel')
+            raise RuntimeError('Problem setting up filterwheel: {}'.format(e))
 
     def _setup_guider(self):
         """
@@ -730,14 +730,9 @@ class Manager(Base):
         """
         try:
             if 'guider' in self.config:
-                guider_exposure = self.config['guider']['exposure']
-                guider_settle = self.confi['guider']['settle']
-                self.guider = GuiderPHD2()
-#                self.guider = self.config['guider'], connect_on_create=True)
-                self.guider.set_exposure(guider_exposure)
-                self.guider.set_settle(*guider_settle)
-        except Exception:
-            raise RuntimeError('Problem setting up guider')
+                self.guider = GuiderPHD2(config = self.config['guider'])
+        except Exception as e:
+            raise RuntimeError('Problem setting up guider: {}'.format(e))
 
 
     def _setup_scheduler(self):
@@ -746,8 +741,11 @@ class Manager(Base):
         """
         
         try:
-            self.scheduler = DefaultScheduler(ntpServ=self.serv_time,
-                                              obs=self.observatory)
-        except Exception:
-            raise RuntimeError('Problem setting up observation planner')
+            self.scheduler = DefaultScheduler(
+                ntpServ=self.serv_time,
+                obs=self.observatory,
+                config=load_config(config_files=['targets']))
+        except Exception as e:
+            raise RuntimeError('Problem setting up observation planner: '
+                               '{}'.format(e))
 

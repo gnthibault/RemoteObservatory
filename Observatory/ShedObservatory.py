@@ -129,7 +129,7 @@ class ShedObservatory(Base):
         return self.scope_controller is not None
 
     def park(self):
-            self.logger.debug('ShedObservatory: parking scope')
+        self.logger.debug('ShedObservatory: parking scope')
         if self.has_scope:
             self.scope_controller.close()
 

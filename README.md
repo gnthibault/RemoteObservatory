@@ -59,4 +59,4 @@ Setup a calibrating_flat and calibrating_dark states
 fill-in the class Calibration that mirrors the observation class and make sure
 that a new calibration is issued whenever an observation has completed (This should arise in Manager ?)
 Check why the SITELONG entry in outputed file is wrong
-CRITICAL: check what happens when no indi server is running, there are unhandled exception there
+ObservationPlanner/Scheduler l232 you NEED to setup proper FixedTarget.from_name

@@ -25,7 +25,7 @@ class Scheduler(Base):
 
     # Max value for which a scheduling slot is programmed, otherwise
     # we split into smaller slots
-    MaximumSlotDurationSec = 60 * 16
+    MaximumSlotDurationSec = 60 * 16 * u.second
 
     def __init__(self, ntpServ, obs, config=None, path='.'):
         """Loads `~pocs.scheduler.field.Field`s from a field
@@ -59,7 +59,7 @@ class Scheduler(Base):
         observation.
         """
 
-        Base.__init__(self)
+        super().__init__()
 
         self.obs = obs
         self.serv_time = ntpServ
@@ -228,12 +228,12 @@ class Scheduler(Base):
 
         #TODO TN readout time, get that info from camera
         camera_time = 1*u.second
-        for target_name, config in self.target_list.items():
-            target = FixedTarget.from_name(target_name)
-            #target = FixedTarget(SkyCoord(5.33*u.deg, 46.0*u.deg))
-            for filter_name in config.items():
+        for target_name, filter_config in self.target_list.items():
+            #target = FixedTarget.from_name(target_name)
+            target = FixedTarget(SkyCoord(5.33*u.deg, 46.0*u.deg))
+            for filter_name, config in filter_config.items():
                 count = config["count"]
-                exp_time = config["exp_time_sec"]*u.second
+                exp_time_sec = config["exp_time_sec"]*u.second
                 #TODO TN retrieve priority from the file ?
                 priority = 0 if (filter_name=='Luminance') else 1
                 try:
@@ -242,10 +242,14 @@ class Scheduler(Base):
                     # this number
                     exp_set_size = max(1, min(count,
                         self.MaximumSlotDurationSec//exp_time_sec))
-                    min_nexp = (count+exp_set_size-1)//exp_time_sec
-                    min_nexp = min_nexp * exp_set_size
+                    #to be fixed
+                    #min_nexp = (count+exp_set_size-1)//exp_set_size
+                    #min_nexp = min_nexp * exp_set_size
                     b = ObservingBlock.from_exposures(
-                            target, priority, exp_time, exp_set_size,
+                            target,
+                            priority,
+                            exp_time_sec,
+                            exp_set_size,
                             camera_time,
                             configuration={'filter': filter_name},
                             constraints=self.constraints)
@@ -258,8 +262,8 @@ class Scheduler(Base):
 # Utility Methods
 ##########################################################################
 
-    def dump_updated_target_list(self, config):
-        config.save_config(path='targets', config=config, overwrite=True):
+#    def dump_updated_target_list(self, config):
+#        config.save_config(path='targets', config=config, overwrite=True)
 
 ##########################################################################
 # Private Methods

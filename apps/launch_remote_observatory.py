@@ -320,8 +320,8 @@ class RemoteObservatoryFSM(StateMachine, Base):
             if self.state not in ['sleeping', 'parked', 'parking',
                                   'housekeeping', 'ready']:
                 #self.logger.warning('Safety failed so sending to park')
-                # TODO TN urgent: corriger
                 #self.park() #FSM trigger
+                # TODO TN urgent: corriger
                 pass
 
         #return safe

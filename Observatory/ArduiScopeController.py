@@ -1,7 +1,9 @@
 # Basic stuff
 import logging
+import threading
 
 # Local
+from apps.launch_arduino_capture import main as arduinolauncher
 from Base.Base import Base
 from utils.messaging import PanMessaging
 
@@ -13,8 +15,8 @@ class ArduiScopeController(Base):
             config = dict(
                 board = "scope_controller",
                 port = "/dev/ttyACM0",
-                cmd_port = 6501,
-                msg_port = 6510,
+                cmd_port = 6502,
+                msg_port = 6520,
                 pin_scope_dustcap = 10,
                 pin_finder_dustcap = 11,
                 pin_flat_panel=13,
@@ -24,6 +26,7 @@ class ArduiScopeController(Base):
         self.config = config
         self.board = config['board']
         self.latest_status = dict(default_status="! inactive")
+        self.acquisition_thread = None
 
         # for communication
         self._cmd_channel = "{}:commands".format(self.board)
@@ -40,6 +43,13 @@ class ArduiScopeController(Base):
                                                    channel=self.board)
         self._pub = PanMessaging.create_publisher(self.config['cmd_port'],
                                                   bind=True)
+        # we also need to launch the arduino service !
+        self.acquisition_thread = threading.Thread(
+            target = arduinolauncher,
+            kwargs=dict(board=self.board,
+                        port=self.config['cmd_port'],
+                        msg_port=self.config['msg_port']))
+        self.aquisition_thread.start()
 
     def deinitialize(self):
         self.latest_status["main_status"]="inactive"
@@ -55,6 +65,9 @@ class ArduiScopeController(Base):
         msg['command'] = 'shutdown'
         self._pub.send_message(self._cmd_channel, msg)
 
+        # acquisition thread should terminate after shutdown
+        self.acquisition_thread.join()
+
     def send_order(self, pin, value):
         msg = dict()
         msg['command'] = 'write_line'
@@ -63,7 +76,7 @@ class ArduiScopeController(Base):
 
     def send_blocking_order(self, pin, value):
         self.send_order(pin, value)
-        self.wait_feedback(pin, value)
+        assert(self.wait_feedback(pin, value))
 
     def wait_feedback(self, pin, value):
         is_confirmed = False
@@ -76,7 +89,7 @@ class ArduiScopeController(Base):
                 except KeyError as ke:
                     pass
             is_confirmed = True if (cpin==pin) and (cval==value) else False
-        
+        return is_confirmed
 
     def open(self):
         """ blocking call: opens both main telescope and guiding scope dustcap
@@ -118,13 +131,15 @@ class ArduiScopeController(Base):
 
     def receive_status(self):
         try:
-            timeout_obj = serialutil.Timeout(1.0)
+            timeout_obj = serialutil.Timeout(2.0)
             while not timeout_obj.expired():
                 msg_type, msg_obj = self._sub.receive_message(blocking=False)
+                if self.board in msg_obj:
+                    self.latest_status = msg_obj
         except Exception as e:
             self.logger.warning("Cannot receive status from arduino board "
                                 "{}".format(self.board))
             return self.latest_status
 
     def status(self):
-        return self.receive_status
+        return self.receive_status()

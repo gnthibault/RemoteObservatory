@@ -23,7 +23,7 @@ class DefaultScheduler(Scheduler):
 
     def __init__(self, ntpServ, obs, config=None, path='.'):
         """ Inherit from the `Base Scheduler` """
-        super().__init__(self, ntpServ, obs, config=config, path=path)
+        super().__init__(ntpServ, obs, config=config, path=path)
 
         # Initialize constraints for scheduling
         self.constraints.append(AtNightConstraint.twilight_astronomical())
@@ -34,13 +34,13 @@ class DefaultScheduler(Scheduler):
                                   boolean_constraint=True))
         except Exception as e:
             self.logger.warning("Cannot add airmass constraint: {}".format(e))
-        try
+        try:
             self.constraints.append(
                 MoonSeparationConstraint(
                     min=config["constraints"]["minmoonseparationdeg"]*u.deg))
         except Exception as e:
             self.logger.warning("Cannot add moon sep constraint: {}".format(e))
-        try
+        try:
             self.constraints.append(
                 LocalHorizonConstraint(horizon=self.obs.get_horizon(),
                                        boolean_constraint=True))

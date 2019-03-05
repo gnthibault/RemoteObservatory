@@ -2,9 +2,6 @@
 import json
 import os 
 from transitions import Machine
-# why the heck phd2 is not compliant with http based json rpc protocol
-#import jsonrpc_requests
-#import requests.sessions
 import socket
 import sys
 
@@ -54,8 +51,13 @@ class GuiderPHD2(Base):
             config = dict(
                 host = "localhost",
                 port = 4400,
-                profile_id = '2'
-            )
+                profile_id = '2',
+                exposure_time_sec = '2',
+                settle = {
+                    "pixels": 1.5,
+                    "time": 10,
+                    "timeout": 60}
+          )
 
         self.host = config["host"]
         self.port = config["port"]
@@ -65,17 +67,14 @@ class GuiderPHD2(Base):
         self.id = 1                # message id
         self.profile_id = config["profile_id"] # profile id for equipment
         self.mount = None
-        self.settle = {"pixels": 1.5, "time": 10, "timeout": 60}
+        self.settle = config["settle"]
+        self.exposure_time_sec = config['exposure_time_sec']
 
         # Initialize the state machine
         self.machine = Machine(model = self,
                                states = GuiderPHD2.states,
                                transitions = GuiderPHD2.transitions,
                                initial = GuiderPHD2.states[0])
-
-    @property
-    def url(self):
-        return "http://{}:{}".format(self.host,self.port)
 
     def launch_server(self):
         cmd = 'phd2' 
