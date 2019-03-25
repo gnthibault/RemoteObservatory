@@ -49,7 +49,7 @@ class ArduiScopeController(Base):
             kwargs=dict(board=self.board,
                         port=self.config['cmd_port'],
                         msg_port=self.config['msg_port']))
-        self.aquisition_thread.start()
+        self.acquisition_thread.start()
 
     def deinitialize(self):
         self.latest_status["main_status"]="inactive"
@@ -80,8 +80,8 @@ class ArduiScopeController(Base):
 
     def wait_feedback(self, pin, value):
         is_confirmed = False
-
-        while not is_confirned:
+        timeout_obj = serialutil.Timeout(100)
+        while not timeout_obj.expired():
             mtype, mmsg = self._sub.receive_message(blocking=True)
             for entry in mmsg:
                 try:
@@ -89,6 +89,8 @@ class ArduiScopeController(Base):
                 except KeyError as ke:
                     pass
             is_confirmed = True if (cpin==pin) and (cval==value) else False
+            if is_confirmed:
+                return is_confirmed
         return is_confirmed
 
     def open(self):

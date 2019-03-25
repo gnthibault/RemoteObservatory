@@ -51,7 +51,7 @@ void LedHandler::collect() {
 }
 
 void LedHandler::report() {
-  val = 0; //TODO TN
+  int value = 0; //TODO TN
   Serial.print("{\"name\":\"led_handler\", \"pin_number\": \"");
   Serial.print(pin_);
   Serial.print(" , \"pin_value\": ");

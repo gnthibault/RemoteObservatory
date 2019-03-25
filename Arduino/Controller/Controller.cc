@@ -23,7 +23,7 @@ const int FINDER_DEW_HEAT_RELAY = 4;//finderscope dew heater
 const int CAMERA_RELAY          = 5;//EOS camera power supply
 const int SCOPE_FAN_RELAY       = 6;//main telescope prim. mirror fans
 
-// PWMs
+// PWM/SERVO
 const int SCOPE_SERVO_DUSTCAP  = 9;    //main telescope dustcap
 const int SCOPE_SERVO_MIN_PULSE = 780; //For futaba S3050
 const int SCOPE_SERVO_MAX_PULSE = 2180;//For futaba S3050
@@ -58,8 +58,8 @@ LedHandler led_handler;
 //RelayHandler relay_scope_fan_handler(SCOPE_FAN_RELAY, relay_cam_name);
 ServoHandler servo_scope_dustcap(SCOPE_SERVO_DUSTCAP, SCOPE_SERVO_MIN_PULSE,
                                  SCOPE_SERVO_MAX_PULSE);
-ServoHandler servo_finder_dustcap(FINDER_SERVO_DUSTCAP, FINDER_SERVO_MIN_PULSE,
-                                  FINDER_SERVO_MAX_PULSE);
+//ServoHandler servo_finder_dustcap(FINDER_SERVO_DUSTCAP, FINDER_SERVO_MIN_PULSE,
+//                                  FINDER_SERVO_MAX_PULSE);
 
 void setup() {
   Serial.begin(9600);
@@ -75,7 +75,7 @@ void setup() {
   //relay_gpu_dew_handler.init();
   //relay_camera_handler.init();
   //relay_scope_fan_handler.init();
-  //servo_scope_dustcap.init();
+  servo_scope_dustcap.init();
   //servo_finder_dustcap.init();
 
   Serial.println("EXIT setup()");
@@ -140,7 +140,6 @@ void main_loop() {
     Serial.print(pin_num);
     Serial.print(" and status was ");
     Serial.println(pin_status);
-    Serial.flush();
 
     switch (pin_num) {
       case LED_BUILTIN:
@@ -157,7 +156,7 @@ void main_loop() {
         break;
       case SCOPE_SERVO_DUSTCAP:
         // Value between 0 and 180
-        //servo_scope_dustcap.setValue(pin_status);
+        servo_scope_dustcap.setValue(pin_status);
         break;
       case FINDER_SERVO_DUSTCAP:
         // Value between 0 and 180
@@ -168,6 +167,7 @@ void main_loop() {
         Serial.println(pin_num);
         break;
     }
+    Serial.flush();
   }
 }
 
