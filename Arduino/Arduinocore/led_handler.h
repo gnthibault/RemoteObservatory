@@ -21,6 +21,7 @@ class LedHandler {
     void report();
   protected:
     uint8_t pin_;
-    uint32_t milli_delay_;
-    uint32_t next_change_ms_ = 0;
+    bool value_;
+    uint64_t milli_delay_;
+    uint64_t next_change_ms_;
 };

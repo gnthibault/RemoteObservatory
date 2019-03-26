@@ -61,8 +61,44 @@ ServoHandler servo_scope_dustcap(SCOPE_SERVO_DUSTCAP, SCOPE_SERVO_MIN_PULSE,
 //ServoHandler servo_finder_dustcap(FINDER_SERVO_DUSTCAP, FINDER_SERVO_MIN_PULSE,
 //                                  FINDER_SERVO_MAX_PULSE);
 
+// We have a simple state machine for order processing protocol, TBD better
+String protocolString;
+int pin_num;
+int pin_status;
+//0 is nothing received, 1 in pin_num received, and 2 is ready to process
+int state;
+
+void process_order(int pin_num, int pin_status) {
+  switch (pin_num) {
+    case LED_BUILTIN:
+      led_handler.setValue(pin_status);
+      break;
+    case SCOPE_DEW_HEAT_RELAY:
+      //relay_scope_dew_handler.setValue(pin_status);
+      break;
+    case FINDER_DEW_HEAT_RELAY:
+      //relay_finder_dew_handler.setValue(pin_status);
+      break;
+    case CAMERA_RELAY:
+      //relay_camer_handler.setValue(pin_status);
+      break;
+    case SCOPE_SERVO_DUSTCAP:
+      // Value between 0 and 180
+      servo_scope_dustcap.setValue(pin_status);
+      break;
+    case FINDER_SERVO_DUSTCAP:
+      // Value between 0 and 180
+      //servo_finder_dustcap.setValue(pin_status);
+      break;
+    default:
+      Serial.print("Invalid pin id: ");
+      Serial.println(pin_num);
+      break;
+  }
+}
+
 void setup() {
-  Serial.begin(9600);
+  Serial.begin(9600);//115200 TODO TN
   Serial.flush();
 
   // Init devices
@@ -78,8 +114,16 @@ void setup() {
   servo_scope_dustcap.init();
   //servo_finder_dustcap.init();
 
-  Serial.println("EXIT setup()");
+  // Initialize simple state machine for command processing
+  pin_num = 0;
+  pin_status = 0;
+  state = 0;
+
+  // Initialize timing stuff
   next_report_millis = end_setup_millis = millis();
+
+  // Outro
+  Serial.println("EXIT setup()");
 }
 
 
@@ -111,7 +155,7 @@ void main_loop() {
     Serial.print((millis() - end_setup_millis)/1000);
     Serial.print("s\" , \"num\":\"");
     Serial.print(report_num);
-    Serial.print("\"");
+    Serial.print("\", devices: [");
 
     // Then each device report its own status
     //dht_air_handler.report();
@@ -123,51 +167,56 @@ void main_loop() {
     //relay_gpu_dew_handler.report();
     //relay_camera_handler.report();
 
-    Serial.println("}");
+    Serial.println("]}");
   }
 
   // Read any serial input
-  //    - Input will be two integers (with anything in between them), the
+  //    - Input will be two integers (with, in between them), the
   //      first specifying the pin and the second the status
   //      to change to (1/0).
   //      Example serial input:
   //           5,1   # put pin 5 to on
   //           6,0   # put pin 6 to off
-  while (Serial.available() > 0) {
-    int pin_num = Serial.parseInt();
-    int pin_status = Serial.parseInt();
-    Serial.print("pin_num was ");
-    Serial.print(pin_num);
-    Serial.print(" and status was ");
-    Serial.println(pin_status);
-
-    switch (pin_num) {
-      case LED_BUILTIN:
-        led_handler.setValue(pin_status);
+  while (Serial.available()) {
+    char c = Serial.read();  //gets one byte from serial buffer
+    switch(c) {
+      case '\n' :
+        if (protocolString.length() > 0) {
+          //Serial.println(protocolString);
+          pin_status = protocolString.toInt();
+          if (state == 1) {
+            state = 2;
+          }
+        }
+        if (state == 2) {
+          //Serial.print("pin_num was ");
+          //Serial.print(pin_num);
+          //Serial.print(" and status was ");
+          //Serial.println(pin_status);
+          process_order(pin_num, pin_status);
+        }
+        protocolString = ""; //clears variable for new input
+        state = 0;           //reset statemachine state
         break;
-      case SCOPE_DEW_HEAT_RELAY:
-        //relay_scope_dew_handler.setValue(pin_status);
-        break;
-      case FINDER_DEW_HEAT_RELAY:
-        //relay_finder_dew_handler.setValue(pin_status);
-        break;
-      case CAMERA_RELAY:
-        //relay_camer_handler.setValue(pin_status);
-        break;
-      case SCOPE_SERVO_DUSTCAP:
-        // Value between 0 and 180
-        servo_scope_dustcap.setValue(pin_status);
-        break;
-      case FINDER_SERVO_DUSTCAP:
-        // Value between 0 and 180
-        //servo_finder_dustcap.setValue(pin_status);
+      case ',' :
+        if (protocolString.length() > 0) {
+          //Serial.println(protocolString);
+          pin_num = protocolString.toInt();
+          if (state == 0) {
+            state = 1;
+          } else {
+            state = 0;
+          }
+        } else {
+          state = 0;
+        }
+        protocolString = ""; //clears variable for new input
         break;
       default:
-        Serial.print("Invalid pin id: ");
-        Serial.println(pin_num);
+        protocolString += c;
+        //Serial.println(protocolString);
         break;
     }
-    Serial.flush();
   }
 }
 
