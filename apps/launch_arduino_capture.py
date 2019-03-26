@@ -16,13 +16,13 @@ from utils.database import DB
 from utils.messaging import PanMessaging
 
 
-def main(board, port, cmd_port, msg_port):
+def main(board, cmd_port, msg_port):
     config = load_config(config_files=['peas'])
     serial_config = config.get('environment', {}).get('serial', {})
-    logging.basicConfig(format='%(levelname)s:%(message)s')
+    logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.DEBUG)
     logger = logging.getLogger('arduino_capture')
     serial_data = ArduinoIO.open_serial_device(
-        port, serial_config=serial_config, name=board)
+        serial_config=serial_config, name=board)
     sub = PanMessaging.create_subscriber(cmd_port)
     pub = PanMessaging.create_publisher(msg_port, bind=True)
     aio = ArduinoIO.ArduinoIO(board, serial_data, pub, sub)
@@ -33,8 +33,8 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(
         description='Record sensor data from an Arduino and send it relay commands.')
     parser.add_argument(
-        '--board', help="Name of the board attached to the port."
-             " default 'scope_controller'", default='scope_controller')
+        '--board', help="Name of the board attached to the port.",
+        default='scope_controller')
     parser.add_argument('--port', help='Port (device path) to connect to.',
                         default='/dev/ttyACM0')
     parser.add_argument(
@@ -76,6 +76,6 @@ if __name__ == '__main__':
     # so that the board name is used as the invocation name.
     sys.argv[0] = board
 
-    main(board, port, args.cmd_port, args.msg_port)
+    main(board, args.cmd_port, args.msg_port)
 
 #launch with PYTHONPATH=. python3 ./apps/launch_arduino_capture.py --board scope_controller

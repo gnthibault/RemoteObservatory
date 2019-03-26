@@ -1,5 +1,6 @@
 # Basic stuff
 import logging
+from serial import serialutil
 import threading
 
 # Local
@@ -14,7 +15,6 @@ class ArduiScopeController(Base):
         if config is None:
             config = dict(
                 board = "scope_controller",
-                port = "/dev/ttyACM0",
                 cmd_port = 6502,
                 msg_port = 6520,
                 pin_scope_dustcap = 10,
@@ -47,7 +47,7 @@ class ArduiScopeController(Base):
         self.acquisition_thread = threading.Thread(
             target = arduinolauncher,
             kwargs=dict(board=self.board,
-                        port=self.config['cmd_port'],
+                        cmd_port=self.config['cmd_port'],
                         msg_port=self.config['msg_port']))
         self.acquisition_thread.start()
 
@@ -71,7 +71,7 @@ class ArduiScopeController(Base):
     def send_order(self, pin, value):
         msg = dict()
         msg['command'] = 'write_line'
-        msg['line'] = '{} {}'.format(pin, value)
+        msg['line'] = '{},{}'.format(pin, value)
         self._pub.send_message(self._cmd_channel, msg)
 
     def send_blocking_order(self, pin, value):

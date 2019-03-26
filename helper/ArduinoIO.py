@@ -85,7 +85,7 @@ def detect_board_on_port(port, logger=None):
             serial_reader.disconnect()
 
 
-def open_serial_device(port, serial_config=None, **kwargs):
+def open_serial_device(serial_config=None, **kwargs):
     """Creates an rs232.SerialData for port, assumed to be an Arduino.
 
     Default parameters are provided when creating the SerialData
@@ -103,9 +103,8 @@ def open_serial_device(port, serial_config=None, **kwargs):
     # Using a long timeout (2 times the report interval) rather than
     # retries which can just break a JSON line into two unparseable
     # fragments.
-    defaults = dict(baudrate=9600, retry_limit=1, retry_delay=0, timeout=4.0,
-                    name=port)
-    params = collections.ChainMap(dict(port=port), kwargs, serial_config or {},
+    defaults = dict(baudrate=9600, retry_limit=1, retry_delay=0, timeout=4.0)
+    params = collections.ChainMap(kwargs, serial_config or {},
                                   defaults)
     params = dict(**params)
     return rs232.SerialData(**params)
@@ -182,8 +181,8 @@ class ArduinoIO(Base):
                 self._report_next_reading = True
             return False
         if self._report_next_reading:
-            self.logger.info('Succeeded in reading from {}; got:\n{}',
-                             self.port, reading)
+            self.logger.info('Succeeded in reading from {}; got: {}'.format(
+                             self.port, reading))
             self._report_next_reading = False
         self.handle_reading(reading)
         return True
@@ -202,8 +201,8 @@ class ArduinoIO(Base):
             if self._serial_data.is_connected:
                 self._serial_data.disconnect()
         except Exception as e:
-            self.logger.error('Failed to disconnect from {} due to: {}',
-                              self.port, e)
+            self.logger.error('Failed to disconnect from {} due to: {}'.format(
+                              self.port, e))
 
     def reconnect(self):
         """Disconnect from and connect to the serial port.
@@ -214,7 +213,7 @@ class ArduinoIO(Base):
         try:
             self.disconnect()
         except Exception:
-            self.logger.error('Unable to disconnect from {}', self.port)
+            self.logger.error('Unable to disconnect from {}'.format(self.port))
             return False
         try:
             self.connect()

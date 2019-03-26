@@ -155,7 +155,7 @@ void main_loop() {
     Serial.print((millis() - end_setup_millis)/1000);
     Serial.print("s\" , \"num\":\"");
     Serial.print(report_num);
-    Serial.print("\", devices: [");
+    Serial.print("\", \"devices\": [");
 
     // Then each device report its own status
     //dht_air_handler.report();

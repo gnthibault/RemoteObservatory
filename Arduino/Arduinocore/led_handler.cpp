@@ -54,7 +54,7 @@ void LedHandler::collect() {
 void LedHandler::report() {
   Serial.print("{\"name\":\"led_handler\", \"pin_number\": \"");
   Serial.print(pin_);
-  Serial.print(" , \"pin_value\": ");
+  Serial.print("\" , \"pin_value\": \"");
   Serial.print(value_);
   Serial.print("\"}");
 }
