@@ -75,6 +75,7 @@ nofilterwheel: #maybe one day
         SII : 7
         LPR : 8
 guider:
+    module : GuiderPHD2
     host : localhost
     port : 4400
     profile_id : 2

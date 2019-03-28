@@ -1,6 +1,7 @@
 #Standard stuff
 import json
 import os 
+import time
 from transitions import Machine
 import socket
 import sys
@@ -77,8 +78,14 @@ class GuiderPHD2(Base):
                                initial = GuiderPHD2.states[0])
 
     def launch_server(self):
+        """
+        Usage: phd2 [-i <num>] [-R]
+          -i, --instanceNumber=<num>  sets the PHD2 instance number (default=1)
+          -R, --Reset                 Reset all PHD2 settings to default values
+        """
         cmd = 'phd2' 
         os.popen(cmd)
+        time.sleep(20) #Did not found anything better than that...
 
     def terminate_server(self):
         self.shutdown()
@@ -104,10 +111,11 @@ class GuiderPHD2(Base):
             msg = "PHD2 error connecting: {}".format(e)
             raise GuidingError(msg)
 
-    def disconnect(self):
+    def disconnect_and_terminate_server(self):
         self.logger.info("Closing connection to server PHD2 {}:{}".format(
                          self.host,self.port))
         self.reset_guiding()
+        self.terminate_server()
         self.sock.close()
         self.disconnection_trig()
 

@@ -23,9 +23,6 @@ from astroplan import Observer
 # Local stuff: Base
 from Base.Base import Base
 
-# Local stuff: Guider
-from Guider.GuiderPHD2 import GuiderPHD2
-
 # Local stuff: IndiClient
 from helper.IndiClient import IndiClient
 
@@ -603,16 +600,16 @@ class Manager(Base):
 
     def park(self):
         try:
+            #close running guider server and client
+            if self.guider is not None:
+                self.guider.disconnect_and_terminate_server()
+
             # park the mount
             self.mount.park()
 
             # park the observatory
             self.observatory.park()
 
-            #close running guider server and client
-            if self.guider is not None:
-                self.guider.disconnect()
-                self.guider.terminate_server()
 
             return True
         except Exception as e:
@@ -730,10 +727,12 @@ class Manager(Base):
         """
         try:
             if 'guider' in self.config:
-                self.guider = GuiderPHD2(config = self.config['guider'])
+                guider_name = self.config['guider']['module']
+                guider_module = load_module('Guider.'+guider_name)
+                self.guider = getattr(guider_module, guider_name)(
+                    config = self.config['guider'])
         except Exception as e:
             raise RuntimeError('Problem setting up guider: {}'.format(e))
-
 
     def _setup_scheduler(self):
         """
