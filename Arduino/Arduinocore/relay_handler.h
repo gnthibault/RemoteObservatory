@@ -10,6 +10,6 @@ class RelayHandler {
     void report();
   protected:
     uint8_t pin_;
-    bool status_;
+    bool value_;
     const char* name_;
 };

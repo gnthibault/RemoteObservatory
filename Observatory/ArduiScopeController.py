@@ -75,6 +75,9 @@ class ArduiScopeController(Base):
         self._pub.send_message(self._cmd_channel, msg)
 
     def send_blocking_order(self, pin, value):
+       """
+           We should receive all parameters as string, not integers
+       """
         self.send_order(pin, value)
         assert(self.wait_feedback(pin, value))
 
@@ -83,9 +86,9 @@ class ArduiScopeController(Base):
         timeout_obj = serialutil.Timeout(100)
         while not timeout_obj.expired():
             mtype, mmsg = self._sub.receive_message(blocking=True)
-            for entry in mmsg:
+            for device in mmsg['data']['devices']:
                 try:
-                    cpin, cval = [entry[x] for x in ['pin_number', 'pin_value']]
+                    cpin, cval = [device[x] for x in ['pin_number', 'pin_value']]
                 except KeyError as ke:
                     pass
             is_confirmed = True if (cpin==pin) and (cval==value) else False

@@ -148,7 +148,7 @@ void main_loop() {
     //relay_finder_dew_handler.collect();
     //relay_gpu_dew_handler.collect();
     //relay_camera_handler.collect();
-    //bool cam_relay_stat = digitalRead(CAMERA_RELAY);
+    servo_scope_dustcap.collect();
 
     // Format/output the results: main entry: 
     Serial.print("{\"name\":\"scope_controller\", \"uptime\": \"");
@@ -166,6 +166,7 @@ void main_loop() {
     //relay_finder_dew_handler.report();
     //relay_gpu_dew_handler.report();
     //relay_camera_handler.report();
+     servo_scope_dustcap.report();
 
     Serial.println("]}");
   }

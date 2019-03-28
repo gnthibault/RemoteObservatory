@@ -219,7 +219,7 @@ class ArduinoIO(Base):
             self.connect()
             return True
         except Exception:
-            self.logger.error('Unable to reconnect to {}', self.port)
+            self.logger.error('Unable to reconnect to {}'.format(self.port))
             return False
 
     def get_reading(self):
@@ -229,10 +229,10 @@ class ArduinoIO(Base):
         try:
             return self._serial_data.get_and_parse_reading(retry_limit=1)
         except serial.SerialException as e:
-            self.logger.error('Exception raised while reading from port {}',
-                              self.port)
-            self.logger.error('Exception: {}', "\n".join(
-                              traceback.format_exc()))
+            self.logger.error('Exception raised while reading from port {}'
+                              ''.format(self.port))
+            self.logger.error('Exception: {}'.format( "\n".join(
+                              traceback.format_exc())))
             if self.reconnect():
                 return None
             raise e
@@ -269,8 +269,9 @@ class ArduinoIO(Base):
                 try:
                     self.handle_command(msg_obj)
                 except Exception as e:
-                    self.logger.error('Exception while handling command: {}', e)
-                    self.logger.error('msg_obj: {}', msg_obj)
+                    self.logger.error('Exception while handling command: {}'
+                                      ''.format(e))
+                    self.logger.error('msg_obj: {}'.format(msg_obj))
 
     def handle_command(self, msg):
         """Handle one relay command.
@@ -281,15 +282,16 @@ class ArduinoIO(Base):
         """
         if msg['command'] == 'shutdown':
             self.logger.info('Received command to shutdown ArduinoIO for '
-                             'board {}', self.board)
+                             'board {}'.format(self.board))
             self._keep_running = False
         elif msg['command'] == 'write_line':
             line = msg['line'].rstrip('\r\n')
-            self.logger.debug('Sending line to board {}: {}', self.board, line)
+            self.logger.debug('Sending line to board {}: {}'.format(self.board,
+                                                                    line))
             line = line + '\n'
             self.write(line)
         else:
-            self.logger.error('Ignoring command: {}', msg)
+            self.logger.error('Ignoring command: {}'.format(msg))
 
     def write(self, text):
         """Writes text (a string) to the port.

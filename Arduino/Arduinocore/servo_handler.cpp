@@ -1,3 +1,5 @@
+// Arduino
+#include <Arduino.h>
 
 // Local
 #include "servo_handler.h"
@@ -15,9 +17,21 @@ void ServoHandler::init() {
   }
 }
 
-void ServoHandler::setValue(int value) {
+void ServoHandler::setValue(uint32_t value) {
   // Value should be in between 0 and 180
   servo_.write(value);
+  // Instead of collecting the value of the pin, we save it in the object
+  value_ = value;
   //servo_.writeMicroseconds(value);
 }
 
+void ServoHandler::collect() {
+}
+
+void ServoHandler::report() {
+  Serial.print("{\"name\":\"servo_handler\", \"pin_number\": \"");
+  Serial.print(pin_);
+  Serial.print("\" , \"pin_value\": \"");
+  Serial.print(value_);
+  Serial.print("\"}");
+}
