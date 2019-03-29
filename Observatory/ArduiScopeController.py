@@ -6,11 +6,14 @@ import threading
 # Local
 from apps.launch_arduino_capture import main as arduinolauncher
 from Base.Base import Base
+from utils.error import ScopeControllerError
 from utils.messaging import PanMessaging
 
 class ArduiScopeController(Base):
     def __init__(self, config=None):
         Base.__init__(self)
+
+        self._is_initialized = False
 
         if config is None:
             config = dict(
@@ -31,7 +34,11 @@ class ArduiScopeController(Base):
         # for communication
         self._cmd_channel = "{}:commands".format(self.board)
         self._sub = None
-        self._pub = None 
+        self._pub = None
+
+    @property
+    def is_initialized(self):
+        return self._is_initialized
 
     def initialize(self):
         self.latest_status = dict(default_status="! active")
@@ -50,6 +57,7 @@ class ArduiScopeController(Base):
                         cmd_port=self.config['cmd_port'],
                         msg_port=self.config['msg_port']))
         self.acquisition_thread.start()
+        self._is_initialized = True
 
     def deinitialize(self):
         self.latest_status["main_status"]="inactive"
@@ -75,11 +83,16 @@ class ArduiScopeController(Base):
         self._pub.send_message(self._cmd_channel, msg)
 
     def send_blocking_order(self, pin, value):
-       """
-           We should receive all parameters as string, not integers
-       """
-        self.send_order(pin, value)
-        assert(self.wait_feedback(pin, value))
+        """
+            We should receive all parameters as string, not integers
+        """
+        try:
+            self.send_order(pin, value)
+            assert(self.wait_feedback(pin, value))
+        except Exception as e:
+            msg = 'Order pin:{}, value:{} failed: {}'.format(pin, value, e)
+            self.logger.error(msg)
+            raise ScopeControllerError(msg)
 
     def wait_feedback(self, pin, value):
         is_confirmed = False
@@ -136,15 +149,20 @@ class ArduiScopeController(Base):
 
     def receive_status(self):
         try:
-            timeout_obj = serialutil.Timeout(2.0)
+            timeout_obj = serialutil.Timeout(4.0)
             while not timeout_obj.expired():
                 msg_type, msg_obj = self._sub.receive_message(blocking=False)
-                if self.board in msg_obj:
-                    self.latest_status = msg_obj
+                if msg_obj is not None:
+                    if self.board in msg_obj:
+                        self.latest_status = msg_obj
         except Exception as e:
-            self.logger.warning("Cannot receive status from arduino board "
-                                "{}".format(self.board))
-            return self.latest_status
+            msg=("Cannot receive status from arduino board "
+                 "{}".format(self.board))
+            self.logger.error(msg)
+            raise ScopeControllerError(msg)
 
     def status(self):
-        return self.receive_status()
+        if self.is_initialized:
+            return self.receive_status()
+        else:
+            return {}

@@ -33,6 +33,14 @@ class GuidingError(Error):
     def __init__(self, msg='Guiding problem'):
         super().__init__(msg)
 
+class ScopeControllerError(Error):
+
+    """ Error for a scope controller system malfunction """
+
+    def __init__(self, msg='Scope control problem'):
+        super().__init__(msg)
+
+
 class InvalidSystemCommand(Error):
 
     """ Error for a system level command malfunction """

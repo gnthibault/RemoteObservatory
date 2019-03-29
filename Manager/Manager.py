@@ -201,8 +201,10 @@ class Manager(Base):
             }
 
         except Exception as e:  # pragma: no cover
-            self.logger.warning("Can't get observatory status: {}-{}".format(e,
-                traceback.format_exc()))
+            msg = "Can't get observatory status: {}-{}".format(e,
+                traceback.format_exc())
+            self.logger.error(msg)
+            raise RuntimeError(msg)
         return status
 
     def get_observation(self, *args, **kwargs):

@@ -28,7 +28,7 @@ class RemoteObservatoryFSM(StateMachine, Base):
     An instance consists primarily of a 'Manager' object, which contains the
     mount, cameras, scheduler, etc.
     See `Manager.Manager`. The manager should create all attached hardware
-    but leave the initialization up to this class (i.e. this class will call
+    but leave the initialization up to this FSM class (this FSM class will call
     the manager `initialize` method).
 
     The instance itself is designed to be run as a state machine via
@@ -36,7 +36,7 @@ class RemoteObservatoryFSM(StateMachine, Base):
 
     Args:
         manager(Manager): An instance of a `Manager.Manager`
-            class. POCS will call the `initialize` method of the manager.
+            class. FSM will call the `initialize` method of the manager.
         state_machine_file(str): Filename of the state machine to use, defaults
             is 'simple_state_table'.
         messaging(bool): If messaging should be included, defaults to False.
@@ -63,7 +63,7 @@ class RemoteObservatoryFSM(StateMachine, Base):
         Base.__init__(self, **kwargs)
 
         # local init
-        self.name = 'gntibault\'s Remote Observatory'
+        self.name = 'Remote Observatory'
         self.logger.info('Initializing Remote Observatory - {}'.format(
                          self.name))
         self._processes = {}

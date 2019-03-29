@@ -159,14 +159,22 @@ void main_loop() {
 
     // Then each device report its own status
     //dht_air_handler.report();
+    //Serial.print(",");
     //dht_box_handler.report();
+    //Serial.print(",");
     //dht_scope_handler.report();
+    //Serial.print(",");
     led_handler.report();
+    Serial.print(",");
     //relay_scope_dew_handler.report();
+    //Serial.print(",");
     //relay_finder_dew_handler.report();
+    //Serial.print(",");
     //relay_gpu_dew_handler.report();
+    //Serial.print(",");
     //relay_camera_handler.report();
-     servo_scope_dustcap.report();
+    //Serial.print(",");
+    servo_scope_dustcap.report();
 
     Serial.println("]}");
   }

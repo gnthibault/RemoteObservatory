@@ -16,6 +16,7 @@ from tzwhere import tzwhere
 # Local
 from Base.Base import Base
 from utils import load_module
+from utils.error import ScopeControllerError
 
 class ShedObservatory(Base):
     """Shed Observatory 
@@ -69,8 +70,10 @@ class ShedObservatory(Base):
             self.scope_controller = getattr(scope_controller,
                                             scope_controller_name)(cfg)
         except Exception as e:
-            self.logger.warning("Cannot load scope module: {}".format(e))
             self.scope_controller = None
+            msg = 'Cannot instantiate scope controller properly: '.format(e)
+            self.logger.error(msg)
+            raise ScopeControllerError(msg)
 
         # If dome controller is specified in the config, load
         try:
@@ -212,9 +215,9 @@ class ShedObservatory(Base):
                   'altitude': self.altitudeMeter,
                   'timezone': str(self.timezone) # not directly serializable
                  }
-        if self.has_dome:
+        if self.has_dome and self.dome_controller.is_initialized:
             status['dome'] = self.dome_controller.status()
-        if self.has_scope:
+        if self.has_scope and self.scope_controller.is_initialized:
             status['scope'] = self.scope_controller.status()
 
         return status
