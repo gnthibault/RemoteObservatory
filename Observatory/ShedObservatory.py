@@ -73,7 +73,7 @@ class ShedObservatory(Base):
             self.scope_controller = None
             msg = 'Cannot instantiate scope controller properly: '.format(e)
             self.logger.error(msg)
-            raise ScopeControllerError(msg)
+            #raise ScopeControllerError(msg)
 
         # If dome controller is specified in the config, load
         try:

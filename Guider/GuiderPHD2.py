@@ -114,10 +114,11 @@ class GuiderPHD2(Base):
     def disconnect_and_terminate_server(self):
         self.logger.info("Closing connection to server PHD2 {}:{}".format(
                          self.host,self.port))
-        self.reset_guiding()
-        self.terminate_server()
-        self.sock.close()
-        self.disconnection_trig()
+        if self.state != 'NotConnected':
+            self.reset_guiding()
+            self.terminate_server()
+            self.sock.close()
+            self.disconnection_trig()
 
     def reset_profile(self, profile_id):
         self.set_connected(False)

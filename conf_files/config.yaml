@@ -1,5 +1,6 @@
 name: gnthibault remote observatory
 observatory:
+    module: ShedObservatory
     investigator: gnthibault
     latitude: 46.204391 # Degrees
     longitude: 6.143158 # Degrees
@@ -18,9 +19,10 @@ observatory:
     # Greenwich Mean Time ( GMT+1 ).
     gmt_offset: 60 # Minutes
     scope_controller:
-        module : ArduiScopeController
+        #module: ArduiScopeController
+        module: none
         board : scope_controller
-        port : /dev/ttyACM0
+        port: /dev/ttyACM0
         cmd_port : 6502
         msg_port : 6520
         pin_scope_dustcap : 10

@@ -29,9 +29,6 @@ from helper.IndiClient import IndiClient
 # Local stuff: Observation planning
 from ObservationPlanner.DefaultScheduler import DefaultScheduler
 
-# Local stuff: Observatory
-from Observatory.ShedObservatory import ShedObservatory
-
 # Local stuff: Service
 from Service.WUGWeatherService import WUGWeatherService
 from Service.NTPTimeService import NTPTimeService
@@ -441,10 +438,10 @@ class Manager(Base):
 
     def initialize_tracking(self):
         # start each observation by setting up the guider
-        if model.manager.guider is not None:
-            model.logger.info("Starting guider before observing")
-            model.manager.guider.reset_guiding()
-            model.manager.guider.guide()
+        if self.guider is not None:
+            self.logger.info("Starting guider before observing")
+            self.guider.reset_guiding()
+            self.guider.guide()
 
     def get_standard_headers(self, observation=None):
         """Get a set of standard headers
@@ -658,7 +655,9 @@ class Manager(Base):
             setup an observatory that stands for the physical building
         """
         try:
-            self.observatory = ShedObservatory(
+            obs_name = self.config['observatory']['module']
+            obs_module = load_module('Observatory.'+obs_name)
+            self.observatory = getattr(obs_module, obs_name)(
                 config = self.config['observatory'])
         except Exception:
             raise RuntimeError('Problem setting up observatory')

@@ -26,24 +26,27 @@ class DefaultScheduler(Scheduler):
         super().__init__(ntpServ, obs, config=config, path=path)
 
         # Initialize constraints for scheduling
-        self.constraints.append(AtNightConstraint.twilight_astronomical())
+        #self.constraints.append(AtNightConstraint.twilight_astronomical())
         try:
+            pass
             # TODO TN maybe non boolean Airmass Constraint
-            self.constraints.append(
-                AirmassConstraint(max=config["constraints"]["maxairmass"],
-                                  boolean_constraint=True))
+            #self.constraints.append(
+            #    AirmassConstraint(max=config["constraints"]["maxairmass"],
+            #                      boolean_constraint=True))
         except Exception as e:
             self.logger.warning("Cannot add airmass constraint: {}".format(e))
         try:
-            self.constraints.append(
-                MoonSeparationConstraint(
-                    min=config["constraints"]["minmoonseparationdeg"]*u.deg))
+            pass
+            #self.constraints.append(
+            #    MoonSeparationConstraint(
+            #        min=config["constraints"]["minmoonseparationdeg"]*u.deg))
         except Exception as e:
             self.logger.warning("Cannot add moon sep constraint: {}".format(e))
         try:
-            self.constraints.append(
-                LocalHorizonConstraint(horizon=self.obs.get_horizon(),
-                                       boolean_constraint=True))
+            pass
+            #self.constraints.append(
+            #    LocalHorizonConstraint(horizon=self.obs.get_horizon(),
+            #                           boolean_constraint=True))
         except Exception as e:
             self.logger.warning("Cannot add horizon constraint: {}".format(e))
 
