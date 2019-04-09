@@ -63,3 +63,13 @@ ObservationPlanner/Scheduler l232 you NEED to setup proper FixedTarget.from_name
 ShedObservatory l76: uncomment the raise ScopeControllerError(msg) 
 DefaultScheduler constructor: please put back all constraints
 Gast is important: Service/NTPTimeService.py l 137
+
+
+## How to launch the full stuff
+PYTHONPATH=. python ./apps/launch_remote_observatory.py
+PYTHONPATH=. python ./apps/launch_qt_dashboard.py
+PYTHONPATH=. python3 ./apps/launch_weather_capture.py
+PYTHONPATH=. python3 ./apps/launch_arduino_capture.py
+./apps/launch_indi_simu.sh
+./apps/launch_PAWS.sh
+

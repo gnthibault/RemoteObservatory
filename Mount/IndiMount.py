@@ -13,6 +13,7 @@ from astropy.time import Time
 from astropy.coordinates import SkyCoord
 from astropy.coordinates import ICRS
 from astropy.coordinates import ITRS
+from astropy.coordinates import EarthLocation
 #c = SkyCoord(ra=10.625*u.degree, dec=41.2*u.degree, frame='icrs', equinox='J2000.0')
 
 class IndiMount(IndiDevice):
@@ -41,16 +42,22 @@ class IndiMount(IndiDevice):
         logger = logger or logging.getLogger(__name__)
         
         if config is None:
-            config = dict(mount_name = "Telescope Simulator")
-
+            config = self.config
         deviceName = config['mount_name']
-
         logger.debug('Indi Mount, mount name is: {}'.format(
             deviceName))
-      
         # device related intialization
         IndiDevice.__init__(self, logger=logger, deviceName=deviceName,
             indiClient=indiClient)
+        try:
+            #try to get timezone from config file
+            self.gps = dict(latitude = self.config['observatory']['latitude'],
+                            longitude = self.config['observatory']['longitude'],
+                            elevation = self.config['observatory']['elevation'])
+        except:
+            self.gps = None
+
+      
 
         if connectOnCreate:
             self.connect()
@@ -84,24 +91,18 @@ class IndiMount(IndiDevice):
         We found an interesting SO post explaining how to get that from astropy
         https://stackoverflow.com/questions/52900678/coordinates-transformation-in-astropy
         """
-        #t = Time('2018-10-19 00:19:41', scale='utc')
-        #loc = EarthLocation(lon=30*u.deg, lat=30*u.deg, height=0*u.m)
-        #self.observatory.getAstropyEarthLocation()
-        #return self.observatory.getAstroplanObserver()
-        #self.serv_time.getAstropyTimeFromUTC()
-
-        #c_itrs = coord.transform_to(ITRS(obstime=t))
+        #time = Time.now()
+        #location = EarthLocation(lat=self.gps['latitude']*u.deg,
+        #                         lon=self.gps['longitude']*u.deg,
+        #                         height=self.gps['elevation']*u.m)
+        #c_itrs = coord.transform_to(ITRS(obstime=time))
         # Calculate local apparent Hour Angle (HA), wrap at 0/24h
-        #local_ha = loc.lon - c_ITRS.spherical.lon
+        #local_ha = location.lon - c_itrs.spherical.lon
         #local_ha.wrap_at(24*u.hourangle, inplace=True)
         # Calculate local apparent Declination
-        #local_dec = c_ITRS.spherical.lat
-        #print("Local apparent HA, Dec={} {}".format(local_ha.to_string(unit=u.hourangle, sep=':'), local_dec.to_string(unit=u.deg, sep=':', alwayssign=True) ))
-
-
-        #coord = coord.transform_to(ICRS)
+        #local_dec = c_itrs.spherical.lat
+        #coord = SkyCoord(ra=local_ha, dec=local_dec)
         #coord = coord.transform_to(ICRS(equinox='J2000.0'))
-
         rahour_decdeg = {'RA': coord.ra.hour, 
                          'DEC': coord.dec.degree}
         if self.is_parked:

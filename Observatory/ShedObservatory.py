@@ -3,7 +3,7 @@ import logging
 import os
 
 # Astropy stuff
-import astropy.units as AU
+import astropy.units as u
 from astropy.coordinates import EarthLocation
 
 # Astroplan stuff
@@ -185,19 +185,19 @@ class ShedObservatory(Base):
             self.logger.debug('ShedObservatory: Flat pannel switched off')
 
     def getAstropyEarthLocation(self):
-        return EarthLocation(lat=self.gpsCoordinates['latitude']*AU.deg,
-                             lon=self.gpsCoordinates['longitude']*AU.deg,
-                             height=self.altitudeMeter*AU.m)
+        return EarthLocation(lat=self.gpsCoordinates['latitude']*u.deg,
+                             lon=self.gpsCoordinates['longitude']*u.deg,
+                             height=self.altitudeMeter*u.m)
 
     def getAstroplanObserver(self):
         location = self.getAstropyEarthLocation()
-        pressure = 0.85 * AU.bar
+        pressure = 0.85 * u.bar
         relative_humidity = 0.20
-        temperature = 15 * AU.deg_C
+        temperature = 15 * u.deg_C
         if self.servWeather is not None:
-            pressure = (self.servWeather.getPressure_mb() / 1000) * AU.bar
+            pressure = (self.servWeather.getPressure_mb() / 1000) * u.bar
             relative_humidity = self.servWeather.getRelative_humidity()
-            temperature = self.servWeather.getTemp_c() * AU.deg_C
+            temperature = self.servWeather.getTemp_c() * u.deg_C
 
         observer = Observer(name=self.investigator,
             location=location,
