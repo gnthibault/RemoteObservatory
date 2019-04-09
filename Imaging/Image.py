@@ -128,7 +128,7 @@ class Image(Base):
                 self.solve_field()
 
             print('################## header info: {}'.format(self.header_pointing))
-            print('################## pointing info: {}'.format(self.pointing.ra))
+            print('################## pointing info: {}'.format(self.pointing))
             mag = self.pointing.separation(self.header_pointing)
             d_ra = self.pointing.ra - self.header_pointing.ra
             d_dec = self.pointing.dec - self.header_pointing.dec
@@ -156,10 +156,8 @@ class Image(Base):
 
             self.header_ra = self.header_pointing.ra.to(u.hourangle)
             self.header_dec = self.header_pointing.dec.to(u.degree)
-            print('##################### HEADER RA {}  DEC {}'.format(
-                  self.header_ra, self.header_dec))
-
-            # Precess to the current equinox otherwise the RA - LST method will be off.
+            # Precess to the current equinox otherwise the RA - LST method will
+            # be off.
             #self.header_ha = self.header_pointing.transform_to(
             #    self.FK5_Jnow).ra.to(u.hourangle) - self.sidereal
         except Exception as e:
@@ -181,13 +179,12 @@ class Image(Base):
             self.pointing = SkyCoord(ra=ra * u.degree,
                                      dec=dec * u.degree,
                                      frame='icrs', equinox='J2000.0')
-            print('##################### WCS POINTING {}'.format(self.pointing))
-
             self.ra = self.pointing.ra.to(u.hourangle)
             self.dec = self.pointing.dec.to(u.degree)
-
-            # Precess to the current equinox otherwise the RA - LST method will be off.
-            #self.ha = self.pointing.transform_to(self.FK5_Jnow).ra.to(u.hourangle) - self.sidereal
+            # Precess to the current equinox otherwise the RA - LST method
+            # will be off.
+            #self.ha = self.pointing.transform_to(self.FK5_Jnow).ra.to(
+            #    u.hourangle) - self.sidereal
 
     def solve_field(self, **kwargs):
         """ Solve field and populate WCS information
@@ -201,8 +198,6 @@ class Image(Base):
             dec=self.header_pointing.dec.value,
             radius=1,
             **kwargs)
-        print('##################### SOLVE INFO {}'.format(solve_info))
-
         self.wcs_file = solve_info['solved_fits_file']
         self.get_wcs_pointing()
 
