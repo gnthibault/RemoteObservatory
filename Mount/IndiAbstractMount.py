@@ -153,6 +153,8 @@ class IndiAbstractMount(IndiMount, AbstractMount):
                 was_slewing = self.is_slewing
                 self._is_tracking = False
                 self._is_slewing = True
+                print('##################### SLEWING TO {}'.format(
+                      self.get_target_coordinates()))
                 IndiMount.slew_to_coord_and_track(self,
                     self.get_target_coordinates())
                 success = True

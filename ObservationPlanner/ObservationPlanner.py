@@ -64,7 +64,7 @@ class ObservationPlanner(Base):
         self.obs = obs
         
         if configFileName is None:
-            self.configFileName = './conf_files/TargetList.json'
+            self.configFileName = './jsonModel/TargetList.json'
         else:
             self.configFileName = configFileName
 

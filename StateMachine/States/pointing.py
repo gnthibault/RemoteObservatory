@@ -10,7 +10,6 @@ from Imaging.Image import Image
 
 wait_interval = 5.
 timeout = 150.
-
 num_pointing_images = 1
 
 def on_enter(event_data):

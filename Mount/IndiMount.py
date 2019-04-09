@@ -9,8 +9,11 @@ from helper.IndiDevice import IndiDevice
 
 # Astropy stuff
 from astropy import units as u
+from astropy.time import Time
 from astropy.coordinates import SkyCoord
-#c = SkyCoord(ra=10.625*u.degree, dec=41.2*u.degree, frame='icrs')
+from astropy.coordinates import ICRS
+from astropy.coordinates import ITRS
+#c = SkyCoord(ra=10.625*u.degree, dec=41.2*u.degree, frame='icrs', equinox='J2000.0')
 
 class IndiMount(IndiDevice):
     """
@@ -74,13 +77,39 @@ class IndiMount(IndiDevice):
         self.set_coord(coord)
 
     def set_coord(self, coord):
+        """
+        Big concern here: coord should be given as Equatorial astrometric epoch
+        of date coordinate (eod):  RA JNow RA, hours,  DEC JNow Dec, degrees +N
+
+        We found an interesting SO post explaining how to get that from astropy
+        https://stackoverflow.com/questions/52900678/coordinates-transformation-in-astropy
+        """
+        #t = Time('2018-10-19 00:19:41', scale='utc')
+        #loc = EarthLocation(lon=30*u.deg, lat=30*u.deg, height=0*u.m)
+        #self.observatory.getAstropyEarthLocation()
+        #return self.observatory.getAstroplanObserver()
+        #self.serv_time.getAstropyTimeFromUTC()
+
+        #c_itrs = coord.transform_to(ITRS(obstime=t))
+        # Calculate local apparent Hour Angle (HA), wrap at 0/24h
+        #local_ha = loc.lon - c_ITRS.spherical.lon
+        #local_ha.wrap_at(24*u.hourangle, inplace=True)
+        # Calculate local apparent Declination
+        #local_dec = c_ITRS.spherical.lat
+        #print("Local apparent HA, Dec={} {}".format(local_ha.to_string(unit=u.hourangle, sep=':'), local_dec.to_string(unit=u.deg, sep=':', alwayssign=True) ))
+
+
+        #coord = coord.transform_to(ICRS)
+        #coord = coord.transform_to(ICRS(equinox='J2000.0'))
+
         rahour_decdeg = {'RA': coord.ra.hour, 
                          'DEC': coord.dec.degree}
         if self.is_parked:
             self.logger.warning('Cannot set coord: {} because mount is parked'
                                 ''.format(rahour_decdeg))
         else:
-            self.logger.info('Now setting coord: {}'.format(rahour_decdeg)) 
+            self.logger.info('Now setting JNow coord: {}'.format(
+                             rahour_decdeg)) 
             self.setNumber('EQUATORIAL_EOD_COORD', rahour_decdeg, sync=True,
                            timeout=180)
 
@@ -180,12 +209,15 @@ class IndiMount(IndiDevice):
         self.logger.debug('Asking mount {} for its current coordinates'.format(
             self.deviceName)) 
         rahour_decdeg = self.get_number('EQUATORIAL_EOD_COORD')
-        self.logger.debug('Received current coordinates {}'.format(
+        self.logger.debug('Received current JNOW coordinates {}'.format(
                           rahour_decdeg))
-
-        return SkyCoord(ra=rahour_decdeg['RA']['value']*u.hour,
-                        dec=rahour_decdeg['DEC']['value']*u.degree,
-                        frame='icrs')
+        ret = SkyCoord(ra=rahour_decdeg['RA']['value']*u.hourangle,
+                       dec=rahour_decdeg['DEC']['value']*u.degree,
+                       frame='cirs',
+                       obstime=Time.now())
+        self.logger.debug('Received coordinates in JNOw/CIRS from mount: {}'
+                          ''.format(ret))
+        return ret
 
 ###############################################################################
 # Monitoring related stuff

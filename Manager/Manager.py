@@ -465,17 +465,19 @@ class Manager(Base):
         t0 = self.serv_time.getAstropyTimeFromUTC()
         moon = get_moon(t0, self.observer.location)
 
+        print('##################### TARGET HOURANGLE IS {}'.format(self.observer.target_hour_angle(t0, target).value))
+
         headers = {
             'airmass': self.observer.altaz(t0, target).secz.value,
-            'creator': "RemoteObservatoryV{}".format(self.__version__),
+            'creator': "RemoteObservatory_{}".format(self.__version__),
             'elevation': self.earth_location.height.value,
-            'ha_mnt': self.observer.target_hour_angle(t0, target).value,
             'latitude': self.earth_location.lat.value,
             'longitude': self.earth_location.lon.value,
             'moon_fraction': self.observer.moon_illumination(t0),
             'moon_separation': target.coord.separation(moon).value,
             'observer': self.config.get('name', ''),
             'origin': 'gnthibault',
+            #'ha_mnt': self.observer.target_hour_angle(t0, target).value,
             #'tracking_rate_ra': self.mount.getTrackRate()
             #TODO TN is that stuff worth implementing ?
         }

@@ -18,7 +18,7 @@ class Indi3DSimulatorClient(IndiClient):
 
   def __init__(self, simulator, configFileName=None):
       # Call indi client base classe ctor
-      IndiClient.__init__(self)
+      IndiClient.__init__(self, config=None)
 
       #Dictionary of callbacks, key=device, value=conditions + callback
       self.number_callbacks = []

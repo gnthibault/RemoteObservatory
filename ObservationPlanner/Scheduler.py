@@ -230,7 +230,8 @@ class Scheduler(Base):
         camera_time = 1*u.second
         for target_name, filter_config in self.target_list.items():
             #target = FixedTarget.from_name(target_name)
-            target = FixedTarget(SkyCoord(5.33*u.deg, 46.0*u.deg))
+            target = FixedTarget(SkyCoord(33.33*u.deg, 66.66*u.deg,
+                                          frame='icrs', equinox='J2000.0'))
             for filter_name, config in filter_config.items():
                 count = config["count"]
                 exp_time_sec = config["exp_time_sec"]*u.second

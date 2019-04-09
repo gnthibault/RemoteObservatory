@@ -12,7 +12,7 @@ import pytz
 from tzwhere import tzwhere
 
 # Astropy stuff
-from astropy import units as AU
+from astropy import units as u
 from astropy.time import Time as ATime
 
 # Local stuff
@@ -37,6 +37,13 @@ class NTPTimeService(BaseService):
         self.logger.debug('NTPTimeservice config: {}'.format(cfg))
         self.ntpserver = cfg['ntpserver']
 
+        try:
+            #try to get timezone from config file
+            self.gps = dict(latitude = self.config['observatory']['latitude'],
+                            longitude = self.config['observatory']['longitude'])
+        except:
+            self.gps = None
+
         if tz is not None:
             try:
                 utc_test = datetime.utcnow()
@@ -49,12 +56,10 @@ class NTPTimeService(BaseService):
                 self.tz = tz
         else:
             try:
-                #try to get timezone from config file
-                gps = dict(latitude = self.config['observatory']['latitude'],
-                           longitude = self.config['observatory']['longitude'])
                 # Now find the timezone from the gps coordinate
                 tzw = tzwhere.tzwhere()
-                timezone_str = tzw.tzNameAt(gps['latitude'], gps['longitude'])
+                timezone_str = tzw.tzNameAt(self.gps['latitude'], 
+                                            self.gps['longitude'])
                 self.tz = pytz.timezone(timezone_str)
             except Exception as e:
                 self.logger.warning('NTPTimeservice: cannot get tz from config'
@@ -134,13 +139,14 @@ class NTPTimeService(BaseService):
         """ returns approximate sidereal time
         """
         utc = self.getAstropyTimeFromUTC()
-        if not (self.obs is None):
+        # TODO GAST IS IMPORTANT
+        if self.gps is not None:
             return utc.sidereal_time( kind='apparent',
-                longitude=self.obs.getAstropyEarthLocation().lon)
+                longitude=self.gps['longitude']*u.deg)
         return utc.sidereal_time(kind='apparent')
 
     def get_gast(self):
-        return float(self.get_astropy_gast()/AU.hourangle)
+        return float(self.get_astropy_gast()/u.hourangle)
 
     def get_jd(self):
         return self.getAstropyTimeFromUTC().jd

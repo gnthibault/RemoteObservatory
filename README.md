@@ -62,3 +62,4 @@ Check why the SITELONG entry in outputed file is wrong
 ObservationPlanner/Scheduler l232 you NEED to setup proper FixedTarget.from_name
 ShedObservatory l76: uncomment the raise ScopeControllerError(msg) 
 DefaultScheduler constructor: please put back all constraints
+Gast is important: Service/NTPTimeService.py l 137

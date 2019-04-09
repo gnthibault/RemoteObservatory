@@ -40,13 +40,24 @@ def solve_field(fname, timeout=15, solve_opts=None, **kwargs):
     if solve_opts is not None:
         options = solve_opts
     else:
+#        options = [
+#            '--guess-scale',
+#            '--cpulimit', str(timeout),
+#            '--no-verify',
+#            '--no-plots',
+#            '--no-fits2fits',
+#            '--crpix-center',
+#            '--match', 'none',
+#            '--corr', 'none',
+#            '--wcs', 'none',
+#            '--downsample', '4',
+#        ]
         options = [
             '--guess-scale',
             '--cpulimit', str(timeout),
             '--no-verify',
             '--no-plots',
             '--no-fits2fits',
-            '--crpix-center',
             '--match', 'none',
             '--corr', 'none',
             '--wcs', 'none',
@@ -58,6 +69,13 @@ def solve_field(fname, timeout=15, solve_opts=None, **kwargs):
         if kwargs.get('skip_solved', True):
             options.append('--skip-solved')
 
+        if 'crpix-center' in kwargs:
+            option.append('--crpix-center')
+        else:
+            option.append('--crpix-x')
+            option.append(0)
+            option.append('--crpix-y')
+            option.append(0)
         if 'ra' in kwargs:
             options.append('--ra')
             options.append(str(kwargs.get('ra')))
