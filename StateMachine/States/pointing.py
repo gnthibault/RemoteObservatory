@@ -15,7 +15,7 @@ from Imaging.Image import OffsetError
 wait_interval = 5.
 timeout = 150.
 max_num_pointing_images = 5
-max_pointing_error = 20*u.arcsec
+max_pointing_error = OffsetError(14*u.arcsec, 14*u.arcsec, 20*u.arcsec)
 
 def on_enter(event_data):
     """Pointing State
@@ -34,8 +34,8 @@ def on_enter(event_data):
                pointing_error.magnitude > max_pointing_error.magnitude):
 
             # Eventually adjust by slewing again to the target
-            if (img_num>0 and 
-                   pointing_error.magnitude < max_pointing_error.magnitude):
+            if ( img_num > 0 and 
+                 pointing_error.magnitude > max_pointing_error.magnitude):
                 model.manager.mount.slew_to_target()
 
             model.say("Taking pointing picture.")
