@@ -18,7 +18,7 @@ from astropy.coordinates import EarthLocation
 
 class IndiMount(IndiDevice):
     """
-        We recall that, with indi, telescopes should be adressed using JNow
+        We recall that, with indi, telescopes can be adressed using JNow/J2000
         coordinates, see:
         http://indilib.org/develop/developer-manual/101-standard-properties.html#h3-telescopes
 
@@ -36,6 +36,12 @@ class IndiMount(IndiDevice):
         topocentric coordinate
         ALT Altitude, degrees above horizon
         AZ Azimuth, degrees E of N
+
+        There is also another important switch we need to use: pier side
+        
+        TELESCOPE_PIER_SIDE : GEM Pier Side
+            PIER_EAST : Mount on the East side of pier (Pointing West).
+            PIER_WEST : Mount on the West side of pier (Pointing East).
     """
     def __init__(self, indiClient, connectOnCreate=True, logger=None,
                  config=None):
@@ -56,8 +62,6 @@ class IndiMount(IndiDevice):
                             elevation = self.config['observatory']['elevation'])
         except:
             self.gps = None
-
-      
 
         if connectOnCreate:
             self.connect()
