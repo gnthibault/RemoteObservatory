@@ -11,6 +11,7 @@ import astropy.units as u
 # Local
 from Imaging.Image import Image
 from Imaging.Image import OffsetError
+from utils.error import PointingError
 
 wait_interval = 5.
 timeout = 150.
@@ -29,6 +30,7 @@ def on_enter(event_data):
 
         img_num = 0
         pointing_error = OffsetError(*(np.inf*u.arcsec,)*3)
+        pointing_error_stack = {}
 
         while (img_num < max_num_pointing_images and
                pointing_error.magnitude > max_pointing_error.magnitude):
@@ -104,7 +106,14 @@ def on_enter(event_data):
                                    pointing_error))
                 # update mount with the actual position
                 model.manager.mount.sync_to_coord(pointing_image.pointing)
+                # update pointing process tracking information
+                pointing_error_stack[img_num] = pointing_error
+                img_num = img_num + 1
                 
+        if pointing_error.magnitude > max_pointing_error.magnitude:
+            raise PointingError('Pointing accuracy was not good enough after '
+                                '{} iterations, pointing error stack was: {}'
+                                ''.format(img_num, pointing_error_stack))
 
         model.next_state = 'tracking'
 

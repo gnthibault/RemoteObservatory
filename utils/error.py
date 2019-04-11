@@ -33,6 +33,13 @@ class GuidingError(Error):
     def __init__(self, msg='Guiding problem'):
         super().__init__(msg)
 
+class PointingError(Error):
+
+    """ Error during the pointing process """
+
+    def __init__(self, msg='Pointing problem'):
+        super().__init__(msg)
+
 class ScopeControllerError(Error):
 
     """ Error for a scope controller system malfunction """
