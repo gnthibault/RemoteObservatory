@@ -497,8 +497,6 @@ class Manager(Base):
         Perform autofocus on all cameras with focus capability, or a named
         subset of these. Optionally will perform a coarse autofocus first,
         otherwise will just fine tune focus.
-
-        Args:
             camera_list (list, optional): list containing names of cameras to
                 autofocus.
             coarse (bool, optional): Whether to performan a coarse autofocus

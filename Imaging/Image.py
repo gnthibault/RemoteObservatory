@@ -127,8 +127,6 @@ class Image(Base):
             if self.wcs is None:
                 self.solve_field()
 
-            print('################## header info: {}'.format(self.header_pointing))
-            print('################## pointing info: {}'.format(self.pointing))
             mag = self.pointing.separation(self.header_pointing)
             d_ra = self.pointing.ra - self.header_pointing.ra
             d_dec = self.pointing.dec - self.header_pointing.dec
