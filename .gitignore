@@ -12,7 +12,6 @@ __pycache__
 **/build
 
 /.idea
-/conf_files
 /dark_calibration
 /state_images
 

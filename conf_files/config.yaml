@@ -2,8 +2,8 @@ name: gnthibault remote observatory
 observatory:
     module: ShedObservatory
     investigator: gnthibault
-    latitude: 46.204391 # Degrees
-    longitude: 6.143158 # Degrees
+    latitude: 45. # Degrees
+    longitude: 5. # Degrees
     elevation: 600.0 # Meters
     # UTC+1 CET Central European Time,
     # UTC +2  CEST Central European Summer Time

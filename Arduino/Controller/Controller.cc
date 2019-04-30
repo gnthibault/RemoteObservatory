@@ -18,10 +18,12 @@ const int DHT_AIR_PIN   = 1;//outside air temperature
 const int DHT_BOX_PIN   = 2;//control box temperature
 
 // Relay
-const int SCOPE_DEW_HEAT_RELAY  = 11;//main telescope dew heater
-const int FINDER_DEW_HEAT_RELAY = 4;//finderscope dew heater
-const int CAMERA_RELAY          = 5;//EOS camera power supply
-const int SCOPE_FAN_RELAY       = 6;//main telescope prim. mirror fans
+const int SCOPE_DEW_HEAT_RELAY  = 11;   //main telescope dew heater
+const int FINDER_DEW_HEAT_RELAY = 4;    //finderscope dew heater
+const int CORRECTOR_DEW_HEAT_RELAY = 4; //corrector dew heater
+const int CAMERA_RELAY          = 5;    //EOS camera power supply
+const int SCOPE_FAN_RELAY       = 6;    //main telescope prim. mirror fans
+const int FLAT_PANEL_RELAY      = 7;    //light up main scope flat panel
 
 // PWM/SERVO
 const int SCOPE_SERVO_DUSTCAP  = 9;    //main telescope dustcap
