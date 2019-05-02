@@ -18,6 +18,7 @@ class ArduiScopeController(Base):
         if config is None:
             config = dict(
                 board = "scope_controller",
+                port = "/dev/ttyACM0",
                 cmd_port = 6502,
                 msg_port = 6520,
                 pin_scope_dustcap = 10,
