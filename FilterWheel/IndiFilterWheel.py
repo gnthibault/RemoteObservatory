@@ -8,8 +8,7 @@ from Base.Base import Base
 from helper.IndiDevice import IndiDevice
 
 class IndiFilterWheel(IndiDevice, Base):
-    def __init__(self, indiClient, config,
-                 connectOnCreate=True):
+    def __init__(self, indiClient, config, connectOnCreate=True):
         
         if config is None:
             config = dict(
