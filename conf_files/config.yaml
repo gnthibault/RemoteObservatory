@@ -21,7 +21,7 @@ observatory:
     scope_controller:
         #module: ArduiScopeController
         module: IndiScopeController
-        board : scope_controller
+        board : Arduino
         port: /dev/ttyACM0
         cmd_port : 6502
         msg_port : 6520

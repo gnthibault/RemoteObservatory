@@ -22,18 +22,18 @@ On
 
 <defSwitchVector device="scope_controller" name="SCOPE_SERVO_DUSTCAP_SWITCH" label="Main scope dustcap" group="Main Control" state="Idle" perm="rw" rule="AtMostOne" timeout="60">
     <defSwitch name="SERVO_SWITCH" label="Dustcap switch">
-    <indiduino pin="9" type="servo" onangle="150" offangle="10" button="BUTTON_1"/>
+    <indiduino pin="9" type="servo" onangle="177" offangle="103" button="BUTTON_1"/>
 Off
     </defSwitch>
 </defSwitchVector>
 
 <defSwitchVector device="scope_controller" name="SCOPE_DEW_HEAT_RELAY" label="Main scope secondary heater" group="Main Control" state="Idle" perm="rw" rule="OneOfMany" timeout="1">
-    <defSwitch name="HEATER_CMD" label="ON">
+    <defSwitch name="RELAY_CMD" label="ON">
     <indiduino pin="2"/>
-Off
+On
     </defSwitch>
     <defSwitch name="DUMMY" label="OFF">
-On
+Off
     </defSwitch>
 </defSwitchVector>
 
@@ -77,7 +77,7 @@ Off
 </defSwitchVector>
 
 <defSwitchVector device="scope_controller" name="FINDER_DEW_HEAT_RELAY" label="Finder scope dew heater" group="Main Control" state="Idle" perm="rw" rule="OneOfMany" timeout="1">
-    <defSwitch name="HEATER_CMD" label="ON">
+    <defSwitch name="RELAY_CMD" label="ON">
     <indiduino pin="2"/>
 Off
     </defSwitch>
@@ -92,7 +92,7 @@ On
 
 
 <defSwitchVector device="scope_controller" name="CORRECTOR_DEW_HEAT_RELAY" label="Corrector dew heater" group="Main Control" state="Idle" perm="rw" rule="OneOfMany" timeout="1">
-    <defSwitch name="HEATER_CMD" label="ON">
+    <defSwitch name="RELAY_CMD" label="ON">
     <indiduino pin="2"/>
 Off
     </defSwitch>

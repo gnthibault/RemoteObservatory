@@ -107,7 +107,8 @@ class IndiClient(PyIndi.BaseClient, Base):
       self.logger.debug('Server disconnected')
 
   def __str__(self):
-      return 'INDI client connected to {}:{}'.format(self.host, self.port)
+      return 'INDI client connected to {}:{}'.format(self.remoteHost,
+          self.remotePort)
 
   def __repr__(self):
       return self.__str__()
