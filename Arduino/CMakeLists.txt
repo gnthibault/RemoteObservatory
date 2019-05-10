@@ -18,3 +18,5 @@ add_subdirectory(Arduinocore)
 add_subdirectory(blinkLED)
 add_subdirectory(Controller)
 add_subdirectory(Focuser)
+add_subdirectory(Firmata)
+
