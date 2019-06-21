@@ -213,7 +213,7 @@ git pull --ff-only
 ./startup.sh
 npm install
 
-
+# Install tic stuff
 
 
 ### More on wifi stuff
