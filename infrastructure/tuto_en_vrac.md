@@ -179,6 +179,9 @@ git clone https://github.com/skyrocknroll/CH341SER_LINUX.git
 make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu-
 Then copy to destination machine and
 sudo make load
+# to launch at startup
+sudo cp ./ch34x.ko /lib/modules/`uname -r`/
+echo "ch34x" >> /etc/modules
 
 # Build arduino sdk OPTIONAL (dont do it)
 git clone https://github.com/arduino/Arduino.git
