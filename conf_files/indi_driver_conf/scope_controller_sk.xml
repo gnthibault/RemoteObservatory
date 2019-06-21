@@ -15,14 +15,14 @@ On
 
 <defNumberVector device="scope_controller" name="SCOPE_SERVO_DUSTCAP_POS" label="Main scope dustcap" group="Main Control" state="Idle" perm="rw" timeout="0">
     <defNumber name="SERVO_POS" label="Dustcap value" format="%4.0f" min="0" max="255" step="1">
-    <indiduino pin="6" type="servo"/>
+    <indiduino pin="9" type="servo"/>
 0
     </defNumber>
 </defNumberVector>
 
 <defSwitchVector device="scope_controller" name="SCOPE_SERVO_DUSTCAP_SWITCH" label="Main scope dustcap" group="Main Control" state="Idle" perm="rw" rule="AtMostOne" timeout="60">
     <defSwitch name="SERVO_SWITCH" label="Dustcap switch">
-    <indiduino pin="6" type="servo" onangle="177" offangle="103" button="BUTTON_1"/>
+    <indiduino pin="9" type="servo" onangle="177" offangle="103" button="BUTTON_1"/>
 Off
     </defSwitch>
 </defSwitchVector>
