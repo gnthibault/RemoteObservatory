@@ -2,6 +2,7 @@
 
 #APP=Controller
 APP=Firmata
+#APP=blinkLED
 in="./build/$APP/$APP"
 out="./build/$APP/$APP.hex"
 
@@ -19,3 +20,5 @@ baud=115200
 avr-objcopy -O ihex -R .eeprom $in $out
 avrdude -V -carduino -p$device -b$baud -P $tty -D -Uflash:w:$out:i \
   -C ./avrdude.conf
+#avrdude -V -carduino -pATmega328P -b57600 -P $tty -D -Uflash:w:$out:i \
+

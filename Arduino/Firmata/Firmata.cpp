@@ -775,7 +775,7 @@ void setup()
   // However do not do this if you are using SERIAL_MESSAGE
 
   Firmata.begin(57600);
-  while (!Serial) {
+  while (!Serial.available()) {
     ; // wait for serial port to connect. Needed for ATmega32u4-based boards and Arduino 101
   }
 
@@ -785,8 +785,7 @@ void setup()
 /*==============================================================================
  * LOOP()
  *============================================================================*/
-int main(void)
-{
+void loop() {
   byte pin, analogPin;
 
   /* DIGITALREAD - as fast as possible, check for changes and output them to the
@@ -820,7 +819,17 @@ int main(void)
     }
   }
 
-#ifdef FIRMATA_SERIAL_FEATURE
-  serialFeature.update();
-#endif
+  #ifdef FIRMATA_SERIAL_FEATURE
+    serialFeature.update();
+  #endif
+}
+
+int main(void)
+{
+  init();
+  setup();
+
+  for (;;) {
+    loop();
+  }
 }
