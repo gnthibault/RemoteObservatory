@@ -115,9 +115,16 @@ autoreconf --install --symlink
 ./configure --prefix=/usr/local
 make -j8 && sudo make install
 
+## build gsc catalog
+wget https://launchpadlibrarian.net/401067940/gsc_1.3~ubuntu19.04.1.tar.xz
+tar -xvf ./gsc_1.3~ubuntu19.04.1.tar.xz
+cd recipe
+cmake -DCMAKE_INSTALL_PREFIX=/usr .
+sudo make install
+
 ## build indi
 To build libindi, first install the following packages:
-sudo apt-get install cdbs libftdi1-dev libcfitsio-dev libnova-dev libusb-1.0-0-dev libjpeg-dev libusb-dev libtiff5-dev libftdi-dev fxload libkrb5-dev libcurl4-gnutls-dev libraw-dev libgsl0-dev dkms libboost-regex-dev libgps-dev libdc1394-22-dev libfftw3-dev
+sudo apt-get install cdbs libftdi1-dev libcfitsio-dev libnova-dev libusb-1.0-0-dev libjpeg-dev libusb-dev libtiff5-dev libftdi-dev fxload libkrb5-dev libcurl4-gnutls-dev libraw-dev libgsl0-dev dkms libboost-regex-dev libgps-dev libdc1394-22-dev libfftw3-dev 
 mkdir ~/Projects
 cd ~/Projects
 git clone https://github.com/indilib/indi.git
@@ -140,7 +147,6 @@ cmake -DCMAKE_INSTALL_PREFIX=/usr  ~/Projects/indi/3rdparty/indi-gphoto
 make -j8
 sudo make install
 cd-
-
 
 ###Install Astrometry.net for ekos
 sudo apt install astrometry.net
