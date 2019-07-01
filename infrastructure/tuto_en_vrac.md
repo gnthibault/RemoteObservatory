@@ -215,6 +215,19 @@ npm install
 
 # Install tic stuff
 
+# install pyopencv
+sudo apt-get install gtk2-devel libv4l-devel ffmpeg-devel gstreamer-plugins-base-devel libpng-devel libjpeg-turbo-devel jasper-devel openexr-devel libtiff-devel libwebp-devel
+mkdir build; cd build
+cmake -DENABLE_PRECOMPILED_HEADERS=OFF -D WITH_OPENMP=ON -D CMAKE_BUILD_TYPE=RELEASE -D BUILD_EXAMPLES=OFF -D BUILD_DOCS=OFF -D BUILD_PERF_TESTS=OFF -D BUILD_TESTS=OFF -D WITH_CSTRIPES=ON -D WITH_OPENCL=ON CMAKE_INSTALL_PREFIX=/usr/local/ ..
+make -j6a
+sudo make install
+
+# Install als
+sudo aptitude install libblas-dev liblapack-dev libblas3 liblapack3 python3 python3-pip python3-dev python3-wheel python3-numpy pip3 python3-scipy
+pip3 install astropy tqdm watchdog astroalign rawpy dtcwt pywi qimage2ndarray
+
+#llvm
+cmake -D CMAKE_BUILD_TYPE=Release -D LLVM_TARGETS_TO_BUILD="ARM" -D LLVM_INCLUDE_EXAMPLES=OFF -D LLVM_BUILD_EXAMPLES=OFF -D LLVM_INCLUDE_TESTS=OFF -D LLVM_BUILD_TESTS=OFF -D LLVM_INCLUDE_BENCHMARKS=OFF -D LLVM_BUILD_BENCHMARKS=OFF -D LLVM_TARGET_ARCH="ARM" ../../llvm-8.0.0.src
 
 ### More on wifi stuff
 
