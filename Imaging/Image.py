@@ -56,7 +56,7 @@ class Image(Base):
 
         # Location Information
         if location is None:
-            cfg_loc = self.config['location']
+            cfg_loc = self.config['observatory']
             location = EarthLocation(lat=cfg_loc['latitude'],
                                      lon=cfg_loc['longitude'],
                                      height=cfg_loc['elevation'],
@@ -72,13 +72,13 @@ class Image(Base):
         self.header_pointing = None
         self.header_ra = None
         self.header_dec = None
-        self.header_ha = None
+        #self.header_ha = None
 
         # Coordinates from WCS
         self.pointing = None
         self.ra = None
         self.dec = None
-        self.ha = None
+        #self.ha = None
 
         self.get_header_pointing()
         self.get_wcs_pointing()
@@ -128,8 +128,8 @@ class Image(Base):
                 self.solve_field()
 
             mag = self.pointing.separation(self.header_pointing)
-            d_dec = self.pointing.dec - self.header_pointing.dec
             d_ra = self.pointing.ra - self.header_pointing.ra
+            d_dec = self.pointing.dec - self.header_pointing.dec
 
             self._pointing_error = OffsetError(
                 d_ra.to(u.arcsec),
@@ -142,39 +142,47 @@ class Image(Base):
     def get_header_pointing(self):
         """Get the pointing information from the header
 
-        The header should contain the `RA-MNT` and `DEC-MNT` keywords, from which
-        the header pointing coordinates are built.
+        The header should contain the `RA` and `DEC` keywords, from which
+        the header pointing coordinates are built. Those two entries are
+        hopefully written by indi :) as J2000 format
         """
         try:
-            self.header_pointing = SkyCoord(ra=float(self.header['RA-MNT']) * u.degree,
-                                            dec=float(self.header['DEC-MNT']) * u.degree)
+            self.header_pointing = SkyCoord(
+                ra=float(self.header['RA']) * u.degree,
+                dec=float(self.header['DEC']) * u.degree,
+                frame='icrs', equinox='J2000.0')
 
             self.header_ra = self.header_pointing.ra.to(u.hourangle)
             self.header_dec = self.header_pointing.dec.to(u.degree)
-
-            # Precess to the current equinox otherwise the RA - LST method will be off.
-            self.header_ha = self.header_pointing.transform_to(
-                self.FK5_Jnow).ra.to(u.hourangle) - self.sidereal
+            # Precess to the current equinox otherwise the RA - LST method will
+            # be off.
+            #self.header_ha = self.header_pointing.transform_to(
+            #    self.FK5_Jnow).ra.to(u.hourangle) - self.sidereal
         except Exception as e:
-            self.logger.warning('Cannot get header pointing information: {}'.format(e))
+            msg = 'Cannot get header pointing information: {}'.format(e)
+            self.logger.error(msg)
+            raise RuntimeError(msg)
+            
 
     def get_wcs_pointing(self):
         """Get the pointing information from the WCS
-
         Builds the pointing coordinates from the plate-solved WCS. These will be
         compared with the coordinates stored in the header.
+        One should notice that Astrometry.net uses J2000 equinox
         """
         if self.wcs is not None:
             ra = self.wcs.celestial.wcs.crval[0]
             dec = self.wcs.celestial.wcs.crval[1]
 
-            self.pointing = SkyCoord(ra=ra * u.degree, dec=dec * u.degree)
-
+            self.pointing = SkyCoord(ra=ra * u.degree,
+                                     dec=dec * u.degree,
+                                     frame='icrs', equinox='J2000.0')
             self.ra = self.pointing.ra.to(u.hourangle)
             self.dec = self.pointing.dec.to(u.degree)
-
-            # Precess to the current equinox otherwise the RA - LST method will be off.
-            self.ha = self.pointing.transform_to(self.FK5_Jnow).ra.to(u.hourangle) - self.sidereal
+            # Precess to the current equinox otherwise the RA - LST method
+            # will be off.
+            #self.ha = self.pointing.transform_to(self.FK5_Jnow).ra.to(
+            #    u.hourangle) - self.sidereal
 
     def solve_field(self, **kwargs):
         """ Solve field and populate WCS information
@@ -182,11 +190,12 @@ class Image(Base):
         Args:
             **kwargs (dict): Options to be passed to `get_solve_field`
         """
-        solve_info = fits_utils.get_solve_field(self.fits_file,
-                                                ra=self.header_pointing.ra.value,
-                                                dec=self.header_pointing.dec.value,
-                                                **kwargs)
-
+        solve_info = fits_utils.get_solve_field(
+            self.fits_file,
+            ra=self.header_pointing.ra.value,
+            dec=self.header_pointing.dec.value,
+            radius=1,
+            **kwargs)
         self.wcs_file = solve_info['solved_fits_file']
         self.get_wcs_pointing()
 

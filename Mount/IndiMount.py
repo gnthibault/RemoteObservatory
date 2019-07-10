@@ -9,12 +9,16 @@ from helper.IndiDevice import IndiDevice
 
 # Astropy stuff
 from astropy import units as u
+from astropy.time import Time
 from astropy.coordinates import SkyCoord
-#c = SkyCoord(ra=10.625*u.degree, dec=41.2*u.degree, frame='icrs')
+from astropy.coordinates import ICRS
+from astropy.coordinates import ITRS
+from astropy.coordinates import EarthLocation
+#c = SkyCoord(ra=10.625*u.degree, dec=41.2*u.degree, frame='icrs', equinox='J2000.0')
 
 class IndiMount(IndiDevice):
     """
-        We recall that, with indi, telescopes should be adressed using JNow
+        We recall that, with indi, telescopes can be adressed using JNow/J2000
         coordinates, see:
         http://indilib.org/develop/developer-manual/101-standard-properties.html#h3-telescopes
 
@@ -32,30 +36,32 @@ class IndiMount(IndiDevice):
         topocentric coordinate
         ALT Altitude, degrees above horizon
         AZ Azimuth, degrees E of N
+
+        There is also another important switch we need to use: pier side
+        
+        TELESCOPE_PIER_SIDE : GEM Pier Side
+            PIER_EAST : Mount on the East side of pier (Pointing West).
+            PIER_WEST : Mount on the West side of pier (Pointing East).
     """
     def __init__(self, indiClient, connectOnCreate=True, logger=None,
-                 configFileName=None):
+                 config=None):
         logger = logger or logging.getLogger(__name__)
         
-        if configFileName is None:
-            self.configFileName = 'conf_files/IndiSimulatorMount.json'
-        else:
-            self.configFileName = configFileName
-
-        # Now configuring class
-        logger.debug('Indi Mount, configuring with file {}'.format(
-            self.configFileName))
-        # Get key from json
-        with open(self.configFileName) as jsonFile:
-            data = json.load(jsonFile)
-            deviceName = data['MountName']
-
+        if config is None:
+            config = self.config
+        deviceName = config['mount_name']
         logger.debug('Indi Mount, mount name is: {}'.format(
             deviceName))
-      
         # device related intialization
         IndiDevice.__init__(self, logger=logger, deviceName=deviceName,
             indiClient=indiClient)
+        try:
+            #try to get timezone from config file
+            self.gps = dict(latitude = self.config['observatory']['latitude'],
+                            longitude = self.config['observatory']['longitude'],
+                            elevation = self.config['observatory']['elevation'])
+        except:
+            self.gps = None
 
         if connectOnCreate:
             self.connect()
@@ -70,25 +76,54 @@ class IndiMount(IndiDevice):
         self.logger.debug('on emergency routine finished')
 
     def slew_to_coord_and_stop(self, coord):
+        """
+            Slew to a coordinate and stop upon receiving coordinates.
+        """
         self.on_coord_set('SLEW')
         self.set_coord(coord)
 
     def slew_to_coord_and_track(self, coord):
+        """
+            Slew to a coordinate and track upon receiving coordinates.
+        """
         self.on_coord_set('TRACK')
         self.set_coord(coord)
 
     def sync_to_coord(self, coord):
+        """
+           Accept current coordinate as correct upon receiving coordinates.
+        """
         self.on_coord_set('SYNC')
         self.set_coord(coord)
 
     def set_coord(self, coord):
+        """
+        Big concern here: coord should be given as Equatorial astrometric epoch
+        of date coordinate (eod):  RA JNow RA, hours,  DEC JNow Dec, degrees +N
+
+        We found an interesting SO post explaining how to get that from astropy
+        https://stackoverflow.com/questions/52900678/coordinates-transformation-in-astropy
+        """
+        time = Time.now()
+        location = EarthLocation(lat=self.gps['latitude']*u.deg,
+                                 lon=self.gps['longitude']*u.deg,
+                                 height=self.gps['elevation']*u.m)
+        c_itrs = coord.transform_to(ITRS(obstime=time))
+        # Calculate local apparent Hour Angle (HA), wrap at 0/24h
+        local_ha = location.lon - c_itrs.spherical.lon
+        local_ha.wrap_at(24*u.hourangle, inplace=True)
+        # Calculate local apparent Declination
+        local_dec = c_itrs.spherical.lat
+        coord = SkyCoord(ra=local_ha, dec=local_dec)
+        #coord = coord.transform_to(ICRS(equinox='J2000.0'))
         rahour_decdeg = {'RA': coord.ra.hour, 
                          'DEC': coord.dec.degree}
         if self.is_parked:
             self.logger.warning('Cannot set coord: {} because mount is parked'
                                 ''.format(rahour_decdeg))
         else:
-            self.logger.info('Now setting coord: {}'.format(rahour_decdeg)) 
+            self.logger.info('Now setting JNow coord: {}'.format(
+                             rahour_decdeg)) 
             self.setNumber('EQUATORIAL_EOD_COORD', rahour_decdeg, sync=True,
                            timeout=180)
 
@@ -188,12 +223,15 @@ class IndiMount(IndiDevice):
         self.logger.debug('Asking mount {} for its current coordinates'.format(
             self.deviceName)) 
         rahour_decdeg = self.get_number('EQUATORIAL_EOD_COORD')
-        self.logger.debug('Received current coordinates {}'.format(
+        self.logger.debug('Received current JNOW coordinates {}'.format(
                           rahour_decdeg))
-
-        return SkyCoord(ra=rahour_decdeg['RA']['value']*u.hour,
-                        dec=rahour_decdeg['DEC']['value']*u.degree,
-                        frame='icrs')
+        ret = SkyCoord(ra=rahour_decdeg['RA']['value']*u.hourangle,
+                       dec=rahour_decdeg['DEC']['value']*u.degree,
+                       frame='cirs',
+                       obstime=Time.now())
+        self.logger.debug('Received coordinates in JNOw/CIRS from mount: {}'
+                          ''.format(ret))
+        return ret
 
 ###############################################################################
 # Monitoring related stuff

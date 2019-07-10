@@ -21,21 +21,34 @@ from ObservationPlanner.LocalHorizonConstraint import LocalHorizonConstraint
 
 class DefaultScheduler(Scheduler):
 
-    def __init__(self, ntpServ, obs, config_file_name=None, path='.'):
+    def __init__(self, ntpServ, obs, config=None, path='.'):
         """ Inherit from the `Base Scheduler` """
-        Scheduler.__init__(self, ntpServ, obs, config_file_name=None, path='.')
+        super().__init__(ntpServ, obs, config=config, path=path)
 
-        # TODO TN add non boolean Airmass Constraint, Local horizon and Moon
-        # Separation
-        #self.constraints = [
-        #    AirmassConstraint(max=3, boolean_constraint=True),
-        #    AtNightConstraint.twilight_astronomical(),
-        #    MoonSeparationConstraint(min=45*u.deg),
-        #    LocalHorizonConstraint(horizon=self.obs.get_horizon(),
-        #                                   boolean_constraint=True)]
-        #self.constraints = [
-        #    AirmassConstraint(max=6, boolean_constraint=True)]
-        self.constraints = []
+        # Initialize constraints for scheduling
+        #self.constraints.append(AtNightConstraint.twilight_astronomical())
+        try:
+            pass
+            # TODO TN maybe non boolean Airmass Constraint
+            #self.constraints.append(
+            #    AirmassConstraint(max=config["constraints"]["maxairmass"],
+            #                      boolean_constraint=True))
+        except Exception as e:
+            self.logger.warning("Cannot add airmass constraint: {}".format(e))
+        try:
+            pass
+            #self.constraints.append(
+            #    MoonSeparationConstraint(
+            #        min=config["constraints"]["minmoonseparationdeg"]*u.deg))
+        except Exception as e:
+            self.logger.warning("Cannot add moon sep constraint: {}".format(e))
+        try:
+            pass
+            #self.constraints.append(
+            #    LocalHorizonConstraint(horizon=self.obs.get_horizon(),
+            #                           boolean_constraint=True))
+        except Exception as e:
+            self.logger.warning("Cannot add horizon constraint: {}".format(e))
 
 ##########################################################################
 # Properties
@@ -74,11 +87,6 @@ class DefaultScheduler(Scheduler):
         
         observer = self.obs.getAstroplanObserver()
 
-        common_properties = {
-            'moon': get_moon(time, observer.location),
-            'observed_list': self.observed_list
-        }
-
         for constraint in self.constraints:
             self.logger.info("Checking Constraint: {}".format(constraint))
             for obs_key, observation in self.observations.items():
@@ -86,19 +94,18 @@ class DefaultScheduler(Scheduler):
                     self.logger.debug("\tObservation: {}".format(obs_key))
                     score = constraint.compute_constraint(time, observer,
                         observation.target.coord)
+                    # Check if the computed score is a boolean
                     if np.any([isinstance(score, ty) for ty in
                               [bool, np.bool, np.bool_]]):
-                        self.logger.debug("\t\tVeto: : {}".format(score))
+                        self.logger.debug("\t\tVeto: {}".format(score))
+                        # Log vetoed observations
                         if not score:
-                            self.logger.debug("\t\t{} vetoed by {}".format(
-                                obs_key, constraint))
                             # if not valid, remove from valid_obs
                             del valid_obs[obs_key]
-                            continue
                     else:
-                        self.logger.debug("\t\tScore: {:.05f}".format(score))
-                    # if valid, update score to valid_obs reference (default 1)
-                    valid_obs[obs_key] += score
+                        self.logger.debug('\t\tScore: {:.05f}'.format(score))
+                        # if valid, update valid_obs score (def start at 1)
+                        valid_obs[obs_key] += score
 
         # Now add initial priority
         for obs_key, score in valid_obs.items():

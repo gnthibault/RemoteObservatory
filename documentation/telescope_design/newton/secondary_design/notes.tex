@@ -1,0 +1,55 @@
+
+# A bit of projective geometry
+
+## Introduction to projective geometry
+
+Projective geometry can be seen as a subset of algebra where, instead of considering an elements "v" of a vector space "V" of dimension "n", we instead consider a projective vector space $V_p$ of dimension $n+1$ where 
+Given a very basic Hilbert space $\mathbb{R}^n$, the associated projective space
+
+## Projective geometry in 3D
+
+In 3D, tools from projective geometry can be used to define a very simple optical system: the pinehole camera model. In this model, all points in a set of points from the 3D domain a considered equivalent if they lie on the same TODO line, hence are projected on the same point on the projection plane.
+
+# Parabola as a conic section
+
+It is always interesting, as a basic starting point, to study the properties of parabola.
+Conic section are really interesting objects to study, for instance they have some cool applications in basic projective geometry for rendering 3d objects on planes. But also because they are strongly related to quadratic equation, and quadratric equations can be extended to higher dimensions, where they are found in a lot of applications to.
+
+Lets first begin with this, here is a simple definition of quadratic equation:
+
+\begin{align}
+
+\begin{pmatrix}u \\ v \\ 1\end{pmatrix}^{t}
+\begin{pmatrix}
+    A               & \nicefrac{C}{2} & \nicefrac{D}{2}\\
+    \nicefrac{C}{2} & B               & \nicefrac{E}{2}\\
+    \nicefrac{D}{2} & \nicefrac{E}{2} & F
+\end{pmatrix}
+\begin{pmatrix}u \\ v \\ 1\end{pmatrix}
+\end{align}
+
+Which can be written as
+
+\begin{align}
+\begin{pmatrix}u \\ v\end{pmatrix}^{t}
+\begin{pmatrix}
+    A               & \nicefrac{C}{2}\\
+    \nicefrac{C}{2} & B              \\
+    \nicefrac{D}{2} & \nicefrac{E}{2}
+\end{pmatrix}
+\begin{pmatrix}u \\ v\end{pmatrix} +
+\begin{pmatrix}
+    \nicefrac{D}{2}\\
+    \nicefrac{E}{2}\\
+    \nicefrac{E}{2} & F
+\end{pmatrix}
+\end{align}
+
+or also as:
+
+\begin{align}
+\end{align}
+
+# Studying parabolic mirror using projective geometry tools
+
+Given a parabolic mirror, and a set of parallel light rays coming from infinity, we have seen that each set of rays do form a cone, and the \"focus\" point, also defines a surface.

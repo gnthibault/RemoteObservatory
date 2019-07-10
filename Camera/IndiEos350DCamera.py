@@ -3,24 +3,25 @@ import logging
 import json
 import io
 
-#Indi stuff
-import PyIndi
+#Local stuff
+from Camera.IndiAbstractCamera import IndiAbstractCamera
 from Camera.IndiCamera import IndiCamera
 
-class IndiEos350DCamera(IndiCamera):
+class IndiEos350DCamera(IndiAbstractCamera):
     ''' Indi Camera class for eos 350D (3456 × 2304 apsc cmos) '''
 
-    def __init__(self, indiClient, logger=None, configFileName=None,
+    def __init__(self, indiClient, config=None,
                  connectOnCreate=True):
-        logger = logger or logging.getLogger(__name__)
-        logger.debug('Configuring Indi EOS350D Camera')
+        self.logger.debug('Configuring Indi EOS6D Camera')
 
-        if config_filename is None:
-            config_filename = './conf_files/IndiEos350DCamera.json'
+        if config is None:
+            config = dict(
+                camera_name='Canon DSLR Digital Rebel XT (normal mode)')
+
 
         # device related intialization
-        IndiCamera.__init__(self, indiClient, logger=logger,
-                            configFileName=config_filename)
+        super().__init__(self, indiClient, logger=self.logger,
+                            config=config)
 
         # Finished configuring
         self.logger.debug('Configured Indi Eos 350D Camera successfully')

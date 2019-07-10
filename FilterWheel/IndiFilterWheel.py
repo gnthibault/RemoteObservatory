@@ -4,27 +4,28 @@ import json
 import logging
 
 # Indi stuff
-import PyIndi
+from Base.Base import Base
 from helper.IndiDevice import IndiDevice
 
-class IndiFilterWheel(IndiDevice):
-    def __init__(self, indiClient, logger=None, configFileName=None,
-                 connectOnCreate=True):
-        logger = logger or logging.getLogger(__name__)
+class IndiFilterWheel(IndiDevice, Base):
+    def __init__(self, indiClient, config, connectOnCreate=True):
         
-        if configFileName is None:
-            self.configFileName = 'conf_files/IndiSimulatorFilterWheel.json'
-        else:
-            self.configFileName = configFileName
+        if config is None:
+            config = dict(
+                module = "IndiFilterWheel",
+                filterwheel_name = "Filter Simulator",
+                filter_list = dict(
+                    Luminance = 1,
+                    Red = 2,
+                    Green = 3,
+                    Blue = 4,
+                    H_Alpha = 5,
+                    OIII = 6,
+                    SII = 7,
+                    LPR = 8))
 
-        # Now configuring class
-        logger.debug('Indi FilterWheel, configuring with file {}'.format(
-                     self.configFileName))
-        # Get key from json
-        with open(self.configFileName) as jsonFile:
-            data = json.load(jsonFile)
-            deviceName = data['FilterWheelName']
-            self.filterList = data['FilterList']
+        deviceName = config['filterwheel_name']
+        self.filterList = config['filter_list']
 
         logger.debug('Indi FilterWheel, filterwheel name is: {}'.format(
                      deviceName))

@@ -11,5 +11,5 @@ def on_enter(event_data):
                            'ready')
         model.next_state = 'parking'
     else:
-        model.manager.mount.unpark()
+        model.manager.unpark()
         model.next_state = 'scheduling'

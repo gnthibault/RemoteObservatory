@@ -26,6 +26,27 @@ class Error(AstropyWarning, Base):
         print("TERMINATING: {}".format(msg))
         sys.exit(1)
 
+class GuidingError(Error):
+
+    """ Error for a guiding system malfunction """
+
+    def __init__(self, msg='Guiding problem'):
+        super().__init__(msg)
+
+class PointingError(Error):
+
+    """ Error during the pointing process """
+
+    def __init__(self, msg='Pointing problem'):
+        super().__init__(msg)
+
+class ScopeControllerError(Error):
+
+    """ Error for a scope controller system malfunction """
+
+    def __init__(self, msg='Scope control problem'):
+        super().__init__(msg)
+
 
 class InvalidSystemCommand(Error):
 
@@ -121,22 +142,13 @@ class SolveError(NotFound):
     """ Camera cannot be imported """
     pass
 
+class BadSerialConnection(Error):
 
-class TheSkyXError(Error):
-    """ Errors from TheSkyX """
+    """ Error raised when serial command is bad """
     pass
 
 
-class TheSkyXKeyError(TheSkyXError):
-    """ Errors from TheSkyX because bad key passed """
+class ArduinoDataError(Error):
+    """Error raised when there is something very wrong with Arduino information."""
     pass
 
-
-class TheSkyXTimeout(TheSkyXError):
-    """ Errors from TheSkyX because bad key passed """
-    pass
-
-
-class GoogleCloudError(Error):
-    """ Errors related to google cloud """
-    pass

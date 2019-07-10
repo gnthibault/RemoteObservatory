@@ -7,7 +7,7 @@ def on_enter(event_data):
     # Cleanup existing observations
     try:
         model.logger.debug("Cleaning data ...")
-        #model.manager.cleanup_observations()
+        model.manager.cleanup_observations()
     except Exception as e:
         model.logger.warning('Problem with cleanup: {}'.format(e))
 

@@ -27,7 +27,6 @@ from Observatory.ShedObservatory import ShedObservatory
 # Local stuff : observation planner
 from ObservationPlanner.ObservationPlanner import ObservationPlanner
 
-
 class AltazPlannerWidget(QFrame, Base):
 
     schedule_ready_trigger = pyqtSignal(object)

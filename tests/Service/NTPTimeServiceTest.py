@@ -1,9 +1,6 @@
 # Basic stuff
 import logging
 import logging.config
-import sys
-
-sys.path.append('.')
 
 # Local stuff : Service
 from Service.NTPTimeService import NTPTimeService

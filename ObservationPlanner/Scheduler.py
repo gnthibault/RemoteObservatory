@@ -18,15 +18,16 @@ from astroplan import ObservingBlock
 from Base.Base import Base
 #from ObservationPlanner.ObservationPlanner import ObservationPlanner
 from ObservationPlanner.Observation import Observation
-
+from utils.config import load_config
+from utils.config import save_config
 
 class Scheduler(Base):
 
     # Max value for which a scheduling slot is programmed, otherwise
     # we split into smaller slots
-    MaximumSlotDurationSec = 300
+    MaximumSlotDurationSec = 60 * 16 * u.second
 
-    def __init__(self, ntpServ, obs, config_file_name=None, path='.'):
+    def __init__(self, ntpServ, obs, config=None, path='.'):
         """Loads `~pocs.scheduler.field.Field`s from a field
 
         Note:
@@ -58,12 +59,7 @@ class Scheduler(Base):
         observation.
         """
 
-        Base.__init__(self)
-
-        if config_file_name is None:
-            self.config_file_name = './conf_files/TargetList.json'
-        else:
-            self.config_file_name = config_file_name
+        super().__init__()
 
         self.obs = obs
         self.serv_time = ntpServ
@@ -73,7 +69,29 @@ class Scheduler(Base):
         self.observed_list = OrderedDict()
         self.constraints = []
 
-        # Initialize obse planner, that does the main job
+        if config is None:
+            try:
+                config = load_config(config_files=['targets'])
+            except Exception as e:
+                self.logger.warning("Cannot load config: {}".format(e))
+                config = dict(
+                    constraints = dict(
+                        maxairmass = 4,
+                        minmoonseparationdeg = 45),
+                    targets = dict(
+                        M42 = dict(
+                            Luminance = dict(
+                                count = 3,
+                                exp_time_sec = 3)),
+                        M51 = dict(
+                            Luminance = dict(
+                                count = 3,
+                                exp_time_sec = 3))))
+        self.config = config
+        self.target_list = config['targets']
+        self.logger.debug('Target list: {}'.format(self.target_list))
+
+        # Initialize obs planner, that does the main job
         #self.obs_planner = ObservationPlanner(ntpServ, obs, config_file, path)
 
         # Initialize a list of targets
@@ -154,13 +172,14 @@ class Scheduler(Base):
                 merit value, defaults to False to only get top value
 
         Returns:
-            tuple or list: A tuple (or list of tuples) with name and score of ranked observations
+            tuple or list: A tuple (or list of tuples) with name and score of
+            ranked observations
         """
         raise NotImplementedError
 
     def status(self):
         return {
-            #'constraints': self.constraints,
+            'constraints': self.constraints,
             'current_observation': self.current_observation,
         }
 
@@ -201,49 +220,51 @@ class Scheduler(Base):
 
     def initialize_target_list(self):
         """Reads the field file and creates valid `Observations` """
-        if self.config_file_name is not None:
-            self.logger.debug('Reading target lists from file: {}'.format(
-                              self.config_file_name))
-
-            if not os.path.exists(self.config_file_name):
-                raise FileNotFoundError
-
-            # Get config from json
-            with open(self.config_file_name) as json_file:
-                self.target_list = json.load(json_file)
-                self.logger.debug('Target list: {}'.format(self.target_list))
 
         # Now add observation to the list
-        if self.target_list is None:
+        if not self.target_list:
             self.logger.warning('Target list seems to be empty')
             return
 
         #TODO TN readout time, get that info from camera
         camera_time = 1*u.second
-        for target_name, config in self.target_list.items():
+        for target_name, filter_config in self.target_list.items():
             #target = FixedTarget.from_name(target_name)
-            target = FixedTarget(SkyCoord(5.33*u.deg, 46.0*u.deg))
-            for filter_name, (count, exp_time_sec) in config.items():
-                exp_time = exp_time_sec*u.second
+            target = FixedTarget(SkyCoord(33.33*u.deg, 66.66*u.deg,
+                                          frame='icrs', equinox='J2000.0'))
+            for filter_name, config in filter_config.items():
+                count = config["count"]
+                exp_time_sec = config["exp_time_sec"]*u.second
                 #TODO TN retrieve priority from the file ?
                 priority = 0 if (filter_name=='Luminance') else 1
                 try:
+                    # number of image per scheduled "round" of imaging
+                    # min number of exposure must be an integer number of times
+                    # this number
                     exp_set_size = max(1, min(count,
                         self.MaximumSlotDurationSec//exp_time_sec))
+                    #to be fixed
+                    #min_nexp = (count+exp_set_size-1)//exp_set_size
+                    #min_nexp = min_nexp * exp_set_size
                     b = ObservingBlock.from_exposures(
-                            target, priority, exp_time, count,
+                            target,
+                            priority,
+                            exp_time_sec,
+                            exp_set_size,
                             camera_time,
                             configuration={'filter': filter_name},
                             constraints=self.constraints)
-                    self.add_observation(b, exp_set_size)
-            
+                    self.add_observation(b,)
                 except AssertionError as e:
-                    self.logger.debug("Error whil adding target : {}"
+                    self.logger.debug("Error while adding target : {}"
                                       "".format(e))
 
 ##########################################################################
 # Utility Methods
 ##########################################################################
+
+#    def dump_updated_target_list(self, config):
+#        config.save_config(path='targets', config=config, overwrite=True)
 
 ##########################################################################
 # Private Methods

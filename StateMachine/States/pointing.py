@@ -2,16 +2,21 @@
 from time import sleep
 import traceback
 
+# Numerical stuff
+import numpy as np
+
 # Astropy
 import astropy.units as u
 
 # Local
 from Imaging.Image import Image
+from Imaging.Image import OffsetError
+from utils.error import PointingError
 
 wait_interval = 5.
 timeout = 150.
-
-num_pointing_images = 1
+max_num_pointing_images = 5
+max_pointing_error = OffsetError(14*u.arcsec, 14*u.arcsec, 20*u.arcsec)
 
 def on_enter(event_data):
     """Pointing State
@@ -22,15 +27,26 @@ def on_enter(event_data):
     model.next_state = 'parking'
 
     try:
-        model.say("Taking pointing picture.")
-        observation = model.manager.current_observation
-        fits_headers = model.manager.get_standard_headers(
-            observation=observation
-        )
-        fits_headers['POINTING'] = 'True'
-        model.logger.debug("Pointing headers: {}".format(fits_headers))
 
-        for img_num in range(num_pointing_images):
+        img_num = 0
+        pointing_error = OffsetError(*(np.inf*u.arcsec,)*3)
+        pointing_error_stack = {}
+
+        while (img_num < max_num_pointing_images and
+               pointing_error.magnitude > max_pointing_error.magnitude):
+
+            # Eventually adjust by slewing again to the target
+            if ( img_num > 0 and 
+                 pointing_error.magnitude > max_pointing_error.magnitude):
+                model.manager.mount.slew_to_target()
+
+            model.say("Taking pointing picture.")
+            observation = model.manager.current_observation
+            fits_headers = model.manager.get_standard_headers(
+                observation=observation
+            )
+            fits_headers['POINTING'] = 'True'
+            model.logger.debug("Pointing headers: {}".format(fits_headers))
             camera_events = dict()
 
             for cam_name, camera in model.manager.cameras.items():
@@ -81,12 +97,23 @@ def on_enter(event_data):
                 pointing_image.solve_field(verbose=True)
                 observation.pointing_image = pointing_image
                 model.logger.debug("Pointing file: {}".format(pointing_image))
+                pointing_error = pointing_image.pointing_error
                 model.say('Ok, I\'ve got the pointing picture, '
                           'let\'s see how close we are.')
                 model.logger.debug('Pointing Coords: {}'.format(
                                    pointing_image.pointing))
                 model.logger.debug('Pointing Error: {}'.format(
-                                   pointing_image.pointing_error))
+                                   pointing_error))
+                # update mount with the actual position
+                model.manager.mount.sync_to_coord(pointing_image.pointing)
+                # update pointing process tracking information
+                pointing_error_stack[img_num] = pointing_error
+                img_num = img_num + 1
+                
+        if pointing_error.magnitude > max_pointing_error.magnitude:
+            raise PointingError('Pointing accuracy was not good enough after '
+                                '{} iterations, pointing error stack was: {}'
+                                ''.format(img_num, pointing_error_stack))
 
         model.next_state = 'tracking'
 

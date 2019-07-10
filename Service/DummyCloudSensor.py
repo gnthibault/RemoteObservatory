@@ -18,7 +18,7 @@ import astropy.units as u
 from Base.Base import Base
 from Service.NTPTimeService import NTPTimeService
 from utils.config import load_config
-#from utils.messaging import PanMessaging
+from utils.messaging import PanMessaging
 
 class DummyCloudSensor(Base):
 
@@ -31,6 +31,12 @@ class DummyCloudSensor(Base):
         self.weather_entries = []
         self.safety_delay = 60
         self.store_result = store_result
+        self.messaging = None
+
+    def send_message(self, msg, channel='weather'):
+        if self.messaging is None:
+            self.messaging = PanMessaging.create_publisher(6510)
+        self.messaging.send_message(channel, msg)
 
     def capture(self, store_result=False, send_message=False, **kwargs):
         """ Query the CloudWatcher """
@@ -42,10 +48,15 @@ class DummyCloudSensor(Base):
 
         data['sky_temp_C'] = np.random.randint(-10,30)
         data['ambient_temp_C'] = np.random.randint(-10,30)
-        data['rain_sensor_temp_C'] = str(np.random.randint(-10,30))
+        data['rain_sensor_temp_C'] = np.random.randint(-10,30)
         data['rain_frequency'] = np.random.randint(-10,30)
         data['errors'] = 'no error'
-        data['wind_speed_KPH'] = str(np.random.randint(-10,100))
+        data['wind_speed_KPH'] = np.random.randint(0,100)
+
+        # some electronic stuff
+        data['pwm_value'] = np.random.randint(0,50)
+        data['ldr_resistance_Ohm'] = np.random.randint(2500,5000)
+
 
         # Make Safety Decision
         #self.safe_dict = self.make_safety_decision(data)

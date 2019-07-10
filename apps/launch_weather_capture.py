@@ -2,11 +2,6 @@
 import pandas
 import time
 
-# plotly
-from plotly import graph_objs as plotly_go
-from plotly import plotly
-from plotly import tools as plotly_tools
-
 # local
 from Service.DummyCloudSensor import DummyCloudSensor
 
@@ -76,7 +71,7 @@ if __name__ == '__main__':
     parser.add_argument('--store-result', action='store_true',
                         default=True, help="Save to db")
     parser.add_argument('--send-message', action='store_true',
-                        default=False, help="Send message")
+                        default=True, help="Send message")
     args = parser.parse_args()
 
     # Weather object

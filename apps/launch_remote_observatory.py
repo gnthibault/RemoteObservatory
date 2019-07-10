@@ -17,7 +17,7 @@ from Base.Base import Base
 from Manager.Manager import Manager
 from StateMachine.StateMachine import StateMachine
 from utils import get_free_space
-#from utils.messaging import Messaging
+from utils.messaging import PanMessaging
 
 
 class RemoteObservatoryFSM(StateMachine, Base):
@@ -28,7 +28,7 @@ class RemoteObservatoryFSM(StateMachine, Base):
     An instance consists primarily of a 'Manager' object, which contains the
     mount, cameras, scheduler, etc.
     See `Manager.Manager`. The manager should create all attached hardware
-    but leave the initialization up to this class (i.e. this class will call
+    but leave the initialization up to this FSM class (this FSM class will call
     the manager `initialize` method).
 
     The instance itself is designed to be run as a state machine via
@@ -36,7 +36,7 @@ class RemoteObservatoryFSM(StateMachine, Base):
 
     Args:
         manager(Manager): An instance of a `Manager.Manager`
-            class. POCS will call the `initialize` method of the manager.
+            class. FSM will call the `initialize` method of the manager.
         state_machine_file(str): Filename of the state machine to use, defaults
             is 'simple_state_table'.
         messaging(bool): If messaging should be included, defaults to False.
@@ -54,7 +54,7 @@ class RemoteObservatoryFSM(StateMachine, Base):
             self,
             manager,
             state_machine_file='conf_files/simple_state_table.yaml',
-            messaging=False,
+            messaging=True,
             **kwargs):
 
         assert isinstance(manager, Manager)
@@ -63,7 +63,7 @@ class RemoteObservatoryFSM(StateMachine, Base):
         Base.__init__(self, **kwargs)
 
         # local init
-        self.name = 'gntibault\'s Remote Observatory'
+        self.name = 'Remote Observatory'
         self.logger.info('Initializing Remote Observatory - {}'.format(
                          self.name))
         self._processes = {}
@@ -73,7 +73,7 @@ class RemoteObservatoryFSM(StateMachine, Base):
         # default loop delay. safety delay take precedence for safety sleep
         self._sleep_delay = kwargs.get('sleep_delay', 2.5)  
         # Safety check delay
-        self._safe_delay = kwargs.get('safe_delay', 60 * 5)
+        self._safe_delay = kwargs.get('safe_delay', 60 * 1)
         self._is_safe = False
 
         StateMachine.__init__(self, state_machine_file, **kwargs)
@@ -139,9 +139,6 @@ class RemoteObservatoryFSM(StateMachine, Base):
         """
 
         if not self._initialized:
-            self.logger.info('*' * 80)
-            self.logger.info("Initializing the system")
-
             try:
                 self.logger.debug("Initializing manager")
                 self.manager.initialize()
@@ -166,7 +163,7 @@ class RemoteObservatoryFSM(StateMachine, Base):
             status['system'] = {
                 'free_space': get_free_space().value,
             }
-            status['manager'] = self.manager.status()
+            status['observatory'] = self.manager.status()
         except Exception as e:  # pragma: no cover
             self.logger.warning("Can't get status: {}".format(e))
         else:
@@ -182,9 +179,9 @@ class RemoteObservatoryFSM(StateMachine, Base):
         """
         if self.has_messaging is False:
             self.logger.info('Unit says: {}'.format(msg))
-        self.send_message('{}'.format(msg), channel='CHAT')
+        self.send_message('{}'.format(msg), channel='PANCHAT')
 
-    def send_message(self, msg, channel='CHAT'):
+    def send_message(self, msg, channel='POCS'):
         """ Send a message
 
         This will use the `self._msg_publisher` to send a message
@@ -323,8 +320,8 @@ class RemoteObservatoryFSM(StateMachine, Base):
             if self.state not in ['sleeping', 'parked', 'parking',
                                   'housekeeping', 'ready']:
                 #self.logger.warning('Safety failed so sending to park')
-                # TODO TN urgent: corriger
                 #self.park() #FSM trigger
+                # TODO TN urgent: corriger
                 pass
 
         #return safe

@@ -19,15 +19,10 @@ from PyQt5.QtCore import Qt, QThread, pyqtSlot
 # Astropy stuff
 from astropy import units as u
 from astropy.coordinates import SkyCoord
-
-# Astroplan
 from astropy.utils.iers import conf
-conf.auto_max_age = None
+#conf.auto_max_age = None
 
-# Local stuff
-sys.path.append('.')
-
-sys.path.append('ScopeSimulator')
+# Local stuff: rendering tools
 from ScopeSimulator import View3D
 
 # Local stuff : IndiClient
@@ -209,11 +204,11 @@ if __name__ == "__main__":
     obs = ShedObservatory()
 
     # ntp time server
-    serv_time = NTPTimeService(obs=obs)
+    serv_time = NTPTimeService()
 
     # Build the Mount
     mount = IndiMount(indiClient=indiCli,
-                      configFileName=None, connectOnCreate=True)
+                      config=None, connectOnCreate=True)
     gps_coord = obs.getGpsCoordinates()
 
     main_loop = GuiLoop(gps_coord, mount, obs, serv_time)

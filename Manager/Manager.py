@@ -7,7 +7,6 @@ import os
 import time
 import traceback
 
-
 # Asynchronous stuff
 from threading import Event
 from threading import Thread
@@ -24,33 +23,11 @@ from astroplan import Observer
 # Local stuff: Base
 from Base.Base import Base
 
-# Local stuff: Camera
-from Camera.IndiAbstractCamera import IndiAbstractCamera
-from Camera.IndiEos350DCamera import IndiEos350DCamera
-
-# Local stuff: FilterWheel
-from FilterWheel.IndiFilterWheel import IndiFilterWheel
-
 # Local stuff: IndiClient
 from helper.IndiClient import IndiClient
 
-# Local stuff: Imaging tools
-#from Imaging.AsyncWriter import AsyncWriter
-#from Imaging.FitsWriter import FitsWriter
-
-# Local stuff: Mount
-from Mount.IndiAbstractMount import IndiAbstractMount
-
 # Local stuff: Observation planning
 from ObservationPlanner.DefaultScheduler import DefaultScheduler
-
-# Local stuff: Observatory
-from Observatory.ShedObservatory import ShedObservatory
-
-# Local stuff: Sequencer
-#from Sequencer.ShootingSequence import ShootingSequence
-#from Sequencer.SequenceBuilder import SequenceBuilder
-#from Sequencer.AutoDarkStep import AutoDarkCalculator, AutoDarkSequence
 
 # Local stuff: Service
 from Service.WUGWeatherService import WUGWeatherService
@@ -59,7 +36,7 @@ from Service.NovaAstrometryService import NovaAstrometryService
 
 # Local stuff: Utils
 from utils import error
-
+from utils.config import load_config
 #from pocs.utils import images as img_utils
 from utils import load_module
 
@@ -102,6 +79,10 @@ class Manager(Base):
         # Setup filter wheel
         self.logger.info('\tSetting up filterwheel')
         self._setup_filterwheel()
+
+        # setup guider
+        self.logger.info('\tSetting up guider')
+        self._setup_guider()
 
         # Setup observation planner
         self.logger.info('\tSetting up observation planner')
@@ -190,7 +171,7 @@ class Manager(Base):
                         self.observer.target_hour_angle(t, 
                             self.mount.get_target_coordinates()))
 
-            status['observatory'] = self.observatory.status
+            status['observatory'] = self.observatory.status()
 
             if self.current_observation:
                 status['observation'] = self.current_observation.status()
@@ -217,8 +198,10 @@ class Manager(Base):
             }
 
         except Exception as e:  # pragma: no cover
-            self.logger.warning("Can't get observatory status: {}-{}".format(e,
-                traceback.format_exc()))
+            msg = "Can't get observatory status: {}-{}".format(e,
+                traceback.format_exc())
+            self.logger.error(msg)
+            raise RuntimeError(msg)
         return status
 
     def get_observation(self, *args, **kwargs):
@@ -254,7 +237,6 @@ class Manager(Base):
         Loops through the `observed_list` performing cleanup tasks. Resets
         `observed_list` when done
 
-        """
         upload_images = False
 
         for seq_time, observation in self.scheduler.observed_list.items():
@@ -280,6 +262,8 @@ class Manager(Base):
             self.logger.debug('Cleanup finished')
 
         self.scheduler.reset_observed_list()
+        """
+        self.logger.warning("TODO TN SHOULD CLEANUP THE DATA HERE")
 
     def observe(self):
         """Take individual images for the current observation
@@ -378,7 +362,7 @@ class Manager(Base):
         should adjust in a given direction, one for each axis.
 
         Uses the `rate_adjustment` key from the `self.current_offset_info`
-        """
+        
         if self.current_offset_info is not None:
             self.logger.debug("Updating the tracking")
 
@@ -447,6 +431,17 @@ class Manager(Base):
 
                     self.logger.debug("Waiting for RA tracking adjustment")
                     time.sleep(0.1)
+        """
+        if self.guider is not None:
+            self.guider.dither(*self.config['guider']['dither'])
+
+
+    def initialize_tracking(self):
+        # start each observation by setting up the guider
+        if self.guider is not None:
+            self.logger.info("Starting guider before observing")
+            self.guider.reset_guiding()
+            self.guider.guide()
 
     def get_standard_headers(self, observation=None):
         """Get a set of standard headers
@@ -470,17 +465,19 @@ class Manager(Base):
         t0 = self.serv_time.getAstropyTimeFromUTC()
         moon = get_moon(t0, self.observer.location)
 
+        print('##################### TARGET HOURANGLE IS {}'.format(self.observer.target_hour_angle(t0, target).value))
+
         headers = {
             'airmass': self.observer.altaz(t0, target).secz.value,
-            'creator': "RemoteObservatoryV{}".format(self.__version__),
+            'creator': "RemoteObservatory_{}".format(self.__version__),
             'elevation': self.earth_location.height.value,
-            'ha_mnt': self.observer.target_hour_angle(t0, target).value,
             'latitude': self.earth_location.lat.value,
             'longitude': self.earth_location.lon.value,
             'moon_fraction': self.observer.moon_illumination(t0),
             'moon_separation': target.coord.separation(moon).value,
             'observer': self.config.get('name', ''),
             'origin': 'gnthibault',
+            #'ha_mnt': self.observer.target_hour_angle(t0, target).value,
             #'tracking_rate_ra': self.mount.getTrackRate()
             #TODO TN is that stuff worth implementing ?
         }
@@ -500,8 +497,6 @@ class Manager(Base):
         Perform autofocus on all cameras with focus capability, or a named
         subset of these. Optionally will perform a coarse autofocus first,
         otherwise will just fine tune focus.
-
-        Args:
             camera_list (list, optional): list containing names of cameras to
                 autofocus.
             coarse (bool, optional): Whether to performan a coarse autofocus
@@ -574,11 +569,51 @@ class Manager(Base):
                  else True if closed (or if not exists).
         """
         try:
+            # close actual dome + everything managed by obsy
             self.observatory.close_everything()
+
             return True
         except Exception as e:
             self.logger.error(
                 "Problem closing observatory: {}".format(e))
+            return False
+
+    def unpark(self):
+        try:
+            # unpark the mount
+            self.mount.unpark()
+
+            # unpark the observatory
+            self.observatory.unpark()
+
+            #connect guider server and client
+            if self.guider is not None:
+                self.guider.launch_server()
+                self.guider.connect()
+
+            return True
+        except Exception as e:
+            self.logger.error(
+                "Problem parking: {}".format(e))
+            return False
+
+    def park(self):
+        try:
+            #close running guider server and client
+            if self.guider is not None:
+                self.guider.disconnect_and_terminate_server()
+
+            # park the mount
+            self.mount.park()
+
+            # park the observatory
+            self.observatory.park()
+
+
+            return True
+        except Exception as e:
+            self.logger.error(
+                "Problem parking: {}".format(e))
             return False
 
 ##########################################################################
@@ -586,24 +621,17 @@ class Manager(Base):
 ##########################################################################
 
     def _setup_image_directory(self, path='.'):
-        path_idx = 0
-
-        #Create a new path, whatever the input is
-        path = os.path.realpath(path)
-        test_path = path
-        while os.path.exists(test_path):
-            test_path = (path+'-'+str(datetime.now().date())+'-'+
-                         str(path_idx))
-            path_idx += 1
-        os.makedirs(test_path, exist_ok=False)
-        self._image_dir = test_path
+        self._image_dir = self.config['directories']['images']
 
     def _setup_indi_client(self):
         """
             setup the indi client that will communicate with devices
         """
         try:
-            self.indi_client = IndiClient()
+            #TODO TN: at some point, this is going to be removed, and each
+            # device will instanciate its own client, depending on which machine
+            # the physical device is attached to
+            self.indi_client = IndiClient(config=self.config['indiclient'])
             self.indi_client.connect()
         except Exception:
             raise RuntimeError('Problem setting up indi client')
@@ -627,7 +655,10 @@ class Manager(Base):
             setup an observatory that stands for the physical building
         """
         try:
-            self.observatory = ShedObservatory()
+            obs_name = self.config['observatory']['module']
+            obs_module = load_module('Observatory.'+obs_name)
+            self.observatory = getattr(obs_module, obs_name)(
+                config = self.config['observatory'])
         except Exception:
             raise RuntimeError('Problem setting up observatory')
 
@@ -635,12 +666,18 @@ class Manager(Base):
         """
             Setup a mount object.
         """
-        #try:
-        self.mount = IndiAbstractMount(indiClient=self.indi_client,
-                                       location=self.earth_location,
-                                       serv_time=self.serv_time)
-        #except Exception:
-        #    raise error.MountNotFound('Problem setting up mount')
+        try:
+            mount_name = self.config['mount']['module']
+            mount_module = load_module('Mount.'+mount_name)
+            self.mount = getattr(mount_module, mount_name)(
+                indiClient = self.indi_client,
+                location = self.earth_location,
+                serv_time = self.serv_time,
+                config = self.config['mount'])
+
+        except Exception as e:
+            self.logger.warning("Cannot load mount module: {}".format(e))
+            raise error.MountNotFound('Problem setting up mount')
 
     def _setup_cameras(self, **kwargs):
         """
@@ -649,15 +686,15 @@ class Manager(Base):
         """
         self.cameras = OrderedDict()
         try:
-            cam = IndiAbstractCamera(serv_time=self.serv_time,
-                                     indiClient=self.indi_client,
-                                     primary=True,
-                                     connectOnCreate=True)
+            cam_name = self.config['camera']['module']
+            cam_module = load_module('Camera.'+cam_name)
+            cam = getattr(cam_module, cam_name)(
+                serv_time=self.serv_time,
+                indiClient=self.indi_client,
+                config = self.config['camera'],
+                primary=True,
+                connectOnCreate=True)
             cam.prepareShoot()
-            # test indi camera class on a old EOS350D
-            #cam = IndiEos350DCamera(indiClient=self.indi_client,\
-            #                        configFileName='IndiEos350DCamera.json',
-            #                        connectOnCreate=True)
  
         except Exception as e:
             raise RuntimeError('Problem setting up camera: {}'.format(e))
@@ -675,11 +712,28 @@ class Manager(Base):
             Setup a filterwheel object.
         """
         try:
-            self.filterwheel = IndiFilterWheel(indiClient=self.indi_client,
-                                               connectOnCreate=True)
+            if 'filterwheel' in self.config:
+                fw_name = self.config['filterwheel']['module']
+                fw_module = load_module('FilterWheel.'+fw_name)
+                self.filterwheel = getattr(fw_module, fw_name)(
+                    indiClient = self.indi_client,
+                    config = self.config['filterwheel'],
+                    connectOnCreate=True)
         except Exception:
-            raise RuntimeError('Problem setting up filterwheel')
+            raise RuntimeError('Problem setting up filterwheel: {}'.format(e))
 
+    def _setup_guider(self):
+        """
+            Setup a guider object.
+        """
+        try:
+            if 'guider' in self.config:
+                guider_name = self.config['guider']['module']
+                guider_module = load_module('Guider.'+guider_name)
+                self.guider = getattr(guider_module, guider_name)(
+                    config = self.config['guider'])
+        except Exception as e:
+            raise RuntimeError('Problem setting up guider: {}'.format(e))
 
     def _setup_scheduler(self):
         """
@@ -687,8 +741,11 @@ class Manager(Base):
         """
         
         try:
-            self.scheduler = DefaultScheduler(ntpServ=self.serv_time,
-                                              obs=self.observatory)
-        except Exception:
-            raise RuntimeError('Problem setting up observation planner')
+            self.scheduler = DefaultScheduler(
+                ntpServ=self.serv_time,
+                obs=self.observatory,
+                config=load_config(config_files=['targets']))
+        except Exception as e:
+            raise RuntimeError('Problem setting up observation planner: '
+                               '{}'.format(e))
 

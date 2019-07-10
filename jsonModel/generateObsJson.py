@@ -22,8 +22,8 @@ horizon.addObstacle(250,90,75)
 
 # coordinate contains informations related to observatory position on earth
 coordinate = { "gpsCoordinates":  {
-                   "latitude": 46.1944,
-                   "longitude": 6.2377
+                   "latitude": 49.4344,
+                   "longitude": 5.1377
                    },
                "altitudeMeter": 400,
                "horizon": horizon.horizon,
