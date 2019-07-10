@@ -6,6 +6,7 @@
 # Basic stuff
 import argparse
 import collections
+import logging
 import os
 from time import sleep
 
@@ -491,10 +492,15 @@ class DarkLibraryBuilder():
                         fname = self.gen_calib_filename(temperature, gain,
                                                         exp_time,i)
                         if not os.path.exists(fname):
+                            print('before set exp time')
                             self.cam.setExpTimeSec(exp_time)
+                            print('before shoot')
                             self.cam.shootAsync()
+                            print('After shootAsync, going to sync')
                             self.cam.synchronizeWithImageReception()
+                            print('After sync')
                             fits = self.cam.getReceivedImage()
+                            print('Image received')
                             with open(fname, "wb") as f:
                                 fits.writeto(f)
         self.cleanup_device()
@@ -638,14 +644,15 @@ def str2bool(v):
         raise argparse.ArgumentTypeError('Boolean value expected.')
 
 if __name__ == '__main__':
-  parser = argparse.ArgumentParser()
-  parser.add_argument('--config_file', help='Path to the config file of the '
+    logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.DEBUG)
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--config_file', help='Path to the config file of the '
                       'camera', default='./conf_files/IndiDatysonT7MC.json')
-  parser.add_argument('--cam_class', help='Name of the class of the camera '
+    parser.add_argument('--cam_class', help='Name of the class of the camera '
                       'can be IndiCamera or IndiASI120MCCamera',
                       default='IndiASI120MCCamera')
-  parser.add_argument('--show_plot', default='False')
-  args = parser.parse_args()
-  main(args.config_file, args.cam_class, str2bool(args.show_plot))
+    parser.add_argument('--show_plot', default='False')
+    args = parser.parse_args()
+    main(args.config_file, args.cam_class, str2bool(args.show_plot))
 
 #PYTHONPATH=. python ./apps/calibration_utilities/dark_library_creation.py --config_file ./conf_files/IndiDatysonT7MC.json --cam_class IndiASI120MCCamera
