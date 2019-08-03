@@ -2,9 +2,9 @@ name: gnthibault remote observatory
 observatory:
     module: ShedObservatory
     investigator: gnthibault
-    latitude: 45. # Degrees
-    longitude: 5. # Degrees
-    elevation: 600.0 # Meters
+    latitude: 43.56 # Degrees
+    longitude: 5.43 # Degrees
+    elevation: 150.0 # Meters
     # UTC+1 CET Central European Time,
     # UTC +2  CEST Central European Summer Time
     utc_offset: 1 # Hours
@@ -20,7 +20,8 @@ observatory:
     gmt_offset: 60 # Minutes
     scope_controller:
         #module: ArduiScopeController
-        module: IndiScopeController
+        #module: IndiScopeController
+        module: None
         board : Arduino
         port: /dev/ttyACM0
         cmd_port : 6502
@@ -103,5 +104,4 @@ messaging:
 #     slack:
 #         webhook_url: [your_webhook_url]
 #         output_timestamp: False
-
 state_machine: simple_state_table

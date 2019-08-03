@@ -47,8 +47,8 @@ class IndiMount(IndiDevice):
                  config=None):
         logger = logger or logging.getLogger(__name__)
         
-        if config is None:
-            config = self.config
+        assert (config is not None) and (type(config)==dict), ("Please provide "
+            "config as dictionary, with mount_name")
         deviceName = config['mount_name']
         logger.debug('Indi Mount, mount name is: {}'.format(
             deviceName))

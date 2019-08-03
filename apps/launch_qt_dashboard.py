@@ -29,14 +29,12 @@ from ScopeSimulator import View3D
 from Dashboard.CameraWidget import CameraWidget
 from Dashboard.DashboardWidget import DashboardWidget
 
+# Local stuff: get actual config
+from utils import load_module
+from utils.config import load_config
+
 # Local stuff : IndiClient
 from helper.Indi3DSimulatorClient import Indi3DSimulatorClient
-
-# Local stuff : Mount
-from Mount.IndiMount import IndiMount
-
-# Local stuff : Observatory
-from Observatory.ShedObservatory import ShedObservatory
 
 # Local stuff : Service
 from Service.NTPTimeService import NTPTimeService
@@ -161,7 +159,7 @@ class GuiLoop():
                                       camera_widget=camera_widget,
                                       dashboard_widget=dashboard_widget)
 
-        indiCli.register_number_callback(
+        indi_client.register_number_callback(
             device_name = self.mount.deviceName,
             vec_name = 'EQUATORIAL_EOD_COORD',
             callback = self.update_coord)
@@ -192,19 +190,31 @@ if __name__ == "__main__":
     # load the logging configuration
     logging.config.fileConfig('logging.ini')
 
+    # At this point, we are doing what Manager.Manager is doing
+
     # build+connect indi client
-    indiCli = Indi3DSimulatorClient(None)
-    indiCli.connect()
+    config = load_config()
+    indi_client = Indi3DSimulatorClient(config=config['indiclient'])
+    indi_client.connect()
 
     # Build the observatory
-    obs = ShedObservatory()
+    obs_name = config['observatory']['module']
+    obs_module = load_module('Observatory.' + obs_name)
+    obs = getattr(obs_module, obs_name)(
+        config=config['observatory'])
+    earth_location = obs.getAstropyEarthLocation()
 
     # ntp time server
     serv_time = NTPTimeService()
 
     # Build the Mount
-    mount = IndiMount(indiClient=indiCli,
-                      connectOnCreate=True)
+    mount_name = config['mount']['module']
+    mount_module = load_module('Mount.' + mount_name)
+    mount = getattr(mount_module, mount_name)(
+        indiClient=indi_client,
+        location=earth_location,
+        serv_time=serv_time,
+        config=config['mount'])
 
     gps_coord = obs.getGpsCoordinates()
 

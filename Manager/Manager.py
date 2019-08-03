@@ -674,7 +674,6 @@ class Manager(Base):
                 location = self.earth_location,
                 serv_time = self.serv_time,
                 config = self.config['mount'])
-
         except Exception as e:
             self.logger.warning("Cannot load mount module: {}".format(e))
             raise error.MountNotFound('Problem setting up mount')

@@ -16,9 +16,9 @@ class Indi3DSimulatorClient(IndiClient):
     the numbers/text that can help us to update the simulation status
   '''
 
-  def __init__(self, simulator, configFileName=None):
+  def __init__(self, config=None):
       # Call indi client base classe ctor
-      IndiClient.__init__(self, config=None)
+      IndiClient.__init__(self, config=config)
 
       #Dictionary of callbacks, key=device, value=conditions + callback
       self.number_callbacks = []

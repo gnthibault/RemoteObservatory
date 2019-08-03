@@ -1,14 +1,37 @@
 name: gnthibault remote observatory
-location:
-    name: Mauna Loa Observatory
-    latitude: 19.54 # Degrees
-    longitude: -155.58 # Degrees
-    elevation: 3400.0 # Meters
-    utc_offset: -10.00 # Hours
-    horizon: 30 # Degrees
+observatory:
+    module: ShedObservatory
+    investigator: gnthibault
+    latitude: 43.56 # Degrees
+    longitude: 5.43 # Degrees
+    elevation: 150.0 # Meters
+    # UTC+1 CET Central European Time,
+    # UTC +2  CEST Central European Summer Time
+    utc_offset: 1 # Hours
+    horizon: # Degrees
+        0 : 30
+        90 : 30
+        180 : 30
+        270 : 30
     twilight_horizon: -18 # Degrees
-    timezone: US/Hawaii
-    gmt_offset: -600
+    timezone: Europe/Paris
+    # Paris is in the Central European Time Zone ( CET ) is 1 hours ahead of
+    # Greenwich Mean Time ( GMT+1 ).
+    gmt_offset: 60 # Minutes
+    scope_controller:
+        #module: ArduiScopeController
+        module: IndiScopeController
+        board : Arduino
+        port: /dev/ttyACM0
+        cmd_port : 6502
+        msg_port : 6520
+        pin_scope_dustcap : 10
+        pin_finder_dustcap : 11
+        pin_flat_panel : 12
+        pin_fan_primary : 13
+    dome_controller:
+        module : None
+        port : /dev/ttyACM1
 directories:
     base: /var/RemoteObservatory
     images: images
@@ -20,9 +43,52 @@ directories:
 db: 
     name: /var/RemoteObservatory/DB
     type: file
+ntp:
+    ntpserver: time.google.com
+indiclient: #To be removed, each device can have its own client
+    indi_host : localhost
+    indi_port : 7624
 mount:
-    brand: simulator
-    driver: indi
+    #module: IndiG11
+    #mount_name: Losmandy Gemini
+    module: IndiAbstractMount
+    mount_name : Telescope Simulator
+    indi_host : localhost
+    indi_port : 7624
+camera:
+    #IndiEos6DCamera
+    module: IndiAbstractCamera
+    camera_name : CCD Simulator
+    indi_host : localhost
+    indi_port : 7624
+    focuser:
+        module: IndiFocuser
+#filterwheel:
+nofilterwheel: #maybe one day
+    module : IndiFilterWheel 
+    filterwheel_name : Filter Simulator
+    filter_list : 
+        Luminance : 1
+        Red : 2
+        Green : 3
+        Blue : 4
+        H_Alpha : 5
+        OIII : 6
+        SII : 7
+        LPR : 8
+guider:
+    module : GuiderPHD2
+    host : localhost
+    port : 4400
+    profile_id : 2
+    exposure_time_sec : 2
+    settle :
+        pixels : 1.5
+        time : 10
+        timeout : 60
+    dither :
+        pixels : 3.0
+        ra_only : False
 messaging:
     # Must match ports in peas.yaml.
     cmd_port: 6500
@@ -39,3 +105,6 @@ messaging:
 #         output_timestamp: False
 
 state_machine: simple_state_table
+
+indi_host : localhost
+indi_port : 7624
