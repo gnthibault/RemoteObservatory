@@ -246,7 +246,7 @@ class StateMachine(Machine, Base):
         -But most of the logic is contained inside of the body of the on_enter
          function defined in each state module in StateMachine/States
          Those functions are defined the behaviour of the state, but more 
-         importantly of next_state. See StateMachine/States/ready,py for a
+         importantly of next_state. See StateMachine/States/ready.py for a
          good example
 
          Are some services running asynchronously, like weather checking ?
@@ -490,8 +490,9 @@ class StateMachine(Machine, Base):
                                                            == self.next_state):
                     return state_info['trigger']
 
-        # Return parking if we don't find anything TODO TN, check that
-        return 'park' #'parking'
+        # Return park transition if we don't find existing transition in
+        # between self.state and self.next_state. This is a security check
+        return 'park'
 
     def _update_status(self, event_data):
         self.status()

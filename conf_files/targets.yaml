@@ -10,4 +10,7 @@ targets :
         Luminance :
             count : 3
             exp_time_sec : 180
-
+    M13 :
+        Luminance :
+           count : 10
+           exp_time_sec : 200

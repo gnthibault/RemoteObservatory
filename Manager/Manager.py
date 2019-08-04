@@ -475,8 +475,7 @@ class Manager(Base):
             'longitude': self.earth_location.lon.value,
             'moon_fraction': self.observer.moon_illumination(t0),
             'moon_separation': target.coord.separation(moon).value,
-            'observer': self.config.get('name', ''),
-            'origin': 'gnthibault',
+            'observer': self.config.get('name', '')
             #'ha_mnt': self.observer.target_hour_angle(t0, target).value,
             #'tracking_rate_ra': self.mount.getTrackRate()
             #TODO TN is that stuff worth implementing ?
