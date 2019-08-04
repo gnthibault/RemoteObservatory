@@ -1,0 +1,103 @@
+PHD Profile 1
+/auto_exp/exposure_max	1	5000
+/auto_exp/exposure_min	1	1000
+/auto_exp/target_snr	1	6
+/CalStepCalc/GuideSpeed	1	0.5
+/camera/AutoLoadDarks	1	1
+/camera/AutoLoadDefectMap	1	1
+/camera/binning	1	1
+/camera/darks_max_exptime	1	6.0 s
+/camera/darks_min_exptime	1	1.0 s
+/camera/darks_note	1	
+/camera/darks_num_frames	1	5
+/camera/LastMenuchoice	1	INDI Camera [CCD Simulator]
+/camera/pixelsize	1	5.2
+/camera/SaturationByADU	1	0
+/camera/TimeoutMs	1	15000
+/camera/UseSubframes	1	0
+/frame/focalLength	1	300
+/frame/timeLapse	1	0
+/guider/onestar/MassChangeThreshold	1	0.5
+/guider/onestar/MassChangeThresholdEnabled	1	1
+/guider/onestar/SearchRegion	1	15
+/guider/onestar/TolerateJumpsEnabled	1	0
+/guider/onestar/TolerateJumpsThreshold	1	4
+/guider/FastRecenter	1	1
+/guider/ScaleImage	1	1
+/guider/StarMinHFD	1	0
+/ImageLogger/ErrorThreshPx	1	4
+/ImageLogger/ErrorThreshRel	1	4
+/ImageLogger/LogAutoSelectFrames	1	0
+/ImageLogger/LogFramesDropped	1	0
+/ImageLogger/LogFramesOverThreshPx	1	0
+/ImageLogger/LogFramesOverThreshRel	1	0
+/ImageLogger/LoggingEnabled	1	0
+/indi/INDIcam	1	Guide Simulator
+/indi/INDIcam_ccd	1	0
+/indi/INDIcam_forcevideo	1	0
+/indi/INDIcam_port	1	
+/indi/INDIhost	1	localhost
+/indi/INDImount	1	Telescope Simulator
+/indi/INDImount_port	1	7624
+/indi/INDIport	1	7624
+/overlay/slit/angle	1	0
+/overlay/slit/center.x	1	376
+/overlay/slit/center.y	1	290
+/overlay/slit/height	1	100
+/overlay/slit/width	1	8
+/rotator/LastMenuChoice	1	None
+/scope/calibration/binning	1	1
+/scope/calibration/dec_guide_rate	1	0.00207771
+/scope/calibration/dec_step_count	1	5
+/scope/calibration/dec_steps	1	{0.0 0.0}, {-6.0 -0.0}, {-13.0 0.0}, {-19.0 0.0}, {-25.0 0.0}, {-31.0 -0.0}, {-31.0 -0.0}, {-19.0 0.0}, {-7.0 0.0}, {0.0 0.0}
+/scope/calibration/decGuideParity	1	1
+/scope/calibration/declination	1	1.16502
+/scope/calibration/focal_length	1	300
+/scope/calibration/image_scale	1	3.57526
+/scope/calibration/last_issue	1	0
+/scope/calibration/orig_binning	1	1
+/scope/calibration/orig_pierside	1	1
+/scope/calibration/orig_timestamp	1	Sam 03 Aug 2019 18:45:17 CEST
+/scope/calibration/ortho_error	1	0.108085
+/scope/calibration/pierSide	1	1
+/scope/calibration/ra_guide_rate	1	0.00207771
+/scope/calibration/ra_step_count	1	5
+/scope/calibration/ra_steps	1	{0.0 0.0}, {-0.0 -6.0}, {-0.0 -12.0}, {-0.0 -19.0}, {-0.0 -25.0}, {-0.1 -32.0}, {-0.1 -32.0}, {-0.0 -17.0}, {-0.0 -2.0}, {-0.0 -0.0}
+/scope/calibration/raGuideParity	1	1
+/scope/calibration/rotatorAngle	1	-888
+/scope/calibration/timestamp	1	Son 04 Aug 2019 14:39:18 CEST
+/scope/calibration/xAngle	1	-1.57249
+/scope/calibration/xRate	1	0.00639766
+/scope/calibration/yAngle	1	0.000188557
+/scope/calibration/yRate	1	0.00620758
+/scope/GuideAlgorithm/X/Hysteresis/aggression	1	0.7
+/scope/GuideAlgorithm/X/Hysteresis/hysteresis	1	0.1
+/scope/GuideAlgorithm/X/Hysteresis/minMove	1	0.19
+/scope/GuideAlgorithm/Y/ResistSwitch/aggression	1	1
+/scope/GuideAlgorithm/Y/ResistSwitch/fastSwitch	1	1
+/scope/GuideAlgorithm/Y/ResistSwitch/minMove	1	0.19
+/scope/AssumeOrthogonal	1	0
+/scope/BacklashCompEnabled	1	0
+/scope/CalFlipRequiresDecFlip	1	0
+/scope/CalibrationDistance	1	25
+/scope/CalibrationDuration	1	1000
+/scope/DecBacklashCeiling	1	20
+/scope/DecBacklashFloor	1	20
+/scope/DecBacklashPulse	1	20
+/scope/DecGuideMode	1	1
+/scope/LastAuxMenuChoice	1	None
+/scope/LastMenuChoice	1	INDI Mount [Telescope Simulator]
+/scope/MaxDecDuration	1	2500
+/scope/MaxRaDuration	1	2500
+/scope/StopGuidingWhenSlewing	1	0
+/scope/UseDecComp	1	1
+/scope/XGuideAlgorithm	1	1
+/scope/YGuideAlgorithm	1	4
+/stepguider/LastMenuChoice	1	None
+/AutoLoadCalibration	1	1
+/DitherMode	1	0
+/DitherRaOnly	1	0
+/DitherScaleFactor	1	1
+/ExposureDurationMs	1	2000
+/name	1	Simulator
+/NoiseReductionMethod	1	0
