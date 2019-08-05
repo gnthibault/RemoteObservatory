@@ -59,7 +59,7 @@ class Observation(Base):
             observation
         """
         name = self.observing_block.target.name
-        return name if name else 'generic'
+        return name if name else 'observing_block.target.name'
 
     @property
     def seq_time(self):

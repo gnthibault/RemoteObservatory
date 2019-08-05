@@ -1,4 +1,5 @@
 constraints :
+    atnight : astronomical
     maxairmass : 4
     minmoonseparationdeg : 45
 targets :

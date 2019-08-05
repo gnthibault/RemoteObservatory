@@ -25,30 +25,6 @@ class DefaultScheduler(Scheduler):
         """ Inherit from the `Base Scheduler` """
         super().__init__(ntpServ, obs, config=config, path=path)
 
-        # Initialize constraints for scheduling
-        #self.constraints.append(AtNightConstraint.twilight_astronomical())
-        try:
-            pass
-            # TODO TN maybe non boolean Airmass Constraint
-            #self.constraints.append(
-            #    AirmassConstraint(max=config["constraints"]["maxairmass"],
-            #                      boolean_constraint=True))
-        except Exception as e:
-            self.logger.warning("Cannot add airmass constraint: {}".format(e))
-        try:
-            pass
-            #self.constraints.append(
-            #    MoonSeparationConstraint(
-            #        min=config["constraints"]["minmoonseparationdeg"]*u.deg))
-        except Exception as e:
-            self.logger.warning("Cannot add moon sep constraint: {}".format(e))
-        try:
-            pass
-            #self.constraints.append(
-            #    LocalHorizonConstraint(horizon=self.obs.get_horizon(),
-            #                           boolean_constraint=True))
-        except Exception as e:
-            self.logger.warning("Cannot add horizon constraint: {}".format(e))
 
 ##########################################################################
 # Properties
@@ -76,7 +52,7 @@ class DefaultScheduler(Scheduler):
         """
         if reread_target_file:
             self.logger.debug("Rereading target file")
-            self.initialize_target_list()
+            self.reread_config()
 
         if time is None:
             time = self.serv_time.getAstropyTimeFromUTC() #getUTCFromNTP()

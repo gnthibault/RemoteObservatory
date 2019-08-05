@@ -50,16 +50,17 @@ indiclient: #To be removed, each device can have its own client
     indi_host : localhost
     indi_port : 7624
 mount:
-    #module: IndiG11
-    #mount_name: Losmandy Gemini
-    module: IndiAbstractMount
-    mount_name : Telescope Simulator
+    module: IndiG11
+    mount_name: Losmandy Gemini
+    #module: IndiAbstractMount
+    #mount_name : Telescope Simulator
     indi_host : localhost
     indi_port : 7624
 camera:
     #IndiEos6DCamera
     module: IndiAbstractCamera
-    camera_name : CCD Simulator
+    camera_name : GPhoto CCD
+    #camera_name : CCD Simulator
     indi_host : localhost
     indi_port : 7624
     focuser:
@@ -81,7 +82,8 @@ guider:
     module : GuiderPHD2
     host : localhost
     port : 4400
-    profile_id : 2
+    profile_id : 3
+    #profile_id : 2
     exposure_time_sec : 2
     settle :
         pixels : 1.5

@@ -97,9 +97,13 @@ class IndiDevice(Base):
             self.deviceName, interfaces))
         return interfaces
 
-    def connect(self):
+    def connect_driver(self):
         # Try first to ask server to give us the device handle, through client
         self.__findDevice()
+
+    def connect(self):
+        # Try first to ask server to give us the device handle, through client
+        self.connect_driver()
 
         # Now connect
         if self.device.isConnected():

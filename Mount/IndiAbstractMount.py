@@ -88,6 +88,9 @@ class IndiAbstractMount(IndiMount, AbstractMount):
 ###############################################################################
 # Mandatory overriden methods
 ###############################################################################
+    def connect_driver(self):  # pragma: no cover
+        IndiMount.connect_driver(self)
+
     def connect(self):  # pragma: no cover
         IndiMount.connect(self)
         self._is_connected = True
