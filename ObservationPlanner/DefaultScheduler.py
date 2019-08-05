@@ -67,7 +67,7 @@ class DefaultScheduler(Scheduler):
                     # Check if the computed score is a boolean
                     if np.any([isinstance(score, ty) for ty in
                               [bool, np.bool, np.bool_]]):
-                        self.logger.debug("\t\tVeto: {}".format(score))
+                        self.logger.debug("\t\tVetoed if false: {}".format(score))
                         # Log vetoed observations
                         if not score:
                             # if not valid, remove from valid_obs

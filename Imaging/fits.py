@@ -4,7 +4,8 @@ import shutil
 import subprocess
 from warnings import warn
 
-# More generic image io
+# Numerical/image stugg
+import numpy as np
 import skimage.io as io
 
 # Astropy
@@ -351,8 +352,7 @@ def write_fits(data, header, filename, logger, exposure_event=None):
 def update_thumbnail(file_path, latest_path):
     with fits.open(file_path, 'readonly') as f:
         hdu = f[0]
-        data = hdu.data
-        io.imsave(latest_path, data)
+        io.imsave(latest_path, hdu.data.astype(np.uint8))
 
 def update_headers(file_path, info):
     with fits.open(file_path, 'update') as f:
