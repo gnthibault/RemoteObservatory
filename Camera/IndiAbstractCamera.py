@@ -22,6 +22,7 @@ class IndiAbstractCamera(IndiCamera, AbstractCamera):
         IndiCamera.__init__(self, indiClient=indiClient, logger=self.logger,
                            config=config,
                            connectOnCreate=connectOnCreate)
+        self.indi_camera_config = config
 
     # TODO TN: setup event based acquisition properly
     def shootAsyncWithEvent(self, exp_time_sec, filename, exposure_event):
@@ -88,3 +89,8 @@ class IndiAbstractCamera(IndiCamera, AbstractCamera):
         self.set_frame_type('FRAME_FLAT')
         w.start()
         return exposure_event  
+
+    # TODO TN: we decide that IndiCamera takes over AbstractCamera in the
+    # case we have diamond like inheritance problem
+    def get_config(self):
+        return IndiCamera.config

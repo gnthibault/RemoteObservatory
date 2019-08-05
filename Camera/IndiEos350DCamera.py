@@ -20,7 +20,7 @@ class IndiEos350DCamera(IndiAbstractCamera):
 
 
         # device related intialization
-        super().__init__(self, indiClient, logger=self.logger,
+        super().__init__(indiClient, logger=self.logger,
                             config=config)
 
         # Finished configuring

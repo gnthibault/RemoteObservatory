@@ -14,6 +14,12 @@ from astroplan import is_observable
 from astroplan import Observer
 from astroplan import ObservingBlock
 
+#Might have to delete after refactoring with ObservationPlanner
+from astroplan.constraints import AtNightConstraint
+from astroplan.constraints import AirmassConstraint
+from astroplan.constraints import TimeConstraint
+from astroplan.constraints import MoonSeparationConstraint
+
 # Local stuff
 from Base.Base import Base
 #from ObservationPlanner.ObservationPlanner import ObservationPlanner

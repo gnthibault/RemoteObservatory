@@ -6,12 +6,6 @@ from astropy.coordinates import get_moon
 from astropy.time import Time
 from astropy import units as u
 
-#Might have to delete after refactoring with ObservationPlanner
-from astroplan.constraints import AtNightConstraint
-from astroplan.constraints import AirmassConstraint
-from astroplan.constraints import TimeConstraint
-from astroplan.constraints import MoonSeparationConstraint
-
 # Local stuff
 from ObservationPlanner.Scheduler import Scheduler
 from utils import listify

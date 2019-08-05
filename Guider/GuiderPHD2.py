@@ -122,6 +122,8 @@ class GuiderPHD2(Base):
 
     def reset_profile(self, profile_id):
         self.set_connected(False)
+        self.logger.debug("About to set profile with id {} among the following "
+                          "list: {}".format(profile_id, self.get_profiles()))
         self.set_profile(profile_id)
         self.set_connected(True)
 

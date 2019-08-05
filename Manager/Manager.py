@@ -689,9 +689,9 @@ class Manager(Base):
             cam = getattr(cam_module, cam_name)(
                 serv_time=self.serv_time,
                 indiClient=self.indi_client,
-                config = self.config['camera'],
-                primary=True,
-                connectOnCreate=True)
+                config=self.config['camera'],
+                connectOnCreate=True,
+                primary=True)
             cam.prepareShoot()
  
         except Exception as e:
