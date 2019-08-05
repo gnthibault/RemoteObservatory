@@ -17,7 +17,7 @@ from astropy import units as u
 from utils import error
 
 
-def solve_field(fname, timeout=15, solve_opts=None, **kwargs):
+def solve_field(fname, timeout=180, solve_opts=None, **kwargs):
     """ Plate solves an image.
 
     Args:

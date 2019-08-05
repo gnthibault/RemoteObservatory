@@ -104,17 +104,17 @@ class IndiMount(IndiDevice):
         We found an interesting SO post explaining how to get that from astropy
         https://stackoverflow.com/questions/52900678/coordinates-transformation-in-astropy
         """
-        time = Time.now()
-        location = EarthLocation(lat=self.gps['latitude']*u.deg,
-                                 lon=self.gps['longitude']*u.deg,
-                                 height=self.gps['elevation']*u.m)
-        c_itrs = coord.transform_to(ITRS(obstime=time))
+        #time = Time.now()
+        #location = EarthLocation(lat=self.gps['latitude']*u.deg,
+        #                         lon=self.gps['longitude']*u.deg,
+        #                         height=self.gps['elevation']*u.m)
+        #c_itrs = coord.transform_to(ITRS(obstime=time))
         # Calculate local apparent Hour Angle (HA), wrap at 0/24h
-        local_ha = location.lon - c_itrs.spherical.lon
-        local_ha.wrap_at(24*u.hourangle, inplace=True)
+        #local_ha = location.lon - c_itrs.spherical.lon
+        #local_ha.wrap_at(24*u.hourangle, inplace=True)
         # Calculate local apparent Declination
-        local_dec = c_itrs.spherical.lat
-        coord = SkyCoord(ra=local_ha, dec=local_dec)
+        #local_dec = c_itrs.spherical.lat
+        #coord = SkyCoord(ra=local_ha, dec=local_dec)
         #coord = coord.transform_to(ICRS(equinox='J2000.0'))
         rahour_decdeg = {'RA': coord.ra.hour, 
                          'DEC': coord.dec.degree}

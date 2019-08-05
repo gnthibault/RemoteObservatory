@@ -1,6 +1,6 @@
 constraints :
     atnight : astronomical
-    maxairmass : 4
+    maxairmass : 2
     minmoonseparationdeg : 45
 targets :
     M42 :
@@ -11,7 +11,7 @@ targets :
         Luminance :
             count : 3
             exp_time_sec : 180
-    M8 :
+    M31 :
         Luminance :
            count : 10
            exp_time_sec : 200
