@@ -20,11 +20,13 @@ class LocalHorizonConstraint(Constraint):
             definition of the local horizon
         """
         self.boolean_constraint = boolean_constraint
-        self.hor_az = np.sort(list(map(int,horizon.keys())))
-        self.hor_alt = (np.array([int(horizon[i]) for i in self.hor_az])*
-                        AU.deg)
+        hor_keys = list(horizon.keys())
+        hor_values = list(map(int, horizon.keys()))
+        hor_order = np.argsort(hor_keys)
+        self.hor_az = hor_values[hor_order]
+        self.hor_alt = [int(horizon[i]) for i in hor_keys[hor_order]]
+        self.hor_alt = np.array(self.hor_alt)*AU.deg
         #self.hor_alt = np.zeros(360)*AU.deg
-
         self.altitude = altitude*AU.deg
 
     def altazs_to_horizon_alt(self, altazs):

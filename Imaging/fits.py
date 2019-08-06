@@ -41,6 +41,7 @@ def solve_field(fname, timeout=180, solve_opts=None, **kwargs):
     if solve_opts is not None:
         options = solve_opts
     else:
+        # TODO TN URGENT THIS IS HORRIBLE AND SHOULD BE FIXED ASAP
         options = [
             '--guess-scale',
             '--cpulimit', str(timeout),
@@ -52,6 +53,9 @@ def solve_field(fname, timeout=180, solve_opts=None, **kwargs):
             '--corr', 'none',
             '--wcs', 'none',
             '--downsample', '4',
+            '-L', '1.55',
+            '-H', '1.7',
+            '-u', 'arcsecperpix'
         ]
 
         if kwargs.get('overwrite', True):
@@ -83,7 +87,7 @@ def solve_field(fname, timeout=180, solve_opts=None, **kwargs):
         raise error.InvalidCommand(
             "Bad parameters to solve_field: {} \t {}".format(e, cmd))
     except Exception as e:
-        raise error.PanError("Timeout on plate solving: {}".format(e))
+        raise error.PanError("Error on plate solving: {}".format(e))
 
     if verbose:
         print("Returning proc from solve_field")
@@ -132,7 +136,7 @@ def get_solve_field(fname, replace=True, remove_extras=True, **kwargs):
 
     proc = solve_field(fname, **kwargs)
     try:
-        output, errs = proc.communicate(timeout=kwargs.get('timeout', 30))
+        output, errs = proc.communicate(timeout=kwargs.get('timeout', 180))
     except subprocess.TimeoutExpired:
         proc.kill()
         raise error.Timeout("Timeout while solving")

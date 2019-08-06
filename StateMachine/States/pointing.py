@@ -16,7 +16,10 @@ from utils.error import PointingError
 wait_interval = 5.
 timeout = 150.
 max_num_pointing_images = 5
-max_pointing_error = OffsetError(14*u.arcsec, 14*u.arcsec, 20*u.arcsec)
+#max_pointing_error = OffsetError(14*u.arcsec, 14*u.arcsec, 20*u.arcsec)
+#TODO TN: FCKING URGENT
+max_pointing_error = OffsetError(1000*u.arcsec, 1000*u.arcsec, 1000*u.arcsec)
+
 
 def on_enter(event_data):
     """Pointing State

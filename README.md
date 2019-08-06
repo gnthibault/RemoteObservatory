@@ -66,7 +66,10 @@ ObservationPlanner/Scheduler l232 you NEED to setup proper FixedTarget.from_name
 ShedObservatory l76: uncomment the raise ScopeControllerError(msg) 
 DefaultScheduler constructor: please put back all constraints
 Gast is important: Service/NTPTimeService.py l 137
-
+Urgent: fix the hardcoded values in solve-field scripting
+Urgent: Fix the LocaHorizonCOnstraint class that is horribly bad
+Urgent: also fix the bad radius value inside solve_info in image.py, that goes with the previous task
+Urgent fix the max_pointing_error in pointing. and of course the uderlying coordinates problem as well
 
 ## How to launch the full stuff
 PYTHONPATH=. python ./apps/launch_remote_observatory.py

@@ -19,7 +19,8 @@ from astroplan.constraints import AtNightConstraint
 from astroplan.constraints import AirmassConstraint
 from astroplan.constraints import TimeConstraint
 from astroplan.constraints import MoonSeparationConstraint
-from ObservationPlanner.LocalHorizonConstraint import LocalHorizonConstraint
+#TODO TN Lot of work to fix that shitty stuff
+#from ObservationPlanner.LocalHorizonConstraint import LocalHorizonConstraint
 
 # Local stuff
 from Base.Base import Base
