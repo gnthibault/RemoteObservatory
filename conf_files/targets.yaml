@@ -1,6 +1,6 @@
 constraints :
-    atnight : astronomical
-    maxairmass : 2
+    #atnight : astronomical
+    #maxairmass : 2
     minmoonseparationdeg : 45
 targets :
     M42 :

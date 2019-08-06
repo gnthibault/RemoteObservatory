@@ -11,6 +11,8 @@ This project either uses, or is directly inspired by:
 * Astroplan: https://github.com/astropy/astroplan (Brett Morris + contributors)
 * Astrometry.net: https://github.com/dstndstn/astrometry.net (Dustin Lang + contributors)
 * PHD2: https://github.com/OpenPHDGuiding/phd2/wiki/EventMonitoring
+* notebooks from ivandga for amateur spectroscopy https://github.com/ivandga/ArasSpectraNotebooks
+
 
 ## Install
 sudo apt-add-repository ppa:mutlaqja/ppa
@@ -53,24 +55,22 @@ pip install dash dash-core-components dash-html-components dash-renderer plotly
 
 
 ## TODO: WORK IN PROGRESS: DO NOT USE BEFORE THIS IS DONE (or just do)
-make sure we are correctly scoring all constraints (not only binary values) in ObservationPlanner/Scheduler
-Also remove the stuf in DefaultScheduler for defining the constraints
-Correct the stub inside of launch_remote_observatory that returns safe even if not safe
-re-integrate the simulator mode that returns fine, even if not fine
-Make a proper integration between our IndiMount and abstractMount inside of IndiAbstractMount, because right now it is a mess
-Setup a calibrating_flat and calibrating_dark states
-fill-in the class Calibration that mirrors the observation class and make sure
-that a new calibration is issued whenever an observation has completed (This should arise in Manager ?)
-Check why the SITELONG entry in outputed file is wrong
-ObservationPlanner/Scheduler l232 you NEED to setup proper FixedTarget.from_name
-ShedObservatory l76: uncomment the raise ScopeControllerError(msg) 
-DefaultScheduler constructor: please put back all constraints
-Gast is important: Service/NTPTimeService.py l 137
-Urgent: fix the hardcoded values in solve-field scripting
-Urgent: Fix the LocaHorizonCOnstraint class that is horribly bad
-Urgent: also fix the bad radius value inside solve_info in image.py, that goes with the previous task
-Urgent fix the max_pointing_error in pointing. and of course the uderlying coordinates problem as well
-L292 in StateMachine, find a better way to signal the issue when transitionning
+* make sure we are correctly scoring all constraints (not only binary values) in ObservationPlanner/Scheduler
+* Correct the stub inside of launch_remote_observatory that returns safe even if not safe
+* re-integrate the simulator mode that returns fine, even if not fine
+* Make a proper integration between our IndiMount and abstractMount inside of IndiAbstractMount, because right now it is a mess
+* Setup a calibrating_flat and calibrating_dark states
+* fill-in the class Calibration that mirrors the observation class and make sure
+* that a new calibration is issued whenever an observation has completed (This should arise in Manager ?)
+* Check why the SITELONG entry in outputed file is wrong
+* ObservationPlanner/Scheduler l232 you NEED to setup proper FixedTarget.from_name
+* ShedObservatory l76: uncomment the raise ScopeControllerError(msg)
+* DefaultScheduler constructor: please put back all constraints
+* Gast is important: Service/NTPTimeService.py l 137
+* Urgent: fix the hardcoded values in solve-field scripting
+* Urgent: also fix the bad radius value inside solve_info in image.py, that goes with the previous task
+* Urgent fix the max_pointing_error in pointing. and of course the uderlying coordinates problem as well
+* L292 in StateMachine, find a better way to signal the issue when transitionning
 
 ## How to launch the full stuff
 PYTHONPATH=. python ./apps/launch_remote_observatory.py
