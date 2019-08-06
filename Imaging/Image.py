@@ -120,8 +120,7 @@ class Image(Base):
             namedtuple: Pointing error information
         """
         if self._pointing_error is None:
-            assert self.pointing is not None, self.logger.warning(
-                "No world coordinate system (WCS), can't get pointing_error")
+            assert self.pointing is not None, "No world coordinate system (WCS), can't get pointing_error"
             assert self.header_pointing is not None
 
             if self.wcs is None:
