@@ -289,6 +289,7 @@ class StateMachine(Machine, Base):
                         'loop: {}:{}'.format(self.state, self.next_state, e,
                         traceback.format_exc()))
                     self.stop_states()
+                    #TODO TN URGENT DO SOME INTERNAL SIGNALING HERE !
                     break
 
                 # If we didn't successfully transition, sleep a while then try

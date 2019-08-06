@@ -70,6 +70,7 @@ Urgent: fix the hardcoded values in solve-field scripting
 Urgent: Fix the LocaHorizonCOnstraint class that is horribly bad
 Urgent: also fix the bad radius value inside solve_info in image.py, that goes with the previous task
 Urgent fix the max_pointing_error in pointing. and of course the uderlying coordinates problem as well
+L292 in StateMachine, find a better way to signal the issue when transitionning
 
 ## How to launch the full stuff
 PYTHONPATH=. python ./apps/launch_remote_observatory.py
