@@ -141,9 +141,10 @@ class Image(Base):
     def get_header_pointing(self):
         """Get the pointing information from the header
 
-        The header should contain the `RA` and `DEC` keywords, from which
-        the header pointing coordinates are built. Those two entries are
-        hopefully written by indi :) as J2000 format
+        The header should contain the `RA-FIELD` and `DEC-FIELD` keywords, from
+        which the header pointing coordinates are built. Those two entries are
+        written by us as J2000 format, which is also the expected format for the
+        astrometric resolution
         """
         try:
             self.header_pointing = SkyCoord(
