@@ -193,7 +193,7 @@ class ShedObservatory(Base):
 
     def getAstroplanObserver(self):
         location = self.getAstropyEarthLocation()
-        pressure = 0.85 * u.bar
+        pressure = 1 * u.bar
         relative_humidity = 0.20
         temperature = 15 * u.deg_C
         if self.servWeather is not None:

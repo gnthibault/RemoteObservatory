@@ -147,8 +147,8 @@ class Image(Base):
         """
         try:
             self.header_pointing = SkyCoord(
-                ra=float(self.header['RA']) * u.degree,
-                dec=float(self.header['DEC']) * u.degree,
+                ra=float(self.header['RA-FIELD']) * u.degree,
+                dec=float(self.header['DEC-FIELD']) * u.degree,
                 frame='icrs', equinox='J2000.0')
 
             self.header_ra = self.header_pointing.ra.to(u.hourangle)

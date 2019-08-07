@@ -364,8 +364,9 @@ def update_headers(file_path, info):
         hdu.header.set('IMAGEID', info.get('image_id', ''))
         hdu.header.set('SEQID', info.get('sequence_id', ''))
         hdu.header.set('FIELD', info.get('field_name', ''))
+        hdu.header.set('RA-FIELD', info.get('ra_field', ''), 'Degrees')
         hdu.header.set('RA-MNT', info.get('ra_mnt', ''), 'Degrees')
-        hdu.header.set('HA-MNT', info.get('ha_mnt', ''), 'Degrees')
+        hdu.header.set('DEC-FIELD', info.get('dec_field', ''), 'Degrees')
         hdu.header.set('DEC-MNT', info.get('dec_mnt', ''), 'Degrees')
         hdu.header.set('EQUINOX', info.get('equinox', 2000.))  # Assume J2000
         hdu.header.set('AIRMASS', info.get('airmass', ''), 'Sec(z)')

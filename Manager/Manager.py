@@ -460,13 +460,16 @@ class Manager(Base):
         assert observation is not None, self.logger.warning(
             "No observation, can't get headers")
 
-        target = observation.target
+        # fetching various informations for the new image
         self.logger.debug("Getting headers for : {}".format(observation))
+        target = observation.target
         t0 = self.serv_time.getAstropyTimeFromUTC()
         moon = get_moon(t0, self.observer.location)
+        mnt_coord = self.mount.get_current_coordinates()
 
         print('##################### TARGET HOURANGLE IS {}'.format(self.observer.target_hour_angle(t0, target).value))
 
+        # Filling up header for the new image to be written
         headers = {
             'airmass': self.observer.altaz(t0, target).secz.value,
             'creator': "RemoteObservatory_{}".format(self.__version__),
@@ -475,10 +478,11 @@ class Manager(Base):
             'longitude': self.earth_location.lon.value,
             'moon_fraction': self.observer.moon_illumination(t0),
             'moon_separation': target.coord.separation(moon).value,
-            'observer': self.config.get('name', '')
+            'observer': self.config.get('name', ''),
+            'ra_mnt': mnt_coord.ra.to(u.deg).value,
+            'dec_mnt': mnt_coord.dec.to(u.deg).value,
+            'tracking_rate_ra': self.mount.get_track_rate()
             #'ha_mnt': self.observer.target_hour_angle(t0, target).value,
-            #'tracking_rate_ra': self.mount.getTrackRate()
-            #TODO TN is that stuff worth implementing ?
         }
 
         # Add observation metadata

@@ -60,14 +60,15 @@ camera:
     module: IndiAbstractCamera
     camera_name : CCD Simulator
     #module: IndiEos6DCamera
+    #camera_name: Canon DSLR EOS 6D
     #camera_name: GPhoto CCD
-    #CCD_INFO :
-    #    CCD_MAX_X : 5472
-    #    CCD_MAX_Y : 3648
-    #    CCD_PIXEL_SIZE : 6.5
-    #    CCD_PIXEL_SIZE_X : 6.5
-    #    CCD_PIXEL_SIZE_Y : 6.5
-    #    CCD_BITSPERPIXEL : 14
+    CCD_INFO :
+        CCD_MAX_X : 5472
+        CCD_MAX_Y : 3648
+        CCD_PIXEL_SIZE : 6.5
+        CCD_PIXEL_SIZE_X : 6.5
+        CCD_PIXEL_SIZE_Y : 6.5
+        CCD_BITSPERPIXEL : 14
     indi_host : localhost
     indi_port : 7624
     focuser:
