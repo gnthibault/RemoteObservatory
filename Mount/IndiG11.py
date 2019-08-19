@@ -96,6 +96,26 @@ class IndiG11(IndiAbstractMount):
         self.setSwitch('PARK_SETTINGS', [mode])
 
 
+    def set_coord(self, coord):
+        """
+        Big concern here: coord should be given as Equatorial astrometric epoch
+        of date coordinate (eod):  RA JNow RA, hours,  DEC JNow Dec, degrees +N
+
+        As our software only manipulates J2000. we decided to convert to jnow
+        for the generic case, but specialize for our specific mount that takes
+        J2000 coordinates also as EOOD (for now...)
+        """
+        rahour_decdeg = {'RA': coord.ra.hour,
+                         'DEC': coord.dec.degree}
+        if self.is_parked:
+            self.logger.warning('Cannot set coord: {} because mount is parked'
+                                ''.format(rahour_decdeg))
+        else:
+            self.logger.info('Now setting JNow coord: {}'.format(
+                             rahour_decdeg))
+            self.setNumber('EQUATORIAL_EOD_COORD', rahour_decdeg, sync=True,
+                           timeout=180)
+
 #setNumberVector Losmandy Gemini GEOGRAPHIC_COORD Ok
 #        LAT='51.466666666666668561'
 #               LONG='5.7166666666666401397'

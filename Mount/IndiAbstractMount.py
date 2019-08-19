@@ -9,7 +9,9 @@ import PyIndi
 
 # Astropy stuff
 from astropy import units as u
-from astropy.coordinates import SkyCoord
+from astropy.coordinates import SkyCoord, FK5
+from astropy.time import Time
+
 #c = SkyCoord(ra=10.625*u.degree, dec=41.2*u.degree, frame='icrs')
 
 # Local stuff
@@ -156,8 +158,8 @@ class IndiAbstractMount(IndiMount, AbstractMount):
                 was_slewing = self.is_slewing
                 self._is_tracking = False
                 self._is_slewing = True
-                print('##################### SLEWING TO {}'.format(
-                      self.get_target_coordinates()))
+
+                target = self.get_target_coordinates()
                 IndiMount.slew_to_coord_and_track(self,
                     self.get_target_coordinates())
                 success = True

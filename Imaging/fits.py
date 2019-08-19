@@ -53,10 +53,11 @@ def solve_field(fname, timeout=180, solve_opts=None, **kwargs):
             '--corr', 'none',
             '--wcs', 'none',
             '--downsample', '4',
-            '-L', '1.55',
-            '-H', '1.7',
-            '-u', 'arcsecperpix'
         ]
+        #'-L', '1.55',
+        #'-H', '1.7',
+        #'-u', 'arcsecperpix'
+        #]
 
         if kwargs.get('overwrite', True):
             options.append('--overwrite')
@@ -180,7 +181,6 @@ def get_solve_field(fname, replace=True, remove_extras=True, **kwargs):
     if errs is not None:
         warn("Error in solving: {}".format(errs))
     else:
-
         try:
             out_dict.update(fits.getheader(fname))
         except OSError:

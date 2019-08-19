@@ -74,11 +74,10 @@ class Image(Base):
         self.header_dec = None
         #self.header_ha = None
 
-        # Coordinates from WCS
+        # Coordinates from WCS written by astrometry
         self.pointing = None
         self.ra = None
         self.dec = None
-        #self.ha = None
 
         self.get_header_pointing()
         self.get_wcs_pointing()
@@ -174,8 +173,8 @@ class Image(Base):
             ra = self.wcs.celestial.wcs.crval[0]
             dec = self.wcs.celestial.wcs.crval[1]
 
-            self.pointing = SkyCoord(ra=ra * u.degree,
-                                     dec=dec * u.degree,
+            self.pointing = SkyCoord(ra=ra*u.degree,
+                                     dec=dec*u.degree,
                                      frame='icrs', equinox='J2000.0')
             self.ra = self.pointing.ra.to(u.hourangle)
             self.dec = self.pointing.dec.to(u.degree)
@@ -194,7 +193,7 @@ class Image(Base):
             self.fits_file,
             ra=self.header_pointing.ra.value,
             dec=self.header_pointing.dec.value,
-            radius=90,
+            radius=5,
             **kwargs)
         self.wcs_file = solve_info['solved_fits_file']
         self.get_wcs_pointing()

@@ -287,6 +287,9 @@ class Scheduler(Base):
         camera_time = 1*u.second
         for target_name, filter_config in self.config['targets'].items():
             target = FixedTarget.from_name(target_name)
+            # TODO TN Urgent: fix that temporary stuff
+            #target = FixedTarget(SkyCoord(ra=1*u.deg, dec=89*u.deg),
+            #                     name="GenericTarget")
             #target = FixedTarget(SkyCoord(33.33*u.deg, 66.66*u.deg,
             #                              frame='icrs', equinox='J2000.0'))
             for filter_name, config in filter_config.items():

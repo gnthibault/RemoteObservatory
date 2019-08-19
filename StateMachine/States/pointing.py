@@ -121,5 +121,7 @@ def on_enter(event_data):
         model.next_state = 'tracking'
 
     except Exception as e:
-        model.say('Hmm, I had a problem checking the pointing error. '
+        msg = ('Hmm, I had a problem checking the pointing error. '
                   'Going to park. {}:{}'.format(e, traceback.format_exc()))
+        model.logger.error(msg)
+        model.say(msg)
