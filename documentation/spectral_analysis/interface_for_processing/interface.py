@@ -1,8 +1,15 @@
 
+# Generic stuff
+import os
+
+# Pyqt stuff
+from PyQt5.QtWidgets import QMainWindow, QFileDialog, QApplication, QMessageBox
+
 
 # Local stuff
-from interface import Ui_MainWindow  # import du fichier interfaceui.py generated through: pyuic5 interfaceui.ui -x -o interfaceui.py
-
+# interfaceui.py as been generated through: pyuic5 interfaceui.ui -x -o interfaceui.py
+from interfaceui import Ui_MainWindow
+from utils import log
 
 class main_window(QtWidgets.QMainWindow):
 
