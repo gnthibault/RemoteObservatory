@@ -55,6 +55,23 @@ class IndiG11(IndiAbstractMount):
      to set a hour angle at for instance 0.2 hours to be safe. Refer to the
      Gemini manual pages 69-70 on setting the GoTo limit.
 
+
+     About J2k / JNow coordinates:
+     5.3.2.2 Accuracy and Epochs
+     With the exception of the Solar System objects and the Alignment Bright
+     Star list, all coordinates are stored rounded to 20 arcsec, giving 10
+     arcsec accuracy for the standard epoch J2000.0. The coordinates are
+     precessed to the equinox of the date when the object is selected; nutation
+     is neglected. The apparent position of objects is calculated (for standard
+     air pressure and temperature), taking refraction into account.
+     For the Moon, topocentric coordinates are calculated. By default, Gemini
+     assumes that any input coordinates are for the epoch of the current date.
+     This default can be changed to Epoch J2000.0 by executing
+     "Setup→Communication→Coordinate Epoch→Epoch J2000.0." If this change is
+     made and Epoch J2000.0 coordinates are entered, Gemini will precess the
+     entered coordinates to the epoch of the date so that GoTo slews will be
+     accurate. The coordinates of the resident catalogs will not, however, be
+     affected regardless of which epoch is selected.
     """
     
     def __init__(self, indiClient, location, serv_time, config):
@@ -94,27 +111,6 @@ class IndiG11(IndiAbstractMount):
                 ZENITH
         """
         self.setSwitch('PARK_SETTINGS', [mode])
-
-
-    def set_coord(self, coord):
-        """
-        Big concern here: coord should be given as Equatorial astrometric epoch
-        of date coordinate (eod):  RA JNow RA, hours,  DEC JNow Dec, degrees +N
-
-        As our software only manipulates J2000. we decided to convert to jnow
-        for the generic case, but specialize for our specific mount that takes
-        J2000 coordinates also as EOOD (for now...)
-        """
-        rahour_decdeg = {'RA': coord.ra.hour,
-                         'DEC': coord.dec.degree}
-        if self.is_parked:
-            self.logger.warning('Cannot set coord: {} because mount is parked'
-                                ''.format(rahour_decdeg))
-        else:
-            self.logger.info('Now setting JNow coord: {}'.format(
-                             rahour_decdeg))
-            self.setNumber('EQUATORIAL_EOD_COORD', rahour_decdeg, sync=True,
-                           timeout=180)
 
 #setNumberVector Losmandy Gemini GEOGRAPHIC_COORD Ok
 #        LAT='51.466666666666668561'

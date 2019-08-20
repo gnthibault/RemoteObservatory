@@ -99,16 +99,14 @@ class IndiMount(IndiDevice):
 
     def set_coord(self, coord):
         """
-        Big concern here: coord should be given as Equatorial astrometric epoch
+        Subteletie here: coord should be given as Equatorial astrometric epoch
         of date coordinate (eod):  RA JNow RA, hours,  DEC JNow Dec, degrees +N
 
         As our software only manipulates J2000. we decided to convert to jnow
-        for the generic case, but specialize for our specific mount that takes
-        J2000 coordinates also as EOOD (for now...)
+        for the generic case
         """
         fk5_now = FK5(equinox=Time.now())
         coord_jnow = coord.transform_to(fk5_now)
-
         rahour_decdeg = {'RA': coord_jnow.ra.hour,
                          'DEC': coord_jnow.dec.degree}
         if self.is_parked:

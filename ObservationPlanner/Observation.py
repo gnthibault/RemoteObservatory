@@ -145,7 +145,7 @@ class Observation(Base):
         status = {
             'current_exp': self.current_exp,
             'equinox': equinox,
-            'number_exposure': self.number_exposures,
+            'number_exposure': self.number_exposures.value,
             'time_per_exposure': self.time_per_exposure.to(u.second).value,
             'total_exposure': self.set_duration.to(u.second).value,
             'field_name': self.name,

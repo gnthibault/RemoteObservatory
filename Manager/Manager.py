@@ -467,8 +467,6 @@ class Manager(Base):
         moon = get_moon(t0, self.observer.location)
         mnt_coord = self.mount.get_current_coordinates()
 
-        print('##################### TARGET HOURANGLE IS {}'.format(self.observer.target_hour_angle(t0, target).value))
-
         # Filling up header for the new image to be written
         headers = {
             'airmass': self.observer.altaz(t0, target).secz.value,

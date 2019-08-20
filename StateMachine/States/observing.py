@@ -51,8 +51,8 @@ def on_enter(event_data):
             now = model.manager.serv_time.getAstropyTimeFromUTC()
             if now >= next_msg_time:
                 elapsed_secs = (now - start_time).to(u.second).value
-                model.logger.debug('Waiting for images: {} seconds '
-                                   'elapsed'.format(round(elapsed_secs)))
+                model.logger.debug('State: observing, waiting for images: '
+                    '{} seconds elapsed'.format(round(elapsed_secs)))
                 next_msg_time += WAITING_MSG_INTERVAL
                 now = model.manager.serv_time.getAstropyTimeFromUTC()
 

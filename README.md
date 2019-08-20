@@ -82,5 +82,8 @@ PYTHONPATH=. python3 ./apps/launch_arduino_capture.py
 * Urgent fix the max_pointing_error in pointing. and of course the uderlying coordinates problem as well
 * L292 in StateMachine, find a better way to signal the issue when transitionning
 * Remove temporary fix in Scheduler:             target = FixedTarget(SkyCoord(ra=1*u.deg, dec=89*u.deg)
-
+* looks like the loops with time intervals in observing and pointing states are not working as expected. ie no message is shown every 5 seconds ?
+* Need to try to kill PHD2 while guiding and check that we return to parking state
+* Need to simulate a PHD2 star lost and check that we return to parking state
+* 
 

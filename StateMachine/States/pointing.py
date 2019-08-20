@@ -13,12 +13,11 @@ from Imaging.Image import Image
 from Imaging.Image import OffsetError
 from utils.error import PointingError
 
-wait_interval = 5.
-timeout = 150.
-max_num_pointing_images = 5
-#max_pointing_error = OffsetError(14*u.arcsec, 14*u.arcsec, 20*u.arcsec)
-#TODO TN: FCKING URGENT
-max_pointing_error = OffsetError(10*u.arcsec, 10*u.arcsec, 10*u.arcsec)
+SLEEP_SECONDS = 5.
+TIMEOUT_SECONDS = 150.
+MAX_NUM_POINTING_IMAGES = 5
+
+max_pointing_error = OffsetError(1.5*u.arcsec, 1.5*u.arcsec, 1.5*u.arcsec)
 
 
 def on_enter(event_data):
@@ -35,7 +34,7 @@ def on_enter(event_data):
         pointing_error = OffsetError(*(np.inf*u.arcsec,)*3)
         pointing_error_stack = {}
 
-        while (img_num < max_num_pointing_images and
+        while (img_num < MAX_NUM_POINTING_IMAGES and
                pointing_error.magnitude > max_pointing_error.magnitude):
 
             # Eventually adjust by slewing again to the target
@@ -78,15 +77,15 @@ def on_enter(event_data):
                     model.say("Observation interrupted!")
                     break
 
-                model.logger.debug('Waiting for images: {} seconds'.format(
-                                   wait_time))
+                model.logger.debug('State: pointing, waiting for images: {} '
+                    'seconds'.format(wait_time))
                 model.status()
 
-                if wait_time > timeout:
+                if wait_time > TIMEOUT_SECONDS:
                     raise RuntimeError("Timeout waiting for pointing image")
 
-                sleep(wait_interval)
-                wait_time += wait_interval
+                sleep(SLEEP_SECONDS)
+                wait_time += SLEEP_SECONDS
 
             if model.manager.current_observation is not None:
                 #TODO Integrate this feature with our own solver class
