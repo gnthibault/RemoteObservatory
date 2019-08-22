@@ -22,18 +22,20 @@ class GuiderPHD2(Base):
         Inst      number   the PHD instance number (1-based)
         
         List of states, according to openPHD2 documentation:
-        State        Description
-        Stopped      PHD is idle
-        Selected     A star is selected but PHD is neither looping exposures,
-                     calibrating, or guiding
-        Calibrating  PHD is calibrating
-        Guiding      PHD is guiding
-        LostLock     PHD is guiding, but the frame was dropped
-        Paused       PHD is paused
-        Looping      PHD is looping exposures
+        State         Description
+        Stopped       PHD is idle
+        StarSelected  A star is selected but PHD is neither looping exposures,
+                      calibrating, or guiding
+        Calibrating   PHD is calibrating
+        Guiding       PHD is guiding, but can still be shaky (while stabilizing)
+        SteadyGuiding PHD is guiding, and settle conditions are met
+        LostLock      PHD is guiding, but the frame was dropped
+        Paused        PHD is paused
+        Looping       PHD is looping exposures
     """
-    states = ['NotConnected', 'Connected', 'Guiding', 'Paused', 'Calibrating',
-              'Looping', 'Stopped']
+    states = ['NotConnected', 'Connected', 'Guiding', 'Settling',
+              'SteadyGuiding', 'Paused', 'Calibrating',
+              'StarSelected', 'LostLock', 'Looping', 'Stopped']
     transitions = [
         { 'trigger': 'connection_trig', 'source': '*', 'dest': 'Connected' },
         { 'trigger': 'disconnection_trig', 'source': '*', 'dest': 'NotConnected' },
@@ -42,7 +44,10 @@ class GuiderPHD2(Base):
         { 'trigger': 'StartCalibration', 'source': '*', 'dest': 'Calibrating' },
         { 'trigger': 'LoopingExposures', 'source': '*', 'dest': 'Looping' },
         { 'trigger': 'LoopingExposuresStoped', 'source': '*', 'dest': 'Stopped' },
+        { 'trigger': 'SettleBegin', 'source': '*', 'dest': 'Settling' },
+        { 'trigger': 'SettleDone', 'source': '*', 'dest': 'SteadyGuiding'},
         { 'trigger': 'StarLost', 'source': '*', 'dest': 'LostLock' },
+        { 'trigger': 'StarSelected', 'source': '*', 'dest': 'StarSelected' },
         { 'trigger': 'ConnectionLost', 'source': '*', 'dest': 'NotConnected' }
         ]
 
@@ -53,7 +58,7 @@ class GuiderPHD2(Base):
                 host = "localhost",
                 port = 4400,
                 profile_id = '2',
-                exposure_time_sec = '2',
+                exposure_time_sec = '3',
                 settle = {
                     "pixels": 1.5,
                     "time": 10,
@@ -72,10 +77,10 @@ class GuiderPHD2(Base):
         self.exposure_time_sec = config['exposure_time_sec']
 
         # Initialize the state machine
-        self.machine = Machine(model = self,
-                               states = GuiderPHD2.states,
-                               transitions = GuiderPHD2.transitions,
-                               initial = GuiderPHD2.states[0])
+        self.machine = Machine(model=self,
+                               states=GuiderPHD2.states,
+                               transitions=GuiderPHD2.transitions,
+                               initial=GuiderPHD2.states[0])
 
     def launch_server(self):
         """
@@ -109,6 +114,7 @@ class GuiderPHD2(Base):
             self.reset_guiding()
         except Exception as e:
             msg = "PHD2 error connecting: {}".format(e)
+            self.logger.error(msg)
             raise GuidingError(msg)
 
     def disconnect_and_terminate_server(self):
@@ -174,6 +180,7 @@ class GuiderPHD2(Base):
             data = self._receive({"result":0})
         except Exception as e:
             msg = "PHD2 error shutdown: {}".format(e)
+            self.logger.error(msg)
             raise GuidingError(msg)
 
     def set_connected(self, connect=True):
@@ -191,6 +198,7 @@ class GuiderPHD2(Base):
             data = self._receive({"result":0})
         except Exception as e:
             msg = "PHD2 error set_connected: {}".format(e)
+            self.logger.error(msg)
             raise GuidingError(msg)
 
     def set_profile(self, profile_id=0):
@@ -209,7 +217,8 @@ class GuiderPHD2(Base):
             self._send_request(req)
             data = self._receive({"result":0})
         except Exception as e:
-            msg = "PHD2 error capturing frame: {}".format(e)
+            msg = "PHD2 error setting profile: {}".format(e)
+            self.logger.error(msg)
             raise GuidingError(msg)
 
 
@@ -234,6 +243,7 @@ class GuiderPHD2(Base):
             data = self._receive({"result":0})
         except Exception as e:
             msg = "PHD2 error capturing frame: {}".format(e)
+            self.logger.error(msg)
             raise GuidingError(msg)
 
     def clear_calibration(self):
@@ -254,6 +264,7 @@ class GuiderPHD2(Base):
             data = self._receive({"result":0})
         except Exception as e:
             msg = "PHD2 error clearing calibration: {}".format(e)
+            self.logger.error(msg)
             raise GuidingError(msg)
 
     def dither(self, pixels=3.0, ra_only=False):
@@ -279,7 +290,15 @@ class GuiderPHD2(Base):
              "params": params,
              "id":self.id}
         self.id+=1
-        self._send_request(req)
+        try:
+            self._send_request(req)
+            data = self._receive({"result":0})
+            while self.state != 'SteadyGuiding':
+                self._receive(loop_mode=True)
+        except Exception as e:
+            msg = "PHD2 error dithering: {}".format(e)
+            self.logger.error(msg)
+            raise GuidingError(msg)
         
     def find_star(self):
         """
@@ -296,8 +315,9 @@ class GuiderPHD2(Base):
         status = self._receive()
         if result in status:
             if not status["result"]:
-                self.logger.error("PHD2 find_star failed")
-                raise RuntimeError("PHD2 cannot find star")
+                msg = "PHD2 find_star failed"
+                self.logger.error(msg)
+                raise GuidingError(msg)
         else:
             #TODO TN URGENT get pixel coordinates
             print("Actual status of find star is {}".format(status))
@@ -318,6 +338,7 @@ class GuiderPHD2(Base):
             data = self._receive({"result":0})
         except Exception as e:
             msg = "PHD2 error setting dec guide mode: {}".format(e)
+            self.logger.error(msg)
             raise GuidingError(msg)
 
     def set_lock_position(self, pos_x, pos_y):
@@ -344,6 +365,7 @@ class GuiderPHD2(Base):
             data = self._receive({"result":0})
         except Exception as e:
             msg = "PHD2 error setting lock position: {}".format(e)
+            self.logger.error(msg)
             raise GuidingError(msg)
 
     def set_exposure(self, exp_time_sec):
@@ -362,6 +384,7 @@ class GuiderPHD2(Base):
             data = self._receive({"result":0})
         except Exception as e:
             msg = "PHD2 error setting exposure: {}".format(e)
+            self.logger.error(msg)
             raise GuidingError(msg)
 
     def loop(self):
@@ -380,6 +403,7 @@ class GuiderPHD2(Base):
             data = self._receive({"result":0})
         except Exception as e:
             msg = "PHD2 error looping: {}".format(e)
+            self.logger.error(msg)
             raise GuidingError(msg)
 
     def stop_capture(self):
@@ -397,6 +421,7 @@ class GuiderPHD2(Base):
             data = self._receive({"result":0})
         except Exception as e:
             msg = "PHD2 error stoping capture: {}".format(e)
+            self.logger.error(msg)
             raise GuidingError(msg)
 
     def guide(self, recalibrate=True):
@@ -431,10 +456,11 @@ class GuiderPHD2(Base):
         try:
             self._send_request(req)
             data = self._receive({"result":0})
-            while self.state != 'Guiding':
+            while self.state != 'SteadyGuiding':
                 self._receive(loop_mode=True)
         except Exception as e:
             msg = "PHD2 error guiding: {}".format(e)
+            self.logger.error(msg)
             raise GuidingError(msg)
 
     #### Getters ####
@@ -454,6 +480,7 @@ class GuiderPHD2(Base):
             return data["result"]
         except Exception as e:
             msg = "PHD2 error getting app state: {}".format(e)
+            self.logger.error(msg)
             raise GuidingError(msg)
 
     def get_calibrated(self):
@@ -472,6 +499,7 @@ class GuiderPHD2(Base):
             return data["result"]
         except Exception as e:
             msg = "PHD2 error getting calibration status: {}".format(e)
+            self.logger.error(msg)
             raise GuidingError(msg)
         self._send_request(req)
         data = self._receive()
@@ -528,6 +556,7 @@ class GuiderPHD2(Base):
                     return
                 else:
                     msg = "PHD2 Timeout: No response from server"
+                    self.logger.error(msg)
                     raise GuidingError(msg)
             except Exception as e:
                 self.logger.error("PHD2 error {}".format(e))
@@ -543,11 +572,13 @@ class GuiderPHD2(Base):
         for msg in msgs[:-1]:          
             try:
                 event = json.loads(msg)
+                self.logger.debug("Received event: {}".format(event))
                 self._check_event(expected)
                 self._handle_event(event)
             except Exception as e:
-                self.logger.error("PHD2 error on message {}:{}".format(msg, e))
-                return ""
+                msg = "PHD2 error on message {}:{}".format(msg, e)
+                self.logger.error(msg)
+                raise GuidingError(msg)
         return event
 
     def _send_request(self, req):
@@ -559,6 +590,7 @@ class GuiderPHD2(Base):
             self.sock.sendall(json_txt.encode())
         except Exception as e:
             msg = "PHD2 error sending request: {}".format(e)
+            self.logger.error(msg)
             raise GuidingError(msg)
 
     def _check_event(self, event, expected=None):
@@ -705,6 +737,7 @@ class GuiderPHD2(Base):
         """
         self.logger.debug("Settling begin, now proper autoguiding, exposure "
                           "can start ")
+        self.SettleBegin()
 
     def _handle_Settling(self, event):
         """Sent for each exposure frame after a dither or guide method
@@ -739,8 +772,9 @@ class GuiderPHD2(Base):
                                  star not found) while settling
         """
         self.logger.debug("Done with settling,  status: {}. Dropped frames: "
-            "{}/{}. Error: {}".format(*[event[key] for key in
-            ["Status","DroppedFrames","TotalFrames","Error"]]))
+            "{}/{}".format(*[event[key] for key in
+            ["Status","DroppedFrames","TotalFrames"]]))
+        self.SettleDone()
 
     def _handle_StarSelected(self, event):
         """A star has been selected.
@@ -750,6 +784,7 @@ class GuiderPHD2(Base):
         """
         self.logger.debug("Star has been selected at coordinates "
                           "x:{}, y:{}".format(event["X"], event["Y"]))
+        self.StarSelected()
 
     def _handle_StarLost(self, event):
         """A frame has been dropped due to the star being lost.
