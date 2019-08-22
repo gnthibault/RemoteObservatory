@@ -433,8 +433,7 @@ class Manager(Base):
                     time.sleep(0.1)
         """
         if self.guider is not None:
-            self.guider.dither(*self.config['guider']['dither'])
-
+            self.guider.dither(**self.config['guider']['dither'])
 
     def initialize_tracking(self):
         # start each observation by setting up the guider

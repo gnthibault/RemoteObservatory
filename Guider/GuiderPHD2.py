@@ -6,9 +6,17 @@ from transitions import Machine
 import socket
 import sys
 
+#Astropy
+import astropy.units as u
+
 #local libs
 from Base.Base import Base
+from utils import Timeout
+from utils import error
 from utils.error import GuidingError
+
+MAXIMUM_CALIBRATION_TIMEOUT = 4 * 60 * u.second
+MAXIMUM_DITHER_TIMEOUT = 45 * u.second
 
 class GuiderPHD2(Base):
     """
@@ -39,6 +47,9 @@ class GuiderPHD2(Base):
     transitions = [
         { 'trigger': 'connection_trig', 'source': '*', 'dest': 'Connected' },
         { 'trigger': 'disconnection_trig', 'source': '*', 'dest': 'NotConnected' },
+        { 'trigger': 'GuideStep', 'source': 'SteadyGuiding', 'dest': 'SteadyGuiding' },
+        # from https://github.com/pytransitions/transitions#transitioning-from-multiple-states:
+        # Note that only the first matching transition will execute
         { 'trigger': 'GuideStep', 'source': '*', 'dest': 'Guiding' },
         { 'trigger': 'Paused', 'source': '*', 'dest': 'Paused' },
         { 'trigger': 'StartCalibration', 'source': '*', 'dest': 'Calibrating' },
@@ -70,7 +81,7 @@ class GuiderPHD2(Base):
         self.session = None
         self.sock = None
         self.recv_buffer = ''
-        self.id = 1                # message id
+        self.id = 1                            # message id
         self.profile_id = config["profile_id"] # profile id for equipment
         self.mount = None
         self.settle = config["settle"]
@@ -106,7 +117,7 @@ class GuiderPHD2(Base):
             # Connect to server and send data
             #self.session = requests.sessions.Session()
             self.sock.connect((self.host, self.port))
-            self._receive({"Event":"Version"}) #get version
+            self._receive({"Event":"Version"})
             self.connection_trig()
             self._receive({"Event":"AppState"}) # get state
             # we make sure that we are starting from a "proper" state
@@ -208,7 +219,7 @@ class GuiderPHD2(Base):
            desc. : Select an equipment profile. All equipment must be
                    disconnected before switching profiles.
         """
-        params = [profile_id]
+        params = [int(profile_id)]
         req={"method": "set_profile",
              "params": params,
              "id":self.id}
@@ -290,11 +301,16 @@ class GuiderPHD2(Base):
              "params": params,
              "id":self.id}
         self.id+=1
+
         try:
             self._send_request(req)
             data = self._receive({"result":0})
+            timeout = Timeout(MAXIMUM_DITHER_TIMEOUT)
             while self.state != 'SteadyGuiding':
                 self._receive(loop_mode=True)
+                if timeout.expired():
+                    raise error.Timeout("Timeout while waiting for settle "
+                                        "after dither was sent to GuiderPHD2")
         except Exception as e:
             msg = "PHD2 error dithering: {}".format(e)
             self.logger.error(msg)
@@ -313,7 +329,7 @@ class GuiderPHD2(Base):
         self.id+=1
         self._send_request(req)
         status = self._receive()
-        if result in status:
+        if 'result' in status:
             if not status["result"]:
                 msg = "PHD2 find_star failed"
                 self.logger.error(msg)
@@ -456,8 +472,12 @@ class GuiderPHD2(Base):
         try:
             self._send_request(req)
             data = self._receive({"result":0})
+            timeout = Timeout(MAXIMUM_CALIBRATION_TIMEOUT)
             while self.state != 'SteadyGuiding':
                 self._receive(loop_mode=True)
+                if timeout.expired():
+                    raise error.Timeout("Timeout while waiting for settle "
+                                        "after guide was sent to GuiderPHD2")
         except Exception as e:
             msg = "PHD2 error guiding: {}".format(e)
             self.logger.error(msg)
@@ -559,27 +579,42 @@ class GuiderPHD2(Base):
                     self.logger.error(msg)
                     raise GuidingError(msg)
             except Exception as e:
-                self.logger.error("PHD2 error {}".format(e))
-                return ""
-
+                msg = "PHD2 error {}".format(e)
+                self.logger.error(msg)
+                raise GuidingError(msg)
+            # Check if we receive termination symbol
             msgs = self.recv_buffer.split('\r\n')
             if len(msgs) <= 1 :
+                # no termination symbol has been received yet, continue
                 self.recv_buffer = msgs[0]
             else:
+                # termination symbol has been received, now can proceed
                 stop_receive = True
+        # eventually store beginning of next message in the current buffer
+        # this is '' if only a single message has been received
         self.recv_buffer = msgs[-1]
         event = ""
+        valid_event = ""
+        expected_status = False
         for msg in msgs[:-1]:          
             try:
                 event = json.loads(msg)
                 self.logger.debug("Received event: {}".format(event))
-                self._check_event(expected)
+                expected_status = (expected_status or
+                                   self._check_event(event, expected))
                 self._handle_event(event)
+                if expected_status:
+                    valid_event = event
             except Exception as e:
                 msg = "PHD2 error on message {}:{}".format(msg, e)
                 self.logger.error(msg)
                 raise GuidingError(msg)
-        return event
+        if not valid_event:
+            msg = "No valid event satisfying expected response: {}".format(
+                expected)
+            self.logger.error(msg)
+            raise GuidingError(msg)
+        return valid_event
 
     def _send_request(self, req):
         base = dict(jsonrpc="2.0")
@@ -594,11 +629,20 @@ class GuiderPHD2(Base):
             raise GuidingError(msg)
 
     def _check_event(self, event, expected=None):
-        if expected is None:
-            return
-        else:
-            for k,v in expected.items():
-                assert(event["k"]==v)
+        status = True
+        # No check the expected
+        if expected is not None:
+            for k, v in expected.items():
+                try:
+                    status = (status and (event[k] == v))
+                except KeyError as e:
+                    status = False
+        # Also check that there is no error
+        if "error" in event:
+            msg = "Received error msg: {}".format(event["error"])
+            self.logger.error(msg)
+            status = False
+        return status
 
     def _handle_event(self, event):
         if "Event" in event:
@@ -735,8 +779,7 @@ class GuiderPHD2(Base):
         """Sent when settling begins after a dither or guide method invocation.
            (no event attributes)
         """
-        self.logger.debug("Settling begin, now proper autoguiding, exposure "
-                          "can start ")
+        self.logger.debug("Settling begin, waiting for telescope to stabilize")
         self.SettleBegin()
 
     def _handle_Settling(self, event):
@@ -771,8 +814,8 @@ class GuiderPHD2(Base):
            DroppedFrames number  the number of dropped camera frames (guide
                                  star not found) while settling
         """
-        self.logger.debug("Done with settling,  status: {}. Dropped frames: "
-            "{}/{}".format(*[event[key] for key in
+        self.logger.debug("Done with settling, status: {}. Dropped frames: "
+            "{}/{}. Now proper imaging can start".format(*[event[key] for key in
             ["Status","DroppedFrames","TotalFrames"]]))
         self.SettleDone()
 
