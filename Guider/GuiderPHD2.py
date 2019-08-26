@@ -17,6 +17,7 @@ from utils.error import GuidingError
 
 MAXIMUM_CALIBRATION_TIMEOUT = 4 * 60 * u.second
 MAXIMUM_DITHER_TIMEOUT = 45 * u.second
+STANDARD_TIMEOUT = 30 * u.second
 
 class GuiderPHD2(Base):
     """
@@ -54,7 +55,7 @@ class GuiderPHD2(Base):
         { 'trigger': 'Paused', 'source': '*', 'dest': 'Paused' },
         { 'trigger': 'StartCalibration', 'source': '*', 'dest': 'Calibrating' },
         { 'trigger': 'LoopingExposures', 'source': '*', 'dest': 'Looping' },
-        { 'trigger': 'LoopingExposuresStoped', 'source': '*', 'dest': 'Stopped' },
+        { 'trigger': 'LoopingExposureStopped', 'source': '*', 'dest': 'Stopped' },
         { 'trigger': 'SettleBegin', 'source': '*', 'dest': 'Settling' },
         { 'trigger': 'SettleDone', 'source': '*', 'dest': 'SteadyGuiding'},
         { 'trigger': 'StarLost', 'source': '*', 'dest': 'LostLock' },
@@ -188,7 +189,10 @@ class GuiderPHD2(Base):
         self.id+=1
         try:
             self._send_request(req)
-            data = self._receive({"result":0})
+            data = self._receive({"id":req["id"]})
+            if "result" not in data or data["result"] != 0:
+                raise GuidingError("Wrong answer to shutdown request: {}"
+                                   "".format(data))
         except Exception as e:
             msg = "PHD2 error shutdown: {}".format(e)
             self.logger.error(msg)
@@ -206,7 +210,10 @@ class GuiderPHD2(Base):
         self.id+=1
         try:
             self._send_request(req)
-            data = self._receive({"result":0})
+            data = self._receive({"id":req["id"]})
+            if "result" not in data or data["result"] != 0:
+                raise GuidingError("Wrong answer to set_connected request: {}"
+                                   "".format(data))
         except Exception as e:
             msg = "PHD2 error set_connected: {}".format(e)
             self.logger.error(msg)
@@ -226,7 +233,10 @@ class GuiderPHD2(Base):
         self.id+=1
         try:
             self._send_request(req)
-            data = self._receive({"result":0})
+            data = self._receive({"id":req["id"]})
+            if "result" not in data or data["result"] != 0:
+                raise GuidingError("Wrong answer to set_profile request: {}"
+                                   "".format(data))
         except Exception as e:
             msg = "PHD2 error setting profile: {}".format(e)
             self.logger.error(msg)
@@ -251,7 +261,10 @@ class GuiderPHD2(Base):
         self.id+=1
         try:
             self._send_request(req)
-            data = self._receive({"result":0})
+            data = self._receive({"id":req["id"]})
+            if "result" not in data or data["result"] != 0:
+                raise GuidingError("Wrong answer to capture_single_frame "
+                                   "request: {}".format(data))
         except Exception as e:
             msg = "PHD2 error capturing frame: {}".format(e)
             self.logger.error(msg)
@@ -272,7 +285,10 @@ class GuiderPHD2(Base):
         self.id+=1
         try:
             self._send_request(req)
-            data = self._receive({"result":0})
+            data = self._receive({"id":req["id"]})
+            if "result" not in data or data["result"] != 0:
+                raise GuidingError("Wrong answer to clear_calibration request: "
+                                   "{}".format(data))
         except Exception as e:
             msg = "PHD2 error clearing calibration: {}".format(e)
             self.logger.error(msg)
@@ -304,7 +320,10 @@ class GuiderPHD2(Base):
 
         try:
             self._send_request(req)
-            data = self._receive({"result":0})
+            data = self._receive({"id":req["id"]})
+            if "result" not in data or data["result"] != 0:
+                raise GuidingError("Wrong answer to dither request: {}"
+                                   "".format(data))
             timeout = Timeout(MAXIMUM_DITHER_TIMEOUT)
             while self.state != 'SteadyGuiding':
                 self._receive(loop_mode=True)
@@ -328,16 +347,18 @@ class GuiderPHD2(Base):
              "id":self.id}
         self.id+=1
         self._send_request(req)
-        status = self._receive()
+        status = self._receive({"id":req["id"]})
+        # Should generate an event like this:
+        # {'Event': 'LockPositionSet', 'Timestamp': 15.16, 'Host': 'XXXX', 'Inst': 1, 'X': 1040.007, 'Y': 224.034}
         if 'result' in status:
             if not status["result"]:
                 msg = "PHD2 find_star failed"
                 self.logger.error(msg)
                 raise GuidingError(msg)
         else:
-            #TODO TN URGENT get pixel coordinates
-            print("Actual status of find star is {}".format(status))
-            self.lock_coordinates = status
+            msg = "Cannot find guiding star automatically"
+            self.logger.error(msg)
+            raise GuidingError(msg)
 
     def set_dec_guide_mode(self, mode="Auto"):
         """
@@ -351,7 +372,10 @@ class GuiderPHD2(Base):
         self.id+=1
         try:
             self._send_request(req)
-            data = self._receive({"result":0})
+            data = self._receive({"id":req["id"]})
+            if "result" not in data or data["result"] != 0:
+                raise GuidingError("Wrong answer to set_dec_guide_mode request:"
+                                   " {}".format(data))
         except Exception as e:
             msg = "PHD2 error setting dec guide mode: {}".format(e)
             self.logger.error(msg)
@@ -378,7 +402,10 @@ class GuiderPHD2(Base):
         self.id+=1
         try:
             self._send_request(req)
-            data = self._receive({"result":0})
+            data = self._receive({"id":req["id"]})
+            if "result" not in data or data["result"] != 0:
+                raise GuidingError("Wrong answer to set_lock_position request: "
+                                   "{}".format(data))
         except Exception as e:
             msg = "PHD2 error setting lock position: {}".format(e)
             self.logger.error(msg)
@@ -397,7 +424,10 @@ class GuiderPHD2(Base):
         self.id+=1
         try:
             self._send_request(req)
-            data = self._receive({"result":0})
+            data = self._receive({"id":req["id"]})
+            if "result" not in data or data["result"] != 0:
+                raise GuidingError("Wrong answer to set_exposure request: {}"
+                                   "".format(data))
         except Exception as e:
             msg = "PHD2 error setting exposure: {}".format(e)
             self.logger.error(msg)
@@ -416,7 +446,10 @@ class GuiderPHD2(Base):
         self.id+=1
         try:
             self._send_request(req)
-            data = self._receive({"result":0})
+            data = self._receive({"id":req["id"]})
+            if "result" not in data or data["result"] != 0:
+                raise GuidingError("Wrong answer to loop request: {}"
+                                   "".format(data))
         except Exception as e:
             msg = "PHD2 error looping: {}".format(e)
             self.logger.error(msg)
@@ -434,9 +467,19 @@ class GuiderPHD2(Base):
         self.id+=1
         try:
             self._send_request(req)
-            data = self._receive({"result":0})
+            data = self._receive({"id":req["id"]})
+            if "result" not in data or data["result"] != 0:
+                raise GuidingError("Wrong answer to stop_capture request: {}"
+                                   "".format(data))
+            timeout = Timeout(STANDARD_TIMEOUT)
+            while self.state != 'Stopped':
+                data = self._receive(expected={"Event": "LoopingExposuresStopped"},
+                                     loop_mode=True)
+                if timeout.expired():
+                    raise error.Timeout("Timeout while waiting for response "
+                        "after stop_capture was sent to GuiderPHD2")
         except Exception as e:
-            msg = "PHD2 error stoping capture: {}".format(e)
+            msg = "PHD2 error stopping capture: {}".format(e)
             self.logger.error(msg)
             raise GuidingError(msg)
 
@@ -471,7 +514,11 @@ class GuiderPHD2(Base):
         self.id+=1
         try:
             self._send_request(req)
-            data = self._receive({"result":0})
+            data = self._receive({"id":req["id"]})
+            if "result" not in data or data["result"] != 0:
+                raise GuidingError("Wrong answer to guide request: {}"
+                                   "".format(data))
+
             timeout = Timeout(MAXIMUM_CALIBRATION_TIMEOUT)
             while self.state != 'SteadyGuiding':
                 self._receive(loop_mode=True)
@@ -496,7 +543,7 @@ class GuiderPHD2(Base):
         self.id+=1
         try:
             self._send_request(req)
-            data = self._receive()
+            data = self._receive({"id":req["id"]})
             return data["result"]
         except Exception as e:
             msg = "PHD2 error getting app state: {}".format(e)
@@ -515,15 +562,12 @@ class GuiderPHD2(Base):
         self.id+=1
         try:
             self._send_request(req)
-            data = self._receive()
+            data = self._receive({"id":req["id"]})
             return data["result"]
         except Exception as e:
             msg = "PHD2 error getting calibration status: {}".format(e)
             self.logger.error(msg)
             raise GuidingError(msg)
-        self._send_request(req)
-        data = self._receive()
-        return data["result"]
 
     def get_connected(self):
         """
@@ -537,7 +581,7 @@ class GuiderPHD2(Base):
         self.id+=1
         try:
             self._send_request(req)
-            data = self._receive()
+            data = self._receive({"id":req["id"]})
             return data["result"]
         except Exception as e:
             msg = "PHD2 error getting connection status: {}".format(e)
@@ -556,7 +600,7 @@ class GuiderPHD2(Base):
         self.id+=1
         try:
             self._send_request(req)
-            data = self._receive()
+            data = self._receive({"id":req["id"]})
             return data["result"]
         except Exception as e:
             msg = "PHD2 error getting profiles list: {}".format(e)
@@ -565,7 +609,25 @@ class GuiderPHD2(Base):
 
     #### Some specific handle code for decoding messages ####
 
-    def _receive(self, expected=None, loop_mode=False):
+    def _receive(self, expected=None, loop_mode=False, timeout=STANDARD_TIMEOUT):
+        timeout = Timeout(timeout)
+        ret = None
+        while not ret:
+            ret = self._receive_from_socket(expected=expected, loop_mode=loop_mode)
+            if timeout.expired():
+                raise error.Timeout("Timeout while waiting for reception of "
+                                    "of response from GuiderPHD2")
+        return ret
+
+    def _receive_from_socket(self, expected=None, loop_mode=False):
+        """
+
+        :param expected: dictionary of expected keys/values. Those keys/values
+                         are tested against each message
+        :param loop_mode: wether an answer is expected soon (might timeout if
+                          there is a problem) of if it should hand undefinitely
+        :return: the first message that complies with expected dictionary
+        """
         # Receive data from the server
         stop_receive = False
         while not stop_receive:
@@ -594,27 +656,22 @@ class GuiderPHD2(Base):
         # this is '' if only a single message has been received
         self.recv_buffer = msgs[-1]
         event = ""
-        valid_event = ""
+        expected_event = ""
         expected_status = False
         for msg in msgs[:-1]:          
             try:
                 event = json.loads(msg)
                 self.logger.debug("Received event: {}".format(event))
-                expected_status = (expected_status or
-                                   self._check_event(event, expected))
+                valid_status = self._check_event(event, expected)
+                expected_status = (expected_status or valid_status)
                 self._handle_event(event)
-                if expected_status:
-                    valid_event = event
+                if valid_status:
+                    expected_event = event
             except Exception as e:
                 msg = "PHD2 error on message {}:{}".format(msg, e)
                 self.logger.error(msg)
                 raise GuidingError(msg)
-        if not valid_event:
-            msg = "No valid event satisfying expected response: {}".format(
-                expected)
-            self.logger.error(msg)
-            raise GuidingError(msg)
-        return valid_event
+        return expected_event
 
     def _send_request(self, req):
         base = dict(jsonrpc="2.0")

@@ -86,5 +86,6 @@ PYTHONPATH=. python3 ./apps/launch_arduino_capture.py
 * looks like the loops with time intervals in observing and pointing states are not working as expected. ie no message is shown every 5 seconds ?
 * Need to try to kill PHD2 while guiding and check that we return to parking state
 * Need to simulate a PHD2 star lost and check that we return to parking state
-* 
+* find_star method in PHD2 doesnt have the right expected return value defined
+* The loop_mode in GuiderPHD2 should not exist
 
