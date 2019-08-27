@@ -8,8 +8,7 @@ def on_enter(event_data):
     if event_data.transition.source != 'pointing':
         model.logger.debug("Checking our tracking")
         try:
-            # update tracking in case we drifted too much, or just setup the
-            # guider
+            # most likely setup dithering
             model.manager.update_tracking()
             model.logger.debug('Done with tracking adjustment, going to '
                                'observe')
@@ -17,5 +16,8 @@ def on_enter(event_data):
         except Exception as e:
             model.logger.warning("Problem adjusting tracking: {}".format(e))
     else:
-        model.manager.initialize_tracking()
-        model.next_state = 'observing'
+        try:
+            if model.manager.initialize_tracking():
+                model.next_state = 'observing'
+        except Exception as e:
+            model.logger.warning("Problem initializing tracking: {}".format(e))

@@ -102,7 +102,7 @@ class GuiderPHD2(Base):
         """
         cmd = 'phd2' 
         os.popen(cmd)
-        time.sleep(20) #Did not found anything better than that...
+        time.sleep(10) #Did not found anything better than that...
 
     def terminate_server(self):
         self.shutdown()
@@ -320,7 +320,7 @@ class GuiderPHD2(Base):
 
         try:
             self._send_request(req)
-            data = self._receive({"id":req["id"]})
+            data = self._receive({"id": req["id"]})
             if "result" not in data or data["result"] != 0:
                 raise GuidingError("Wrong answer to dither request: {}"
                                    "".format(data))
@@ -472,9 +472,8 @@ class GuiderPHD2(Base):
                 raise GuidingError("Wrong answer to stop_capture request: {}"
                                    "".format(data))
             timeout = Timeout(STANDARD_TIMEOUT)
-            while self.state != 'Stopped':
-                data = self._receive(expected={"Event": "LoopingExposuresStopped"},
-                                     loop_mode=True)
+            while self.state not in ['Stopped', 'GuidingStopped']:
+                data = self._receive(loop_mode=True)
                 if timeout.expired():
                     raise error.Timeout("Timeout while waiting for response "
                         "after stop_capture was sent to GuiderPHD2")
@@ -614,9 +613,11 @@ class GuiderPHD2(Base):
         ret = None
         while not ret:
             ret = self._receive_from_socket(expected=expected, loop_mode=loop_mode)
+            if not ret:
+                self.logger.warning("Received {}, still waiting for expected {}".format(ret, expected))
             if timeout.expired():
                 raise error.Timeout("Timeout while waiting for reception of "
-                                    "of response from GuiderPHD2")
+                                    "response from GuiderPHD2")
         return ret
 
     def _receive_from_socket(self, expected=None, loop_mode=False):
@@ -698,7 +699,6 @@ class GuiderPHD2(Base):
         if "error" in event:
             msg = "Received error msg: {}".format(event["error"])
             self.logger.error(msg)
-            status = False
         return status
 
     def _handle_event(self, event):
@@ -980,8 +980,24 @@ class GuiderPHD2(Base):
            Type       string  The type of alert: "info", "question", "warning",
                               or "error"
         """
-        self.logger.warning("PHD2 Alert {}:{}".format(
-            *[event[key] for key in ["Msg","Type"]]))
+        def _handle_Alert(self, event):
+            """An alert message was displayed in PHD2.
+               Msg     string the text of the alert message
+               Type    string The type of alert: "info", "question", "warning",
+                              or "error"
+            """
+            if event["Type"] == "info":
+                self.logger.info("Received alert of type {} from PHD2: {}"
+                    "".format(*[event[key] for key in ["Type","Msg"]]))
+            if event["Type"] == "warning":
+                self.logger.warning("Received alert of type {} from PHD2: {}"
+                    "".format(*[event[key] for key in ["Type","Msg"]]))
+            if event["Type"] == "info":
+                self.logger.error("Received alert of type {} from PHD2: {}"
+                    "".format(*[event[key] for key in ["Type","Msg"]]))
+            else:
+                self.logger.info("Received alert of type {} from PHD2: {}"
+                    "".format(*[event[key] for key in ["Type","Msg"]]))
 
     def _handle_GuideParamChange(self, event):
         """A guiding parameter has been changed.

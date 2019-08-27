@@ -79,13 +79,10 @@ PYTHONPATH=. python3 ./apps/launch_arduino_capture.py
 * DefaultScheduler constructor: please put back all constraints
 * Gast is important: Service/NTPTimeService.py l 137
 * Urgent: fix the hardcoded values in solve-field scripting
-* Urgent: also fix the bad radius value inside solve_info in image.py, that goes with the previous task
-* Urgent fix the max_pointing_error in pointing. and of course the uderlying coordinates problem as well
+* Urgent fix the max_pointing_error in pointing. Current one might be too low
 * L292 in StateMachine, find a better way to signal the issue when transitionning
 * Remove temporary fix in Scheduler:             target = FixedTarget(SkyCoord(ra=1*u.deg, dec=89*u.deg)
-* looks like the loops with time intervals in observing and pointing states are not working as expected. ie no message is shown every 5 seconds ?
 * Need to try to kill PHD2 while guiding and check that we return to parking state
 * Need to simulate a PHD2 star lost and check that we return to parking state
-* find_star method in PHD2 doesnt have the right expected return value defined
-* The loop_mode in GuiderPHD2 should not exist
+* The loop_mode in GuiderPHD2 is ambiguous (let it like this for now)
 

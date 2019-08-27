@@ -11,8 +11,6 @@ def on_enter(event_data):
     model.logger.debug("Taking it on home and then parking.")
     model.manager.park()
     
-    if not model.manager.observatory.close_everything():
+    if not model.manager.close_observatory():
         model.logger.critical('Unable to close dome!')
-        model.logger.debug('Unable to close dome!')
-
 

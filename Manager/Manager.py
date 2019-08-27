@@ -437,10 +437,15 @@ class Manager(Base):
 
     def initialize_tracking(self):
         # start each observation by setting up the guider
-        if self.guider is not None:
-            self.logger.info("Starting guider before observing")
-            self.guider.reset_guiding()
-            self.guider.guide()
+        try:
+            if self.guider is not None:
+                self.logger.info("Starting guider before observing")
+                self.guider.reset_guiding()
+                self.guider.guide()
+            return True
+        except Exception as e:
+            self.logger.error('Error while trying to initialize tracking')
+            return False
 
     def get_standard_headers(self, observation=None):
         """Get a set of standard headers
@@ -608,7 +613,6 @@ class Manager(Base):
 
             # park the observatory
             self.observatory.park()
-
 
             return True
         except Exception as e:

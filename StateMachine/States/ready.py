@@ -6,7 +6,7 @@ def on_enter(event_data):
     model = event_data.model
     model.logger.debug("Ok, I'm all set up and ready to go!")
 
-    if not model.manager.observatory.open_everything():
+    if not model.manager.open_observatory():
         model.logger.error('Failed to open observatory while entering state'
                            'ready')
         model.next_state = 'parking'
