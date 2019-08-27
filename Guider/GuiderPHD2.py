@@ -18,6 +18,7 @@ from utils.error import GuidingError
 MAXIMUM_CALIBRATION_TIMEOUT = 4 * 60 * u.second
 MAXIMUM_DITHER_TIMEOUT = 45 * u.second
 STANDARD_TIMEOUT = 30 * u.second
+SOCKET_TIMEOUT = 5.0
 
 class GuiderPHD2(Base):
     """
@@ -102,7 +103,7 @@ class GuiderPHD2(Base):
         """
         cmd = 'phd2' 
         os.popen(cmd)
-        time.sleep(10) #Did not found anything better than that...
+        time.sleep(20) #Did not found anything better than that...
 
     def terminate_server(self):
         self.shutdown()
@@ -112,7 +113,7 @@ class GuiderPHD2(Base):
                          self.port))
         # Create a socket (SOCK_STREAM means a TCP socket)
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.sock.settimeout(1.0)
+        self.sock.settimeout(SOCKET_TIMEOUT)
 
         try:
             # Connect to server and send data
@@ -909,14 +910,14 @@ class GuiderPHD2(Base):
            (no event attributes)
         """
         self.logger.debug("Guiding has stopped {}".format(
-            event[""]))
+            event))
 
     def _handle_Resumed(self, event):
         """PHD has been resumed after having been paused.
            (no attributes)
         """
         self.logger.debug("Guiding has resumed {}".format(
-            event[""]))
+            event))
 
     def _handle_GuideStep(self, event):
         """This event corresponds to a line in the PHD Guide Log. The event is
