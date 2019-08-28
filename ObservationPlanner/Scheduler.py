@@ -80,20 +80,6 @@ class Scheduler(Base):
         else:
             self.config = config
 
-        #self.logger.warning("Cannot load config: {}".format(e))
-        #config = dict(
-        #    constraints = dict(
-        #        maxairmass = 4,
-        #        minmoonseparationdeg = 45),
-        #    targets = dict(
-        #        M42 = dict(
-        #            Luminance = dict(
-        #                count = 3,
-        #                exp_time_sec = 3)),
-        #        M51 = dict(
-        #            Luminance = dict(
-        #                count = 3,
-        #                exp_time_sec = 3))))
         self.logger.debug('Config: {}'.format(self.config))
 
         # Initialize obs planner, that does the main job

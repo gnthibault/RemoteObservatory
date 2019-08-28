@@ -56,7 +56,9 @@ class DPolynom:
         return mp
 
 class starMaterial(QMaterial):
-
+    """
+       Implements QMaterial interface 
+    """
     def __init__(self, parent=None):
         super().__init__(parent)
         starEffect = QEffect(self)
@@ -64,10 +66,12 @@ class starMaterial(QMaterial):
         starRenderPass = QRenderPass(self)
         starShaderProgram = QShaderProgram(self)
         starRenderState = QPointSize(self)
+        # Defines color (white) and visibility (wether it is discarder or not)
         starShaderProgram.setShaderCode(
             QShaderProgram.Vertex,
             QShaderProgram.loadSource(QUrl.fromLocalFile(
                 'ScopeSimulator/shaders/pointcloud.vert')))
+        # Defines ?
         starShaderProgram.setShaderCode(
             QShaderProgram.Fragment, 
             QShaderProgram.loadSource(QUrl.fromLocalFile(
@@ -138,15 +142,16 @@ class World3D():
         self.skyEntity = QEntity(self.rootEntity)
         self.skyTransform = QTransform()
         self.skyEntity.addComponent(self.skyTransform)
-        self.makeHorizontalPlane()
-        self.makeEquatorialGrid()
-        self.makeHorizontalGrid()
-        self.makeMountBasement()
+        self.make_horizontal_plane()
+        self.make_equatorial_grid()
+        self.make_altaz_grid()
+        self.make_mount_basement()
         self.makeCardinals()
         #self.makeStars()
         self.makeStarsPoints()
         self.qtime=QQuaternion()
         self.qlongitude = QQuaternion()
+        self.qlatitude = QQuaternion()
         self.setLatitude(90.0)
         self.setLongitude(0.0)
         self.set_gast(self.get_gast())
@@ -175,6 +180,22 @@ class World3D():
             self.qtime)
 
     def setLatitude(self, latitude):
+        """
+           Recall frame:
+           Qt3D frame: x axis pointing North, y axis pointing Zenith/pole, z axis
+           pointing East
+           Celestial frame: x axis pointing South, y axis pointing East, Z axis
+           pointing Zenith/pole
+           Recall latitude:
+           We recall that input latitude is 90deg at north pole and -90 at
+           south pole, in this context, we are using a 3D spherical coordinate
+           system where angle is 0 at south pole, grow up to 90 at equateur
+           and then jump directly at -90 (wtf) in northern hemisphere, and
+           decays again to reach 0 again at north pole.
+           Displacement to the given latitude coordinate is considered as a
+           rotation around z axis: (0,0,1) in the Qt3D frame
+        """   
+        self.latitude = latitude
         self.latitude = latitude
         if self.latitude < 0.0:
             angle = 90.0 - abs(self.latitude)
@@ -185,6 +206,21 @@ class World3D():
         self.updateSkyTransform()
 
     def setLongitude(self, longitude):
+        """
+           Recall frame:
+           Qt3D frame: x axis pointing North, y axis pointing Zenith/pole, z axis
+           pointing East
+           Celestial frame: x axis pointing South, y axis pointing East, Z axis
+           pointing Zenith/pole
+           Recall latitude:
+           We recall that input latitude is 0 at greenwich (UK) and start to
+           grow from there, going east (around 3-6 in France, up to +360
+           Equivalently one can start from 0, and decrease in negative number
+           up to -180 going west.
+           In this context, we use the converse definition locally: longitude is 
+           defined as rotation around y axis: (0,1,0) of -latitude axis in the
+           Qt3D frame
+        """   
         self.longitude = longitude
         angle = -self.longitude
         self.qlongitude = QQuaternion.fromAxisAndAngle(QVector3D(0.0, 1.0, 0.0),
@@ -199,7 +235,14 @@ class World3D():
                                                   angle)
         self.updateSkyTransform()
 
-    def makeHorizontalPlane(self):
+    def make_horizontal_plane(self):
+        """
+           Builds the earth ground, (simple plain green colored plane mesh)
+           One need to set Width and Height to define the mesh, plus material
+
+           One should notice that this ground plane is attached to the root
+           entity
+        """
         self.horizontalPlane = QEntity()
         self.horizontalMesh = QPlaneMesh()
         self.horizontalMesh.setWidth(2 * World3D._sky_radius)
@@ -217,7 +260,22 @@ class World3D():
         self.horizontalPlane.addComponent(self.horizontalMesh)
         self.horizontalPlane.setParent(self.rootEntity)
 
-    def makeEquatorialGrid(self):
+    def make_equatorial_grid(self):
+        """
+           Equatorial grid helps vizualize the spherical coordinate system
+           whose main axis is colinear to earth rotation axis
+           We choose:
+            -18 rings: 1 tick every 10 degrees for the 180 degrees of
+              declination. 90 being north pole (close to polar star) and -90
+              standing for south pole. 0 degrees is on the celestial equateur
+            -24 slices: 1 tick every hour for the 24 hours of right ascencion
+              00h standing for position of sun in background star at spring
+              meridian at its highest position (ie intersecting celestial
+              equateur). This point for origin is also called vernal point.
+
+           One should notice that this ground plane is attached to the sky
+           entity
+        """
         self.equatorialGrid = QEntity()
         self.equatorialMesh = QSphereMesh()
         self.equatorialMesh.setRadius(World3D._sky_radius)
@@ -233,7 +291,17 @@ class World3D():
         self.equatorialGrid.addComponent(self.equatorialMesh)
         self.equatorialGrid.setParent(self.skyEntity)
 
-    def makeHorizontalGrid(self):
+    def make_altaz_grid(self):
+        """
+            Altaz grid helps vizualize the spherical coordinate system whose
+            main axis is colinear to the normal to earth sphere at observer
+            position
+            We choose:
+              -18 rings: 1 tick every 10 degrees for the 180 degrees of altitude
+               90 standing for zenith and -90 for the nadir
+              -36 slices: 1 tick every 10 degrees for the 360 degrees of azimuth
+               0 being oriented towards north, and 90 degrees towards east
+        """
         self.horizontalGrid = QEntity()
         self.horizontalMesh = QSphereMesh()
         self.horizontalMesh.setRadius(World3D._sky_radius)
@@ -249,51 +317,80 @@ class World3D():
         self.horizontalGrid.addComponent(self.horizontalMesh)
         self.horizontalGrid.setParent(self.rootEntity)
 
-    def makeMountBasement(self):
+    def make_mount_basement(self):
+        """
+           Right at the foot of the observer, we put an image of a compass in
+           order to ease understanding of the scene.
+           As in the ground horizontal plane, we define a PlaneMesh
+
+           We recall that this element is connected to the root entity, and we
+           also recall frame:
+           Qt3D frame: x axis pointing North, y axis pointing Zenith/pole, z axis
+           pointing East
+        """
         # self.svgRenderer = QSvgRenderer()
         # self.svgRenderer.load('compass.svg')
         # self.compass = QImage(self.svgRenderer.defaultSize(), QImage.Format_ARGB32)
-        # self.compassTexture = QTexture2D()
-        # self.compassTexture.addTextureImage(self.compass)
-        self.compassTexture = QTextureLoader()
-        self.compassTexture.setMirrored(False)
-        self.compassTexture.setSource(
+        # self.compass_texture = QTexture2D()
+        # self.compass_texture.addTextureImage(self.compass)
+        self.compass_texture = QTextureLoader()
+        self.compass_texture.setMirrored(False)
+        self.compass_texture.setSource(
             QUrl.fromLocalFile('ScopeSimulator/data/compass.svg.png'))
         self.basementGrid = QEntity()
-        # self.basementMesh = QCylinderMesh()
-        # self.basementMesh.setRadius(1500.0)
-        # self.basementMesh.setLength(10.0)
-        # self.basementMesh.setSlices(360)
-        self.basementMesh = QPlaneMesh()
-        self.basementMesh.setWidth(1500.0)
-        self.basementMesh.setHeight(1500.0)
-        self.basementMesh.setMeshResolution(QSize(2, 2))
-        self.basementTransform = QTransform()
-        self.basementTransform.setTranslation(QVector3D(0,20.0,0))
-        self.basementTransform.setRotationY(-90.0)
+        # self.basement_mesh = QCylinderMesh()
+        # self.basement_mesh.setRadius(1500.0)
+        # self.basement_mesh.setLength(10.0)
+        # self.basement_mesh.setSlices(360)
+        self.basement_mesh = QPlaneMesh()
+        self.basement_mesh.setWidth(1500.0)
+        self.basement_mesh.setHeight(1500.0)
+        self.basement_mesh.setMeshResolution(QSize(2, 2))
+        self.basement_transform = QTransform()
+        self.basement_transform.setTranslation(QVector3D(0,20.0,0))
+        self.basement_transform.setRotationY(-90.0)
         self.basementMatBack = QDiffuseSpecularMaterial()
         self.basementMatBack.setAmbient(QColor(200,200,228))
         self.basementMat = QTextureMaterial()
-        self.basementMat.setTexture(self.compassTexture)
-        self.basementGrid.addComponent(self.basementTransform)
+        self.basementMat.setTexture(self.compass_texture)
+        self.basementGrid.addComponent(self.basement_transform)
         self.basementGrid.addComponent(self.basementMatBack)
         self.basementGrid.addComponent(self.basementMat)
-        self.basementGrid.addComponent(self.basementMesh)
+        self.basementGrid.addComponent(self.basement_mesh)
         self.basementGrid.setParent(self.rootEntity)
 
     def makeCardinals(self):
-        cardinals = [('North', QVector3D(World3D._sky_radius - 100.0, 20.0,
-            0.0), (0.0, -90.0, 0.0)),
-        ('South', QVector3D(-(World3D._sky_radius - 100.0), 20.0, 0.0),
-            (0.0, 90.0, 0.0)),
-        ('East', QVector3D(0.0, 20.0, World3D._sky_radius - 100.0),
-            (0.0, 180.0, 0.0)),
-        ('West', QVector3D(0.0, 20.0, -(World3D._sky_radius - 100.0)),
-            (0.0, 0.0, 0.0)),
-        ('Zenith', QVector3D(0.0, World3D._sky_radius - 100.0, 0.0),
-            (90.0, 0.0, 0.0)),
-        ('Nadir', QVector3D(0.0, -(World3D._sky_radius - 100.0), 0.0),
-            (-90.0, 0.0, 0.0)),]
+        """
+           We decide to put some labels on the cardinal points, ie, 
+           Nort/East/South/West/Zenith/Nadir
+           Each cardinal is defined as a 3-uplet:
+               -name string
+               -translation in Qvector
+               -rotation around X,Y,Z axis
+           We recall that this element is connected to the root entity, and we
+           also recall frame:
+           Qt3D frame: x axis pointing North, y axis pointing Zenith/pole, z axis
+           pointing East
+        """
+        cardinals = [
+            ('North',
+                QVector3D(World3D._sky_radius - 100.0, 20.0, 0.0),
+                (0.0, -90.0, 0.0)),
+            ('South',
+                QVector3D(-(World3D._sky_radius - 100.0), 20.0, 0.0),
+                (0.0, 90.0, 0.0)),
+            ('East',
+                QVector3D(0.0, 20.0, World3D._sky_radius - 100.0),
+                (0.0, 180.0, 0.0)),
+            ('West',
+                QVector3D(0.0, 20.0, -(World3D._sky_radius - 100.0)),
+                (0.0, 0.0, 0.0)),
+            ('Zenith',
+                QVector3D(0.0, World3D._sky_radius - 100.0, 0.0),
+                (90.0, 0.0, 0.0)),
+            ('Nadir',
+                QVector3D(0.0, -(World3D._sky_radius - 100.0), 0.0),
+                (-90.0, 0.0, 0.0)),]
         font = QFont('Helvetica', 32)
         self.textMat = QDiffuseSpecularMaterial()
         self.textMat.setAmbient(QColor(200,200,228))

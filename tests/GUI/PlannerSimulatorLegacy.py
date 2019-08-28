@@ -34,14 +34,18 @@ from Mount.IndiMount import IndiMount
 # Local stuff : Observatory
 from Observatory.ShedObservatory import ShedObservatory
 
+# Local stuff: Observation planner Widget
+from ObservationPlanner.PlannerWidget import AltazPlannerWidget
+
 # Local stuff : Service
 from Service.NTPTimeService import NTPTimeService
 
 class MainWindow(QMainWindow):
-    def __init__(self, view3D):
+    def __init__(self, planner, view3D):
         super().__init__()
 
         # Various views/widgets
+        self.planner = planner
         self.view3D = view3D
 
         # Change visual parameters and setup widgets on the main window
@@ -83,6 +87,15 @@ class MainWindow(QMainWindow):
         self.setCentralWidget(self.widget3D)
         #self.layout.addWidget(self.widget3D)
 
+        # Dock planner
+        self.dock_planner = QDockWidget('Observation planner', self)
+        self.addDockWidget(Qt.BottomDockWidgetArea, self.dock_planner)
+        #self.planner.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
+        self.dock_planner.setWidget(self.planner)        
+
+        # Dock safety camera
+
+
         # Global stuff
         self.setLayout(self.layout)
         self.setWindowTitle('Remote observatory dashboard')
@@ -122,13 +135,13 @@ class GuiLoop():
         app = QApplication([])
 
         # Initialize various widgets/views
+        planner = AltazPlannerWidget(observatory=self.observatory,
+                                     serv_time=self.serv_time )
         view3D = View3D.View3D(serv_time=self.serv_time)
 
         # Now initialize main window
-        self.main_window = MainWindow(view3D=view3D)
+        self.main_window = MainWindow(planner=planner, view3D=view3D)
 
-        # We make sure that upon reception of new number from indiserver, the
-        # actual virtual mount position gets updated
         indiCli.register_number_callback(
             device_name = self.mount.deviceName,
             vec_name = 'EQUATORIAL_EOD_COORD',
@@ -162,7 +175,7 @@ class ObservationRun(QThread):
 
     @pyqtSlot()
     def run(self):
-        ''' Keep in min that backend thread should not do anything because
+        ''' Keep in min that backend thred should not do anything because
             every action should be launched asynchronously from the gui
         '''
         # Now start to do stuff
