@@ -1,6 +1,8 @@
 # Common stuff
 import math
 import struct
+import numpy as np
+import scipy.interpolate
 
 # PyQt stuff
 from PyQt5.QtGui import QColor, QVector3D, QImage, QFont
@@ -147,15 +149,15 @@ class World3D():
         self.make_altaz_grid()
         self.make_mount_basement()
         self.makeCardinals()
-        #self.makeStars()
-        self.makeStarsPoints()
+        #self.make_stars()
+        self.make_stars_points()
         self.qtime=QQuaternion()
         self.qlongitude = QQuaternion()
         self.qlatitude = QQuaternion()
         self.setLatitude(90.0)
         self.setLongitude(0.0)
         self.set_gast(self.get_gast())
-        #self.makeEcliptic()
+        #self.make_ecliptic()
         self.celestialintervalms = 1 * 1000
         self.celestialacceleration = 1
         self.celestialtimer = QTimer()
@@ -365,8 +367,9 @@ class World3D():
            Nort/East/South/West/Zenith/Nadir
            Each cardinal is defined as a 3-uplet:
                -name string
-               -translation in Qvector
-               -rotation around X,Y,Z axis
+               -translation in Qvector to be applied first
+               -rotation around X,Y,Z axis to be applied in the translated frame
+                ie, in order to show the letters the right way)
            We recall that this element is connected to the root entity, and we
            also recall frame:
            Qt3D frame: x axis pointing North, y axis pointing Zenith/pole, z axis
@@ -413,37 +416,59 @@ class World3D():
             e.setParent(self.cardinals)
         self.cardinals.setParent(self.rootEntity)
 
-    def makeStars(self):
-        # star coordinates in J2000.0 equinox,no proper motion
-        # transform for precession-nutation as defined by IAU2006
-        # see http://www-f1.ijs.si/~ramsak/KlasMeh/razno/zemlja.pdf page 8
-        # not accurate for more than +-7000 years
-        jd = self.serv_time.get_jd()
+    def make_stars(self):
+        """
+           star coordinates in J2000.0 equinox, and proper motion
+           transform for precession-nutation as defined by IAU2006
+           see http://www-f1.ijs.si/~ramsak/KlasMeh/razno/zemlja.pdf page 8
+        """
+        # define a QObject to attach the stars to
         self.skyJ2000 = QEntity()
+
+        # define J2000 to JNow transform matrix, TODO we might use astropy ?
+        jd = self.serv_time.get_jd()
         self.transformJ2000 = QTransform()
-        m = self.matPrecessNut(jd)
+        m = self.mat_precess_nut(jd)
         qPrecessNut = QQuaternion.fromRotationMatrix(m)
         qqt=QQuaternion.fromRotationMatrix(World3D._m_celestial_qt)
         self.transformJ2000.setRotation(qqt*qPrecessNut)
         self.skyJ2000.addComponent(self.transformJ2000)
-        radius_mag = [150.0, 100.0, 70.0, 50, 40, 30.0]
-        stars = load_bright_star_5('ScopeSimulator/data/bsc5.dat.gz', True)
+
+        # Define star material for nice rendering
         starmat = QDiffuseSpecularMaterial()
         starmat.setAmbient(QColor(255,255,224))
         starmat.setDiffuse(QColor(255,255,224))
 
+        # Loads star catalog and render on the sky parent object
+        stars = load_bright_star_5('ScopeSimulator/data/bsc5.dat.gz', True)
+        radius_mag = [150.0, 100.0, 70.0, 50, 40, 30.0]
+        mag_to_radius = scipy.interpolate.interp1d(
+            range(1,8),
+            [150.0, 100.0, 70.0, 50, 40, 30.0, 20.0],
+            axis=0,
+            kind='quadratic',
+            fill_value=(150,20),
+            bounds_error=False,
+            assume_sorted=False)
         for star in stars:
             e = QEntity()
             eStar = QSphereMesh()
-            eradius = (radius_mag[int(star['mag'] - 1)] if 
-                int(star['mag'] - 1) < 6 else 20.0)
+            eradius = mag_to_radius(float(star['mag'])) 
             eStar.setRadius(eradius)
             eTransform = QTransform()
-            ex = ((World3D._sky_radius - 150.0) * math.cos(star['ra']) *
-                  math.cos(star['de']))
-            ey = ((World3D._sky_radius -150.0) * math.sin(star['de']))
-            ez = ((World3D._sky_radius -150.0) * math.sin(star['ra']) *
-                  math.cos(star['de']))
+            # project celestial coordinates in radians on 3d cartesian
+            # coordinates in sky2000 frame, assuming:
+            # x axis: should be center to vernal point
+            # y axis: should be center to 90deg west
+            # z axis: should be center to zenith
+            # TODO: there is an issue there, as RA coordinates, seen from north
+            # hemisphere, go from vernal (00:00) to west (6:00), ...
+            # which is the contrary of radians
+            ex = ((World3D._sky_radius - 150.0) * np.cos(star['ra']) *
+                  np.cos(star['de']))
+            ey = ((World3D._sky_radius -150.0) * np.sin(star['de']))
+            ez = ((World3D._sky_radius -150.0) * np.sin(star['ra']) *
+                  np.cos(star['de']))
             #print(ex, ey ,ez)
             eTransform.setTranslation(QVector3D(ex, ez, ey))
             e.addComponent(starmat)
@@ -453,11 +478,11 @@ class World3D():
 
         self.skyJ2000.setParent(self.skyEntity)
 
-    def makeStarsPoints(self):
+    def make_stars_points(self):
         jd = self.serv_time.get_jd()
         self.skyJ2000 = QEntity()
         self.transformJ2000 = QTransform()
-        m = self.matPrecessNut(jd)
+        m = self.mat_precess_nut(jd)
         qPrecessNut = QQuaternion.fromRotationMatrix(m)
         qqt=QQuaternion.fromRotationMatrix(World3D._m_celestial_qt)
         self.transformJ2000.setRotation(qqt*qPrecessNut)
@@ -499,13 +524,19 @@ class World3D():
         self.skyJ2000.addComponent(pointGeometryRenderer)
         self.skyJ2000.setParent(self.skyEntity)
 
-    def makeEcliptic(self):
+    def make_ecliptic(self):
+        """
+           Ecliptic is the plane that contains earth orbit around the sun
+           Most of the planetary objects are projected on a position close to
+           the projections of that plane on the sky sphere
+           TODO TN: check and fix that stuff
+        """
         for j in range(-12, 14):
             # ecliptic pole
             skyEcliptic = QEntity()
             transformEcliptic = QTransform()
-            m = self.matPrecessNut(2451545.0 + 365.25 * j * 1000)
-            mcio = self.matCIOLocator(2451545.0 + 365.25 * j * 1000)
+            m = self.mat_precess_nut(2451545.0 + 365.25 * j * 1000)
+            mcio = self.mat_cio_locator(2451545.0 + 365.25 * j * 1000)
             qEcliptic = QQuaternion.fromRotationMatrix(m)
             qCIO = QQuaternion.fromRotationMatrix(mcio)
             qp=QQuaternion.fromRotationMatrix(World3D._m_celestial_qt)
@@ -532,7 +563,12 @@ class World3D():
             e.setParent(skyEcliptic)
             skyEcliptic.setParent(self.skyEntity)
 
-    def matPrecessNut(self, jd):
+    def mat_precess_nut(self, jd):
+        """
+           Matrix that describes the transformation to be applied to J2000
+           coordinates in order to be turned into JNow celestial coordinates
+           TODO TN: use astropy
+        """
         J2000 = 2451545.0
         t = jd - J2000
         t = t / 36525 #julian century
@@ -540,17 +576,17 @@ class World3D():
             t * (0.000007578 + t * (0.0000059285)))))
         y = -0.006951 + t * (-0.025896 + t * (-22.4072747 + t * (0.00190059 +
             t * (0.001112526 + t * (0.0000001358)))))
-        x = x * 2.0 * math.pi / (360.0 * 60.0 * 60)
-        y = y * 2.0 * math.pi / (360.0 * 60.0 * 60.0)
-        #print(x,y)
-        #z = math.sqrt(1 - x*x - y*y)
-        #b = 1 / (1 + z)
+        x = x * 2.0 * np.pi / (360.0 * 60.0 * 60)
+        y = y * 2.0 * np.pi / (360.0 * 60.0 * 60.0)
         b = 0.5 + (x*x + y*y) / 8.0
         m = QMatrix3x3([1.0 - b*x*x, -b*x*y, x, -b*x*y, 1.0 -b*y*y, y, -x, -y,
                        1.0 - b*(x*x+y*y)])
         return m
 
-    def matCIOLocator(self, jd):
+    def mat_cio_locator(self, jd):
+        """
+            TODO TN: wtf is that thing ?
+        """
         J2000 = 2451545.0
         t = jd - J2000
         t = t / 36525 #julian century
