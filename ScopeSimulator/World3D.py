@@ -154,8 +154,8 @@ class World3D():
         self.qtime=QQuaternion()
         self.qlongitude = QQuaternion()
         self.qlatitude = QQuaternion()
-        self.setLatitude(90.0)
-        self.setLongitude(0.0)
+        self.set_latitude(90.0)
+        self.set_longitude(0.0)
         self.set_gast(self.get_gast())
         #self.make_ecliptic()
 
@@ -187,7 +187,7 @@ class World3D():
         self.skyTransform.setRotation(self.qlatitude * self.qlongitude *
             self.qtime)
 
-    def setLatitude(self, latitude):
+    def set_latitude(self, latitude):
         """
            Recall frame:
            Qt3D frame: x axis pointing North, y axis pointing Zenith/pole, z axis
@@ -213,7 +213,7 @@ class World3D():
                                                       angle)
         self.updateSkyTransform()
 
-    def setLongitude(self, longitude):
+    def set_longitude(self, longitude):
         """
            Recall frame:
            Qt3D frame: x axis pointing North, y axis pointing Zenith/pole, z axis
@@ -222,7 +222,7 @@ class World3D():
            pointing Zenith/pole
            Recall latitude:
            We recall that input latitude is 0 at greenwich (UK) and start to
-           grow from there, going east (around 3-6 in France, up to +360
+           grow from there, going east (around 3-6 in France) up to +360
            Equivalently one can start from 0, and decrease in negative number
            up to -180 going west.
            In this context, we use the converse definition locally: longitude is 
