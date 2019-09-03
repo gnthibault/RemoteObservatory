@@ -23,7 +23,7 @@ from astropy.utils.iers import conf
 #conf.auto_max_age = None
 
 # Local stuff: rendering tools
-from ScopeSimulator import View3D
+from ScopeSimulator import World3D
 
 # Local stuff : Observatory
 from Observatory.ShedObservatory import ShedObservatory
@@ -69,7 +69,6 @@ class MainWindow(QMainWindow):
         self.layout = QVBoxLayout()
 
         # 3D view
-        #self.dock_view3D = QDockWidget('Mount simulator', self)
         #self.addDockWidget(Qt.BottomDockWidgetArea, self.dock_view3D)
         self.widget3D = QWidget.createWindowContainer(self.view3D.window, self)
         #self.widget3D.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
@@ -166,20 +165,9 @@ if __name__ == "__main__":
     # load the logging configuration
     logging.config.fileConfig('logging.ini')
 
-    # build+connect indi client
-    indiCli = Indi3DSimulatorClient(None)
-    indiCli.connect()
-
     # Build the observatory
     obs = ShedObservatory()
-
-    # ntp time server
     serv_time = NTPTimeService()
-
-    # Build the Mount
-    mount = IndiMount(indiClient=indiCli,
-                      config={"mount_name":"Telescope Simulator"}, connectOnCreate=True)
     gps_coord = obs.getGpsCoordinates()
-
-    main_loop = GuiLoop(gps_coord, mount, obs, serv_time)
+    main_loop = GuiLoop(gps_coord, obs, serv_time)
     main_loop.run()

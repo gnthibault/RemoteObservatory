@@ -138,7 +138,7 @@ class World3D():
     # _m_celestial is its proper inverse
     _sky_radius = 50000.0
 
-    def __init__(self, parent=None, serv_time=None):
+    def __init__(self, parent=None, serv_time=None, auto_update=False):
         self.serv_time = serv_time
         self.rootEntity = QEntity(parent)
         self.skyEntity = QEntity(self.rootEntity)
@@ -149,8 +149,8 @@ class World3D():
         self.make_altaz_grid()
         self.make_mount_basement()
         self.makeCardinals()
-        #self.make_stars()
-        self.make_stars_points()
+        self.make_stars()
+        #self.make_stars_points()
         self.qtime=QQuaternion()
         self.qlongitude = QQuaternion()
         self.qlatitude = QQuaternion()
@@ -158,9 +158,15 @@ class World3D():
         self.setLongitude(0.0)
         self.set_gast(self.get_gast())
         #self.make_ecliptic()
-        self.celestialintervalms = 1 * 1000
-        self.celestialacceleration = 1
-        self.celestialtimer = QTimer()
+
+        # Initialize update frequency
+        if auto_update:
+            self.celestialintervalms = 1 * 1000
+            self.celestialacceleration = 1
+            self.celestialtimer = QTimer()
+            self.initialize_refresh_timer()
+
+    def initialize_refresh_timer(self):
         self.celestialtimer.setInterval(
             self.celestialintervalms / self.celestialacceleration)
         self.celestialtimer.setSingleShot(False)
@@ -502,11 +508,11 @@ class World3D():
         for star in stars:
             eradius = (radius_mag[int(star['mag'] - 1)] if
                        int(star['mag'] - 1) < 6 else 20.0)
-            ex = ((World3D._sky_radius - 150.0) * math.cos(star['ra']) *
-                   math.cos(star['de']))
-            ey = (World3D._sky_radius -150.0) * math.sin(star['de'])
-            ez = ((World3D._sky_radius -150.0) * math.sin(star['ra']) *
-                  math.cos(star['de']))
+            ex = ((World3D._sky_radius - 150.0) * np.cos(star['ra']) *
+                  np.cos(star['de']))
+            ey = (World3D._sky_radius -150.0) * np.sin(star['de'])
+            ez = ((World3D._sky_radius -150.0) * np.sin(star['ra']) *
+                  np.cos(star['de']))
             points.append(struct.pack('f', ex))
             points.append(struct.pack('f', ez))
             points.append(struct.pack('f', ey))
@@ -594,12 +600,12 @@ class World3D():
             t * (0.000007578 + t * (0.0000059285)))))
         y = -0.006951 + t * (-0.025896 + t * (-22.4072747 + t * (0.00190059 +
             t * (0.001112526 + t * (0.0000001358)))))
-        xt = x * 2.0 * math.pi / (360.0 * 60.0 * 60)
-        yt = y * 2.0 * math.pi / (360.0 * 60.0 * 60.0)
+        xt = x * 2.0 * np.pi / (360.0 * 60.0 * 60)
+        yt = y * 2.0 * np.pi / (360.0 * 60.0 * 60.0)
         x0 = -0.016617
         y0 = -0.006951
-        xt0 = x0 * 2.0 * math.pi / (360.0 * 60.0 * 60)
-        yt0 = y0 * 2.0 * math.pi / (360.0 * 60.0 * 60.0)
+        xt0 = x0 * 2.0 * np.pi / (360.0 * 60.0 * 60)
+        yt0 = y0 * 2.0 * np.pi / (360.0 * 60.0 * 60.0)
         xc = [-0.016617, 2004.191898, -0.4297829, -0.19861834, 0.000007578 ,
               0.0000059285]
         yc = [-0.006951, -0.025896, -22.4072747, 0.00190059, 0.001112526,
@@ -613,11 +619,11 @@ class World3D():
         ispx = spx.integrate()
         ixt = ispx.eval(t)
         ixt0 = ispx.eval(0.0)
-        ixt = ixt * 2.0 * math.pi / (360.0 * 60.0 * 60)
-        ixt0 = ixt0 * 2.0 * math.pi / (360.0 * 60.0 * 60.0)
+        ixt = ixt * 2.0 * np.pi / (360.0 * 60.0 * 60)
+        ixt0 = ixt0 * 2.0 * np.pi / (360.0 * 60.0 * 60.0)
         s = - 0.5 * (xt * yt - xt0 * yt0) + (ixt - ixt0) - 0.0145606
-        m = QMatrix3x3([math.cos(s), -math.sin(s), 0.0, math.sin(s),
-                        math.cos(s), 0, 0, 0, 1.0])
+        m = QMatrix3x3([np.cos(s), -np.sin(s), 0.0, np.sin(s),
+                        np.cos(s), 0, 0, 0, 1.0])
         return m
         
 if __name__ == '__main__':
@@ -625,11 +631,12 @@ if __name__ == '__main__':
     from PyQt5.QtGui import QVector3D
     from PyQt5.Qt3DExtras import Qt3DWindow, QOrbitCameraController
     import sys
+    from Service.NTPTimeService import NTPTimeService
     app=QApplication(sys.argv)
     view = Qt3DWindow()
     view.defaultFrameGraph().setClearColor(QColor(37,37,39))
     view.show()
-    world = World3D()
+    world = World3D(parent=None, serv_time=NTPTimeService())
     camera = view.camera()
     camera.lens().setPerspectiveProjection(45.0, 16.0 / 9.0, 0.1, 100000.0)
     #camera.lens().setOrthographicProjection(-50000,50000, 0, 50000, 0, 100000.0)
