@@ -26,7 +26,7 @@ class DPolynom:
     def __init__(self):
         self.coeffs = None
 
-    def setCoeffs(self, lcoeffs):
+    def set_coeffs(self, lcoeffs):
         self.coeffs = lcoeffs
 
     def eval(self, x):
@@ -38,14 +38,14 @@ class DPolynom:
     def derive(self):
         d = DPolynom()
         dc = [i * self.coeffs[i] for i in range(1, len(self.coeffs))]
-        d.setCoeffs(dc)
+        d.set_coeffs(dc)
         return d
 
     def integrate(self):
         ip = DPolynom()
         ipc = [self.coeffs[i] / (i + 1) for i in range(len(self.coeffs))]
         ipc = [0.0] + ipc
-        ip.setCoeffs(ipc)
+        ip.set_coeffs(ipc)
         return ip
 
     def mul(self, other):
@@ -54,10 +54,10 @@ class DPolynom:
         for i in range(len(self.coeffs)):
             for j in range(len(other.coeffs)):
                 mpc[i+j] += self.coeffs[i] * other.coeffs[j]
-        mp.setCoeffs(mpc)
+        mp.set_coeffs(mpc)
         return mp
 
-class starMaterial(QMaterial):
+class StarMaterial(QMaterial):
     """
        Implements QMaterial interface 
     """
@@ -129,62 +129,80 @@ class World3D():
     """
     Qt3D frame: x axis pointing North, y axis pointing Zenith/pole, z axis
     pointing East
-    Celestial frame: x axis pointing South, y axis pointing East, Z axis
-    pointing Zenith/pole
+    Celestial frame: x axis pointing North, y axis pointing Zenith, Z axis
+    pointing East
     """
-    # raw first order
-    _m_celestial_qt = QMatrix3x3([-1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 1.0, 0.0])
-
     # _m_celestial is its proper inverse
+    _m_celestial_qt = QMatrix3x3([ 1.0, 0.0, 0.0,
+                                   0.0, 1.0, 0.0,
+                                   0.0, 0.0, 1.0])
+
+    # sky is considered as a sphere centered on origin (assuming topocentric)
     _sky_radius = 50000.0
 
     def __init__(self, parent=None, serv_time=None, auto_update=False):
+        # serv time encapsulate various time utilities
         self.serv_time = serv_time
+
+        # ground will be attached to the dummy root entity
         self.rootEntity = QEntity(parent)
-        self.skyEntity = QEntity(self.rootEntity)
-        self.skyTransform = QTransform()
-        self.skyEntity.addComponent(self.skyTransform)
+
+        # Sky entity will be a rotating frame different from the ground
+        self.sky_entity = QEntity(self.rootEntity)
+        self.sky_transform = QTransform()
+        self.sky_entity.addComponent(self.sky_transform)
+
+        # attach ground frame related elements to root entity
         self.make_horizontal_plane()
-        self.make_equatorial_grid()
         self.make_altaz_grid()
         self.make_mount_basement()
-        self.makeCardinals()
+        self.make_cardinals()
+
+        # Attach sky frame related elements to sky entity
+        self.make_equatorial_grid()
         self.make_stars()
         #self.make_stars_points()
+        #self.make_ecliptic()
+
+        # Helps define sky frame relative to ground frame (root entity)
         self.qtime=QQuaternion()
         self.qlongitude = QQuaternion()
         self.qlatitude = QQuaternion()
         self.set_latitude(90.0)
         self.set_longitude(0.0)
         self.set_gast(self.get_gast())
-        #self.make_ecliptic()
 
         # Initialize update frequency
         if auto_update:
             self.celestialintervalms = 1 * 1000
-            self.celestialacceleration = 1
             self.celestialtimer = QTimer()
             self.initialize_refresh_timer()
 
     def initialize_refresh_timer(self):
         self.celestialtimer.setInterval(
-            self.celestialintervalms / self.celestialacceleration)
+            self.celestialintervalms)
         self.celestialtimer.setSingleShot(False)
-        self.celestialtimer.timeout.connect(self.updateCeletialTime)
+        self.celestialtimer.timeout.connect(self.update_celestial_time)
         self.celestialtimer.start()
 
-    def updateCeletialTime(self):
-        gast = self.gast + (self.celestialintervalms / 1000) / (60*60)
+    def update_celestial_time(self, gast=None):
+        if gast is None:
+            gast = self.gast    
         self.set_gast(gast)
 
     def get_gast(self):
-        return self.getCelestialTime()
+        return self.get_celestial_time()
 
-    def getCelestialTime(self):
+    def get_celestial_time(self):
         return self.serv_time.get_gast()
 
-    def updateSkyTransform(self):
-        self.skyTransform.setRotation(self.qlatitude * self.qlongitude *
+    def update_sky_transform(self):
+        """
+           transform the sky entity from reference frame (ground) to celestial
+
+           qlatitude is a quaternion that define rotation around
+        """
+        self.sky_transform.setRotation(self.qlatitude * self.qlongitude *
             self.qtime)
 
     def set_latitude(self, latitude):
@@ -209,9 +227,10 @@ class World3D():
             angle = 90.0 - abs(self.latitude)
         else:
             angle = -(90.0 - self.latitude)
-        self.qlatitude = QQuaternion.fromAxisAndAngle(QVector3D(0.0, 0.0, 1.0),
-                                                      angle)
-        self.updateSkyTransform()
+        self.qlatitude = QQuaternion.fromAxisAndAngle(
+            QVector3D(0.0, 0.0, 1.0),
+            angle)
+        self.update_sky_transform()
 
     def set_longitude(self, longitude):
         """
@@ -233,7 +252,7 @@ class World3D():
         angle = -self.longitude
         self.qlongitude = QQuaternion.fromAxisAndAngle(QVector3D(0.0, 1.0, 0.0),
                                                        angle)
-        self.updateSkyTransform()
+        self.update_sky_transform()
 
     def set_gast(self, gast):
         #print('Setting GAST', gast)
@@ -241,7 +260,7 @@ class World3D():
         angle = -self.gast * 360.0 / 24.0
         self.qtime = QQuaternion.fromAxisAndAngle(QVector3D(0.0, 1.0, 0.0),
                                                   angle)
-        self.updateSkyTransform()
+        self.update_sky_transform()
 
     def make_horizontal_plane(self):
         """
@@ -297,7 +316,7 @@ class World3D():
         self.equatorialGrid.addComponent(self.equatorialTransform)
         self.equatorialGrid.addComponent(self.equatorialMat)
         self.equatorialGrid.addComponent(self.equatorialMesh)
-        self.equatorialGrid.setParent(self.skyEntity)
+        self.equatorialGrid.setParent(self.sky_entity)
 
     def make_altaz_grid(self):
         """
@@ -309,6 +328,9 @@ class World3D():
                90 standing for zenith and -90 for the nadir
               -36 slices: 1 tick every 10 degrees for the 360 degrees of azimuth
                0 being oriented towards north, and 90 degrees towards east
+
+           One should notice that this altaz grid is attached to the root
+           entity
         """
         self.horizontalGrid = QEntity()
         self.horizontalMesh = QSphereMesh()
@@ -331,10 +353,11 @@ class World3D():
            order to ease understanding of the scene.
            As in the ground horizontal plane, we define a PlaneMesh
 
-           We recall that this element is connected to the root entity, and we
-           also recall frame:
            Qt3D frame: x axis pointing North, y axis pointing Zenith/pole, z axis
            pointing East
+
+           One should notice that the "mount basement" is attached to the root
+           entity
         """
         # self.svgRenderer = QSvgRenderer()
         # self.svgRenderer.load('compass.svg')
@@ -367,7 +390,7 @@ class World3D():
         self.basementGrid.addComponent(self.basement_mesh)
         self.basementGrid.setParent(self.rootEntity)
 
-    def makeCardinals(self):
+    def make_cardinals(self):
         """
            We decide to put some labels on the cardinal points, ie, 
            Nort/East/South/West/Zenith/Nadir
@@ -482,7 +505,7 @@ class World3D():
             e.addComponent(eStar)
             e.setParent(self.skyJ2000)
 
-        self.skyJ2000.setParent(self.skyEntity)
+        self.skyJ2000.setParent(self.sky_entity)
 
     def make_stars_points(self):
         jd = self.serv_time.get_jd()
@@ -496,7 +519,7 @@ class World3D():
         self.skyJ2000.addComponent(self.transformJ2000)
         radius_mag = [150.0, 100.0, 70.0, 50, 40, 30.0]
         stars = load_bright_star_5('ScopeSimulator/data/bsc5.dat.gz', True)
-        starmat = starMaterial()
+        starmat = StarMaterial()
         #starmat = QDiffuseSpecularMaterial()
         #starmat.setAmbient(QColor(255,255,224))
         #starmat.setDiffuse(QColor(255,255,224))
@@ -528,7 +551,7 @@ class World3D():
         pointGeometryRenderer.setInstanceCount(1)
         #pointGeometryRenderer.setVertexCount(len(stars))
         self.skyJ2000.addComponent(pointGeometryRenderer)
-        self.skyJ2000.setParent(self.skyEntity)
+        self.skyJ2000.setParent(self.sky_entity)
 
     def make_ecliptic(self):
         """
@@ -567,7 +590,7 @@ class World3D():
             e.addComponent(eTransform)
             e.addComponent(ePole)
             e.setParent(skyEcliptic)
-            skyEcliptic.setParent(self.skyEntity)
+            skyEcliptic.setParent(self.sky_entity)
 
     def mat_precess_nut(self, jd):
         """
@@ -611,9 +634,9 @@ class World3D():
         yc = [-0.006951, -0.025896, -22.4072747, 0.00190059, 0.001112526,
               0.0000001358]
         px = DPolynom()
-        px.setCoeffs(xc)
+        px.set_coeffs(xc)
         py=DPolynom()
-        py.setCoeffs(yc)
+        py.set_coeffs(yc)
         dpx=px.derive()
         spx=dpx.mul(py)
         ispx = spx.integrate()

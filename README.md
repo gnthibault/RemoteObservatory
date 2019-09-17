@@ -13,7 +13,7 @@ This project either uses, or is directly inspired by:
 * PHD2: https://github.com/OpenPHDGuiding/phd2/wiki/EventMonitoring
 * notebooks from ivandga for amateur spectroscopy: https://github.com/ivandga/ArasSpectraNotebooks
 * SpectroStars from Serge Golovanow: https://github.com/serge-golovanow/SpectroStars
-
+* Astroalign: https://github.com/toros-astro/astroalign
 
 # Install
 
@@ -24,7 +24,7 @@ sudo apt-get update
 sudo apt-get install libcfitsio-dev libnova-dev swig indi-full libindi-dev libindi1 kstars-bleeding libftdi-dev libgps-dev libraw-dev libgphoto2-dev libboost-dev libboost-regex-dev librtlsdr-dev libftdi1-dev libfftw3-dev libastrometry* libnova* astrometry-* xplanet extra-cmake-modules kdelibs5-dev libkf5declarative-dev libkf5globalaccel-dev libkf5configwidgets-dev libkf5xmlgui-dev libkf5windowsystem-dev kdoctools-dev libkf5notifications-dev libkf5kdelibs4support5-bin libkf5newstuff-dev libkf5crash-dev libkf5plotting-dev libkf5notifyconfig-dev libraw-dev wcslib-dev libqt5svg5-dev libqt5websockets5-dev qttools5-dev-tools libftdi1-dev libgps-dev libjpeg9-dev gpsd  libtheora-dev phd2 -y
 
 ## Python requirements
-pip install requests pyindi-client requests-cache watchdog astropy ntplib astroplan matplotlib tzwhere astroquery pymongo rawpy serial pyserial socket
+pip install requests pyindi-client requests-cache watchdog astropy ntplib astroplan matplotlib tzwhere astroquery pymongo rawpy serial pyserial socket astroalign
 If you want to run the astrometry server locally, use:
 pip install django Pillow
 
