@@ -1,0 +1,21 @@
+astroalign==1.0.4
+astroplan==0.4
+astropy==3.0.4
+astroquery==0.3.8
+ntplib==0.3.3
+matplotlib==3.1.0
+numpy==1.16.4
+pyindi-client==0.2.2
+pymongo==3.7.0
+PyQt3D==5.13.0
+PyQt5==5.13.0 PyQt5-sip==4.19.17
+pyqtgraph==0.10.0
+pyserial==3.4
+rawpy==0.13.1
+requests==2.21.0
+requests-cache==0.4.13
+requests-cache==0.4.13
+pyserial==3.4
+serial==0.0.97
+tzwhere==3.0.3
+watchdog==0.8.3

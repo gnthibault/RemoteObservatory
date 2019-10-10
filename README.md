@@ -32,7 +32,7 @@ pip install django Pillow
 If you are interested in compiling/using the arduino stuff here, please download the official Arduino IDE, and define the following environment variable: $ARDUINO_SDK_PATH
 
 ## Building 3D support for virtual telescope
-pip install PyQt5 PyQt3D
+pip install PyQt5 PyQt3D pyqtgraph
 
 
 # How to launch the full stuff
