@@ -14,8 +14,8 @@ pyserial==3.4
 rawpy==0.13.1
 requests==2.21.0
 requests-cache==0.4.13
-requests-cache==0.4.13
-pyserial==3.4
+rinohtype==0.3.1
 serial==0.0.97
+Sphinx==1.8.1
 tzwhere==3.0.3
 watchdog==0.8.3
