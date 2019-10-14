@@ -10,7 +10,7 @@ VERBOSE = 1
 # Default target executed when no arguments are given to make.
 default_target: all
 
-.PHONY: default_target
+.PHONY: default_target test docs clean
 
 all: remote_observatory
 
@@ -74,10 +74,8 @@ remote_observatory: venv
 	$(info Installing remote_observatory in venv ...)
 	#python setup.py install
 
-docs: venv
-	cd docs
-	make html
-	cd -
+docs:
+	cd docs; make html; cd -
 
 clean:
 	rm -rf venv
