@@ -15,7 +15,7 @@ default_target: all
 all: remote_observatory
 
 packages:
-	echo "Installing system packages requirements ..."
+	$(info Installing system packages requirements ...)
 	sudo add-apt-repository -y ppa:mutlaqja/ppa
 	sudo add-apt-repository -y ppa:pch/phd2
 	sudo apt-get update
@@ -64,21 +64,20 @@ packages:
 #            libjpeg9-dev\
 
 venv: requirements.txt packages
-	echo "Installing python requirements ..."
+	$(info Installing python requirements ...)
 	test -d venv || virtualenv venv
 	. venv/bin/activate && \
 	pip install --upgrade pip && \
 	pip install -r requirements.txt
 
 remote_observatory: venv
-	echo "Installing remote_observatory in venv ..."
+	$(info Installing remote_observatory in venv ...)
 	#python setup.py install
 
 docs: venv
 	cd docs
 	make html
 	cd -
-
 
 clean:
 	rm -rf venv
