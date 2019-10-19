@@ -16,7 +16,7 @@ class IndiDevice(Base):
         'blob': 'getBLOB',
         'light': 'getLight',
         'number': 'getNumber',
-        'switch': 'get_switch',
+        'switch': 'getSwitch',
         'text': 'getText'
     }
     def __init__(self, logger, device_name, indi_client):
@@ -227,11 +227,10 @@ class IndiDevice(Base):
         while not(prop):
             prop = getattr(self.device, attr)(propName)
             if not prop and 0 < timeout < time.time() - started:
-                self.logger.debug('Timeout while waiting for '
-                                  'property {} of type {}  for device {}'
-                                  ''.format(propName,propType,self.device_name))
-                raise RuntimeError('Timeout finding property {}'.format(
-                                   propName))
+                self.logger.debug(f"Timeout while waiting for property "
+                                  "{propName} of type {propType}  for device "
+                                  "{self.device_name}")
+                raise RuntimeError(f"Timeout finding property {propName}")
             time.sleep(0.01)
         return prop
 

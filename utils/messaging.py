@@ -199,7 +199,7 @@ class PanMessaging(object):
             try:
                 msg_obj = loads(msg)
             except Exception:
-                msg_obj = yaml.load(msg)
+                msg_obj = yaml.safe_load(msg)
 
         return msg_type, msg_obj
 

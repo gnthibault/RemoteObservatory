@@ -30,7 +30,7 @@ class IndiEos350DCamera(IndiAbstractCamera):
       Indi CCD related stuff
     '''
     def prepareShoot(self):
-        self.setText("DEVICE_PORT",{"PORT":"/dev/ttyUSB0"})
+        self.set_text("DEVICE_PORT",{"PORT":"/dev/ttyUSB0"})
         IndiCamera.prepareShoot(self)
 
 

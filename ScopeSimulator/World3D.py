@@ -383,7 +383,7 @@ class World3D():
         self.basementMatBack = QDiffuseSpecularMaterial()
         self.basementMatBack.setAmbient(QColor(200,200,228))
         self.basementMat = QTextureMaterial()
-        self.basementMat.setTexture(self.compass_texture)
+        self.basementMat.set_texture(self.compass_texture)
         self.basementGrid.addComponent(self.basement_transform)
         self.basementGrid.addComponent(self.basementMatBack)
         self.basementGrid.addComponent(self.basementMat)
@@ -430,7 +430,7 @@ class World3D():
         for cpoint in cardinals:
             e = QEntity()
             eText = QExtrudedTextMesh()
-            eText.setText(cpoint[0])
+            eText.set_text(cpoint[0])
             eText.setDepth(0.45)
             eText.setFont(font)
             eTransform = QTransform()

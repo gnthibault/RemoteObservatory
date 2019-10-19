@@ -52,7 +52,7 @@ class IndiASI120MCCamera(IndiCamera):
         return self.get_number('ADC_DEPTH')['BITS']['value']
 
     def set_gain(self, value):
-        self.setNumber('CCD_CONTROLS', {'Gain':value})
+        self.set_number('CCD_CONTROLS', {'Gain':value})
         pass
 
     def get_gain(self):

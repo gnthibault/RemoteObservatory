@@ -41,4 +41,4 @@ class IndiEos6DCamera(IndiAbstractCamera):
         self.logger.debug("COnfig for camera device is {}".format(self.indi_camera_config))
         # TODO TN: we decide that IndiCamera takes over AbstractCamera in the
         # case we have diamond like inheritance problem
-        self.setNumber("CCD_INFO", self.indi_camera_config["CCD_INFO"])
+        self.set_number("CCD_INFO", self.indi_camera_config["CCD_INFO"])

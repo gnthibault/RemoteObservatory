@@ -49,7 +49,7 @@ class IndiFilterWheel(IndiDevice, Base):
             self.logger.debug('IndiFilterWheel: Initializing filter number {}'
                               ' to filter name {}'.format(filterNumber,
                               filterName))
-            self.setText('FILTER_NAME',{'FILTER_SLOT_NAME_{}'.format(
+            self.set_text('FILTER_NAME',{'FILTER_SLOT_NAME_{}'.format(
                                          filterNumber):filterName})
 
     def setFilter(self, name):
@@ -59,7 +59,7 @@ class IndiFilterWheel(IndiDevice, Base):
     def setFilterNumber(self, number):
         self.logger.debug('setting filter number {}'.format(
                           number)) 
-        self.setNumber('FILTER_SLOT', {'FILTER_SLOT_VALUE': number})
+        self.set_number('FILTER_SLOT', {'FILTER_SLOT_VALUE': number})
 
     def currentFilter(self):
         ctl = self.get_prop('FILTER_SLOT', 'number')

@@ -58,11 +58,11 @@ class Ui_MainWindow(object):
         self.menuFile.setTitle(_translate("MainWindow", "File"))
         self.menuSettings.setTitle(_translate("MainWindow", "Settings"))
         self.menuAbout.setTitle(_translate("MainWindow", "About"))
-        self.actionExit_the_application.setText(_translate("MainWindow", "Exit the application"))
-        self.actionOpen_file.setText(_translate("MainWindow", "Open file"))
-        self.actionAbout.setText(_translate("MainWindow", "About"))
-        self.actionAbout_Qt.setText(_translate("MainWindow", "About Qt"))
-        self.actionCredits.setText(_translate("MainWindow", "Credits"))
+        self.actionExit_the_application.set_text(_translate("MainWindow", "Exit the application"))
+        self.actionOpen_file.set_text(_translate("MainWindow", "Open file"))
+        self.actionAbout.set_text(_translate("MainWindow", "About"))
+        self.actionAbout_Qt.set_text(_translate("MainWindow", "About Qt"))
+        self.actionCredits.set_text(_translate("MainWindow", "Credits"))
 
 
 if __name__ == "__main__":

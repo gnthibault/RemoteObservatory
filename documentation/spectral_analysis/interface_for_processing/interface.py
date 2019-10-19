@@ -19,9 +19,9 @@ class main_window(QtWidgets.QMainWindow):
         self.ui = Ui_MainWindow()
         self.ui.setupUi(self)
 
-        self.ui.tFolder.setText(os.path.expanduser(Config.get_scan_folder_path()))
-        self.ui.tDark.setText(os.path.expanduser(Config.get_dark_path()))
-        self.ui.tWork.setText(os.path.expanduser(Config.get_work_folder_path()))
+        self.ui.tFolder.set_text(os.path.expanduser(Config.get_scan_folder_path()))
+        self.ui.tDark.set_text(os.path.expanduser(Config.get_dark_path()))
+        self.ui.tWork.set_text(os.path.expanduser(Config.get_work_folder_path()))
 
         self.running = False
         self.counter = 0

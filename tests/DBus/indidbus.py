@@ -68,8 +68,8 @@ print("Connected to Telescope and CCD is established.")
 print("Commanding telescope to slew to coordinates of star Caph...")
 
 # Set Telescope RA,DEC coords in JNOW
-remote_object.setNumber("Telescope Simulator", "EQUATORIAL_EOD_COORD", "RA", 0.166)
-remote_object.setNumber("Telescope Simulator", "EQUATORIAL_EOD_COORD", "DEC", 59.239)
+remote_object.set_number("Telescope Simulator", "EQUATORIAL_EOD_COORD", "RA", 0.166)
+remote_object.set_number("Telescope Simulator", "EQUATORIAL_EOD_COORD", "DEC", 59.239)
 remote_object.sendProperty("Telescope Simulator", "EQUATORIAL_EOD_COORD")
 
 # Wait until slew is done
@@ -85,7 +85,7 @@ print("Telescope slew is complete, tracking...")
 print("Taking a 5 second CCD exposure...")
 
 # Take 5 second exposure
-remote_object.setNumber("CCD Simulator", "CCD_EXPOSURE", "CCD_EXPOSURE_VALUE", 5.0)
+remote_object.set_number("CCD Simulator", "CCD_EXPOSURE", "CCD_EXPOSURE_VALUE", 5.0)
 remote_object.sendProperty("CCD Simulator", "CCD_EXPOSURE")
 
 # Wait until exposure is done

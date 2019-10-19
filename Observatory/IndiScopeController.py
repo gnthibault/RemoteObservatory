@@ -42,7 +42,7 @@ class IndiScopeController(IndiDevice, Base):
 
     def initialize(self):
         self.connect()
-        self.setText("DEVICE_PORT",{"PORT":self.port})
+        self.set_text("DEVICE_PORT",{"PORT":self.port})
         self._is_initialized = True
 
     def deinitialize(self):

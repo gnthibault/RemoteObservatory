@@ -129,7 +129,7 @@ class IndiCamera(IndiDevice):
         try:
             self.logger.info('launching acquisition with {} '
                              'sec exposure time'.format(self.exp_time_sec))
-            self.setNumber('CCD_EXPOSURE',
+            self.set_number('CCD_EXPOSURE',
                            {'CCD_EXPOSURE_VALUE': self.sanitize_exp_time(
                                self.exp_time_sec)}, sync=False)
         except Exception as e:
@@ -137,13 +137,13 @@ class IndiCamera(IndiDevice):
 
 
     def abortShoot(self, sync=True):
-        self.setNumber('CCD_ABORT_EXPOSURE', {'ABORT': 1}, sync=sync)
+        self.set_number('CCD_ABORT_EXPOSURE', {'ABORT': 1}, sync=sync)
 
     def launchStreaming(self):
         self.set_switch('VIDEO_STREAM',['ON'])
 
     def setUploadPath(self, path, prefix = 'IMAGE_XXX'):
-        self.setText('UPLOAD_SETTINGS', {'UPLOAD_DIR': path,\
+        self.set_text('UPLOAD_SETTINGS', {'UPLOAD_DIR': path,\
         'UPLOAD_PREFIX': prefix})
 
     def getBinning(self):
@@ -152,7 +152,7 @@ class IndiCamera(IndiDevice):
     def setBinning(self, hbin, vbin = None):
         if vbin == None:
             vbin = hbin
-        self.setNumber('CCD_BINNING', {'HOR_BIN': hbin, 'VER_BIN': vbin })
+        self.set_number('CCD_BINNING', {'HOR_BIN': hbin, 'VER_BIN': vbin })
 
     def getRoi(self):
         return self.getPropertyValueVector('CCD_FRAME', 'number')
@@ -165,7 +165,7 @@ class IndiCamera(IndiDevice):
             HEIGHT: Frame width in pixels
             ex: cam.setRoi({'X':256, 'Y':480, 'WIDTH':512, 'HEIGHT':640})
         """
-        self.setNumber('CCD_FRAME', roi)
+        self.set_number('CCD_FRAME', roi)
 
     def get_dynamic(self):
         return self.get_number('CCD_INFO')['CCD_BITSPERPIXEL']['value']
@@ -182,7 +182,7 @@ class IndiCamera(IndiDevice):
         if isinstance(temperature, u.Quantity):
             temperature = temperature.to(u.deg_C).value
         if np.isfinite(temperature):
-            self.setNumber('CCD_TEMPERATURE',
+            self.set_number('CCD_TEMPERATURE',
                            { 'CCD_TEMPERATURE_VALUE' : temperature },
                            sync=True, timeout=1200)
 
@@ -195,7 +195,7 @@ class IndiCamera(IndiDevice):
     def set_gain(self, value):
         pass
         #TODO TN, Try to solve this
-        #self.setNumber('DETECTOR_GAIN', [{'Gain': value}])
+        #self.set_number('DETECTOR_GAIN', [{'Gain': value}])
 
     def get_gain(self):
         gain = self.get_number('CCD_GAIN')

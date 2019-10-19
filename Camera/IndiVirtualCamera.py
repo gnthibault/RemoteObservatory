@@ -34,7 +34,7 @@ class IndiVirtualCamera(IndiCamera):
           RA:  hh:mm:ss as 0.12345 or 23.999
           DEC: dd:mm:ss as -89.999 or +89.999
         '''
-        self.setNumber(
+        self.set_number(
             'EQUATORIAL_PE', {'RA_PE': coord['ra'], 'DEC_PE': coord['dec']},
             sync=False)
         

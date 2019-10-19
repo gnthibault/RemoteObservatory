@@ -112,7 +112,7 @@ class IndiG11(IndiAbstractMount):
         """
         self.set_switch('PARK_SETTINGS', [mode])
 
-#setNumberVector Losmandy Gemini GEOGRAPHIC_COORD Ok
+#set_numberVector Losmandy Gemini GEOGRAPHIC_COORD Ok
 #        LAT='51.466666666666668561'
 #               LONG='5.7166666666666401397'
 #                      ELEV='0'

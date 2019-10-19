@@ -115,7 +115,7 @@ class IndiMount(IndiDevice):
         else:
             self.logger.info('Now setting JNow coord: {}'.format(
                              rahour_decdeg)) 
-            self.setNumber('EQUATORIAL_EOD_COORD', rahour_decdeg, sync=True,
+            self.set_number('EQUATORIAL_EOD_COORD', rahour_decdeg, sync=True,
                            timeout=180)
 
     def on_coord_set(self, what_to_do='TRACK'):
