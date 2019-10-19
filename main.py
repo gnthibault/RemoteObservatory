@@ -78,16 +78,16 @@ if __name__ == '__main__':
     indiCli.connect()
 
     # test indi Device
-    indiDevice = IndiDevice(logger=logger,deviceName='CCD Simulator',\
-        indiClient=indiCli)
+    indiDevice = IndiDevice(logger=logger,device_name='CCD Simulator',\
+        indi_client=indiCli)
 
     # test indi virtual camera class
-    cam = IndiVirtualCamera(logger=logger, indiClient=indiCli,\
-        configFileName=None, connectOnCreate=False)
+    cam = IndiVirtualCamera(logger=logger, indi_client=indiCli,\
+        configFileName=None, connect_on_create=False)
 
     # test indi camera class on a old EOS350D
-    #cam = IndiEos350DCamera(logger=logger, indiClient=indiCli,\
-    #  configFileName='IndiEos350DCamera.json', connectOnCreate=False)
+    #cam = IndiEos350DCamera(logger=logger, indi_client=indiCli,\
+    #  configFileName='IndiEos350DCamera.json', connect_on_create=False)
 
     cam.connect()
     cam.prepareShoot()
@@ -97,15 +97,15 @@ if __name__ == '__main__':
     #fits = cam.getReceivedImage()
 
     # Now test filterWheel
-    filterWheel = IndiFilterWheel(logger=logger, indiClient=indiCli,
+    filterWheel = IndiFilterWheel(logger=logger, indi_client=indiCli,
                                   configFileName=None,
-                                  connectOnCreate=True)
+                                  connect_on_create=True)
     filterWheel.initFilterWheelConfiguration()
     print('Filterwheel is {}'.format(filterWheel))
 
     # Now test Mount
-    mount = IndiMount(logger=logger, indiClient=indiCli,
-                      configFileName=None, connectOnCreate=True)
+    mount = IndiMount(logger=logger, indi_client=indiCli,
+                      configFileName=None, connect_on_create=True)
 
     # test nova Astrometry service
     #nova = NovaAstrometryService(logger=logger,configFileName='local')

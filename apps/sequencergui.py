@@ -161,7 +161,7 @@ class GuiLoop():
         self.main_window = MainWindow(planner=planner, view3D=view3D)
 
         indi_client.register_number_callback(
-            device_name = self.mount.deviceName,
+            device_name = self.mount.device_name,
             vec_name = 'EQUATORIAL_EOD_COORD',
             callback = self.update_coord)
 
@@ -205,11 +205,11 @@ class ObservationRun(QThread):
     @pyqtSlot()
     def run(self):
         # Instanciate all devices
-        filter_wheel = IndiFilterWheel(indiClient=indi_client,
+        filter_wheel = IndiFilterWheel(indi_client=indi_client,
                                        configFileName=None,
-                                       connectOnCreate=False)
-        camera = IndiCamera(indiClient=indi_client, configFileName=None,
-                            connectOnCreate=False)
+                                       connect_on_create=False)
+        camera = IndiCamera(indi_client=indi_client, configFileName=None,
+                            connect_on_create=False)
 
         # Instanciate the image writer stuff
         writer = FitsWriter(observatory=obs, filterWheel=filter_wheel)
@@ -241,8 +241,8 @@ if __name__ == "__main__":
     serv_time = NTPTimeService(obs=obs)
 
     # Build the Mount
-    mount = IndiMount(indiClient=indi_client,
-                      configFileName=None, connectOnCreate=True)
+    mount = IndiMount(indi_client=indi_client,
+                      configFileName=None, connect_on_create=True)
     gps_coord = obs.getGpsCoordinates()
 
     main_loop = GuiLoop(gps_coord, mount, obs, serv_time, indi_client)

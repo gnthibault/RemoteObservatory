@@ -62,13 +62,13 @@ if __name__ == '__main__':
     indi_client = IndiClient()
 
     # Instanciate all devices
-    filter_wheel = IndiFilterWheel(indiClient=indi_client,
+    filter_wheel = IndiFilterWheel(indi_client=indi_client,
                                    configFileName=None,
-                                   connectOnCreate=False)
-    mount = IndiMount(indiClient=indi_client, configFileName=None,
-                      connectOnCreate=False)
-    camera = IndiCamera(indiClient=indi_client, configFileName=None,
-                        connectOnCreate=False)
+                                   connect_on_create=False)
+    mount = IndiMount(indi_client=indi_client, configFileName=None,
+                      connect_on_create=False)
+    camera = IndiCamera(indi_client=indi_client, configFileName=None,
+                        connect_on_create=False)
 
     # Instanciate the image writer stuff
     writer = FitsWriter(observatory=obs, filterWheel=filter_wheel)

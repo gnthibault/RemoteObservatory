@@ -28,9 +28,9 @@ if __name__ == '__main__':
         "mount_name":"Losmandy Gemini"}
 
     # Now test Mount
-    mount = IndiMount(indiClient=indiCli,
+    mount = IndiMount(indi_client=indiCli,
                       config=config,
-                      connectOnCreate=True)
+                      connect_on_create=True)
     # Set slew ret to be used afterwards
     mount.set_slew_rate('SLEW_FIND')
 

@@ -169,7 +169,7 @@ class ShedObservatory(Base):
             return False
         return True
 
-    def onEmergency(self):
+    def on_emergency(self):
         self.logger.debug('ShedObservatory: on emergency routine started...')
         self.close_everything()
         self.logger.debug('ShedObservatory: on emergency routine finished')

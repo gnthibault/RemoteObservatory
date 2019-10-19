@@ -8,7 +8,7 @@ from Base.Base import Base
 from helper.IndiDevice import IndiDevice
 
 class IndiFilterWheel(IndiDevice, Base):
-    def __init__(self, indiClient, config, connectOnCreate=True):
+    def __init__(self, indi_client, config, connect_on_create=True):
         
         if config is None:
             config = dict(
@@ -24,22 +24,22 @@ class IndiFilterWheel(IndiDevice, Base):
                     SII = 7,
                     LPR = 8))
 
-        deviceName = config['filterwheel_name']
+        device_name = config['filterwheel_name']
         self.filterList = config['filter_list']
 
         logger.debug('Indi FilterWheel, filterwheel name is: {}'.format(
-                     deviceName))
+                     device_name))
       
         # device related intialization
-        IndiDevice.__init__(self, logger=logger, deviceName=deviceName,
-                            indiClient=indiClient)
-        if connectOnCreate:
+        IndiDevice.__init__(self, logger=logger, device_name=device_name,
+                            indi_client=indi_client)
+        if connect_on_create:
             self.connect()
 
         # Finished configuring
         self.logger.debug('configured successfully')
 
-    def onEmergency(self):
+    def on_emergency(self):
         self.logger.debug('on emergency routine started...')
         setFilterNumber(1)
         self.logger.debug('on emergency routine finished')

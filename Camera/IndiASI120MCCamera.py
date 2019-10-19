@@ -10,8 +10,8 @@ from Camera.IndiCamera import IndiCamera
 class IndiASI120MCCamera(IndiCamera):
     ''' Indi Camera class for eos 350D (3456 × 2304 apsc cmos) '''
 
-    def __init__(self, indiClient, logger=None, config_filename=None,
-                 connectOnCreate=True):
+    def __init__(self, indi_client, logger=None, config_filename=None,
+                 connect_on_create=True):
         logger = logger or logging.getLogger(__name__)
         logger.debug('Configuring Indi EOS350D Camera')
 
@@ -19,7 +19,7 @@ class IndiASI120MCCamera(IndiCamera):
             config_filename = './conf_files/IndiASI120MCCamera.json'
 
         # device related intialization
-        IndiCamera.__init__(self, indiClient, logger=logger,
+        IndiCamera.__init__(self, indi_client, logger=logger,
                             config_filename=config_filename)
 
         # Finished configuring
@@ -32,7 +32,7 @@ class IndiASI120MCCamera(IndiCamera):
             self.logger.warn('Camera {} using format {} with dynamic {} although it is capable '
                              'of {}. Trying to set maximum bit depth'.format(self.name,
                                  self.get_current_format(), dyn, max_dyn))
-            self.setSwitch('CCD_VIDEO_FORMAT', ['ASI_IMG_RAW16'])
+            self.set_switch('CCD_VIDEO_FORMAT', ['ASI_IMG_RAW16'])
             self.logger.info('Now camera {} has format {} allowing for dynamic {}'.format(
                 self.name, self.get_current_format(), self.get_dynamic()))
 

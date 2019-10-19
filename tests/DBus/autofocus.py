@@ -35,17 +35,17 @@ myDevices = [ "indi_simulator_telescope", "indi_simulator_ccd",
 #print("Establishing connection to Telescope and CCD...")
 
 ## Set connect switch to ON to connect the devices
-#ekos_indi.setSwitch("Telescope Simulator", "CONNECTION", "CONNECT", "On")
+#ekos_indi.set_switch("Telescope Simulator", "CONNECTION", "CONNECT", "On")
 ## Send the switch to INDI server so that it gets processed by the driver
 #ekos_indi.sendProperty("Telescope Simulator", "CONNECTION")
 ## Same thing for CCD Simulator
-#ekos_indi.setSwitch("CCD Simulator", "CONNECTION", "CONNECT", "On")
+#ekos_indi.set_switch("CCD Simulator", "CONNECTION", "CONNECT", "On")
 #ekos_indi.sendProperty("CCD Simulator", "CONNECTION")
 ## Same thing for FW
-#ekos_indi.setSwitch("Filter Simulator", "CONNECTION", "CONNECT", "On")
+#ekos_indi.set_switch("Filter Simulator", "CONNECTION", "CONNECT", "On")
 #ekos_indi.sendProperty("Filter Simulator", "CONNECTION")
 ## Same thing for Focuser
-#ekos_indi.setSwitch("Focuser Simulator", "CONNECTION", "CONNECT", "On")
+#ekos_indi.set_switch("Focuser Simulator", "CONNECTION", "CONNECT", "On")
 #ekos_indi.sendProperty("Focuser Simulator", "CONNECTION")
 #telescopeState = "Busy"
 #ccdState       = "Busy"

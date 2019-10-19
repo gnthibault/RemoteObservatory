@@ -674,7 +674,7 @@ class Manager(Base):
             mount_name = self.config['mount']['module']
             mount_module = load_module('Mount.'+mount_name)
             self.mount = getattr(mount_module, mount_name)(
-                indiClient = self.indi_client,
+                indi_client = self.indi_client,
                 location = self.earth_location,
                 serv_time = self.serv_time,
                 config = self.config['mount'])
@@ -693,9 +693,9 @@ class Manager(Base):
             cam_module = load_module('Camera.'+cam_name)
             cam = getattr(cam_module, cam_name)(
                 serv_time=self.serv_time,
-                indiClient=self.indi_client,
+                indi_client=self.indi_client,
                 config=self.config['camera'],
-                connectOnCreate=True,
+                connect_on_create=True,
                 primary=True)
             cam.prepareShoot()
  
@@ -719,9 +719,9 @@ class Manager(Base):
                 fw_name = self.config['filterwheel']['module']
                 fw_module = load_module('FilterWheel.'+fw_name)
                 self.filterwheel = getattr(fw_module, fw_name)(
-                    indiClient = self.indi_client,
+                    indi_client = self.indi_client,
                     config = self.config['filterwheel'],
-                    connectOnCreate=True)
+                    connect_on_create=True)
         except Exception:
             raise RuntimeError('Problem setting up filterwheel: {}'.format(e))
 

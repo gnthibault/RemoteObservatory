@@ -35,7 +35,7 @@ class ScheduleSequencer:
         # Very first job will be to schedule startup routine of all devices
         #TODO TN URGENT: creer un dict de devices et tous les allumer/connecter
         def startup_device(dev):
-            dev.indiClient.connect()
+            dev.indi_client.connect()
             dev.connect()
         
         # Start mount

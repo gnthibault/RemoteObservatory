@@ -142,7 +142,7 @@ class GuiLoop():
         self.main_window = MainWindow(planner=planner, view3D=view3D)
 
         indiCli.register_number_callback(
-            device_name=self.mount.deviceName,
+            device_name=self.mount.device_name,
             vec_name='EQUATORIAL_EOD_COORD',
             callback=self.update_coord)
 
@@ -207,8 +207,8 @@ if __name__ == "__main__":
     serv_time = NTPTimeService()
 
     # Build the Mount
-    mount = IndiMount(indiClient=indiCli,
-                      config=None, connectOnCreate=True)
+    mount = IndiMount(indi_client=indiCli,
+                      config=None, connect_on_create=True)
     gps_coord = obs.getGpsCoordinates()
 
     main_loop = GuiLoop(gps_coord, mount, obs, serv_time)

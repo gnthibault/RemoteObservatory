@@ -160,7 +160,7 @@ class GuiLoop():
                                       dashboard_widget=dashboard_widget)
 
         indi_client.register_number_callback(
-            device_name = self.mount.deviceName,
+            device_name = self.mount.device_name,
             vec_name = 'EQUATORIAL_EOD_COORD',
             callback = self.update_coord)
 
@@ -211,7 +211,7 @@ if __name__ == "__main__":
     mount_name = config['mount']['module']
     mount_module = load_module('Mount.' + mount_name)
     mount = getattr(mount_module, mount_name)(
-        indiClient=indi_client,
+        indi_client=indi_client,
         location=earth_location,
         serv_time=serv_time,
         config=config['mount'])

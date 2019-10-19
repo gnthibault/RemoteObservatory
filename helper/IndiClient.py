@@ -10,8 +10,8 @@ import PyIndi
 from Base.Base import Base
 
 # configure global variables
-global indiClientGlobalBlobEvent
-indiClientGlobalBlobEvent = threading.Event()
+global IndiClientGlobalBlobEvent
+IndiClientGlobalBlobEvent = threading.Event()
 
 class IndiClient(PyIndi.BaseClient, Base):
   '''
@@ -44,7 +44,7 @@ class IndiClient(PyIndi.BaseClient, Base):
       # Finished configuring
       self.logger.debug('Configured Indi Client successfully')
 
-  def onEmergency(self):
+  def on_emergency(self):
       self.logger.debug('on emergency routine started...')
       pass
       self.logger.debug('on emergency routine finished')
@@ -82,8 +82,8 @@ class IndiClient(PyIndi.BaseClient, Base):
   def newBLOB(self, bp):
       # this threading.Event is used for sync purpose in other part of the code
       self.logger.debug("new BLOB received: "+bp.name)
-      global indiClientGlobalBlobEvent
-      indiClientGlobalBlobEvent.set()
+      global IndiClientGlobalBlobEvent
+      IndiClientGlobalBlobEvent.set()
 
   def newSwitch(self, svp):
       pass

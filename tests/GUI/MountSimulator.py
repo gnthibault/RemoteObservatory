@@ -130,7 +130,7 @@ class GuiLoop():
         # We make sure that upon reception of new number from indiserver, the
         # actual virtual mount position gets updated
         indiCli.register_number_callback(
-            device_name = self.mount.deviceName,
+            device_name = self.mount.device_name,
             vec_name = 'EQUATORIAL_EOD_COORD',
             callback = self.update_coord)
 
@@ -194,8 +194,8 @@ if __name__ == "__main__":
     serv_time = NTPTimeService()
 
     # Build the Mount
-    mount = IndiMount(indiClient=indiCli,
-                      config={"mount_name":"Telescope Simulator"}, connectOnCreate=True)
+    mount = IndiMount(indi_client=indiCli,
+                      config={"mount_name":"Telescope Simulator"}, connect_on_create=True)
     gps_coord = obs.getGpsCoordinates()
 
     main_loop = GuiLoop(gps_coord, mount, obs, serv_time)

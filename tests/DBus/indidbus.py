@@ -45,11 +45,11 @@ for device in devices:
 print("Establishing connection to Telescope and CCD...")
 
 # Set connect switch to ON to connect the devices
-remote_object.setSwitch("Telescope Simulator", "CONNECTION", "CONNECT", "On")
+remote_object.set_switch("Telescope Simulator", "CONNECTION", "CONNECT", "On")
 # Send the switch to INDI server so that it gets processed by the driver
 remote_object.sendProperty("Telescope Simulator", "CONNECTION")
 # Same thing for CCD Simulator
-remote_object.setSwitch("CCD Simulator", "CONNECTION", "CONNECT", "On")
+remote_object.set_switch("CCD Simulator", "CONNECTION", "CONNECT", "On")
 remote_object.sendProperty("CCD Simulator", "CONNECTION")
 
 telescopeState = "Busy"

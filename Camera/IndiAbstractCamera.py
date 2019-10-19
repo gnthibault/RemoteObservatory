@@ -12,16 +12,16 @@ from Camera.AbstractCamera import AbstractCamera
 from Camera.IndiCamera import IndiCamera
 
 class IndiAbstractCamera(IndiCamera, AbstractCamera):
-    def __init__(self, serv_time, indiClient, config=None,
-                 connectOnCreate=True, primary=False):
+    def __init__(self, serv_time, indi_client, config=None,
+                 connect_on_create=True, primary=False):
 
         # Parent initialization
         AbstractCamera.__init__(self, serv_time=serv_time, primary=primary)
 
         # device related intialization
-        IndiCamera.__init__(self, indiClient=indiClient, logger=self.logger,
+        IndiCamera.__init__(self, indi_client=indi_client, logger=self.logger,
                            config=config,
-                           connectOnCreate=connectOnCreate)
+                           connect_on_create=connect_on_create)
         self.indi_camera_config = config
 
     # TODO TN: setup event based acquisition properly

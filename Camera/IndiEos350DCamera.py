@@ -10,8 +10,8 @@ from Camera.IndiCamera import IndiCamera
 class IndiEos350DCamera(IndiAbstractCamera):
     ''' Indi Camera class for eos 350D (3456 × 2304 apsc cmos) '''
 
-    def __init__(self, indiClient, config=None,
-                 connectOnCreate=True):
+    def __init__(self, indi_client, config=None,
+                 connect_on_create=True):
         self.logger.debug('Configuring Indi EOS6D Camera')
 
         if config is None:
@@ -20,7 +20,7 @@ class IndiEos350DCamera(IndiAbstractCamera):
 
 
         # device related intialization
-        super().__init__(indiClient, logger=self.logger,
+        super().__init__(indi_client, logger=self.logger,
                             config=config)
 
         # Finished configuring

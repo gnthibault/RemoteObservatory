@@ -12,8 +12,8 @@ class IndiFocuser(IndiDevice):
     """
 
     """
-    def __init__(self, indiClient, logger=None, config_filename=None,
-                 connectOnCreate=True):
+    def __init__(self, indi_client, logger=None, config_filename=None,
+                 connect_on_create=True):
         logger = logger or logging.getLogger(__name__)
         
         if config_filename is None:
@@ -27,21 +27,21 @@ class IndiFocuser(IndiDevice):
         # Get config from json
         with open(self.config_filename) as jsonFile:
           data = json.load(jsonFile)
-          deviceName = data['FocuserName']
+          device_name = data['FocuserName']
 
         logger.debug('Indi Focuser, focuser name is: {}'.format(
-          deviceName))
+          device_name))
       
         # device related intialization
-        IndiDevice.__init__(self, logger=logger, deviceName=deviceName,
-          indiClient=indiClient)
-        if connectOnCreate:
+        IndiDevice.__init__(self, logger=logger, device_name=device_name,
+          indi_client=indi_client)
+        if connect_on_create:
           self.connect()
 
         # Finished configuring
         self.logger.debug('Indi Focuser configured successfully')
 
-    def onEmergency(self):
+    def on_emergency(self):
         self.logger.debug('Indi Focuser: on emergency routine started...')
         self.logger.debug('Indi Focuser: on emergency routine finished')
 

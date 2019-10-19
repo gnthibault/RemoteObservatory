@@ -9,7 +9,7 @@ import numpy as np
 # Indi stuff
 import PyIndi
 from helper.IndiDevice import IndiDevice
-from helper.IndiClient import indiClientGlobalBlobEvent
+from helper.IndiClient import IndiClientGlobalBlobEvent
 
 # Imaging and Fits stuff
 from astropy.io import fits
@@ -30,8 +30,8 @@ class IndiCamera(IndiDevice):
     DEFAULT_EXP_TIME_SEC = 5
     MAXIMUM_EXP_TIME_SEC = 3601
 
-    def __init__(self, indiClient, logger=None, config=None,
-                 connectOnCreate=True):
+    def __init__(self, indi_client, logger=None, config=None,
+                 connect_on_create=True):
         logger = logger or logging.getLogger(__name__)
         
         if config is None:
@@ -41,7 +41,7 @@ class IndiCamera(IndiDevice):
                     module = "IndiFocuser",
                     focuser_name = ""))
 
-        deviceName = config['camera_name']
+        device_name = config['camera_name']
         # If scope focuser is specified in the config, load
         try:
             cfg = config['focuser']
@@ -52,12 +52,12 @@ class IndiCamera(IndiDevice):
             self.logger.warning("Cannot load focuser module: {}".format(e))
             self.scope_controller = None
 
-        logger.debug('Indi camera, camera name is: {}'.format(deviceName))
+        logger.debug('Indi camera, camera name is: {}'.format(device_name))
       
         # device related intialization
-        IndiDevice.__init__(self, logger=logger, deviceName=deviceName,
-                            indiClient=indiClient)
-        if connectOnCreate:
+        IndiDevice.__init__(self, logger=logger, device_name=device_name,
+                            indi_client=indi_client)
+        if connect_on_create:
             self.connect()
 
         # Frame Blob: reference that will be used to receive binary
@@ -69,8 +69,8 @@ class IndiCamera(IndiDevice):
 
         # Now check if there is a focuser attached
         #try:
-        #    self.focuser = IndiFocuser(indiClient=self.indi_client,
-        #                               connectOnCreate=True)
+        #    self.focuser = IndiFocuser(indi_client=self.indi_client,
+        #                               connect_on_create=True)
         #except Exception:
         #    raise RuntimeError('Problem setting up focuser')
 
@@ -81,7 +81,7 @@ class IndiCamera(IndiDevice):
     def dynamic(self):
         return 2**self.get_dynamic()
 
-    def onEmergency(self):
+    def on_emergency(self):
         self.logger.debug('on emergency routine started...')
         self.abortShoot(sync=False)
         self.logger.debug('on emergency routine finished')
@@ -96,15 +96,15 @@ class IndiCamera(IndiDevice):
         '''
         self.logger.debug('Indi client will register to server in order to '
                           'receive blob CCD1 when it is ready')
-        self.indiClient.setBLOBMode(PyIndi.B_ALSO, self.deviceName, 'CCD1')
+        self.indi_client.setBLOBMode(PyIndi.B_ALSO, self.device_name, 'CCD1')
         self.frameBlob=self.get_prop(propName='CCD1', propType='blob')
 
     def synchronizeWithImageReception(self):
         try:
-            global indiClientGlobalBlobEvent
+            global IndiClientGlobalBlobEvent
             self.logger.debug('synchronizeWithImageReception: Start waiting')
-            indiClientGlobalBlobEvent.wait()
-            indiClientGlobalBlobEvent.clear()
+            IndiClientGlobalBlobEvent.wait()
+            IndiClientGlobalBlobEvent.clear()
             self.logger.debug('synchronizeWithImageReception: Done')
         except Exception as e:
             self.logger.error('Indi Camera Error in '
@@ -140,7 +140,7 @@ class IndiCamera(IndiDevice):
         self.setNumber('CCD_ABORT_EXPOSURE', {'ABORT': 1}, sync=sync)
 
     def launchStreaming(self):
-        self.setSwitch('VIDEO_STREAM',['ON'])
+        self.set_switch('VIDEO_STREAM',['ON'])
 
     def setUploadPath(self, path, prefix = 'IMAGE_XXX'):
         self.setText('UPLOAD_SETTINGS', {'UPLOAD_DIR': path,\
@@ -187,10 +187,10 @@ class IndiCamera(IndiDevice):
                            sync=True, timeout=1200)
 
     def set_cooling_on(self):
-        self.setSwitch('CCD_COOLER',['COOLER_ON'])
+        self.set_switch('CCD_COOLER',['COOLER_ON'])
 
     def set_cooling_off(self):
-        self.setSwitch('CCD_COOLER',['COOLER_OFF'])
+        self.set_switch('CCD_COOLER',['COOLER_OFF'])
 
     def set_gain(self, value):
         pass
@@ -212,11 +212,11 @@ class IndiCamera(IndiDevice):
         FRAME_DARK Take a dark frame exposure
         FRAME_FLAT Take a flat field frame exposure
         """
-        self.setSwitch('CCD_FRAME_TYPE', [frame_type])
+        self.set_switch('CCD_FRAME_TYPE', [frame_type])
 
     def setUploadTo(self, uploadTo = 'local'):
         uploadTo = IndiCamera.UploadModeDict[upload_to]
-        self.setSwitch('UPLOAD_MODE', [uploadTo] )
+        self.set_switch('UPLOAD_MODE', [uploadTo] )
 
     def getExposureRange(self):
         pv = self.getCCDControls('CCD_EXPOSURE', 'number')[0]

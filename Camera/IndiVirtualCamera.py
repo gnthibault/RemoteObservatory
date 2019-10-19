@@ -10,15 +10,15 @@ from Camera.IndiCamera import IndiCamera
 class IndiVirtualCamera(IndiCamera):
     ''' Indi Virtual Camera '''
 
-    def __init__(self, indiClient, logger=None, configFileName=None,
-                 connectOnCreate=True):
+    def __init__(self, indi_client, logger=None, configFileName=None,
+                 connect_on_create=True):
         logger = logger or logging.getLogger(__name__)
         
         logger.debug('Configuring Indi Virtual Camera')
 
         # device related intialization
-        IndiCamera.__init__(self, indiClient, logger=logger,
-            configFileName=configFileName, connectOnCreate=connectOnCreate)
+        IndiCamera.__init__(self, indi_client, logger=logger,
+            configFileName=configFileName, connect_on_create=connect_on_create)
 
         # Finished configuring
         self.logger.debug('Configured Indi Virtual Camera successfully')

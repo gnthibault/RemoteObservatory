@@ -600,14 +600,14 @@ def main(config_file='./jsonModel/IndiCCDSimulatorCamera.json',
     # Instanciate a time server as well
     serv_time = NTPTimeService()    
 
-    #cam = IndiASI120MCCamera(indiClient=indiCli,
+    #cam = IndiASI120MCCamera(indi_client=indiCli,
     try:
         cam_module = load_module('Camera.{}'.format(cam_class))
         cam_ctor = getattr(cam_module, cam_class)
         print('cam_ctor is {}'.format(cam_ctor))
-        cam = cam_ctor(indiClient=indiCli,
+        cam = cam_ctor(indi_client=indiCli,
             config_filename=config_file,
-            connectOnCreate=False)
+            connect_on_create=False)
     except RuntimeError as e:
         raise RuntimeError('Please provide a valid cam_class. current one is '
                            '{} and error is {}'.format(cam_class, e))

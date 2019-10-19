@@ -24,8 +24,8 @@ if __name__ == '__main__':
     indiCli.connect()
 
     # test indi virtual camera class
-    cam = IndiVirtualCamera(indiClient=indiCli, configFileName=None,
-                     connectOnCreate=False)
+    cam = IndiVirtualCamera(indi_client=indiCli, configFileName=None,
+                     connect_on_create=False)
     cam.connect()
 
     # Play with camera configuration

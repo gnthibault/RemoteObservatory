@@ -25,6 +25,7 @@ packages:
             extra-cmake-modules\
             indi-full\
             gpsd\
+            gsc\
             kdelibs5-dev\
             kdoctools-dev\
             kstars-bleeding\

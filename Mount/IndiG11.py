@@ -74,16 +74,16 @@ class IndiG11(IndiAbstractMount):
      affected regardless of which epoch is selected.
     """
     
-    def __init__(self, indiClient, location, serv_time, config):
+    def __init__(self, indi_client, location, serv_time, config):
 
         if config is None:
             config = dict(mount_name="Losmandy Gemini")
 
-        super().__init__(indiClient=indiClient,
+        super().__init__(indi_client=indi_client,
                          location=location,
                          serv_time=serv_time,
                          config=config,
-                         connectOnCreate=False)
+                         connect_on_create=False)
 
         self.connect_driver()
         self.set_startup_mode(mode='WARM_RESTART')
@@ -101,7 +101,7 @@ class IndiG11(IndiAbstractMount):
             WARM_START
             WARM_RESTART
         """
-        self.setSwitch('STARTUP_MODE', [mode])
+        self.set_switch('STARTUP_MODE', [mode])
 
     def set_park_settings(self, mode='HOME'):
         """
@@ -110,7 +110,7 @@ class IndiG11(IndiAbstractMount):
                 STARTUP
                 ZENITH
         """
-        self.setSwitch('PARK_SETTINGS', [mode])
+        self.set_switch('PARK_SETTINGS', [mode])
 
 #setNumberVector Losmandy Gemini GEOGRAPHIC_COORD Ok
 #        LAT='51.466666666666668561'
@@ -118,11 +118,11 @@ class IndiG11(IndiAbstractMount):
 #                      ELEV='0'
 
 #Dispatch command error(-1):
-#<setSwitchVector device="Losmandy Gemini" name="TELESCOPE_PARK" state="Ok" timeout="60" timestamp="2019-08-05T00:03:43">
+#<set_switchVector device="Losmandy Gemini" name="TELESCOPE_PARK" state="Ok" timeout="60" timestamp="2019-08-05T00:03:43">
 #    <oneSwitch name="PARK">
 #On
 #    </oneSwitch>
 #    <oneSwitch name="UNPARK">
 #Off
 #    </oneSwitch>
-#</setSwitchVector>
+#</set_switchVector>

@@ -23,8 +23,8 @@ if __name__ == '__main__':
     indiCli.connect()
 
     # Now test Mount
-    mount = IndiMount(indiClient=indiCli,
-                      configFileName=None, connectOnCreate=True)
+    mount = IndiMount(indi_client=indiCli,
+                      configFileName=None, connect_on_create=True)
     # Set slew ret to be used afterwards
     mount.set_slew_rate('SLEW_FIND')
 

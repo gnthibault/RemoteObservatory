@@ -39,20 +39,20 @@ class IndiAbstractMount(IndiMount, AbstractMount):
         ALT Altitude, degrees above horizon
         AZ Azimuth, degrees E of N
     """
-    def __init__(self, indiClient, location, serv_time,
-                 config=None, connectOnCreate=True):
+    def __init__(self, indi_client, location, serv_time,
+                 config=None, connect_on_create=True):
 
         # device related intialization
-        IndiMount.__init__(self, indiClient=indiClient,
+        IndiMount.__init__(self, indi_client=indi_client,
                            config=config, 
-                           connectOnCreate=False)
+                           connect_on_create=False)
         # setup AbstractMount config
         self._setup_abstract_config()
         #Setup AbstractMount
         AbstractMount.__init__(self, location=location,
                                serv_time=serv_time)
 
-        if connectOnCreate:
+        if connect_on_create:
             self.connect()
 
 ###############################################################################
@@ -178,7 +178,7 @@ class IndiAbstractMount(IndiMount, AbstractMount):
 ###############################################################################
 
     def __str__(self):
-        return 'Mount: {}'.format(self.deviceName)
+        return 'Mount: {}'.format(self.device_name)
 
     def __repr__(self):
         return self.__str__()
