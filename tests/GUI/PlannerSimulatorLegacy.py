@@ -148,7 +148,7 @@ class GuiLoop():
             callback = self.update_coord)
 
         self.main_window.view3D.set_coord(self.gps_coord)
-        self.main_window.view3D.initialiseCamera()
+        self.main_window.view3D.initialise_camera()
         self.main_window.view3D.window.show()
 
         thread = ObservationRun(self.mount)

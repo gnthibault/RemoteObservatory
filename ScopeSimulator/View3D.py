@@ -19,20 +19,35 @@ class View3D(QObject):
         self.serv_time = serv_time
         self.window = Qt3DWindow(parent)
         self.setClearColor(View3D._default_clear_color)
-        self.rootEntity = QEntity()
-        self.world = World3D(self.rootEntity, self.serv_time)
-        self.model = Model3D(self.rootEntity, self.serv_time)
+        self.root_entity = QEntity()
+        self.world = World3D(self.root_entity, self.serv_time)
+        self.model = Model3D(self.root_entity, self.serv_time)
         self.model.setWorld(self.world)
-        self.initialiseCamera()
-        self.window.setRootEntity(self.rootEntity)
+        self.initialise_camera()
+        self.window.setRootEntity(self.root_entity)
         self.scope = None
 
     def setClearColor(self, color):
         self.clearColor = color
         self.window.defaultFrameGraph().setClearColor(self.clearColor)
 
-    def initialiseCamera(self):
-        # Camera pinhole model definition
+    def initialise_camera(self):
+        """ from https://doc.qt.io/qt-5/qt3drender-qcameralens.html#details
+        setPerspectiveProjection works as follow:
+        float fieldOfView, float aspectRatio, float nearPlane, float farPlane)
+
+        Could also use
+        setFrustumProjection(
+            float left, float right, float bottom, float top,
+            float nearPlane, float farPlane)
+        or
+        setOrthographicProjection(float left, float right, float bottom,
+            float top, float nearPlane, float farPlane)
+        One can also retrieve the equivalent projection matrix with:
+        QMatrix4x4	projectionMatrix() const
+        :return:
+        """
+        # Camera pinhole model definition for perspective:
         self.window.camera().lens().setPerspectiveProjection(
             45.0, 16.0 / 9.0, 0.1, 100000.0)
         self.window.camera().setPosition(QVector3D(0.0, 1750.0, -3000.0))
@@ -40,9 +55,9 @@ class View3D(QObject):
         #camera.setUpVector(QVector3D(0.0, 0.0, 1.0))
 
         # Camera controls
-        self.camController = QOrbitCameraController(self.rootEntity)
+        self.camController = QOrbitCameraController(self.root_entity)
         #camController = Qt3DExtras.QFirstPersonCameraController(scene)
-        #self.camController = CameraController(self.rootEntity)
+        #self.camController = CameraController(self.root_entity)
         self.camController.setLinearSpeed(500.0)
         self.camController.setLookSpeed(180.0)
         self.camController.setCamera(self.window.camera())

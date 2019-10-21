@@ -63,70 +63,78 @@ class StarMaterial(QMaterial):
     """
     def __init__(self, parent=None):
         super().__init__(parent)
-        starEffect = QEffect(self)
-        starTechnique = QTechnique(self)
-        starRenderPass = QRenderPass(self)
-        starShaderProgram = QShaderProgram(self)
-        starRenderState = QPointSize(self)
-        # Defines color (white) and visibility (wether it is discarder or not)
-        starShaderProgram.setShaderCode(
+        star_effect = QEffect(self)
+        star_technique = QTechnique(self)
+        star_render_pass = QRenderPass(self)
+        star_shader_program = QShaderProgram(self)
+        star_render_state = QPointSize(self)
+        # Defines color (white) and visibility (wether it is discarded or not)
+        star_shader_program.setShaderCode(
             QShaderProgram.Vertex,
             QShaderProgram.loadSource(QUrl.fromLocalFile(
                 'ScopeSimulator/shaders/pointcloud.vert')))
         # Defines ?
-        starShaderProgram.setShaderCode(
+        star_shader_program.setShaderCode(
             QShaderProgram.Fragment, 
             QShaderProgram.loadSource(QUrl.fromLocalFile(
                 'ScopeSimulator/shaders/pointcloud.frag')))
-        starRenderPass.setShaderProgram(starShaderProgram)
-        starRenderState.setSizeMode(QPointSize.Programmable)
-        starRenderPass.addRenderState(starRenderState)
-        starTechnique.addRenderPass(starRenderPass)
-        filterKey = QFilterKey()
-        filterKey.setName('renderingStyle')
-        filterKey.setValue('forward')
-        starTechnique.addFilterKey(filterKey)
-        starTechnique.graphicsApiFilter().setApi(QGraphicsApiFilter.OpenGL)
-        starTechnique.graphicsApiFilter().setMajorVersion(3)
-        starTechnique.graphicsApiFilter().setMinorVersion(3)
-        starTechnique.graphicsApiFilter().setProfile(
+        star_render_pass.setShaderProgram(star_shader_program)
+        star_render_state.setSizeMode(QPointSize.Programmable)
+        star_render_pass.addRenderState(star_render_state)
+        star_technique.addRenderPass(star_render_pass)
+        filter_key = QFilterKey()
+        filter_key.setName('renderingStyle')
+        filter_key.setValue('forward')
+        star_technique.addFilterKey(filter_key)
+        star_technique.graphicsApiFilter().setApi(QGraphicsApiFilter.OpenGL)
+        star_technique.graphicsApiFilter().setMajorVersion(3)
+        star_technique.graphicsApiFilter().setMinorVersion(3)
+        star_technique.graphicsApiFilter().setProfile(
             QGraphicsApiFilter.CoreProfile)
-        #starTechnique.graphicsApiFilter().setProfile(
+        #star_technique.graphicsApiFilter().setProfile(
         #    QGraphicsApiFilter.NoProfile)
-        starEffect.addTechnique(starTechnique)
-        super().setEffect(starEffect)
+        star_effect.addTechnique(star_technique)
+        super().setEffect(star_effect)
 
 class PointGeometry(QGeometry):
 
     def __init__(self, parent=None):
         super().__init__(parent)
-        posAttribute = QAttribute(self)
-        self.vertexBuffer = QBuffer(self)
-        posAttribute.setName(QAttribute.defaultPositionAttributeName())
-        posAttribute.setVertexBaseType(QAttribute.Float)
-        posAttribute.setVertexSize(3)
-        posAttribute.setAttributeType(QAttribute.VertexAttribute)
-        posAttribute.setBuffer(self.vertexBuffer)
-        posAttribute.setByteOffset(0)
-        posAttribute.setByteStride((3 + 1) * 4) # float32 is 4 bytes
-        #posAttribute.setDivisor(1)
-        self.addAttribute(posAttribute)
-        self.positionAttribute = posAttribute
-        radiusAttribute = QAttribute(self)
-        radiusAttribute.setName('radius')
-        radiusAttribute.setVertexBaseType(QAttribute.Float)
-        radiusAttribute.setVertexSize(1)
-        radiusAttribute.setAttributeType(QAttribute.VertexAttribute)
-        radiusAttribute.setBuffer(self.vertexBuffer)
-        radiusAttribute.setByteOffset(3 * 4) # float32 is 4 bytes
-        #posAttribute.setByteStride(0)
-        radiusAttribute.setByteStride((3 + 1) * 4) # float32 is 4 bytes
-        #radiusAttribute.setDivisor(1)
-        self.addAttribute(radiusAttribute)
-        self.radiusAttribute = radiusAttribute
+        pos_attribute = QAttribute(self)
+        self.vertex_buffer = QBuffer(self)
+        pos_attribute.setName(QAttribute.defaultPositionAttributeName())
+        pos_attribute.setVertexBaseType(QAttribute.Float)
+        pos_attribute.setVertexSize(3)
+        pos_attribute.setAttributeType(QAttribute.VertexAttribute)
+        pos_attribute.setBuffer(self.vertex_buffer)
+        pos_attribute.setByteOffset(0)
+        pos_attribute.setByteStride((3 + 1) * 4) # float32 is 4 bytes
+        #pos_attribute.setDivisor(1)
+        self.add_attribute(pos_attribute)
+        self.positionAttribute = pos_attribute
+        radius_attribute = QAttribute(self)
+        radius_attribute.setName('radius')
+        radius_attribute.setVertexBaseType(QAttribute.Float)
+        radius_attribute.setVertexSize(1)
+        radius_attribute.setAttributeType(QAttribute.VertexAttribute)
+        radius_attribute.setBuffer(self.vertex_buffer)
+        radius_attribute.setByteOffset(3 * 4) # float32 is 4 bytes
+        #pos_attribute.setByteStride(0)
+        radius_attribute.setByteStride((3 + 1) * 4) # float32 is 4 bytes
+        #radius_attribute.setDivisor(1)
+        self.add_attribute(radius_attribute)
+        self.radius_attribute = radius_attribute
 
 class World3D():
     """
+    About Qentity, doc from: https://doc.qt.io/qt-5/qt3dcore-qentity.html
+    By itself a Qt3DCore::QEntity is an empty shell. The behavior of a
+    Qt3DCore::QEntity object is defined by the Qt3DCore::QComponent objects it
+    references. Each Qt3D backend aspect will be able to interpret and process
+    an Entity by recognizing which components it is made up of. One aspect may
+    decide to only process entities composed of a single Qt3DCore::QTransform
+    component whilst another may focus on Qt3DInput::QMouseHandler.
+
     Qt3D frame: x axis pointing North, y axis pointing Zenith/pole, z axis
     pointing East
     Celestial frame: x axis pointing North, y axis pointing Zenith, Z axis
@@ -138,17 +146,17 @@ class World3D():
                                    0.0, 0.0, 1.0])
 
     # sky is considered as a sphere centered on origin (assuming topocentric)
-    _sky_radius = 50000.0
+    _sky_radius = 50000.0  #500000mm = 50m
 
     def __init__(self, parent=None, serv_time=None, auto_update=False):
         # serv time encapsulate various time utilities
         self.serv_time = serv_time
 
         # ground will be attached to the dummy root entity
-        self.rootEntity = QEntity(parent)
+        self.root_entity = QEntity(parent)
 
         # Sky entity will be a rotating frame different from the ground
-        self.sky_entity = QEntity(self.rootEntity)
+        self.sky_entity = QEntity(self.root_entity)
         self.sky_transform = QTransform()
         self.sky_entity.addComponent(self.sky_transform)
 
@@ -174,16 +182,16 @@ class World3D():
 
         # Initialize update frequency
         if auto_update:
-            self.celestialintervalms = 1 * 1000
-            self.celestialtimer = QTimer()
+            self.celestial_interval_ms = 1 * 1000
+            self.celestial_timer = QTimer()
             self.initialize_refresh_timer()
 
     def initialize_refresh_timer(self):
-        self.celestialtimer.setInterval(
-            self.celestialintervalms)
-        self.celestialtimer.setSingleShot(False)
-        self.celestialtimer.timeout.connect(self.update_celestial_time)
-        self.celestialtimer.start()
+        self.celestial_timer.setInterval(
+            self.celestial_interval_ms)
+        self.celestial_timer.setSingleShot(False)
+        self.celestial_timer.timeout.connect(self.update_celestial_time)
+        self.celestial_timer.start()
 
     def update_celestial_time(self, gast=None):
         if gast is None:
@@ -269,23 +277,47 @@ class World3D():
 
            One should notice that this ground plane is attached to the root
            entity
+
+           Documentation for plane mesh:
+           https://doc.qt.io/qt-5/qt3dextras-qplanemesh.html
+           A square planar mesh. One can set height, width and resolution:
+           Holds the plane resolution. The width and height values of this
+           property specify the number of vertices generated for the mesh in the
+           respective dimensions.
+
+           doc for QDiffuseSpecularMaterial:
+           https://doc.qt.io/qt-5/qt3dextras-qdiffusespecularmaterial.html
+           The QDiffuseSpecularMaterial class provides a default implementation
+           of the phong lighting effect.
+           The phong lighting effect is based on the combination of 3 lighting
+           components ambient, diffuse and specular. The relative strengths of
+           these components are controlled by means of their reflectivity
+           coefficients which are modelled as RGB triplets:
+           Ambient is the color that is emitted by an object without any other
+           light source. Diffuse is the color that is emitted for rought surface
+           reflections with the lights. Specular is the color emitted for shiny
+           surface reflections with the lights.
+           The shininess of a surface is controlled by a float property.
+           This material uses an effect with a single render pass approach and
+           performs per fragment lighting. Techniques are provided for OpenGL 2,
+           OpenGL 3 or above as well as OpenGL ES 2.
         """
-        self.horizontalPlane = QEntity()
-        self.horizontalMesh = QPlaneMesh()
-        self.horizontalMesh.setWidth(2 * World3D._sky_radius)
-        self.horizontalMesh.setHeight(2 * World3D._sky_radius)
-        self.horizontalMesh.setMeshResolution(QSize(50, 50))
-        #self.horizontalMesh.setMirrored(True)
+        self.horizontal_plane = QEntity()
+        self.horizontal_mesh = QPlaneMesh()
+        self.horizontal_mesh.setWidth(2 * World3D._sky_radius)
+        self.horizontal_mesh.setHeight(2 * World3D._sky_radius)
+        self.horizontal_mesh.setMeshResolution(QSize(50, 50))
+        #self.horizontal_mesh.setMirrored(True)
         #self.horizontalTransform = QTransform()
         #self.horizontalTransform.setMatrix(QTransform.rotateAround(
         #    QVector3D(0,0,0), 90.0, QVector3D(1.0, 0.0, 0.0)))
         #self.horizontalTransform.setTranslation(QVector3D(0.0, -10.0, 0.0))
-        self.horizontalMat = QDiffuseSpecularMaterial()
-        self.horizontalMat.setAmbient(QColor(0, 128, 0))
-        #self.horizontalPlane.addComponent(self.horizontalTransform)
-        self.horizontalPlane.addComponent(self.horizontalMat)
-        self.horizontalPlane.addComponent(self.horizontalMesh)
-        self.horizontalPlane.setParent(self.rootEntity)
+        self.horizontal_mat = QDiffuseSpecularMaterial()
+        self.horizontal_mat.setAmbient(QColor(0, 128, 0))
+        #self.horizontal_plane.addComponent(self.horizontalTransform)
+        self.horizontal_plane.addComponent(self.horizontal_mat)
+        self.horizontal_plane.addComponent(self.horizontal_mesh)
+        self.horizontal_plane.setParent(self.root_entity)
 
     def make_equatorial_grid(self):
         """
@@ -294,29 +326,39 @@ class World3D():
            We choose:
             -18 rings: 1 tick every 10 degrees for the 180 degrees of
               declination. 90 being north pole (close to polar star) and -90
-              standing for south pole. 0 degrees is on the celestial equateur
-            -24 slices: 1 tick every hour for the 24 hours of right ascencion
+              standing for south pole. 0 degrees is on the celestial equator
+            -24 slices: 1 tick every hour for the 24 hours of right ascension
               00h standing for position of sun in background star at spring
               meridian at its highest position (ie intersecting celestial
-              equateur). This point for origin is also called vernal point.
+              equator). This point for origin is also called vernal point.
 
            One should notice that this ground plane is attached to the sky
            entity
+
+           Documentation for QSphereMesh:
+           https://doc.qt.io/qt-5/qt3dextras-qspheremesh.html
+           A spherical mesh with 3 properties
+           setRadius(float radius)
+           setRings(int rings)
+           setSlices(int slices)
+
+           Inherits from QGeometryRenderer whose doc is there:
+           https://doc.qt.io/qt-5/qt3drender-qgeometryrenderer.html
         """
-        self.equatorialGrid = QEntity()
-        self.equatorialMesh = QSphereMesh()
-        self.equatorialMesh.setRadius(World3D._sky_radius)
-        self.equatorialMesh.setRings(18)
-        self.equatorialMesh.setSlices(24)
-        self.equatorialMesh.setPrimitiveType(QGeometryRenderer.Lines)
-        self.equatorialTransform = QTransform()
-        #self.equatorialTransform.setRotationZ(-(90 - 49.29))
-        self.equatorialMat = QDiffuseSpecularMaterial()
-        self.equatorialMat.setAmbient(QColor(200,0,0))
-        self.equatorialGrid.addComponent(self.equatorialTransform)
-        self.equatorialGrid.addComponent(self.equatorialMat)
-        self.equatorialGrid.addComponent(self.equatorialMesh)
-        self.equatorialGrid.setParent(self.sky_entity)
+        self.equatorial_grid = QEntity()
+        self.equatorial_mesh = QSphereMesh()
+        self.equatorial_mesh.setRadius(World3D._sky_radius)
+        self.equatorial_mesh.setRings(18)
+        self.equatorial_mesh.setSlices(24)
+        self.equatorial_mesh.setPrimitiveType(QGeometryRenderer.Lines)
+        self.equatorial_transform = QTransform()
+        #self.equatorial_transform.setRotationZ(-(90 - 49.29))
+        self.equatorial_mat = QDiffuseSpecularMaterial()
+        self.equatorial_mat.setAmbient(QColor(200,0,0))
+        self.equatorial_grid.addComponent(self.equatorial_transform)
+        self.equatorial_grid.addComponent(self.equatorial_mat)
+        self.equatorial_grid.addComponent(self.equatorial_mesh)
+        self.equatorial_grid.setParent(self.sky_entity)
 
     def make_altaz_grid(self):
         """
@@ -333,19 +375,19 @@ class World3D():
            entity
         """
         self.horizontalGrid = QEntity()
-        self.horizontalMesh = QSphereMesh()
-        self.horizontalMesh.setRadius(World3D._sky_radius)
-        self.horizontalMesh.setRings(18)
-        self.horizontalMesh.setSlices(36)
-        self.horizontalMesh.setPrimitiveType(QGeometryRenderer.Lines)
+        self.horizontal_mesh = QSphereMesh()
+        self.horizontal_mesh.setRadius(World3D._sky_radius)
+        self.horizontal_mesh.setRings(18)
+        self.horizontal_mesh.setSlices(36)
+        self.horizontal_mesh.setPrimitiveType(QGeometryRenderer.Lines)
         self.horizontalTransform = QTransform()
         self.horizontalTransform.setRotationX(0.0)
-        self.horizontalMat = QDiffuseSpecularMaterial()
-        self.horizontalMat.setAmbient(QColor(0,0,200))
+        self.horizontal_mat = QDiffuseSpecularMaterial()
+        self.horizontal_mat.setAmbient(QColor(0,0,200))
         self.horizontalGrid.addComponent(self.horizontalTransform)
-        self.horizontalGrid.addComponent(self.horizontalMat)
-        self.horizontalGrid.addComponent(self.horizontalMesh)
-        self.horizontalGrid.setParent(self.rootEntity)
+        self.horizontalGrid.addComponent(self.horizontal_mat)
+        self.horizontalGrid.addComponent(self.horizontal_mesh)
+        self.horizontalGrid.setParent(self.root_entity)
 
     def make_mount_basement(self):
         """
@@ -358,6 +400,11 @@ class World3D():
 
            One should notice that the "mount basement" is attached to the root
            entity
+
+           Doc for QTextureLoader:
+           https://doc.qt.io/qt-5/qt3drender-qtextureloader.html
+           Handles the texture loading and setting the texture's properties.
+
         """
         # self.svgRenderer = QSvgRenderer()
         # self.svgRenderer.load('compass.svg')
@@ -368,27 +415,28 @@ class World3D():
         self.compass_texture.setMirrored(False)
         self.compass_texture.setSource(
             QUrl.fromLocalFile('ScopeSimulator/data/compass.svg.png'))
-        self.basementGrid = QEntity()
+        self.basement_grid = QEntity()
         # self.basement_mesh = QCylinderMesh()
         # self.basement_mesh.setRadius(1500.0)
         # self.basement_mesh.setLength(10.0)
         # self.basement_mesh.setSlices(360)
         self.basement_mesh = QPlaneMesh()
-        self.basement_mesh.setWidth(1500.0)
-        self.basement_mesh.setHeight(1500.0)
+        self.basement_mesh.setWidth(1500.0) #1500mm = 1.5m
+        self.basement_mesh.setHeight(1500.0) #1500mm = 1.5m
         self.basement_mesh.setMeshResolution(QSize(2, 2))
         self.basement_transform = QTransform()
+        # move texture just 5mm above ground towards zenith for visibility
         self.basement_transform.setTranslation(QVector3D(0,20.0,0))
         self.basement_transform.setRotationY(-90.0)
-        self.basementMatBack = QDiffuseSpecularMaterial()
-        self.basementMatBack.setAmbient(QColor(200,200,228))
-        self.basementMat = QTextureMaterial()
-        self.basementMat.setTexture(self.compass_texture)
-        self.basementGrid.addComponent(self.basement_transform)
-        self.basementGrid.addComponent(self.basementMatBack)
-        self.basementGrid.addComponent(self.basementMat)
-        self.basementGrid.addComponent(self.basement_mesh)
-        self.basementGrid.setParent(self.rootEntity)
+        self.basement_mat_back = QDiffuseSpecularMaterial()
+        self.basement_mat_back.setAmbient(QColor(200,200,228))
+        self.basement_mat = QTextureMaterial()
+        self.basement_mat.setTexture(self.compass_texture)
+        self.basement_grid.addComponent(self.basement_transform)
+        self.basement_grid.addComponent(self.basement_mat_back)
+        self.basement_grid.addComponent(self.basement_mat)
+        self.basement_grid.addComponent(self.basement_mesh)
+        self.basement_grid.setParent(self.root_entity)
 
     def make_cardinals(self):
         """
@@ -403,6 +451,9 @@ class World3D():
            also recall frame:
            Qt3D frame: x axis pointing North, y axis pointing Zenith/pole, z axis
            pointing East
+
+           we always but labels 20mm above ground for visibility and 100 mm
+           within the sky radius for visibility as well
         """
         cardinals = [
             ('North',
@@ -424,26 +475,26 @@ class World3D():
                 QVector3D(0.0, -(World3D._sky_radius - 100.0), 0.0),
                 (-90.0, 0.0, 0.0)),]
         font = QFont('Helvetica', 32)
-        self.textMat = QDiffuseSpecularMaterial()
-        self.textMat.setAmbient(QColor(200,200,228))
+        self.text_mat = QDiffuseSpecularMaterial()
+        self.text_mat.setAmbient(QColor(200,200,228))
         self.cardinals = QEntity()
         for cpoint in cardinals:
             e = QEntity()
-            eText = QExtrudedTextMesh()
-            eText.setText(cpoint[0])
-            eText.setDepth(0.45)
-            eText.setFont(font)
-            eTransform = QTransform()
-            eTransform.setTranslation(cpoint[1])
-            eTransform.setRotationX(cpoint[2][0])
-            eTransform.setRotationY(cpoint[2][1])
-            eTransform.setRotationZ(cpoint[2][2])
-            eTransform.setScale(1000.0)
-            e.addComponent(self.textMat)
-            e.addComponent(eTransform)
-            e.addComponent(eText)
+            e_text = QExtrudedTextMesh()
+            e_text.setText(cpoint[0])
+            e_text.setDepth(0.45)
+            e_text.setFont(font)
+            e_transform = QTransform()
+            e_transform.setTranslation(cpoint[1])
+            e_transform.setRotationX(cpoint[2][0])
+            e_transform.setRotationY(cpoint[2][1])
+            e_transform.setRotationZ(cpoint[2][2])
+            e_transform.setScale(1000.0)
+            e.addComponent(self.text_mat)
+            e.addComponent(e_transform)
+            e.addComponent(e_text)
             e.setParent(self.cardinals)
-        self.cardinals.setParent(self.rootEntity)
+        self.cardinals.setParent(self.root_entity)
 
     def make_stars(self):
         """
@@ -464,9 +515,9 @@ class World3D():
         self.skyJ2000.addComponent(self.transformJ2000)
 
         # Define star material for nice rendering
-        starmat = QDiffuseSpecularMaterial()
-        starmat.setAmbient(QColor(255,255,224))
-        starmat.setDiffuse(QColor(255,255,224))
+        star_mat = QDiffuseSpecularMaterial()
+        star_mat.setAmbient(QColor(255,255,224))
+        star_mat.setDiffuse(QColor(255,255,224))
 
         # Loads star catalog and render on the sky parent object
         stars = load_bright_star_5('ScopeSimulator/data/bsc5.dat.gz', True)
@@ -481,10 +532,10 @@ class World3D():
             assume_sorted=False)
         for star in stars:
             e = QEntity()
-            eStar = QSphereMesh()
-            eradius = mag_to_radius(float(star['mag'])) 
-            eStar.setRadius(eradius)
-            eTransform = QTransform()
+            e_star = QSphereMesh()
+            e_radius = mag_to_radius(float(star['mag'])) 
+            e_star.setRadius(e_radius)
+            e_transform = QTransform()
             # project celestial coordinates in radians on 3d cartesian
             # coordinates in sky2000 frame, assuming:
             # x axis: should be center to vernal point
@@ -499,10 +550,10 @@ class World3D():
             ez = ((World3D._sky_radius -150.0) * np.sin(star['ra']) *
                   np.cos(star['de']))
             #print(ex, ey ,ez)
-            eTransform.setTranslation(QVector3D(ex, ez, ey))
-            e.addComponent(starmat)
-            e.addComponent(eTransform)
-            e.addComponent(eStar)
+            e_transform.setTranslation(QVector3D(ex, ez, ey))
+            e.addComponent(star_mat)
+            e.addComponent(e_transform)
+            e.addComponent(e_star)
             e.setParent(self.skyJ2000)
 
         self.skyJ2000.setParent(self.sky_entity)
@@ -519,17 +570,17 @@ class World3D():
         self.skyJ2000.addComponent(self.transformJ2000)
         radius_mag = [150.0, 100.0, 70.0, 50, 40, 30.0]
         stars = load_bright_star_5('ScopeSimulator/data/bsc5.dat.gz', True)
-        starmat = StarMaterial()
-        #starmat = QDiffuseSpecularMaterial()
-        #starmat.setAmbient(QColor(255,255,224))
-        #starmat.setDiffuse(QColor(255,255,224))
-        print('Star Effect', starmat.effect())
-        print('Star Technique', starmat.effect().techniques()[0])
-        self.skyJ2000.addComponent(starmat)
+        star_mat = StarMaterial()
+        #star_mat = QDiffuseSpecularMaterial()
+        #star_mat.setAmbient(QColor(255,255,224))
+        #star_mat.setDiffuse(QColor(255,255,224))
+        print('Star Effect', star_mat.effect())
+        print('Star Technique', star_mat.effect().techniques()[0])
+        self.skyJ2000.addComponent(star_mat)
         #points = QByteArray(3 * FLOAT_SIZE * len(stars), 'b\x00')
         points = QByteArray()
         for star in stars:
-            eradius = (radius_mag[int(star['mag'] - 1)] if
+            e_radius = (radius_mag[int(star['mag'] - 1)] if
                        int(star['mag'] - 1) < 6 else 20.0)
             ex = ((World3D._sky_radius - 150.0) * np.cos(star['ra']) *
                   np.cos(star['de']))
@@ -539,12 +590,12 @@ class World3D():
             points.append(struct.pack('f', ex))
             points.append(struct.pack('f', ez))
             points.append(struct.pack('f', ey))
-            points.append(struct.pack('f', eradius))
+            points.append(struct.pack('f', e_radius))
         pointGeometryRenderer = QGeometryRenderer()
         pointGeometry = PointGeometry(pointGeometryRenderer)
-        pointGeometry.vertexBuffer.setData(points)
+        pointGeometry.vertex_buffer.setData(points)
         pointGeometry.positionAttribute.setCount(len(stars))
-        pointGeometry.radiusAttribute.setCount(len(stars))
+        pointGeometry.radius_attribute.setCount(len(stars))
         pointGeometryRenderer.setPrimitiveType(QGeometryRenderer.Points)
         pointGeometryRenderer.setGeometry(pointGeometry)
         #pointGeometryRenderer.setFirstInstance(0)
@@ -576,18 +627,18 @@ class World3D():
             eclmat.setDiffuse(QColor(255,20,20))
             e = QEntity()
             ePole = QSphereMesh()
-            eradius = 300.0
-            ePole.setRadius(eradius)
-            eTransform = QTransform()
+            e_radius = 300.0
+            ePole.setRadius(e_radius)
+            e_transform = QTransform()
             ex = ((World3D._sky_radius - 150.0) * math.cos(math.radians(0.0)) *
                   math.cos(math.radians(90.0)))
             ey = ((World3D._sky_radius -150.0) * math.sin(math.radians(90.0)))
             ez = ((World3D._sky_radius -150.0) * math.sin(math.radians(0.0)) *
                   math.cos(math.radians(90.0)))
             #print(ex, ey ,ez)
-            eTransform.setTranslation(QVector3D(ex, ez, ey))
+            e_transform.setTranslation(QVector3D(ex, ez, ey))
             e.addComponent(eclmat)
-            e.addComponent(eTransform)
+            e.addComponent(e_transform)
             e.addComponent(ePole)
             e.setParent(skyEcliptic)
             skyEcliptic.setParent(self.sky_entity)
@@ -665,9 +716,9 @@ if __name__ == '__main__':
     #camera.lens().setOrthographicProjection(-50000,50000, 0, 50000, 0, 100000.0)
     camera.setPosition(QVector3D(0.0, 750.0, 3000.0))
     camera.setViewCenter(QVector3D(0.0, 0.0, 0.0))
-    camController = QOrbitCameraController(world.rootEntity)
+    camController = QOrbitCameraController(world.root_entity)
     camController.setLinearSpeed(500.0)
     camController.setLookSpeed(120.0)
     camController.setCamera(camera)
-    view.setRootEntity(world.rootEntity)
+    view.setRootEntity(world.root_entity)
     app.exec_()

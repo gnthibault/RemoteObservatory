@@ -119,7 +119,7 @@ class GuiLoop():
         self.main_window = MainWindow(view3D=view3D)
 
         self.main_window.view3D.set_coord(self.gps_coord)
-        self.main_window.view3D.initialiseCamera()
+        self.main_window.view3D.initialise_camera()
         self.main_window.view3D.window.show()
 
         # Everything ends when program is over
