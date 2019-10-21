@@ -52,10 +52,10 @@ class View3D(QObject):
         '''
         latitude = coord['latitude']
         longitude = coord['longitude']
-        self.world.setLatitude(latitude)
-        self.model.setLatitude(latitude)
-        self.world.setLongitude(longitude)
-        self.model.setLongitude(longitude)
+        self.world.set_latitude(latitude)
+        self.model.set_latitude(latitude)
+        self.world.set_longitude(longitude)
+        self.model.set_longitude(longitude)
 
     #def setTelescope(self, gdi):
         #if self.scope is not None:

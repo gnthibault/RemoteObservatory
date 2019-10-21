@@ -27,9 +27,8 @@ from ScopeSimulator import World3D
 
 # Local stuff : Observatory
 from Observatory.ShedObservatory import ShedObservatory
-
-# Local stuff : Service
 from Service.NTPTimeService import NTPTimeService
+from ScopeSimulator.View3D import View3D
 
 class MainWindow(QMainWindow):
     def __init__(self, view3D):
@@ -105,7 +104,7 @@ class MainWindow(QMainWindow):
 
 class GuiLoop():
 
-    def __init__(self, gps_coord, mount, observatory, serv_time):
+    def __init__(self, gps_coord, observatory, serv_time):
         self.gps_coord = gps_coord
         self.observatory = observatory
         self.serv_time = serv_time
@@ -114,7 +113,7 @@ class GuiLoop():
         app = QApplication([])
 
         # Initialize various widgets/views
-        view3D = View3D.View3D(serv_time=self.serv_time)
+        view3D = View3D(serv_time=self.serv_time)
 
         # Now initialize main window
         self.main_window = MainWindow(view3D=view3D)
@@ -125,7 +124,6 @@ class GuiLoop():
 
         # Everything ends when program is over
         status = app.exec_()
-        thread.wait()
         sys.exit(status)
 
     # callback for updating model
@@ -169,5 +167,6 @@ if __name__ == "__main__":
     obs = ShedObservatory()
     serv_time = NTPTimeService()
     gps_coord = obs.getGpsCoordinates()
-    main_loop = GuiLoop(gps_coord, obs, serv_time)
+    main_loop = GuiLoop(gps_coord=gps_coord, observatory=obs,
+                        serv_time=serv_time)
     main_loop.run()

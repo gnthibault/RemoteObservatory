@@ -13,7 +13,7 @@ class BaseService():
       class that are needed by the Base.Base class, such that we avoid circular
       dependency
     """
-    def __init__(self, config = None, logger=None):
+    def __init__(self, config=None, logger=None):
         global _config
         self.logger = logger or logging.getLogger(self.__class__.__name__)
         if _config is None:

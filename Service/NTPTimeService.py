@@ -26,11 +26,11 @@ class NTPTimeService(BaseService):
     '''
     DEFAULT_TIMEZONE_STR = 'Europe/Paris'
 
-    def __init__(self, tz=None, logger=None):
+    def __init__(self, config=None, tz=None):
         """ tz can be obtained by obs.get_time_zone()
         """
 
-        BaseService.__init__(self)
+        BaseService.__init__(self, config=config)
 
         # Get ntp server from config
         cfg = self.config['ntp']
