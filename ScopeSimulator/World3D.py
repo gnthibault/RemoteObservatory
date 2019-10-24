@@ -214,6 +214,17 @@ class World3D():
     def update_sky_transform(self):
         """
            transform the sky entity from reference frame (ground) to celestial
+           We recall how is the sky entity frame defined
+            - x axis: should be center to vernal point
+            - y axis: should be center to 90deg east
+            - z axis: should be center to north celestial pole
+             RA coordinates, seen from north
+             hemisphere, go from vernal (00:00) to east (6:00), ...
+
+           We also recall the main frame definition:
+            - x axis pointing North
+            - y axis pointing Zenith/pole
+            - z axis pointing East
 
            qlatitude is a quaternion that define rotation around
         """
