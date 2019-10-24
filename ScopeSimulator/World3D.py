@@ -3,6 +3,12 @@ import math
 import struct
 import numpy as np
 import scipy.interpolate
+from multiprocessing.pool import ThreadPool
+
+# Astronomy stuff
+from astropy import units as u
+from astropy.coordinates import FK5
+from astropy.coordinates import SkyCoord
 
 # PyQt stuff
 from PyQt5.QtGui import QColor, QVector3D, QImage, QFont
@@ -169,16 +175,14 @@ class World3D():
         # Attach sky frame related elements to sky entity
         self.make_equatorial_grid()
         self.make_stars()
-        #self.make_stars_points()
         #self.make_ecliptic()
 
         # Helps define sky frame relative to ground frame (root entity)
         self.qtime=QQuaternion()
-        self.qlongitude = QQuaternion()
         self.qlatitude = QQuaternion()
         self.set_latitude(90.0)
         self.set_longitude(0.0)
-        self.set_gast(self.get_gast())
+        self.set_celestial_time(self.get_celestial_time())
 
         # Initialize update frequency
         if auto_update:
@@ -193,16 +197,19 @@ class World3D():
         self.celestial_timer.timeout.connect(self.update_celestial_time)
         self.celestial_timer.start()
 
-    def update_celestial_time(self, gast=None):
-        if gast is None:
-            gast = self.gast    
-        self.set_gast(gast)
-
-    def get_gast(self):
-        return self.get_celestial_time()
+    def update_celestial_time(self, celestial_time=None):
+        if celestial_time is None:
+            celestial_time = self.celestial_time
+        self.set_celestial_time(celestial_time)
 
     def get_celestial_time(self):
-        return self.serv_time.get_gast()
+        """
+        Give the AD coordinate of the sky that is at the same location as the
+        sun during spring equinox (when it overlays with vernal point)
+        :return:
+        """
+        return self.serv_time.get_astropy_celestial_time(
+            longitude=self.longitude)
 
     def update_sky_transform(self):
         """
@@ -210,8 +217,7 @@ class World3D():
 
            qlatitude is a quaternion that define rotation around
         """
-        self.sky_transform.setRotation(self.qlatitude * self.qlongitude *
-            self.qtime)
+        self.sky_transform.setRotation(self.qlatitude * self.qtime)
 
     def set_latitude(self, latitude):
         """
@@ -229,7 +235,6 @@ class World3D():
            Displacement to the given latitude coordinate is considered as a
            rotation around z axis: (0,0,1) in the Qt3D frame
         """   
-        self.latitude = latitude
         self.latitude = latitude
         if self.latitude < 0.0:
             angle = 90.0 - abs(self.latitude)
@@ -257,15 +262,11 @@ class World3D():
            Qt3D frame
         """   
         self.longitude = longitude
-        angle = -self.longitude
-        self.qlongitude = QQuaternion.fromAxisAndAngle(QVector3D(0.0, 1.0, 0.0),
-                                                       angle)
         self.update_sky_transform()
 
-    def set_gast(self, gast):
-        #print('Setting GAST', gast)
-        self.gast = gast
-        angle = -self.gast * 360.0 / 24.0
+    def set_celestial_time(self, celestial_time):
+        self.celestial_time = celestial_time
+        angle = float(self.celestial_time.to(u.degree))
         self.qtime = QQuaternion.fromAxisAndAngle(QVector3D(0.0, 1.0, 0.0),
                                                   angle)
         self.update_sky_transform()
@@ -505,15 +506,6 @@ class World3D():
         # define a QObject to attach the stars to
         self.skyJ2000 = QEntity()
 
-        # define J2000 to JNow transform matrix, TODO we might use astropy ?
-        jd = self.serv_time.get_jd()
-        self.transformJ2000 = QTransform()
-        m = self.mat_precess_nut(jd)
-        qPrecessNut = QQuaternion.fromRotationMatrix(m)
-        qqt=QQuaternion.fromRotationMatrix(World3D._m_celestial_qt)
-        self.transformJ2000.setRotation(qqt*qPrecessNut)
-        self.skyJ2000.addComponent(self.transformJ2000)
-
         # Define star material for nice rendering
         star_mat = QDiffuseSpecularMaterial()
         star_mat.setAmbient(QColor(255,255,224))
@@ -521,13 +513,14 @@ class World3D():
 
         # Loads star catalog and render on the sky parent object
         stars = load_bright_star_5('ScopeSimulator/data/bsc5.dat.gz', True)
-        radius_mag = [150.0, 100.0, 70.0, 50, 40, 30.0]
+        stars = self.j2k_to_jnow(stars)
+        radius_mag = [200, 150, 75, 50, 40, 30, 20]
         mag_to_radius = scipy.interpolate.interp1d(
             range(1,8),
-            [150.0, 100.0, 70.0, 50, 40, 30.0, 20.0],
+            radius_mag,
             axis=0,
             kind='quadratic',
-            fill_value=(150,20),
+            fill_value=(max(radius_mag), min(radius_mag)),
             bounds_error=False,
             assume_sorted=False)
         for star in stars:
@@ -539,17 +532,16 @@ class World3D():
             # project celestial coordinates in radians on 3d cartesian
             # coordinates in sky2000 frame, assuming:
             # x axis: should be center to vernal point
-            # y axis: should be center to 90deg west
-            # z axis: should be center to zenith
-            # TODO: there is an issue there, as RA coordinates, seen from north
-            # hemisphere, go from vernal (00:00) to west (6:00), ...
+            # y axis: should be center to 90deg east
+            # z axis: should be center to north celestial pole
+            # RA coordinates, seen from north
+            # hemisphere, go from vernal (00:00) to east (6:00), ...
             # which is the contrary of radians
             ex = ((World3D._sky_radius - 150.0) * np.cos(star['ra']) *
                   np.cos(star['de']))
-            ey = ((World3D._sky_radius -150.0) * np.sin(star['de']))
-            ez = ((World3D._sky_radius -150.0) * np.sin(star['ra']) *
+            ey = ((World3D._sky_radius -150.0) * np.sin(star['ra']) *
                   np.cos(star['de']))
-            #print(ex, ey ,ez)
+            ez = ((World3D._sky_radius - 150.0) * np.sin(star['de']))
             e_transform.setTranslation(QVector3D(ex, ez, ey))
             e.addComponent(star_mat)
             e.addComponent(e_transform)
@@ -558,16 +550,37 @@ class World3D():
 
         self.skyJ2000.setParent(self.sky_entity)
 
-    def make_stars_points(self):
+    def j2k_to_jnow(self, coords):
+        now = self.serv_time.getAstropyTimeFromUTC()
+
+        def convert_from_j2k_to_jnow(coord):
+            coord_j2k = SkyCoord(ra=coord['ra_degres'] * u.degree,
+                                 dec=coord['de_degres'] * u.degree,
+                                 frame='icrs',
+                                 equinox='J2000.0')
+            fk5_now = FK5(equinox=now)
+            coord_jnow = coord_j2k.transform_to(fk5_now)
+            coord['ra'] = coord_jnow.ra.radian
+            coord['de'] = coord_jnow.dec.radian
+            coord['ra_degres'] = coord_jnow.ra.degree
+            coord['de_degres'] = coord_jnow.dec.degree
+            return coord
+
+        with ThreadPool(4) as p:
+            p.map(convert_from_j2k_to_jnow, coords)
+
+        return coords
+
+    def make_stars_deprecated(self):
         jd = self.serv_time.get_jd()
         self.skyJ2000 = QEntity()
-        self.transformJ2000 = QTransform()
-        m = self.mat_precess_nut(jd)
-        qPrecessNut = QQuaternion.fromRotationMatrix(m)
-        qqt=QQuaternion.fromRotationMatrix(World3D._m_celestial_qt)
-        self.transformJ2000.setRotation(qqt*qPrecessNut)
+        #self.transformJ2000 = QTransform()
+        #m = self.mat_precess_nut(jd)
+        #qPrecessNut = QQuaternion.fromRotationMatrix(m)
+        #qqt=QQuaternion.fromRotationMatrix(World3D._m_celestial_qt)
+        #self.transformJ2000.setRotation(qqt*qPrecessNut)
         #self.transformJ2000.setRotation(qqt)
-        self.skyJ2000.addComponent(self.transformJ2000)
+        #self.skyJ2000.addComponent(self.transformJ2000)
         radius_mag = [150.0, 100.0, 70.0, 50, 40, 30.0]
         stars = load_bright_star_5('ScopeSimulator/data/bsc5.dat.gz', True)
         star_mat = StarMaterial()
@@ -604,7 +617,7 @@ class World3D():
         self.skyJ2000.addComponent(pointGeometryRenderer)
         self.skyJ2000.setParent(self.sky_entity)
 
-    def make_ecliptic(self):
+    def make_ecliptic_deprecated(self):
         """
            Ecliptic is the plane that contains earth orbit around the sun
            Most of the planetary objects are projected on a position close to
@@ -643,7 +656,7 @@ class World3D():
             e.setParent(skyEcliptic)
             skyEcliptic.setParent(self.sky_entity)
 
-    def mat_precess_nut(self, jd):
+    def mat_precess_nut_deprecated(self, jd):
         """
            Matrix that describes the transformation to be applied to J2000
            coordinates in order to be turned into JNow celestial coordinates
@@ -663,7 +676,7 @@ class World3D():
                        1.0 - b*(x*x+y*y)])
         return m
 
-    def mat_cio_locator(self, jd):
+    def mat_cio_locator_deprecated(self, jd):
         """
             TODO TN: wtf is that thing ?
         """
@@ -699,7 +712,7 @@ class World3D():
         m = QMatrix3x3([np.cos(s), -np.sin(s), 0.0, np.sin(s),
                         np.cos(s), 0, 0, 0, 1.0])
         return m
-        
+
 if __name__ == '__main__':
     from PyQt5.QtWidgets import QApplication
     from PyQt5.QtGui import QVector3D

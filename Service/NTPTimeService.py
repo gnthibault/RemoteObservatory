@@ -135,18 +135,16 @@ class NTPTimeService(BaseService):
         next_noon = next_midnight + timedelta(hours=12)
         return self.convert_to_utc_time(next_noon)
 
-    def get_astropy_gast(self):
+    def get_astropy_celestial_time(self, longitude=None):
         """ returns approximate sidereal time
         """
+        if longitude is None:
+            longitude = self.gps['longitude']*u.deg
         utc = self.getAstropyTimeFromUTC()
-        # TODO GAST IS IMPORTANT
         if self.gps is not None:
             return utc.sidereal_time( kind='apparent',
-                longitude=self.gps['longitude']*u.deg)
+                longitude=longitude)
         return utc.sidereal_time(kind='apparent')
-
-    def get_gast(self):
-        return float(self.get_astropy_gast()/u.hourangle)
 
     def get_jd(self):
         return self.getAstropyTimeFromUTC().jd
