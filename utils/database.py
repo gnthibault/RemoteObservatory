@@ -157,7 +157,7 @@ def get_shared_mongo_client(host, port, connect):
 def create_storage_obj(collection, data, obj_id=None,
                        serv_time=NTPTimeService()):
     """Returns the object to be stored in the database"""
-    obj = dict(data=data, type=collection, date=serv_time.getUTCFromNTP())
+    obj = dict(data=data, type=collection, date=serv_time.get_utc_from_ntp())
     if obj_id:
         obj['_id'] = obj_id
     return obj

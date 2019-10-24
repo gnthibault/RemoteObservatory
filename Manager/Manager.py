@@ -106,7 +106,7 @@ class Manager(Base):
     def is_dark(self):
         horizon = -18 * u.degree
 
-        t0 = self.serv_time.getAstropyTimeFromUTC()
+        t0 = self.serv_time.get_astropy_time_from_utc()
         is_dark = self.observer.is_night(t0, horizon=horizon)
 
         if not is_dark:
@@ -118,7 +118,7 @@ class Manager(Base):
     @property
     def sidereal_time(self):
         return self.observer.local_sidereal_time(
-            self.serv_time.getAstropyTimeFromUTC())
+            self.serv_time.get_astropy_time_from_utc())
 
     @property
     def primary_camera(self):
@@ -159,8 +159,8 @@ class Manager(Base):
         """
         status = {}
         try:
-            t = self.serv_time.getAstropyTimeFromUTC()
-            local_time = str(self.serv_time.getLocalTimeFromNTP())
+            t = self.serv_time.get_astropy_time_from_utc()
+            local_time = str(self.serv_time.get_local_time_from_ntp())
 
             if self.mount.is_initialized:
                 status['mount'] = self.mount.status()
@@ -400,9 +400,9 @@ class Manager(Base):
                         dec_direction), '{:05.0f}'.format(dec_ms))
 
                 # Adjust tracking for up to 30 seconds then fail if not done.
-                start_tracking_time = self.serv_time.getAstropyTimeFromUTC()
+                start_tracking_time = self.serv_time.get_astropy_time_from_utc()
                 while self.mount.is_tracking is False:
-                    if (self.serv_time.getAstropyTimeFromUTC() -
+                    if (self.serv_time.get_astropy_time_from_utc() -
                             start_tracking_time).sec > 30:
                         raise Exception('Trying to adjust Dec tracking for '
                                         'more than 30 seconds')
@@ -422,9 +422,9 @@ class Manager(Base):
                         ra_direction), '{:05.0f}'.format(ra_ms))
 
                 # Adjust tracking for up to 30 seconds then fail if not done.
-                start_tracking_time = self.serv_time.getAstropyTimeFromUTC()
+                start_tracking_time = self.serv_time.get_astropy_time_from_utc()
                 while self.mount.is_tracking is False:
-                    if (self.serv_time.getAstropyTimeFromUTC() - 
+                    if (self.serv_time.get_astropy_time_from_utc() - 
                             start_tracking_time).sec > 30:
                         raise Exception('Trying to adjust RA tracking for '
                                         'more than 30 seconds')
@@ -467,7 +467,7 @@ class Manager(Base):
         # fetching various informations for the new image
         self.logger.debug("Getting headers for : {}".format(observation))
         target = observation.target
-        t0 = self.serv_time.getAstropyTimeFromUTC()
+        t0 = self.serv_time.get_astropy_time_from_utc()
         moon = get_moon(t0, self.observer.location)
         mnt_coord = self.mount.get_current_coordinates()
 

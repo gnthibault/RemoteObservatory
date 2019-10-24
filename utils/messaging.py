@@ -155,7 +155,7 @@ class PanMessaging(object):
         assert channel > '', self.logger.warning("Cannot send blank channel")
 
         if isinstance(message, str):
-            current_time = self.serv_time.getUTCFromNTP()
+            current_time = self.serv_time.get_utc_from_ntp()
             message = {
                 'message': message,
                 'timestamp': current_time.isoformat().replace(

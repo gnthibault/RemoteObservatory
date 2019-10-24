@@ -67,7 +67,7 @@ class DummyCloudSensor(Base):
         data['rain_condition'] = 'Rain_condition'
 
         # Store current weather
-        data['date'] = self.serv_time.getUTCFromNTP()
+        data['date'] = self.serv_time.get_utc_from_ntp()
         self.weather_entries.append(data)
 
         # If we get over a certain amount of entries, trim the earliest

@@ -18,7 +18,7 @@ from astropy.time import Time as ATime
 # Local stuff
 from Service.BaseService import BaseService
 
-class NTPTimeService(BaseService):
+class NTPTimeService(BaseService):_
     ''' NTPTime Service: one of the only service class that does not inherit
         from Base, because Base needs a time service. That would generate a
         circular dependency.
@@ -76,14 +76,14 @@ class NTPTimeService(BaseService):
         else:
             return pytz.timezone(self.DEFAULT_TIMEZONE_STR)
 
-    def getTimeStampFromNTP(self):
+    def get_time_stamp_from_ntp(self):
         cli = ntplib.NTPClient()
         res = cli.request(self.ntpserver, version=3, timeout=5)
         return res.tx_time
 
-    def getUTCFromNTP(self):
+    def get_utc_from_ntp(self):
         try:
-            res = self.getTimeStampFromNTP()
+            res = self.get_time_stamp_from_ntp()
             utc = datetime.utcfromtimestamp(res)
             self.logger.debug('NTP Time Service got UTC from server {} : {}'
                               .format(self.ntpserver,utc))
@@ -95,15 +95,15 @@ class NTPTimeService(BaseService):
                 .format(self.ntpserver,e,utc))
         return pytz.utc.localize(utc, is_dst=None)
 
-    def getLocalTimeFromNTP(self):
-        return self.convert_to_local_time(self.getUTCFromNTP())
+    def get_local_time_from_ntp(self):
+        return self.convert_to_local_time(self.get_utc_from_ntp())
 
-    def getLocalDateFromNTP(self):
-        return self.getLocalTimeFromNTP().date()
+    def get_local_date_from_ntp(self):
+        return self.get_local_time_from_ntp().date()
 
-    def getAstropyTimeFromUTC(self):
-        return ATime(self.getUTCFromNTP())
-        #return ATime(self.getUTCFromNTP(),
+    def get_astropy_time_from_utc(self):
+        return ATime(self.get_utc_from_ntp())
+        #return ATime(self.get_utc_from_ntp(),
         #    location=self.obs.getAstropyEarthLocation())
 
     def convert_to_local_time(self, utc_time):
@@ -122,15 +122,15 @@ class NTPTimeService(BaseService):
             local_dt = copy.deepcopy(local_time)
         return local_dt.astimezone(pytz.utc)
 
-    def getNextLocalMidnightInUTC(self, target_date=None):
+    def get_next_local_midnight_in_utc(self, target_date=None):
         if target_date is None:
-            target_date = self.getLocalTimeFromNTP().date()
+            target_date = self.get_local_time_from_ntp().date()
         midnight = datetime(2000,1,1).time()
         next_midnight = (datetime.combine(target_date, midnight) +
                          timedelta(days=1))
         return self.convert_to_utc_time(next_midnight)
 
-    def getNextNoonAfterNextMidnightInUTC(self, target_date=None):
+    def get_next_noon_after_next_midnight_in_utc(self, target_date=None):
         next_midnight = self.getNextMidnightInUTC(target_date)
         next_noon = next_midnight + timedelta(hours=12)
         return self.convert_to_utc_time(next_noon)
@@ -140,20 +140,20 @@ class NTPTimeService(BaseService):
         """
         if longitude is None:
             longitude = self.gps['longitude']*u.deg
-        utc = self.getAstropyTimeFromUTC()
+        utc = self.get_astropy_time_from_utc()
         if self.gps is not None:
             return utc.sidereal_time( kind='apparent',
                 longitude=longitude)
         return utc.sidereal_time(kind='apparent')
 
     def get_jd(self):
-        return self.getAstropyTimeFromUTC().jd
+        return self.get_astropy_time_from_utc().jd
 
     def flat_time(self):
         """
             Given an astropy Time, flatten to have no extra chars besides
             integers
         """
-        t = self.getAstropyTimeFromUTC()
+        t = self.get_astropy_time_from_utc()
         return t.isot.replace('-', '').replace(':', '').split('.')[0]
 

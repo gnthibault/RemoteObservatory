@@ -320,7 +320,7 @@ class AbstractCamera(Base):
 
         self.db.insert('observations', {
             'data': info,
-            'date': self.serv_time.getUTCFromNTP(),
+            'date': self.serv_time.get_utc_from_ntp(),
             'sequence_id': seq_id,
         })
 
@@ -364,7 +364,7 @@ class AbstractCamera(Base):
 
         self.db.insert('calibrations', {
             'data': info,
-            'date': self.serv_time.getUTCFromNTP(),
+            'date': self.serv_time.get_utc_from_ntp(),
             'sequence_id': seq_id,
         })
 

@@ -52,7 +52,7 @@ if __name__ == '__main__':
     #configFileName='test.json')
 
     # Precise time + duration
-    start = servTime.getUTCFromNTP().date()
+    start = servTime.get_utc_from_ntp().date()
     duration = 12
     obs_planner.init_schedule(start_time=start, duration_hour=duration)
     obs_planner.showObservationPlan(start_time=start, duration_hour=duration,

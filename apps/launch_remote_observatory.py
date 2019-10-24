@@ -382,7 +382,7 @@ class RemoteObservatoryFSM(StateMachine, Base):
 
             is_safe = record['data'].get('safe', False)
             timestamp = record['date']
-            age = (self.manager.serv_time.getUTCFromNTP() -
+            age = (self.manager.serv_time.get_utc_from_ntp() -
                    timestamp).total_seconds()
             self.logger.debug(
                 "Weather Safety: {} [{:.0f} sec old - {}]".format(is_safe,

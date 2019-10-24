@@ -60,7 +60,7 @@ class FitsWriter(Base):
                 hdr = fits[0].header
             
             if self.servTime is not None:
-                hdr['UTCTIME'] = (str(self.servTime.getUTCFromNTP()), 'NC')
+                hdr['UTCTIME'] = (str(self.servTime.get_utc_from_ntp()), 'NC')
             if self.filterWheel is not None:
                 filterName = self.filterWheel.currentFilter()[1]
                 hdr['FILTER'] = (filterName, 'NC')

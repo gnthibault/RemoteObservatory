@@ -197,7 +197,7 @@ class AbstractMount(Base):
         """
         self.logger.debug('Setting park position')
 
-        park_time = self.self.serv_time.getAstropyTimeFromUTC()
+        park_time = self.self.serv_time.get_astropy_time_from_utc()
         park_time.location = self.location
 
         lst = park_time.sidereal_time('apparent')

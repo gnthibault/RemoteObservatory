@@ -551,7 +551,7 @@ class World3D():
         self.skyJ2000.setParent(self.sky_entity)
 
     def j2k_to_jnow(self, coords):
-        now = self.serv_time.getAstropyTimeFromUTC()
+        now = self.serv_time.get_astropy_time_from_utc()
 
         def convert_from_j2k_to_jnow(coord):
             coord_j2k = SkyCoord(ra=coord['ra_degres'] * u.degree,

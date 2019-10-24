@@ -121,10 +121,10 @@ class AltazPlannerWidget(QFrame, Base):
 
     def show_current_time(self):
         #with QMutexLocker(self.mutex) as mutexLocker:
-        cur_time = self.serv_time.getUTCFromNTP()
+        cur_time = self.serv_time.get_utc_from_ntp()
         #TODO TN: of course this has to be modified accordingly
         tm = self.serv_time.convert_to_local_time(
-            self.serv_time.getNextLocalMidnightInUTC())
+            self.serv_time.get_next_local_midnight_in_utc())
         tm = tm + timedelta(hours=-5)+timedelta(minutes=cur_time.second)
         #mutexLocker = QMutexLocker(self.mutex)
         self.obs_planner.annotate_time_point(time_point=tm,

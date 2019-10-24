@@ -35,19 +35,19 @@ if __name__ == '__main__':
     obs_planner.showObservationPlan(show_plot=True)
 
     # can also work for specific date
-    obs_planner.init_schedule(start_time=servTime.getUTCFromNTP().date())
-    obs_planner.showObservationPlan(start_time=servTime.getUTCFromNTP().date(),
+    obs_planner.init_schedule(start_time=servTime.get_utc_from_ntp().date())
+    obs_planner.showObservationPlan(start_time=servTime.get_utc_from_ntp().date(),
                                     show_plot=True)
 
     # specific date + duration
-    obs_planner.init_schedule(start_time=servTime.getUTCFromNTP().date(),
+    obs_planner.init_schedule(start_time=servTime.get_utc_from_ntp().date(),
                               duration_hour=6)
-    obs_planner.showObservationPlan(start_time=servTime.getUTCFromNTP().date(),
+    obs_planner.showObservationPlan(start_time=servTime.get_utc_from_ntp().date(),
                               duration_hour=6, show_plot=True)
 
     # or even more specific precise time + duration
-    obs_planner.init_schedule(start_time=servTime.getUTCFromNTP(),
+    obs_planner.init_schedule(start_time=servTime.get_utc_from_ntp(),
                               duration_hour=24)
-    obs_planner.showObservationPlan(start_time=servTime.getUTCFromNTP(),
+    obs_planner.showObservationPlan(start_time=servTime.get_utc_from_ntp(),
                               duration_hour=24, show_plot=True)
 
