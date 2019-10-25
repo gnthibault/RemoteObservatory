@@ -28,7 +28,15 @@
 # …
 # [[outputs.influxdb]]
 # urls = ["http://localhost:8086"]
-# database = "influx_db"
+# database = "remoteobservatory"
 # username = "influx_user"
 # password = "influx_password"
 # …
+
+# One can also use environment variables
+# [[outputs.influxdb]]
+#  urls = ["${INFLUX_URL}"]
+#  skip_database_creation = ${INFLUX_SKIP_DATABASE_CREATION}
+#  password = "${INFLUX_PASSWORD}"
+
+# for MQTT:

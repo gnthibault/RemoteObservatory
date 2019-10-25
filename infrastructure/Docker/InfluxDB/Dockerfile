@@ -4,19 +4,18 @@
 
 # Then run the configuration with:
 # docker run \
-# -p 8083:8083 \
 # -p 8086:8086 \
 # -d \
 # -v $PWD/influxdb.conf:/etc/influxdb/influxdb.conf:ro \
+#  -v /home/data:/var/lib/influxdb \
 # -e "INFLUXDB_REPORTING_DISABLED=true" \
 # -e "INFLUXDB_DATA_QUERY_LOG_ENABLED=false" \
-# -e "INFLUXDB_ADMIN_ENABLED=true" \
 # influxdb -config /etc/influxdb/influxdb.conf
 
 
 # Example of how to use it:
 # Creating a DB named mydb:
-# curl -G http://localhost:8086/query --data-urlencode "q=CREATE DATABASE mydb"
+# curl -G http://localhost:8086/query --data-urlencode "q=CREATE DATABASE remoteobservatory"
 # Inserting into the DB:
 # curl -i -XPOST 'http://localhost:8086/write?db=mydb' --data-binary 'cpu_load_short,host=server01,region=us-west value=0.64 1434055562000000000'
 
