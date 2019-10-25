@@ -18,12 +18,12 @@ from astropy.time import Time as ATime
 # Local stuff
 from Service.BaseService import BaseService
 
-class NTPTimeService(BaseService):_
-    ''' NTPTime Service: one of the only service class that does not inherit
+class NTPTimeService(BaseService):
+    """ NTPTime Service: one of the only service class that does not inherit
         from Base, because Base needs a time service. That would generate a
         circular dependency.
         Just in case, we designed a BaseService for this purpose
-    '''
+    """
     DEFAULT_TIMEZONE_STR = 'Europe/Paris'
 
     def __init__(self, config=None, tz=None):
