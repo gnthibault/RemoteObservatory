@@ -1,4 +1,7 @@
 # RemoteObservatory
+[![astropy](http://img.shields.io/badge/powered%20by-AstroPy-orange.svg?style=flat)](http://www.astropy.org/)
+
+
 Another astronomical observatory manager.
 This project either uses, or is directly inspired by:
 
@@ -59,8 +62,6 @@ pip install dash dash-core-components dash-html-components dash-renderer plotly
 For now, RemoteObservatory uses some web service to acquire data, so ensure that you have a json file containing the key for each API in your home directory:
   * For WUG, get your key [here](https://www.wunderground.com/weather/api/) and store it in your home directory inside a .wug.json file
   * For nova (astrometry.net), get your key at [here](http://nova.astrometry.net/api_help) and store it in your home directory inside a .nova.json file
-### PSFeX (not needed)
-sudo apt-get install psfex sextractor
 ### Arduino capture
 PYTHONPATH=. python3 ./apps/launch_arduino_capture.py
 

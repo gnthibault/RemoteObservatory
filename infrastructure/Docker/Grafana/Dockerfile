@@ -8,7 +8,7 @@
 # -d \
 # --rm \
 # -p 3000:3000 \
-# --name=grafana \
+# --name grafana-remoteobservatory \
 # -e "GF_INSTALL_PLUGINS=grafana-clock-panel,grafana-simple-json-datasource" \
 # -e "GF_INSTALL_PLUGINS=http://plugin-domain.com/my-custom-plugin.zip;custom-plugin" \
 # -e "GF_SERVER_ROOT_URL=http://grafana.server.name" \

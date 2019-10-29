@@ -6,8 +6,9 @@
 # docker run \
 # -p 8086:8086 \
 # -d \
+# --name influxdb-remoteobservatory \
 # -v $PWD/influxdb.conf:/etc/influxdb/influxdb.conf:ro \
-#  -v /home/data:/var/lib/influxdb \
+# -v /home/data:/var/lib/influxdb \
 # -e "INFLUXDB_REPORTING_DISABLED=true" \
 # -e "INFLUXDB_DATA_QUERY_LOG_ENABLED=false" \
 # influxdb -config /etc/influxdb/influxdb.conf

@@ -277,7 +277,7 @@ class World3D():
 
     def set_celestial_time(self, celestial_time):
         self.celestial_time = celestial_time
-        angle = float(self.celestial_time.to(u.degree))
+        angle = float(self.celestial_time.to(u.degree).value)
         self.qtime = QQuaternion.fromAxisAndAngle(QVector3D(0.0, 1.0, 0.0),
                                                   angle)
         self.update_sky_transform()

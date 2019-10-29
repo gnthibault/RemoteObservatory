@@ -4,6 +4,7 @@
 # Then run the configuration with:
 # docker run \
 # -d \
+# --name telegraf-remoteobservatory \
 # -v $PWD/telegraf.conf:/etc/telegraf/telegraf.conf:ro \
 # telegraf
 
