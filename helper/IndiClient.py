@@ -37,9 +37,12 @@ class IndiClient(PyIndi.BaseClient, Base):
       self.remoteHost = config['indi_host']
       self.remotePort = int(config['indi_port'])
 
-      self.setServer(self.remoteHost,self.remotePort)  
+      self.setServer(self.remoteHost,self.remotePort)
+
       self.logger.debug('Indi Client, remote host is: {} : {}'.format(
                         self.getHost(),self.getPort()))
+      if connect_on_create:
+          self.connect()
 
       # Finished configuring
       self.logger.debug('Configured Indi Client successfully')

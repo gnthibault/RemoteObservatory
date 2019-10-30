@@ -61,7 +61,7 @@ class IndiCamera(IndiDevice):
             self.connect()
 
         # Frame Blob: reference that will be used to receive binary
-        self.frameBlob = None
+        self.frame_blob = None
 
         # Default exposureTime, gain
         self.exp_time_sec=5
@@ -97,7 +97,7 @@ class IndiCamera(IndiDevice):
         self.logger.debug('Indi client will register to server in order to '
                           'receive blob CCD1 when it is ready')
         self.indi_client.setBLOBMode(PyIndi.B_ALSO, self.device_name, 'CCD1')
-        self.frameBlob=self.get_prop(propName='CCD1', propType='blob')
+        self.frame_blob=self.get_prop(propName='CCD1', propType='blob')
 
     def synchronizeWithImageReception(self):
         try:
@@ -113,9 +113,9 @@ class IndiCamera(IndiDevice):
     def getReceivedImage(self):
         try:
             ret = []
-            self.logger.debug('getReceivedImage frameBlob: {}'.format(
-                self.frameBlob))
-            for blob in self.frameBlob:
+            self.logger.debug('getReceivedImage frame_blob: {}'.format(
+                self.frame_blob))
+            for blob in self.frame_blob:
                 self.logger.debug('Indi camera, processing blob with name: {},'
                                    ', size: {}, format: {}'.format(
                                    blob.name,blob.size,blob.format))

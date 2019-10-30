@@ -29,12 +29,13 @@ class IndiASI120MCCamera(IndiCamera):
         dyn = self.get_dynamic()
         max_dyn = self.get_maximum_dynamic()
         if dyn != max_dyn:
-            self.logger.warn('Camera {} using format {} with dynamic {} although it is capable '
-                             'of {}. Trying to set maximum bit depth'.format(self.name,
-                                 self.get_current_format(), dyn, max_dyn))
-            self.set_switch('CCD_VIDEO_FORMAT', ['ASI_IMG_RAW16'])
-            self.logger.info('Now camera {} has format {} allowing for dynamic {}'.format(
-                self.name, self.get_current_format(), self.get_dynamic()))
+            self.logger.warning(f"Camera {self.name} using format "
+                f"{self.get_current_format()} with dynamic {dyn} although it "
+                f"is capable of {max_dyn}. Trying to set maximum bit depth")
+            self.set_switch("CCD_VIDEO_FORMAT", ["ASI_IMG_RAW16"])
+            self.logger.info(f"Now camera {self.name} has format "
+                f"{self.get_current_format()} allowing for dynamic "
+                f"{self.get_dynamic()}")
 
     '''
       Indi CCD related stuff
