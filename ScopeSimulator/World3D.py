@@ -1,9 +1,10 @@
 # Common stuff
-import math
 import struct
+from multiprocessing.pool import ThreadPool
+
+# Numerical stuff
 import numpy as np
 import scipy.interpolate
-from multiprocessing.pool import ThreadPool
 
 # Astronomy stuff
 from astropy import units as u
@@ -26,42 +27,6 @@ from PyQt5.QtSvg import QSvgRenderer
 
 # Local stuff
 from ScopeSimulator.Catalogs import load_bright_star_5
-
-class DPolynom:
-
-    def __init__(self):
-        self.coeffs = None
-
-    def set_coeffs(self, lcoeffs):
-        self.coeffs = lcoeffs
-
-    def eval(self, x):
-        v = 0.0
-        for ic in range(len(self.coeffs) - 1, -1, -1):
-            v = x * v + self.coeffs[ic]
-        return v
-
-    def derive(self):
-        d = DPolynom()
-        dc = [i * self.coeffs[i] for i in range(1, len(self.coeffs))]
-        d.set_coeffs(dc)
-        return d
-
-    def integrate(self):
-        ip = DPolynom()
-        ipc = [self.coeffs[i] / (i + 1) for i in range(len(self.coeffs))]
-        ipc = [0.0] + ipc
-        ip.set_coeffs(ipc)
-        return ip
-
-    def mul(self, other):
-        mp = DPolynom()
-        mpc = [0.0 for i in range(len(self.coeffs) + len(other.coeffs))]
-        for i in range(len(self.coeffs)):
-            for j in range(len(other.coeffs)):
-                mpc[i+j] += self.coeffs[i] * other.coeffs[j]
-        mp.set_coeffs(mpc)
-        return mp
 
 class StarMaterial(QMaterial):
     """
@@ -175,13 +140,12 @@ class World3D():
         # Attach sky frame related elements to sky entity
         self.make_equatorial_grid()
         self.make_stars()
-        #self.make_ecliptic()
 
         # Helps define sky frame relative to ground frame (root entity)
         self.qtime=QQuaternion()
         self.qlatitude = QQuaternion()
-        self.set_latitude(90.0)
-        self.set_longitude(0.0)
+        self.set_latitude(45.0)
+        self.set_longitude(5.0)
         self.set_celestial_time(self.get_celestial_time())
 
         # Initialize update frequency
@@ -276,6 +240,12 @@ class World3D():
         self.update_sky_transform()
 
     def set_celestial_time(self, celestial_time):
+        """
+        We recall that celestial time is
+        :param celestial_time:  astropy.coordinates.angles.Longitude to be
+        simulated
+        :return:
+        """
         self.celestial_time = celestial_time
         angle = float(self.celestial_time.to(u.degree).value)
         self.qtime = QQuaternion.fromAxisAndAngle(QVector3D(0.0, 1.0, 0.0),
@@ -581,148 +551,6 @@ class World3D():
             p.map(convert_from_j2k_to_jnow, coords)
 
         return coords
-
-    def make_stars_deprecated(self):
-        jd = self.serv_time.get_jd()
-        self.skyJ2000 = QEntity()
-        #self.transformJ2000 = QTransform()
-        #m = self.mat_precess_nut(jd)
-        #qPrecessNut = QQuaternion.fromRotationMatrix(m)
-        #qqt=QQuaternion.fromRotationMatrix(World3D._m_celestial_qt)
-        #self.transformJ2000.setRotation(qqt*qPrecessNut)
-        #self.transformJ2000.setRotation(qqt)
-        #self.skyJ2000.addComponent(self.transformJ2000)
-        radius_mag = [150.0, 100.0, 70.0, 50, 40, 30.0]
-        stars = load_bright_star_5('ScopeSimulator/data/bsc5.dat.gz', True)
-        star_mat = StarMaterial()
-        #star_mat = QDiffuseSpecularMaterial()
-        #star_mat.setAmbient(QColor(255,255,224))
-        #star_mat.setDiffuse(QColor(255,255,224))
-        print('Star Effect', star_mat.effect())
-        print('Star Technique', star_mat.effect().techniques()[0])
-        self.skyJ2000.addComponent(star_mat)
-        #points = QByteArray(3 * FLOAT_SIZE * len(stars), 'b\x00')
-        points = QByteArray()
-        for star in stars:
-            e_radius = (radius_mag[int(star['mag'] - 1)] if
-                       int(star['mag'] - 1) < 6 else 20.0)
-            ex = ((World3D._sky_radius - 150.0) * np.cos(star['ra']) *
-                  np.cos(star['de']))
-            ey = (World3D._sky_radius -150.0) * np.sin(star['de'])
-            ez = ((World3D._sky_radius -150.0) * np.sin(star['ra']) *
-                  np.cos(star['de']))
-            points.append(struct.pack('f', ex))
-            points.append(struct.pack('f', ez))
-            points.append(struct.pack('f', ey))
-            points.append(struct.pack('f', e_radius))
-        pointGeometryRenderer = QGeometryRenderer()
-        pointGeometry = PointGeometry(pointGeometryRenderer)
-        pointGeometry.vertex_buffer.setData(points)
-        pointGeometry.positionAttribute.setCount(len(stars))
-        pointGeometry.radius_attribute.setCount(len(stars))
-        pointGeometryRenderer.setPrimitiveType(QGeometryRenderer.Points)
-        pointGeometryRenderer.setGeometry(pointGeometry)
-        #pointGeometryRenderer.setFirstInstance(0)
-        pointGeometryRenderer.setInstanceCount(1)
-        #pointGeometryRenderer.setVertexCount(len(stars))
-        self.skyJ2000.addComponent(pointGeometryRenderer)
-        self.skyJ2000.setParent(self.sky_entity)
-
-    def make_ecliptic_deprecated(self):
-        """
-           Ecliptic is the plane that contains earth orbit around the sun
-           Most of the planetary objects are projected on a position close to
-           the projections of that plane on the sky sphere
-           TODO TN: check and fix that stuff
-        """
-        for j in range(-12, 14):
-            # ecliptic pole
-            skyEcliptic = QEntity()
-            transformEcliptic = QTransform()
-            m = self.mat_precess_nut(2451545.0 + 365.25 * j * 1000)
-            mcio = self.mat_cio_locator(2451545.0 + 365.25 * j * 1000)
-            qEcliptic = QQuaternion.fromRotationMatrix(m)
-            qCIO = QQuaternion.fromRotationMatrix(mcio)
-            qp=QQuaternion.fromRotationMatrix(World3D._m_celestial_qt)
-            transformEcliptic.setRotation(qp*qEcliptic*qCIO)
-            skyEcliptic.addComponent(transformEcliptic)
-            eclmat = QDiffuseSpecularMaterial()
-            eclmat.setAmbient(QColor(255,20,20))
-            eclmat.setDiffuse(QColor(255,20,20))
-            e = QEntity()
-            ePole = QSphereMesh()
-            e_radius = 300.0
-            ePole.setRadius(e_radius)
-            e_transform = QTransform()
-            ex = ((World3D._sky_radius - 150.0) * math.cos(math.radians(0.0)) *
-                  math.cos(math.radians(90.0)))
-            ey = ((World3D._sky_radius -150.0) * math.sin(math.radians(90.0)))
-            ez = ((World3D._sky_radius -150.0) * math.sin(math.radians(0.0)) *
-                  math.cos(math.radians(90.0)))
-            #print(ex, ey ,ez)
-            e_transform.setTranslation(QVector3D(ex, ez, ey))
-            e.addComponent(eclmat)
-            e.addComponent(e_transform)
-            e.addComponent(ePole)
-            e.setParent(skyEcliptic)
-            skyEcliptic.setParent(self.sky_entity)
-
-    def mat_precess_nut_deprecated(self, jd):
-        """
-           Matrix that describes the transformation to be applied to J2000
-           coordinates in order to be turned into JNow celestial coordinates
-           TODO TN: use astropy
-        """
-        J2000 = 2451545.0
-        t = jd - J2000
-        t = t / 36525 #julian century
-        x = -0.016617 + t * (2004.191898 + t * (-0.4297829 + t * (-0.19861834 +
-            t * (0.000007578 + t * (0.0000059285)))))
-        y = -0.006951 + t * (-0.025896 + t * (-22.4072747 + t * (0.00190059 +
-            t * (0.001112526 + t * (0.0000001358)))))
-        x = x * 2.0 * np.pi / (360.0 * 60.0 * 60)
-        y = y * 2.0 * np.pi / (360.0 * 60.0 * 60.0)
-        b = 0.5 + (x*x + y*y) / 8.0
-        m = QMatrix3x3([1.0 - b*x*x, -b*x*y, x, -b*x*y, 1.0 -b*y*y, y, -x, -y,
-                       1.0 - b*(x*x+y*y)])
-        return m
-
-    def mat_cio_locator_deprecated(self, jd):
-        """
-            TODO TN: wtf is that thing ?
-        """
-        J2000 = 2451545.0
-        t = jd - J2000
-        t = t / 36525 #julian century
-        x = -0.016617 + t * (2004.191898 + t * (-0.4297829 + t * (-0.19861834 +
-            t * (0.000007578 + t * (0.0000059285)))))
-        y = -0.006951 + t * (-0.025896 + t * (-22.4072747 + t * (0.00190059 +
-            t * (0.001112526 + t * (0.0000001358)))))
-        xt = x * 2.0 * np.pi / (360.0 * 60.0 * 60)
-        yt = y * 2.0 * np.pi / (360.0 * 60.0 * 60.0)
-        x0 = -0.016617
-        y0 = -0.006951
-        xt0 = x0 * 2.0 * np.pi / (360.0 * 60.0 * 60)
-        yt0 = y0 * 2.0 * np.pi / (360.0 * 60.0 * 60.0)
-        xc = [-0.016617, 2004.191898, -0.4297829, -0.19861834, 0.000007578 ,
-              0.0000059285]
-        yc = [-0.006951, -0.025896, -22.4072747, 0.00190059, 0.001112526,
-              0.0000001358]
-        px = DPolynom()
-        px.set_coeffs(xc)
-        py=DPolynom()
-        py.set_coeffs(yc)
-        dpx=px.derive()
-        spx=dpx.mul(py)
-        ispx = spx.integrate()
-        ixt = ispx.eval(t)
-        ixt0 = ispx.eval(0.0)
-        ixt = ixt * 2.0 * np.pi / (360.0 * 60.0 * 60)
-        ixt0 = ixt0 * 2.0 * np.pi / (360.0 * 60.0 * 60.0)
-        s = - 0.5 * (xt * yt - xt0 * yt0) + (ixt - ixt0) - 0.0145606
-        m = QMatrix3x3([np.cos(s), -np.sin(s), 0.0, np.sin(s),
-                        np.cos(s), 0, 0, 0, 1.0])
-        return m
 
 if __name__ == '__main__':
     from PyQt5.QtWidgets import QApplication
