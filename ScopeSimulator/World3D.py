@@ -242,6 +242,13 @@ class World3D():
     def set_celestial_time(self, celestial_time):
         """
         We recall that celestial time is
+        passant de l'hémisphère Sud à l'hémisphère Nord, c'est le nœud ascendant. Ce dernier est le point vernal (noté γ, parfois g), parfois noté point de l'équinoxe vernal ou point de l'équinoxe de printemps, ou encore point gamma.
+
+Les références du système de coordonnées équatoriales sont d'une part le méridien passant par le point vernal, il définit le méridien zéro pour la mesure des ascensions droites, et d'autre part l'équateur céleste à partir duquel la déclinaison est mesurée (positivement au-dessus de l'équateur, négativement en dessous).
+
+Les coordonnées du point vernal sont l'ascension droite (α) = 0 h (étant situé sur le méridien zéro) et sa déclinaison (δ) est nulle (étant situé sur l'équateur céleste).
+
+
         :param celestial_time:  astropy.coordinates.angles.Longitude to be
         simulated
         :return:

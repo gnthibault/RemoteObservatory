@@ -41,8 +41,6 @@ class IndiClient(PyIndi.BaseClient, Base):
 
       self.logger.debug('Indi Client, remote host is: {} : {}'.format(
                         self.getHost(),self.getPort()))
-      if connect_on_create:
-          self.connect()
 
       # Finished configuring
       self.logger.debug('Configured Indi Client successfully')
@@ -56,16 +54,16 @@ class IndiClient(PyIndi.BaseClient, Base):
       if self.isServerConnected():
           self.logger.warning('Already connected to server')
       else:
-          self.logger.info('Connecting to server at {}:{}'.format(
-                           self.getHost(),self.getPort()))
+          self.logger.info(f"Connecting to server at {self.getHost()}:"
+                           f"{self.getPort()}")
 
           if not self.connectServer():
-              self.logger.error('No indiserver running on {}:{} '
-                  ' - Try to run indiserver indi_simulator_telescope '
-                  ' indi_simulator_ccd'.format(self.getHost(),self.getPort()))
+              self.logger.error(f"No indiserver running on {self.getHost()}:"
+                  f"{self.getPort()} - Try to run indiserver "
+                  f"indi_simulator_telescope indi_simulator_ccd")
           else:
-              self.logger.info('Successfully connected to server at '
-                               '{}:{}'.format(self.getHost(),self.getPort()))
+              self.logger.info(f"Successfully connected to server at "
+                               f"{self.getHost()}:{self.getPort()}")
 
   '''
     Indi related stuff (implementing BaseClient methods)

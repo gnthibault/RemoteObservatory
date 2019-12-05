@@ -52,23 +52,22 @@ class IndiDevice(Base):
         return self.device_name
 
     def __find_device(self):
-        self.logger.debug('IndiDevice: asking indi_client to look for device {}'
-                          ''.format(self.device_name))
+        self.logger.debug(f"IndiDevice: asking indi_client to look for device "
+                          f"{self.device_name}")
         if self.device is None:
             started = time.time()
             while not self.device:
                 self.device = self.indi_client.getDevice(self.device_name)
                 if 0 < self.timeout < time.time() - started:
-                    self.logger.error('IndiDevice: Timeout while waiting for '
-                                      ' device {}'.format(self.device_name))
-                    raise RuntimeError('IndiDevice Timeout while waiting for '
-                                       'device {}'.format(self.device_name))
+                    self.logger.error(f"IndiDevice: Timeout while waiting for "
+                                      f"device {self.device_name}")
+                    raise RuntimeError(f"IndiDevice Timeout while waiting for "
+                                       f"device {self.device_name}")
                 time.sleep(0.01)
-            self.logger.debug('Indi Device: indi_client has found device {}'
-                              ''.format(self.device_name))
+            self.logger.debug(f"Indi Device: indi_client has found device "
+                              f"{self.device_name}")
         else:
-            self.logger.warning('Device {} already found'.format(
-                                self.device_name))
+            self.logger.warning(f"Device {self.device_name} already found")
     def find_interfaces(self, device):
         interface = device.getDriverInterface()
         interface.acquire()
@@ -94,8 +93,8 @@ class IndiDevice(Base):
         }
         interfaces = (
             [interfaces[x] for x in interfaces if x & device_interfaces])
-        self.logger.debug('device {}, interfaces are: {}'.format(
-            self.device_name, interfaces))
+        self.logger.debug(f"device {self.device_name}, interfaces are: "
+                          f"{interfaces}")
         return interfaces
 
     def connect_driver(self):
