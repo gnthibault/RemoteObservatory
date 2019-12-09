@@ -533,18 +533,17 @@ class Manager(Base):
             try:
                 assert camera.focuser.is_connected
             except AttributeError:
-                self.logger.debug('Camera {} has no focuser, skipping '
-                                  'autofocus'.format(cam_name))
+                self.logger.debug(f"Camera {cam_name} has no focuser, skipping "
+                                  f"autofocus")
             except AssertionError:
-                self.logger.debug('Camera {} focuser not connected, skipping '
-                                  'autofocus'.format(cam_name))
+                self.logger.debug(f"Camera {cam_name} focuser not connected, "
+                                  f"skipping autofocus")
             else:
                 try:
                     # Start the autofocus
-                    autofocus_event = camera.autofocus(coarse=coarse)
+                    autofocus_event = camera.autofocus()
                 except Exception as e:
-                    self.logger.error(
-                        "Problem running autofocus: {}".format(e))
+                    self.logger.error(f"Problem running autofocus: {e}")
                 else:
                     autofocus_events[cam_name] = autofocus_event
 

@@ -18,6 +18,7 @@ from astropy.io import fits
 import astropy.units as u
 
 # Local stuff: Focuser
+from Imaging.IndiAutoFocuser import IndiAutoFocuser
 from utils import load_module
 
 class IndiCamera(IndiDevice):
@@ -99,7 +100,7 @@ class IndiCamera(IndiDevice):
         self.logger.debug('Indi client will register to server in order to '
                           'receive blob CCD1 when it is ready')
         self.indi_client.setBLOBMode(PyIndi.B_ALSO, self.device_name, 'CCD1')
-        self.frame_blob=self.get_prop(propName='CCD1', propType='blob')
+        self.frame_blob = self.get_prop(propName='CCD1', propType='blob')
 
     def synchronizeWithImageReception(self):
         try:
@@ -251,10 +252,9 @@ class IndiCamera(IndiDevice):
             float_exp_time_sec = exp_time_sec
         # Show warning if needed
         if float_exp_time_sec != exp_time_sec:
-            self.logger.warning('Sanitizing exposition time: cannot accept'
-                                ' {}, using {} instead'.format(exp_time_sec
-                                , float_exp_time_sec))
-
+            self.logger.warning(f"Sanitizing exposition time: cannot accept "
+                                f" {exp_time_sec}, using {float_exp_time_sec} "
+                                f"instead")
         return float_exp_time_sec
 
     def getExpTimeSec(self):
@@ -263,10 +263,20 @@ class IndiCamera(IndiDevice):
     def setExpTimeSec(self, exp_time_sec):
         self.exp_time_sec = self.sanitize_exp_time(exp_time_sec)
 
+    def autofocus_async(self, autofocus_event):
+        """
+
+        """
+        self.logger.info(f"Camera {self.device_name} is going to start "
+                         f"autofocus with focuser {self.focuser.device_name}")
+        af = IndiAutoFocuser(self)
+
+        self.logger.info(f"Camera {self.device_name} just finished "
+                     f"autofocus with focuser {self.focuser.device_name}")
+        autofocus_event.set()
+
     def __str__(self):
-        return 'INDI Camera "{0}"'.format(self.name)
+        return f"INDI Camera {self.device_name}"
 
     def __repr__(self):
         return self.__str__()
-
-

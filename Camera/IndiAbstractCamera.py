@@ -50,6 +50,17 @@ class IndiAbstractCamera(IndiCamera, AbstractCamera):
         w.start()
         return exposure_event
 
+    def autofocus(self, *args, **kwargs):
+        """
+        Should return an event
+        """
+        autofocus_event = threading.Event()
+        w = threading.Thread(target=self.autofocus_async,
+                             args=(autofocus_event))
+        self.set_frame_type('FRAME_LIGHT')
+        w.start()
+        return exposure_event
+
     def take_bias_exposure(self, exposure_time, filename, *args, **kwargs):
         """
         Should return an event
