@@ -12,31 +12,25 @@ class IndiFocuser(IndiDevice):
     """
 
     """
-    def __init__(self, indi_client, logger=None, config_filename=None,
+    def __init__(self, logger=None, config=None,
                  connect_on_create=True):
         logger = logger or logging.getLogger(__name__)
-        
-        if config_filename is None:
-          self.config_filename = './conf_files/IndiSimulatorFocuser.json'
-        else:
-          self.config_filename = config_filename
 
-        # Now configuring class
-        logger.debug('Indi Focuser, configuring with file {}'.format(
-          self.config_filename))
-        # Get config from json
-        with open(self.config_filename) as jsonFile:
-          data = json.load(jsonFile)
-          device_name = data['FocuserName']
+        if config is None:
+            config = dict(
+                focuser_name="Focuser Simulator",
+                indi_client=dict(
+                    indi_host="localhost",
+                    indi_port="7624"
+                ))
 
-        logger.debug('Indi Focuser, focuser name is: {}'.format(
-          device_name))
-      
+        logger.debug(f"Indi Focuser, focuser name is: {config['focuser_name']}")
+
         # device related intialization
-        IndiDevice.__init__(self, logger=logger, device_name=device_name,
-          indi_client=indi_client)
+        IndiDevice.__init__(self, device_name=config['focuser_name'],
+                                  indi_client_config=config["indi_client"])
         if connect_on_create:
-          self.connect()
+            self.connect()
 
         # Finished configuring
         self.logger.debug('Indi Focuser configured successfully')
@@ -46,7 +40,7 @@ class IndiFocuser(IndiDevice):
         self.logger.debug('Indi Focuser: on emergency routine finished')
 
     def __str__(self):
-        return 'Focuser: {}'.format(self.name)
+        return f"Focuser: {self.name}"
 
     def __repr__(self):
         return self.__str__()

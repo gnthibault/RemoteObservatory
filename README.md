@@ -84,4 +84,5 @@ PYTHONPATH=. python3 ./apps/launch_arduino_capture.py
 * Need to try to kill PHD2 while guiding and check that we return to parking state
 * Need to simulate a PHD2 star lost and check that we return to parking state
 * The loop_mode in GuiderPHD2 is ambiguous (let it like this for now)
-
+* use find . -path ./venv -prune -o -name '*.py' to search stuf not in venv
+* use find . -path ./venv -prune -o -name '*.py' -exec sed -i -e 's/get_local_time_from_ntp/get_local_time/g' {} \; to replace stuff

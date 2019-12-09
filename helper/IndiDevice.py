@@ -19,11 +19,11 @@ class IndiDevice(Base):
         'switch': 'getSwitch',
         'text': 'getText'
     }
-    def __init__(self, logger, device_name, indi_client):
+    def __init__(self, logger, device_name, indi_client_config):
         Base.__init__(self)
     
         self.device_name = device_name
-        self.indi_client = indi_client
+        self.indi_client_config = indi_client_config
         self.timeout = IndiDevice.defaultTimeout
         self.device = None
         self.interfaces = None
@@ -51,7 +51,7 @@ class IndiDevice(Base):
     def name(self):
         return self.device_name
 
-    def __find_device(self):
+    def _setup_device(self):
         self.logger.debug(f"IndiDevice: asking indi_client to look for device "
                           f"{self.device_name}")
         if self.device is None:
@@ -68,8 +68,12 @@ class IndiDevice(Base):
                               f"{self.device_name}")
         else:
             self.logger.warning(f"Device {self.device_name} already found")
-    def find_interfaces(self, device):
-        interface = device.getDriverInterface()
+
+    def _setup_interfaces(self):
+        """
+        Find out what interface the current device offers
+        """
+        interface = self.device.getDriverInterface()
         interface.acquire()
         device_interfaces = int(ctypes.cast(interface.__int__(),
                                 ctypes.POINTER(ctypes.c_uint16)).contents.value)
@@ -91,30 +95,55 @@ class IndiDevice(Base):
             PyIndi.BaseDevice.ROTATOR_INTERFACE: 'rotator',
             PyIndi.BaseDevice.AUX_INTERFACE: 'aux'
         }
-        interfaces = (
+        self.interfaces = (
             [interfaces[x] for x in interfaces if x & device_interfaces])
         self.logger.debug(f"device {self.device_name}, interfaces are: "
-                          f"{interfaces}")
-        return interfaces
+                          f"{self.interfaces}")
+
+    def _setup_indi_client(self):
+        """
+            setup the indi client that will communicate with devices
+        """
+        try:
+            self.logger.info(f"Setting up indi client")
+            self.indi_client = IndiClient(config=self.indi_client_config)
+        except Exception:
+            raise RuntimeError('Problem setting up indi client')
+
+    def connect_client(self):
+        """
+        connect to indi server
+        """
+        self.indi_client.connect()
 
     def connect_driver(self):
         # Try first to ask server to give us the device handle, through client
-        self.__find_device()
+        self._setup_device()
 
-    def connect(self):
-        # Try first to ask server to give us the device handle, through client
-        self.connect_driver()
+    def connect_device(self):
+        """
 
+        """
         # Now connect
         if self.device.isConnected():
             self.logger.warning(f"already connected to device "
                                 f"{self.device_name}")
             return
         self.logger.info(f"Connecting to device {self.device_name}")
-        # get interfaces
-        self.interfaces = self.find_interfaces(self.device)
+        # setup available list of interfaces
+        self._setup_interfaces()
         # set the corresponding switch to on
         self.set_switch('CONNECTION', ['CONNECT'])
+
+    def connect(self):
+        # setup indi client
+        self._setup_indi_client()
+        # Connect indj client to server
+        self.connect_client()
+        # Ask server to give us the device handle, through client
+        self.connect_driver()
+        # now enable actual communication between driver and device
+        self.connect_device()
 
     def disconnect(self):
         if not self.device.isConnected():

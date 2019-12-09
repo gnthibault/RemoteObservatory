@@ -182,7 +182,7 @@ class ObservationPlanner(Base):
         if start_time is None or (isinstance(start_time, datetime.date) and not
                                   isinstance(start_time, datetime.datetime)):
             if start_time is None:
-                target_date = self.ntpServ.get_local_date_from_ntp()
+                target_date = self.ntpServ.get_local_date()
             else:
                 target_date = start_time
             midnight = self.ntpServ.get_next_local_midnight_in_utc(target_date)
@@ -210,7 +210,7 @@ class ObservationPlanner(Base):
         if start_time is None or (isinstance(start_time, datetime.date) and not
                                   isinstance(start_time, datetime.datetime)):
             if start_time is None:
-                target_date = self.ntpServ.get_local_date_from_ntp()
+                target_date = self.ntpServ.get_local_date()
             else:
                 target_date = start_time
             midnight = self.ntpServ.get_next_local_midnight_in_utc(target_date)
@@ -488,7 +488,7 @@ class ObservationPlanner(Base):
 
     def annotate_time_point(self, time_point=None, show_airmass=True):
         if time_point is None:
-            time_point = self.ntpServ.get_local_time_from_ntp()
+            time_point = self.ntpServ.get_local_time()
         tm = matplotlib.dates.date2num(time_point)
         color = 'mediumslateblue'
         axes = []

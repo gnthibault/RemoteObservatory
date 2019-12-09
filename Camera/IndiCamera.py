@@ -9,7 +9,7 @@ import numpy as np
 # Indi stuff
 import PyIndi
 from helper.IndiDevice import IndiDevice
-from helper.IndiClient import IndiClientGlobalBlobEvent
+#from helper.IndiClient import IndiClientGlobalBlobEvent
 
 # Imaging and Fits stuff
 from astropy.io import fits
@@ -30,33 +30,35 @@ class IndiCamera(IndiDevice):
     DEFAULT_EXP_TIME_SEC = 5
     MAXIMUM_EXP_TIME_SEC = 3601
 
-    def __init__(self, indi_client, logger=None, config=None,
-                 connect_on_create=True):
+    def __init__(self, logger=None, config=None, connect_on_create=True):
         logger = logger or logging.getLogger(__name__)
         
         if config is None:
             config = dict(
-                camera_name = 'CCD Simulator',
-                focuser = dict(
-                    module = "IndiFocuser",
-                    focuser_name = ""))
-
+                camera_name='CCD Simulator',
+                focuser=dict(
+                    module="IndiFocuser",
+                    focuser_name=""),
+                indi_client=dict(
+                    indi_host="localhost",
+                    indi_port="7624"
+                ))
         device_name = config['camera_name']
         # If scope focuser is specified in the config, load
         try:
             cfg = config['focuser']
             focuser_name = cfg['module']
             focuser = load_module('Camera.'+focuser_name)
-            self.fouser = getattr(focuser, focuser_name)(cfg)
+            self.focuser = getattr(focuser, focuser_name)(config=cfg)
         except Exception as e:
             self.logger.warning("Cannot load focuser module: {}".format(e))
-            self.scope_controller = None
+            self.focuser = None
 
         logger.debug('Indi camera, camera name is: {}'.format(device_name))
       
         # device related intialization
         IndiDevice.__init__(self, logger=logger, device_name=device_name,
-                            indi_client=indi_client)
+                            indi_client_config=config["indi_client"])
         if connect_on_create:
             self.connect()
 
@@ -101,10 +103,12 @@ class IndiCamera(IndiDevice):
 
     def synchronizeWithImageReception(self):
         try:
-            global IndiClientGlobalBlobEvent
+            #global IndiClientGlobalBlobEvent
             self.logger.debug('synchronizeWithImageReception: Start waiting')
-            IndiClientGlobalBlobEvent.wait()
-            IndiClientGlobalBlobEvent.clear()
+            #IndiClientGlobalBlobEvent.wait()
+            #IndiClientGlobalBlobEvent.clear()
+            self.indi_client.blob_event.wait()
+            self.indi_client.blob_event.clear()
             self.logger.debug('synchronizeWithImageReception: Done')
         except Exception as e:
             self.logger.error('Indi Camera Error in '

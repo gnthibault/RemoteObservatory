@@ -54,7 +54,7 @@ if __name__ == '__main__':
 
     #test ntp time server
     servTime = NTPTimeService(logger=logger)
-    ntpTime = servTime.get_utc_from_ntp()
+    ntpTime = servTime.get_utc()
     #print('Current Time from NTP is : {}'.format(ntpTime))
 
     # test Weather service

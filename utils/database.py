@@ -12,11 +12,11 @@ import weakref
 # Local
 from utils import serializers as json_util
 from utils.config import load_config
-from Service.NTPTimeService import NTPTimeService
+from Service.HostTimeService import HostTimeService
 
 class AbstractDB(metaclass=abc.ABCMeta):
     def __init__(self, db_name=None, collection_names=list(), logger=None,
-                 serv_time=NTPTimeService(), **kwargs):
+                 serv_time=HostTimeService(), **kwargs):
         """
         Init base class for db instances.
 
@@ -155,9 +155,9 @@ def get_shared_mongo_client(host, port, connect):
 
 
 def create_storage_obj(collection, data, obj_id=None,
-                       serv_time=NTPTimeService()):
+                       serv_time=HostTimeService()):
     """Returns the object to be stored in the database"""
-    obj = dict(data=data, type=collection, date=serv_time.get_utc_from_ntp())
+    obj = dict(data=data, type=collection, date=serv_time.get_utc())
     if obj_id:
         obj['_id'] = obj_id
     return obj

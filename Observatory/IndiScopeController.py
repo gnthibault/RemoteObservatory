@@ -7,7 +7,7 @@ from helper.IndiDevice import IndiDevice
 from utils.error import ScopeControllerError
 
 class IndiScopeController(IndiDevice, Base):
-    def __init__(self, indi_client, config=None, connect_on_create=True,
+    def __init__(self, config=None, connect_on_create=True,
                  logger=None):
         Base.__init__(self)
 
@@ -17,8 +17,11 @@ class IndiScopeController(IndiDevice, Base):
         if config is None:
             config = dict(
                 board_name = "Arduino",
-                port = "/dev/ttyACM0"
-            )
+                port = "/dev/ttyACM0",
+                indi_client=dict(
+                    indi_host="localhost",
+                    indi_port="7624"
+                ))
 
         self.board = config['board_name']
         self.port = config['port']
@@ -29,7 +32,7 @@ class IndiScopeController(IndiDevice, Base):
       
         # device related intialization
         IndiDevice.__init__(self, logger=logger, device_name=self.board,
-                            indi_client=indi_client)
+                            indi_client_config=config["indi_client"])
         if connect_on_create:
             self.initialize()
 

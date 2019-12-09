@@ -44,7 +44,7 @@ class IndiMount(IndiDevice):
             PIER_EAST : Mount on the East side of pier (Pointing West).
             PIER_WEST : Mount on the West side of pier (Pointing East).
     """
-    def __init__(self, indi_client, connect_on_create=True, logger=None,
+    def __init__(self, connect_on_create=True, logger=None,
                  config=None):
         logger = logger or logging.getLogger(__name__)
         
@@ -55,7 +55,7 @@ class IndiMount(IndiDevice):
             device_name))
         # device related intialization
         IndiDevice.__init__(self, logger=logger, device_name=device_name,
-            indi_client=indi_client)
+            indi_client_config=config["indi_client"])
         try:
             #try to get timezone from config file
             self.gps = dict(latitude = self.config['observatory']['latitude'],

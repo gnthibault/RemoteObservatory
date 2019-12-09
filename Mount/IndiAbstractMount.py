@@ -39,12 +39,11 @@ class IndiAbstractMount(IndiMount, AbstractMount):
         ALT Altitude, degrees above horizon
         AZ Azimuth, degrees E of N
     """
-    def __init__(self, indi_client, location, serv_time,
+    def __init__(self, location, serv_time,
                  config=None, connect_on_create=True):
 
         # device related intialization
-        IndiMount.__init__(self, indi_client=indi_client,
-                           config=config, 
+        IndiMount.__init__(self, config=config,
                            connect_on_create=False)
         # setup AbstractMount config
         self._setup_abstract_config()
@@ -104,8 +103,7 @@ class IndiAbstractMount(IndiMount, AbstractMount):
         self._is_connected = False
 
     def initialize(self, *arg, **kwargs):  # pragma: no cover
-        self.logger.debug('Initializing mount with args {}, {}'.format(
-                          arg, kwargs))
+        self.logger.debug(f"Initializing mount with args {arg}, {kwargs}")
         self.connect()
         self._is_initialized = True
 

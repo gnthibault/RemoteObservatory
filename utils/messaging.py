@@ -11,8 +11,7 @@ from json import dumps
 from json import loads
 
 #from pocs.utils import current_time
-from Service.NTPTimeService import NTPTimeService
-
+from Service.NTPTimeService import HostTimeService
 
 class PanMessaging(object):
 
@@ -61,7 +60,7 @@ class PanMessaging(object):
         # Create a new context
         self.context = zmq.Context()
         self.socket = None
-        self.serv_time = NTPTimeService()
+        self.serv_time = HostTimeService()
 
     @classmethod
     def create_forwarder(cls, sub_port, pub_port, ready_fn=None, done_fn=None):
@@ -155,7 +154,7 @@ class PanMessaging(object):
         assert channel > '', self.logger.warning("Cannot send blank channel")
 
         if isinstance(message, str):
-            current_time = self.serv_time.get_utc_from_ntp()
+            current_time = self.serv_time.get_utc()
             message = {
                 'message': message,
                 'timestamp': current_time.isoformat().replace(

@@ -21,18 +21,24 @@ observatory:
     scope_controller:
         #module: ArduiScopeController
         #module: IndiScopeController
-        module: None
-        board : Arduino
-        port: /dev/ttyACM0
-        cmd_port : 6502
-        msg_port : 6520
-        pin_scope_dustcap : 10
-        pin_finder_dustcap : 11
-        pin_flat_panel : 12
-        pin_fan_primary : 13
+        #module: None
+        #board : Arduino
+        #port: /dev/ttyACM0
+        #cmd_port : 6502
+        #msg_port : 6520
+        #pin_scope_dustcap : 10
+        #pin_finder_dustcap : 11
+        #pin_flat_panel : 12
+        #pin_fan_primary : 13
+        indi_client :
+            indi_host : localhost
+            indi_port : 7624
     dome_controller:
         module : None
         port : /dev/ttyACM1
+        indi_client :
+            indi_host : localhost
+            indi_port : 7624
 directories:
     base: /var/RemoteObservatory
     images: images
@@ -46,16 +52,14 @@ db:
     type: file
 ntp:
     ntpserver: time.google.com
-indiclient: #To be removed, each device can have its own client
-    indi_host : localhost
-    indi_port : 7624
 mount:
     #module: IndiG11
     #mount_name: Losmandy Gemini
     module: IndiAbstractMount
     mount_name : Telescope Simulator
-    indi_host : localhost
-    indi_port : 7624
+    indi_client :
+        indi_host : localhost
+        indi_port : 7624
 camera:
     module: IndiAbstractCamera
     camera_name : CCD Simulator
@@ -69,10 +73,15 @@ camera:
         CCD_PIXEL_SIZE_X : 6.5
         CCD_PIXEL_SIZE_Y : 6.5
         CCD_BITSPERPIXEL : 14
-    indi_host : localhost
-    indi_port : 7624
+    indi_client :
+        indi_host : localhost
+        indi_port : 7624
     focuser:
         module: IndiFocuser
+        focuser_name : Focuser Simulator
+        indi_client :
+            indi_host : localhost
+            indi_port : 7624
 #filterwheel:
 nofilterwheel: #maybe one day
     module : IndiFilterWheel 
@@ -86,6 +95,9 @@ nofilterwheel: #maybe one day
         OIII : 6
         SII : 7
         LPR : 8
+    indi_client :
+        indi_host : localhost
+        indi_port : 7624
 guider:
     module : GuiderPHD2
     host : localhost

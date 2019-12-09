@@ -14,7 +14,7 @@ if __name__ == '__main__':
     # ntp time server
     servTime = NTPTimeService(logger=logger)
     
-    print('UTC from NTP is: {}'.format(servTime.get_utc_from_ntp()))
+    print('UTC from NTP is: {}'.format(servTime.get_utc()))
     print('Time from NTP is: {}'.format(servTime.getTimeFromNTP()))
     print('UTC astropy is: {}'.format(servTime.get_astropy_time_from_utc()))
     print('next UTC midnight is: {}'.format(

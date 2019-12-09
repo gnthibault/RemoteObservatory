@@ -32,6 +32,7 @@ from ObservationPlanner.DefaultScheduler import DefaultScheduler
 # Local stuff: Service
 from Service.WUGWeatherService import WUGWeatherService
 from Service.NTPTimeService import NTPTimeService
+from Service.HostTimeService import HostTimeService
 from Service.NovaAstrometryService import NovaAstrometryService
 
 # Local stuff: Utils
@@ -55,10 +56,6 @@ class Manager(Base):
         # Image directory and other ios
         self.logger.info('\tSetting up main image directory')
         self._setup_image_directory()
-
-        # setup indi client
-        self.logger.info('\tSetting up indi client')
-        self._setup_indi_client()
 
         # setup web services
         self.logger.info('\tSetting up web services')
@@ -160,7 +157,7 @@ class Manager(Base):
         status = {}
         try:
             t = self.serv_time.get_astropy_time_from_utc()
-            local_time = str(self.serv_time.get_local_time_from_ntp())
+            local_time = str(self.serv_time.get_local_time())
 
             if self.mount.is_initialized:
                 status['mount'] = self.mount.status()
@@ -627,25 +624,12 @@ class Manager(Base):
     def _setup_image_directory(self, path='.'):
         self._image_dir = self.config['directories']['images']
 
-    def _setup_indi_client(self):
-        """
-            setup the indi client that will communicate with devices
-        """
-        try:
-            #TODO TN: at some point, this is going to be removed, and each
-            # device will instanciate its own client, depending on which machine
-            # the physical device is attached to
-            self.indi_client = IndiClient(config=self.config['indiclient'])
-            self.indi_client.connect()
-        except Exception:
-            raise RuntimeError('Problem setting up indi client')
-
     def _setup_services(self):
         """
             setup various services that are supposed to provide infos/data
         """
         try:
-            self.serv_time = NTPTimeService()
+            self.serv_time = HostTimeService()
             #self.serv_weather = WUGWeatherService()
             #self.serv_astrometry = NovaAstrometryService(configFileName='local')
             #self.serv_astrometry.login()
@@ -674,7 +658,6 @@ class Manager(Base):
             mount_name = self.config['mount']['module']
             mount_module = load_module('Mount.'+mount_name)
             self.mount = getattr(mount_module, mount_name)(
-                indi_client = self.indi_client,
                 location = self.earth_location,
                 serv_time = self.serv_time,
                 config = self.config['mount'])
@@ -693,7 +676,6 @@ class Manager(Base):
             cam_module = load_module('Camera.'+cam_name)
             cam = getattr(cam_module, cam_name)(
                 serv_time=self.serv_time,
-                indi_client=self.indi_client,
                 config=self.config['camera'],
                 connect_on_create=True,
                 primary=True)
@@ -719,7 +701,6 @@ class Manager(Base):
                 fw_name = self.config['filterwheel']['module']
                 fw_module = load_module('FilterWheel.'+fw_name)
                 self.filterwheel = getattr(fw_module, fw_name)(
-                    indi_client = self.indi_client,
                     config = self.config['filterwheel'],
                     connect_on_create=True)
         except Exception:

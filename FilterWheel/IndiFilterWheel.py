@@ -8,21 +8,25 @@ from Base.Base import Base
 from helper.IndiDevice import IndiDevice
 
 class IndiFilterWheel(IndiDevice, Base):
-    def __init__(self, indi_client, config, connect_on_create=True):
+    def __init__(self, config, connect_on_create=True):
         
         if config is None:
             config = dict(
-                module = "IndiFilterWheel",
-                filterwheel_name = "Filter Simulator",
-                filter_list = dict(
-                    Luminance = 1,
-                    Red = 2,
-                    Green = 3,
-                    Blue = 4,
-                    H_Alpha = 5,
-                    OIII = 6,
-                    SII = 7,
-                    LPR = 8))
+                module="IndiFilterWheel",
+                filterwheel_name="Filter Simulator",
+                filter_list=dict(
+                    Luminance=1,
+                    Red=2,
+                    Green=3,
+                    Blue=4,
+                    H_Alpha=5,
+                    OIII=6,
+                    SII=7,
+                    LPR=8),
+                indi_client=dict(
+                    indi_host="localhost",
+                    indi_port="7624"
+                ))
 
         device_name = config['filterwheel_name']
         self.filterList = config['filter_list']
@@ -32,7 +36,7 @@ class IndiFilterWheel(IndiDevice, Base):
       
         # device related intialization
         IndiDevice.__init__(self, logger=logger, device_name=device_name,
-                            indi_client=indi_client)
+                            indi_client_config=config["indi_client"])
         if connect_on_create:
             self.connect()
 

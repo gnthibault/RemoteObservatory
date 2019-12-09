@@ -49,7 +49,7 @@ class DefaultScheduler(Scheduler):
             self.reread_config()
 
         if time is None:
-            time = self.serv_time.get_astropy_time_from_utc() #get_utc_from_ntp()
+            time = self.serv_time.get_astropy_time_from_utc() #get_utc()
 
         # dictionary where key is obs key and value is priority (aka merit)
         valid_obs = {obs: 1.0 for obs in self.observations}

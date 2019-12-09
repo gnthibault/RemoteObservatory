@@ -382,7 +382,7 @@ class RemoteObservatoryFSM(StateMachine, Base):
 
             is_safe = record['data'].get('safe', False)
             timestamp = record['date']
-            age = (self.manager.serv_time.get_utc_from_ntp() -
+            age = (self.manager.serv_time.get_utc() -
                    timestamp).total_seconds()
             self.logger.debug(
                 "Weather Safety: {} [{:.0f} sec old - {}]".format(is_safe,
@@ -586,6 +586,6 @@ if __name__ == '__main__':
     # load the logging configuration
     logging.config.fileConfig('logging.ini')
     m = Manager()
-    r = RemoteObservatoryFSM(manager = m)
+    r = RemoteObservatoryFSM(manager=m)
     r.initialize()
     r.run()

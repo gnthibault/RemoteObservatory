@@ -12,15 +12,14 @@ from Camera.AbstractCamera import AbstractCamera
 from Camera.IndiCamera import IndiCamera
 
 class IndiAbstractCamera(IndiCamera, AbstractCamera):
-    def __init__(self, serv_time, indi_client, config=None,
+    def __init__(self, serv_time, config=None,
                  connect_on_create=True, primary=False):
 
         # Parent initialization
         AbstractCamera.__init__(self, serv_time=serv_time, primary=primary)
 
         # device related intialization
-        IndiCamera.__init__(self, indi_client=indi_client, logger=self.logger,
-                           config=config,
+        IndiCamera.__init__(self, logger=self.logger, config=config,
                            connect_on_create=connect_on_create)
         self.indi_camera_config = config
 
