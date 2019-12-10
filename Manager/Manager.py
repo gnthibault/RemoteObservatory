@@ -99,14 +99,11 @@ class Manager(Base):
     @property
     def is_dark(self):
         horizon = -18 * u.degree
-
         t0 = self.serv_time.get_astropy_time_from_utc()
         is_dark = self.observer.is_night(t0, horizon=horizon)
-
         if not is_dark:
             sun_pos = self.observer.altaz(t0, target=get_sun(t0)).alt
             self.logger.debug("Sun {:.02f} > {}".format(sun_pos, horizon))
-
         return is_dark
 
     @property

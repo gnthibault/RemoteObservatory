@@ -342,6 +342,14 @@ class MongoDB(AbstractDB):
 class FileDB(AbstractDB):
     """Stores collections as files of JSON records."""
 
+    __db_thread_lock = threading.Lock()
+
+    def thread_safe(func):
+        def function_wrapper(*args, **kwargs):
+            with FileDB.__db_thread_lock:
+                return func(*args, **kwargs)
+        return function_wrapper
+
     def __init__(self, db_name='remote_observatory_file_db', **kwargs):
         """Flat file storage for json records
 
@@ -360,6 +368,7 @@ class FileDB(AbstractDB):
         self._storage_dir = self.db_folder
         os.makedirs(self._storage_dir, exist_ok=True)
 
+    @thread_safe
     def insert_current(self, collection, obj, store_permanently=True):
         self.validate_collection(collection)
         obj_id = self._make_id()
@@ -370,8 +379,8 @@ class FileDB(AbstractDB):
             # Overwrite current collection file with obj.
             json_util.dumps_file(current_fn, obj, clobber=True)
         except Exception as e:
-            self._warn('Problem inserting object into current collection: '
-                       '{}, {!r}'.format(e, obj))
+            self._warn(f"Problem inserting object into current collection: "
+                       f"{e}, {obj}")
             result = None
 
         if not store_permanently:
@@ -387,6 +396,7 @@ class FileDB(AbstractDB):
                        '{}, {!r}'.format(e, obj))
             return None
 
+    @thread_safe
     def insert(self, collection, obj):
         self.validate_collection(collection)
         obj_id = self._make_id()
@@ -401,15 +411,16 @@ class FileDB(AbstractDB):
                        '{}, {!r}'.format(e, obj))
             return None
 
+    @thread_safe
     def get_current(self, collection):
         current_fn = self.get_file(collection, permanent=False)
-
         try:
             return json_util.loads_file(current_fn)
         except FileNotFoundError as e:
             self._warn("No record found for {}".format(collection))
             return None
 
+    @thread_safe
     def find(self, collection, obj_id):
         collection_fn = self.get_file(collection)
         with open(collection_fn, 'r') as f:
@@ -423,6 +434,7 @@ class FileDB(AbstractDB):
                     return obj
         return None
 
+    @thread_safe
     def clear_current(self, type):
         current_f = os.path.join(self._storage_dir,
                                  'current_{}.json'.format(type))
@@ -443,10 +455,11 @@ class FileDB(AbstractDB):
 
     @classmethod
     def permanently_erase_database(cls, db_name):
-        # Clear out any .json files.
-        storage_dir = os.path.join(os.environ['PANDIR'], 'json_store', db_name)
-        for f in glob(os.path.join(storage_dir, '*.json')):
-            os.remove(f)
+        with cls.__db_thread_lock:
+            # Clear out any .json files.
+            storage_dir = os.path.join(os.environ['PANDIR'], 'json_store', db_name)
+            for f in glob(os.path.join(storage_dir, '*.json')):
+                os.remove(f)
 
 
 class MemoryDB(AbstractDB):

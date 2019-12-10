@@ -341,13 +341,6 @@ class RemoteObservatoryFSM(StateMachine, Base):
         # See if dark
         is_dark = self.manager.is_dark
 
-        # Check simulator TODO TN setup back simulator
-        #try:
-        #    if 'night' in self.config['simulator']:
-        #        is_dark = True
-        #except KeyError:
-        #    pass
-
         self.logger.debug("Dark Check: {}".format(is_dark))
         return is_dark
 

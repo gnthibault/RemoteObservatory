@@ -1,6 +1,7 @@
 # Generic
 import logging
 import sys
+import threading
 
 # Local stuff
 #from pocs import hardware

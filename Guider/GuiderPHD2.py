@@ -392,6 +392,29 @@ class GuiderPHD2(Base):
                     to the given coordinates and if a guide star is in range,
                     the lock position is set to the coordinates of the guide
                     star.
+
+                    from https://openphdguiding.org/manual/?section=Tools.htm#Lock_Positions
+                    PHD2 normally sets a 'lock position' where the guide star is
+                    located at the end of calibration.  Depending on the details
+                    of the calibration sequence, this may not be exactly where
+                    the star was located at the start of calibration - it could
+                    be off by a few pixels.  If you are trying to precisely
+                    center your target, you may want to use a
+                    'sticky lock position.'
+                    You do this by clicking on your guide star before
+                    calibration, then setting the 'Sticky Lock Position' under
+                    the 'Tools' menu.  After calibration is complete, PHD2 will
+                    continue to move the mount until the star is located at the
+                    sticky lock position.  So you may see an additional delay
+                    after the calibration while PHD2 repositions the scope at
+                    guide speed.  The sticky lock position will continue to be
+                    used even as guiding is stopped and subsequently resumed.
+                    Again, this insures a rigorous positioning of the guide star
+                    (and presumably your image target) at the expense of delays
+                    needed for PHD2 to reposition the mount.
+                    If you need to  fine-tune the position of the guide star on
+                    the camera sensor after guiding has begun, you can use the
+                    'Adjust Lock Position' function under the Tools menu:
         """
         params = [{}]
         params[0]["X"] = pos_x
