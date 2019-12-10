@@ -224,7 +224,7 @@ class IndiDevice(Base):
                                   timeout=timeout)
         return pv
 
-    def set_test(self, property_name, valueVector, sync=True, timeout=None):
+    def set_text(self, property_name, valueVector, sync=True, timeout=None):
         pv = self.get_prop(property_name, 'text')
         for property_name, index in self.__get_prop_vect_indices_having_values(
                                    pv, valueVector.keys()).items():

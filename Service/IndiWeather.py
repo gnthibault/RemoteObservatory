@@ -17,7 +17,7 @@ from helper.IndiDevice import IndiDevice
 from utils.messaging import PanMessaging
 
 
-class IndiWeatherSimulator(threading.Thread, IndiDevice):
+class IndiWeather(threading.Thread, IndiDevice):
     """
         This is a nice tool
     """
@@ -30,14 +30,13 @@ class IndiWeatherSimulator(threading.Thread, IndiDevice):
             config = dict(
                 service_name="Weather Simulator",
                 publish_port=6510,
-                delay_sec=30,
+                delay_sec=60,
                 indi_client=dict(
                     indi_host="localhost",
                     indi_port="7624"
                 ))
 
-        logger.debug(f"Indi Weather Simulator service, name is: "
-                     f"{config['service_name']}")
+        logger.debug(f"Indi Weather service, name is: {config['service_name']}")
 
         # device related intialization
         IndiDevice.__init__(self, logger=logger,
@@ -75,6 +74,7 @@ class IndiWeatherSimulator(threading.Thread, IndiDevice):
         Connect, and setup coordinatea
         """
         self.connect()
+        self.set_geographic_coord()
 
     def send_message(self, msg, channel='weather'):
         if self.messaging is None:
@@ -85,27 +85,41 @@ class IndiWeatherSimulator(threading.Thread, IndiDevice):
         """ Query the weather station and eventually publish results"""
         self.logger.debug("Updating weather")
 
+        features = self.get_weather_features()
         data = {}
         data['weather_sensor_name'] = self.device_name
 
-        data['sky_temp_C'] = np.random.randint(-10, 30)
-        data['ambient_temp_C'] = np.random.randint(-10, 30)
-        data['rain_sensor_temp_C'] = np.random.randint(-10, 30)
-        data['rain_frequency'] = np.random.randint(-10, 30)
-        data['errors'] = 'no error'
-        data['wind_speed_KPH'] = np.random.randint(0, 100)
+        #data['sky_temp_C'] = np.random.randint(-10, 30)
+        #data['ambient_temp_C'] = np.random.randint(-10, 30)
+        #data['rain_sensor_temp_C'] = np.random.randint(-10, 30)
+        #data['rain_frequency'] = np.random.randint(-10, 30)
+        #data['errors'] = 'no error'
+        #data['wind_speed_KPH'] = np.random.randint(0, 100)
 
         # some electronic stuff
-        data['pwm_value'] = np.random.randint(0, 50)
-        data['ldr_resistance_Ohm'] = np.random.randint(2500, 5000)
+        #data['pwm_value'] = np.random.randint(0, 50)
+        #data['ldr_resistance_Ohm'] = np.random.randint(2500, 5000)
 
         # Make Safety Decision
         # self.safe_dict = self.make_safety_decision(data)
-        data['safe'] = True
-        data['sky_condition'] = 'Sky_condition'
-        data['wind_condition'] = 'Wind_condition'
-        data['gust_condition'] = 'Gust_condition'
-        data['rain_condition'] = 'Rain_condition'
+        #data['safe'] = True
+        #data['sky_condition'] = 'Sky_condition'
+        #data['wind_condition'] = 'Wind_condition'
+        #data['gust_condition'] = 'Gust_condition'
+        #data['rain_condition'] = 'Rain_condition'
+
+        # name: WEATHER_FORECAST, label: Weather, format: '%4.2f'
+        data["WEATHER_FORECAST"] = features["WEATHER_FORECAST"]['value']
+        # name: WEATHER_TEMPERATURE, label: Temperature (C), format: '%4.2f'
+        data["WEATHER_TEMPERATURE"] = features["WEATHER_TEMPERATURE"]['value']
+        # name: WEATHER_WIND_SPEED, label: Wind (kph), format: '%4.2f'
+        data["WEATHER_WIND_SPEED"] = features["WEATHER_WIND_SPEED"]['value']
+        # name: WEATHER_WIND_GUST, label: Gust (kph), format: '%4.2f'
+        data["WEATHER_WIND_GUST"] = features["WEATHER_WIND_GUST"]['value']
+        # name: WEATHER_RAIN_HOUR, label: Precip (mm), format: '%4.2f'
+        data["WEATHER_RAIN_HOUR"] = features["WEATHER_RAIN_HOUR"]['value']
+
+        data["safe"] = self.make_safety_decision(data)
 
         # Store current weather
         data['date'] = self.serv_time.get_utc()
@@ -140,6 +154,37 @@ class IndiWeatherSimulator(threading.Thread, IndiDevice):
         :return: True if server is stopped, False otherwise
         """
         return self._stop_event.is_set()
+
+    def set_geographic_coord(self):
+        self.set_number('GEOGRAPHIC_COORD',
+                        {'LAT' : self.config['observatory']['latitude'],
+                         'LONG': self.config['observatory']['longitude'],
+                         'ELEV': self.config['observatory']['elevation'] },
+                        sync=False)
+
+    def get_weather_features(self):
+        """
+            get the whole set of values
+        """
+        return self.get_number('WEATHER_PARAMETERS')
+
+    def make_safety_decision(self, features):
+        """
+        based on:
+            name: WEATHER_FORECAST, label: Weather, format: '%4.2f'
+            name: WEATHER_TEMPERATURE, label: Temperature (C), format: '%4.2f'
+            name: WEATHER_WIND_SPEED, label: Wind (kph), format: '%4.2f'
+            name: WEATHER_WIND_GUST, label: Gust (kph), format: '%4.2f'
+            name: WEATHER_RAIN_HOUR, label: Precip (mm), format: '%4.2f'
+        """
+        status = False
+        status = status and (np.float32(features["WEATHER_WIND_SPEED"]) <
+                             self.limits["MAX_WEATHER_WIND_SPEED_KPH"])
+        status = status and (np.float32(features["WEATHER_WIND_GUST"]) <
+                             self.limits["MAX_WEATHER_WIND_GUST_KPH"])
+        status = status and (np.float32(features["WEATHER_RAIN_HOUR"]) == 0)
+
+        return status
 
     def __str__(self):
         return f"Weather service: {self.device_name}"
