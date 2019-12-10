@@ -30,9 +30,6 @@ from helper.IndiClient import IndiClient
 from ObservationPlanner.DefaultScheduler import DefaultScheduler
 
 # Local stuff: Service
-from Service.WUGWeatherService import WUGWeatherService
-from Service.NTPTimeService import NTPTimeService
-from Service.HostTimeService import HostTimeService
 from Service.NovaAstrometryService import NovaAstrometryService
 
 # Local stuff: Utils
@@ -628,14 +625,38 @@ class Manager(Base):
             setup various services that are supposed to provide infos/data
         """
         try:
-            self.serv_time = HostTimeService()
-            #self.serv_weather = WUGWeatherService()
+            self._setup_time_service()
+            self._setup_weather_service()
             #self.serv_astrometry = NovaAstrometryService(configFileName='local')
-            #self.serv_astrometry.login()
-
         except Exception:
             raise RuntimeError('Problem setting up services')
 
+    def _setup_weather_service(self):
+        """
+            setup a service that will provide weather informations
+        """
+        try:
+            weather_name = self.config['weather_service']['module']
+            weather_module = load_module('Service.'+weather_name)
+            self.serv_weather = getattr(weather_module, weather_name)(
+                config = self.config['weather_service'],
+                serv_time=self.serv_time,
+                connect_on_create=True,
+                loop_on_create=True)
+        except Exception:
+            raise RuntimeError('Problem setting up weather service')
+
+    def _setup_time_service(self):
+        """
+            setup a service that will provide time
+        """
+        try:
+            time_name = self.config['time_service']['module']
+            time_module = load_module('Service.'+time_name)
+            self.serv_time = getattr(time_module, time_name)(
+                config = self.config['time_service'])
+        except Exception:
+            raise RuntimeError('Problem setting up time service')
 
     def _setup_observatory(self):
         """

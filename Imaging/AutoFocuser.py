@@ -6,7 +6,7 @@ from threading import Thread
 import numpy as np
 
 # Local stuff
-from Base import Base
+from Base.Base import Base
 
 class AutoFocuser(Base):
     """
@@ -46,7 +46,7 @@ class AutoFocuser(Base):
                  autofocus_merit_function_kwargs=None,
                  autofocus_mask_dilations=None,
                  *args, **kwargs):
-        super().__init__(*args, **kwargs)
+        super().__init__(self, args, kwargs)
 
         if initial_position is None:
             self._position = None
@@ -75,7 +75,7 @@ class AutoFocuser(Base):
 
         self.logger.debug(f"AutoFocuser successfully created with camera "
                           f"{self.camera.device_name} and focuser "
-                          f"{self.camera.focuser.device_name})
+                          f"{self.camera.focuser.device_name}")
 
 ##################################################################################################
 # Properties

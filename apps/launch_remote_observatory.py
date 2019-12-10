@@ -368,26 +368,14 @@ class RemoteObservatoryFSM(StateMachine, Base):
         is_safe = False
         record = {'safe': False}
 
-        # TODO TN: setup back simulator
-        #try:
-        #    if 'weather' in self.config['simulator']:
-        #        is_safe = True
-        #        self.logger.debug("Weather simulator always safe")
-        #        return is_safe
-        #except KeyError:
-        #    pass
-
         try:
             record = self.db.get_current('weather')
-
             is_safe = record['data'].get('safe', False)
             timestamp = record['date']
             age = (self.manager.serv_time.get_utc() -
                    timestamp).total_seconds()
-            self.logger.debug(
-                "Weather Safety: {} [{:.0f} sec old - {}]".format(is_safe,
-                age, timestamp))
-
+            self.logger.debug(f"Weather Safety: {is_safe} [{age:.0f} sec old "
+                              f"- {timestamp}]")
         except (TypeError, KeyError) as e:
             self.logger.warning("No record found in DB: {}", e)
         except BaseException as e:

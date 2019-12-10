@@ -112,6 +112,19 @@ guider:
     dither :
         pixels : 3.0
         ra_only : False
+weather_service :
+    #module : IndiOpenWeatherMap
+    #service_name: Weather Simulator
+    module : IndiWeatherSimulator
+    service_name : Weather Simulator
+    key_path : /var/RemoteObservatory/keys.json
+    publish_port : 6510
+    delay_sec : 30
+    indi_client :
+        indi_host : localhost
+        indi_port : 7624
+time_service :
+    module : HostTimeService
 messaging:
     # Must match ports in peas.yaml.
     cmd_port: 6500
