@@ -40,9 +40,13 @@ if __name__ == '__main__':
         ))
 
     # Now test Mount
-    serv = IndiOpenWeatherMap(logger=None, config=config,
-                       serv_time=HostTimeService(),
-                       connect_on_create=True, loop_on_create=False)
+    IndiWeather
+    serv = IndiWeather(logger=None, config=config,
+                              serv_time=HostTimeService(),
+                              connect_on_create=True, loop_on_create=False)
+    #serv = IndiOpenWeatherMap(logger=None, config=config,
+    #                   serv_time=HostTimeService(),
+    #                   connect_on_create=True, loop_on_create=False)
     # Set slew ret to be used afterwards
     print(serv.capture())
     serv.set_geographic_coord()

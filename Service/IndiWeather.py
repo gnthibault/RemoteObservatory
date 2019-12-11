@@ -75,6 +75,7 @@ class IndiWeather(threading.Thread, IndiDevice):
         """
         self.connect()
         self.set_geographic_coord()
+        self.set_update_period()
 
     def send_message(self, msg, channel='weather'):
         if self.messaging is None:
@@ -85,43 +86,8 @@ class IndiWeather(threading.Thread, IndiDevice):
         """ Query the weather station and eventually publish results"""
         self.logger.debug("Updating weather")
 
-        features = self.get_weather_features()
-        data = {}
+        data = self._fill_in_weather_data()
         data['weather_sensor_name'] = self.device_name
-
-        #data['sky_temp_C'] = np.random.randint(-10, 30)
-        #data['ambient_temp_C'] = np.random.randint(-10, 30)
-        #data['rain_sensor_temp_C'] = np.random.randint(-10, 30)
-        #data['rain_frequency'] = np.random.randint(-10, 30)
-        #data['errors'] = 'no error'
-        #data['wind_speed_KPH'] = np.random.randint(0, 100)
-
-        # some electronic stuff
-        #data['pwm_value'] = np.random.randint(0, 50)
-        #data['ldr_resistance_Ohm'] = np.random.randint(2500, 5000)
-
-        # Make Safety Decision
-        # self.safe_dict = self.make_safety_decision(data)
-        #data['safe'] = True
-        #data['sky_condition'] = 'Sky_condition'
-        #data['wind_condition'] = 'Wind_condition'
-        #data['gust_condition'] = 'Gust_condition'
-        #data['rain_condition'] = 'Rain_condition'
-
-        # name: WEATHER_FORECAST, label: Weather, format: '%4.2f'
-        data["WEATHER_FORECAST"] = features["WEATHER_FORECAST"]['value']
-        # name: WEATHER_TEMPERATURE, label: Temperature (C), format: '%4.2f'
-        data["WEATHER_TEMPERATURE"] = features["WEATHER_TEMPERATURE"]['value']
-        # name: WEATHER_WIND_SPEED, label: Wind (kph), format: '%4.2f'
-        data["WEATHER_WIND_SPEED"] = features["WEATHER_WIND_SPEED"]['value']
-        # name: WEATHER_WIND_GUST, label: Gust (kph), format: '%4.2f'
-        data["WEATHER_WIND_GUST"] = features["WEATHER_WIND_GUST"]['value']
-        # name: WEATHER_RAIN_HOUR, label: Precip (mm), format: '%4.2f'
-        data["WEATHER_RAIN_HOUR"] = features["WEATHER_RAIN_HOUR"]['value']
-
-        data["safe"] = self.make_safety_decision(data)
-
-        # Store current weather
         data['date'] = self.serv_time.get_utc()
         self.weather_entries.append(data)
 
@@ -157,9 +123,14 @@ class IndiWeather(threading.Thread, IndiDevice):
 
     def set_geographic_coord(self):
         self.set_number('GEOGRAPHIC_COORD',
-                        {'LAT' : self.config['observatory']['latitude'],
+                        {'LAT': self.config['observatory']['latitude'],
                          'LONG': self.config['observatory']['longitude'],
                          'ELEV': self.config['observatory']['elevation'] },
+                        sync=False)
+
+    def set_update_period(self):
+        self.set_number('WEATHER_UPDATE',
+                        {'PERIOD': self._delay_sec},
                         sync=False)
 
     def get_weather_features(self):
@@ -168,7 +139,45 @@ class IndiWeather(threading.Thread, IndiDevice):
         """
         return self.get_number('WEATHER_PARAMETERS')
 
-    def make_safety_decision(self, features):
+    def _fill_in_weather_data(self):
+        """
+
+        """
+        features = self.get_weather_features()
+        data = {}
+        #data['sky_temp_C'] = np.random.randint(-10, 30)
+        #data['ambient_temp_C'] = np.random.randint(-10, 30)
+        #data['rain_sensor_temp_C'] = np.random.randint(-10, 30)
+        #data['rain_frequency'] = np.random.randint(-10, 30)
+        #data['errors'] = 'no error'
+        #data['wind_speed_KPH'] = np.random.randint(0, 100)
+
+        # some electronic stuff
+        #data['pwm_value'] = np.random.randint(0, 50)
+        #data['ldr_resistance_Ohm'] = np.random.randint(2500, 5000)
+
+        # Make Safety Decision
+        # self.safe_dict = self.make_safety_decision(data)
+        #data['safe'] = True
+        #data['sky_condition'] = 'Sky_condition'
+        #data['wind_condition'] = 'Wind_condition'
+        #data['gust_condition'] = 'Gust_condition'
+        #data['rain_condition'] = 'Rain_condition'
+
+        # name: WEATHER_FORECAST, label: Weather, format: '%4.2f'
+        data["WEATHER_FORECAST"] = features["WEATHER_FORECAST"]['value']
+        # name: WEATHER_TEMPERATURE, label: Temperature (C), format: '%4.2f'
+        data["WEATHER_TEMPERATURE"] = features["WEATHER_TEMPERATURE"]['value']
+        # name: WEATHER_WIND_SPEED, label: Wind (kph), format: '%4.2f'
+        data["WEATHER_WIND_SPEED"] = features["WEATHER_WIND_SPEED"]['value']
+        # name: WEATHER_WIND_GUST, label: Gust (kph), format: '%4.2f'
+        data["WEATHER_WIND_GUST"] = features["WEATHER_WIND_GUST"]['value']
+        # name: WEATHER_RAIN_HOUR, label: Precip (mm), format: '%4.2f'
+        data["WEATHER_RAIN_HOUR"] = features["WEATHER_RAIN_HOUR"]['value']
+        data["safe"] = self._make_safety_decision(data)
+        return data
+
+    def _make_safety_decision(self, features):
         """
         based on:
             name: WEATHER_FORECAST, label: Weather, format: '%4.2f'
@@ -183,7 +192,6 @@ class IndiWeather(threading.Thread, IndiDevice):
         status = status and (np.float32(features["WEATHER_WIND_GUST"]) <
                              self.limits["MAX_WEATHER_WIND_GUST_KPH"])
         status = status and (np.float32(features["WEATHER_RAIN_HOUR"]) == 0)
-
         return status
 
     def __str__(self):
