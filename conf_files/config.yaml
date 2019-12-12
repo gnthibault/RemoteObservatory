@@ -79,6 +79,7 @@ camera:
     focuser:
         module: IndiFocuser
         focuser_name : Focuser Simulator
+        port : /dev/ttyUSB0
         indi_client :
             indi_host : localhost
             indi_port : 7624

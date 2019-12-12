@@ -49,10 +49,11 @@ class IndiCamera(IndiDevice):
         try:
             cfg = config['focuser']
             focuser_name = cfg['module']
-            focuser = load_module('Camera.'+focuser_name)
-            self.focuser = getattr(focuser, focuser_name)(config=cfg)
+            focuser = load_module('Focuser.'+focuser_name)
+            self.focuser = getattr(focuser, focuser_name)(
+                logger=None, config=cfg, connect_on_create=connect_on_create)
         except Exception as e:
-            self.logger.warning("Cannot load focuser module: {}".format(e))
+            logger.warning("Cannot load focuser module: {}".format(e))
             self.focuser = None
 
         logger.debug('Indi camera, camera name is: {}'.format(device_name))

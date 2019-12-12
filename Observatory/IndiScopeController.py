@@ -44,8 +44,8 @@ class IndiScopeController(IndiDevice, Base):
         return self._is_initialized
 
     def initialize(self):
+        self.set_port()
         self.connect()
-        self.set_text("DEVICE_PORT",{"PORT":self.port})
         self._is_initialized = True
 
     def deinitialize(self):
@@ -62,6 +62,8 @@ class IndiScopeController(IndiDevice, Base):
         self.switch_off_finder_dew_heater()
         self.switch_off_camera()
 
+    def set_port(self):
+        self.set_text("DEVICE_PORT", {"PORT":self.port})
 
     def open(self):
         """ blocking call: opens both main telescope and guiding scope dustcap
