@@ -33,8 +33,12 @@ class IndiWeather(threading.Thread, IndiDevice):
                 delay_sec=60,
                 indi_client=dict(
                     indi_host="localhost",
-                    indi_port="7624"
-                ))
+                    indi_port="7624"),
+                limits=dict(
+                    MAX_WEATHER_WIND_SPEED_KPH=25,
+                    MAX_WEATHER_WIND_GUST_KPH=30,
+                    MAX_WEATHER_CLOUD_COVER=5)
+            )
 
         logger.debug(f"Indi Weather service, name is: {config['service_name']}")
 
@@ -56,9 +60,11 @@ class IndiWeather(threading.Thread, IndiDevice):
         self.store_result = True
         self._do_run = True
         self._delay_sec = config["delay_sec"]
-
         # we store the last 10 entries
         self.weather_entries = deque([], 3)
+
+        # Actual threshold for safety alerts
+        self.limits = config["limits"]
 
         if connect_on_create:
             self.initialize()
@@ -126,12 +132,12 @@ class IndiWeather(threading.Thread, IndiDevice):
                         {'LAT': self.config['observatory']['latitude'],
                          'LONG': self.config['observatory']['longitude'],
                          'ELEV': self.config['observatory']['elevation'] },
-                        sync=False)
+                        sync=True)
 
     def set_update_period(self):
         self.set_number('WEATHER_UPDATE',
                         {'PERIOD': self._delay_sec},
-                        sync=False)
+                        sync=True)
 
     def get_weather_features(self):
         """
@@ -186,13 +192,13 @@ class IndiWeather(threading.Thread, IndiDevice):
             name: WEATHER_WIND_GUST, label: Gust (kph), format: '%4.2f'
             name: WEATHER_RAIN_HOUR, label: Precip (mm), format: '%4.2f'
         """
-        status = False
+        status = True
         status = status and (np.float32(features["WEATHER_WIND_SPEED"]) <
                              self.limits["MAX_WEATHER_WIND_SPEED_KPH"])
         status = status and (np.float32(features["WEATHER_WIND_GUST"]) <
                              self.limits["MAX_WEATHER_WIND_GUST_KPH"])
         status = status and (np.float32(features["WEATHER_RAIN_HOUR"]) == 0)
-        return status
+        return bool(status)
 
     def __str__(self):
         return f"Weather service: {self.device_name}"

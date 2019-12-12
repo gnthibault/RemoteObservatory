@@ -2,7 +2,10 @@
 import json
 import logging
 
-#Local stuff
+# Numeric stuff
+import numpy as np
+
+# Local stuff
 from Service.IndiWeather import IndiWeather
 
 class IndiOpenWeatherMap(IndiWeather):
@@ -22,8 +25,12 @@ class IndiOpenWeatherMap(IndiWeather):
                 delay_sec=60,
                 indi_client=dict(
                     indi_host="localhost",
-                    indi_port="7624"
-                ))
+                    indi_port="7624"),
+                limits=dict(
+                    MAX_WEATHER_WIND_SPEED_KPH=25,
+                    MAX_WEATHER_WIND_GUST_KPH=30,
+                    MAX_WEATHER_CLOUD_COVER=5)
+                )
 
         logger.debug(f"Indi OpenWeatherMap service, name is: "
                      f"{config['service_name']}")
@@ -52,7 +59,7 @@ class IndiOpenWeatherMap(IndiWeather):
         self.set_api_key()
 
     def set_api_key(self):
-        self.set_text('OWM_API_KEY',{'API_KEY': self.api_key})
+        self.set_text('OWM_API_KEY',{'API_KEY': self.api_key}, sync=True)
 
     def _fill_in_weather_data(self):
         """
@@ -73,9 +80,12 @@ class IndiOpenWeatherMap(IndiWeather):
         # name: WEATHER_RAIN_HOUR, label: Precip (mm), format: '%4.2f'
         data["WEATHER_RAIN_HOUR"] = features["WEATHER_RAIN_HOUR"]['value']
         # name: WEATHER_SNOW_HOUR, label: Precip (mm), format: '%4.2f'
-        data["WEATHER_RAIN_HOUR"] = features["WEATHER_RAIN_HOUR"]['value']
+        data["WEATHER_SNOW_HOUR"] = features["WEATHER_SNOW_HOUR"]['value']
         # name: WEATHER_CLOUD_COVER, label: Clouds (%), format: '%4.2f'
-        data["WEATHER_RAIN_HOUR"] = features["WEATHER_RAIN_HOUR"]['value']
+        data["WEATHER_CLOUD_COVER"] = features["WEATHER_CLOUD_COVER"]['value']
+        # name: WEATHER_CODE, label: Status code, format = '%4.2f'
+        # min: 200, max: 810
+        data["WEATHER_CODE"] = features["WEATHER_CODE"]['value']
         data["safe"] = self._make_safety_decision(data)
         return data
 
@@ -90,18 +100,23 @@ class IndiOpenWeatherMap(IndiWeather):
         # name: WEATHER_RAIN_HOUR, label: Precip (mm), format: '%4.2f'
         # name: WEATHER_SNOW_HOUR, label: Precip (mm), format: '%4.2f'
         # name: WEATHER_CLOUD_COVER, label: Clouds (%), format: '%4.2f'
+        # name: WEATHER_CODE, label: Status code, format = '%4.2f'
+        # min: 200, max: 810
+        data["WEATHER_CODE"] = features["WEATHER_CODE"]['value']
         """
-        status = False
+        status = True
         status = status and (np.float32(features["WEATHER_WIND_SPEED"]) <
                              self.limits["MAX_WEATHER_WIND_SPEED_KPH"])
         status = status and (np.float32(features["WEATHER_CLOUD_COVER"]) <
                              self.limits["MAX_WEATHER_CLOUD_COVER"])
         status = status and (np.float32(features["WEATHER_RAIN_HOUR"]) == 0)
         status = status and (np.float32(features["WEATHER_SNOW_HOUR"]) == 0)
+        status = status and (np.float32(features["WEATHER_CODE"]) == 802)
+        status = status and (np.float32(features["WEATHER_FORECAST"]) == 1)
 
         # name: WEATHER_CLOUD_COVER, label: Clouds (%), format: '%4.2f'
 
-        return status
+        return bool(status)
 
 
     def __str__(self):

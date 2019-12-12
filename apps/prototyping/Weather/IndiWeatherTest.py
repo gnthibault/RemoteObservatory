@@ -21,32 +21,39 @@ if __name__ == '__main__':
     logging.config.fileConfig('logging.ini')
 
     # define config
-    config = dict(
+    config1 = dict(
         service_name="Weather Simulator",
         publish_port=65106,
         delay_sec=30,
         indi_client=dict(
             indi_host="localhost",
-            indi_port="7624"
-        ))
-    config = dict(
+            indi_port="7624"),
+        limits = dict(
+            MAX_WEATHER_WIND_SPEED_KPH=25,
+            MAX_WEATHER_WIND_GUST_KPH=30,
+            MAX_WEATHER_CLOUD_COVER=5)
+        )
+    config2 = dict(
         service_name = "OpenWeatherMap",
         key_path = "/var/RemoteObservatory/keys.json",
         publish_port = 6510,
         delay_sec = 60,
         indi_client = dict(
             indi_host="localhost",
-            indi_port="7624"
-        ))
+            indi_port="7624"),
+        limits=dict(
+            MAX_WEATHER_WIND_SPEED_KPH=25,
+            MAX_WEATHER_WIND_GUST_KPH=30,
+            MAX_WEATHER_CLOUD_COVER=5)
+        )
 
-    # Now test Mount
-    IndiWeather
-    serv = IndiWeather(logger=None, config=config,
-                              serv_time=HostTimeService(),
-                              connect_on_create=True, loop_on_create=False)
-    #serv = IndiOpenWeatherMap(logger=None, config=config,
-    #                   serv_time=HostTimeService(),
-    #                   connect_on_create=True, loop_on_create=False)
+    # Now test IndiWeather
+    #serv = IndiWeather(logger=None, config=config1,
+    #                          serv_time=HostTimeService(),
+    #                          connect_on_create=True, loop_on_create=False)
+    serv = IndiOpenWeatherMap(logger=None, config=config2,
+                       serv_time=HostTimeService(),
+                       connect_on_create=True, loop_on_create=False)
     # Set slew ret to be used afterwards
     print(serv.capture())
     serv.set_geographic_coord()

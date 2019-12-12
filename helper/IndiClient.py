@@ -21,7 +21,6 @@ class SingletonIndiClientHolder:
             config = kwargs["config"]
         else:
             config = args[0]
-        print(config)
         key = f"{config['indi_host']}:{config['indi_port']}"
         if key not in cls._instances:
             cls._instances[key] = object.__new__(cls)
