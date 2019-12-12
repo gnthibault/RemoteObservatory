@@ -12,13 +12,31 @@ from Base.Base import Base
   
 class IndiDevice(Base):
     defaultTimeout = 30
-    propTypeToGetterMap = {
+    __prop_getter = {
         'blob': 'getBLOB',
         'light': 'getLight',
         'number': 'getNumber',
         'switch': 'getSwitch',
         'text': 'getText'
     }
+    # Set of useful dictionaries (put as class att to override behaviour ?)
+    __state_str = {
+        PyIndi.IPS_IDLE: 'IDLE',
+        PyIndi.IPS_OK: 'OK',
+        PyIndi.IPS_BUSY: 'BUSY',
+        PyIndi.IPS_ALERT: 'ALERT'}
+    __switch_types = {
+        PyIndi.ISR_1OFMANY: 'ONE_OF_MANY',
+        PyIndi.ISR_ATMOST1: 'AT_MOST_ONE',
+        PyIndi.ISR_NOFMANY: 'ANY'}
+    __type_str = {
+        PyIndi.INDI_NUMBER: 'number',
+        PyIndi.INDI_SWITCH: 'switch',
+        PyIndi.INDI_TEXT: 'text',
+        PyIndi.INDI_LIGHT: 'light',
+        PyIndi.INDI_BLOB: 'blob',
+        PyIndi.INDI_UNKNOWN: 'unknown'}
+
     def __init__(self, logger, device_name, indi_client_config):
         Base.__init__(self)
     
@@ -27,21 +45,6 @@ class IndiDevice(Base):
         self.timeout = IndiDevice.defaultTimeout
         self.device = None
         self.interfaces = None
-
-        # Set of useful dictionaries that can be overriden to change behaviour
-        self.__state_to_str = { PyIndi.IPS_IDLE: 'IDLE',
-                                PyIndi.IPS_OK: 'OK',
-                                PyIndi.IPS_BUSY: 'BUSY',
-                                PyIndi.IPS_ALERT: 'ALERT' }
-        self.__switch_types = { PyIndi.ISR_1OFMANY: 'ONE_OF_MANY',
-                                PyIndi.ISR_ATMOST1: 'AT_MOST_ONE',
-                                PyIndi.ISR_NOFMANY: 'ANY'}
-        self.__type_to_str = { PyIndi.INDI_NUMBER: 'number',
-                               PyIndi.INDI_SWITCH: 'switch',
-                               PyIndi.INDI_TEXT: 'text',
-                               PyIndi.INDI_LIGHT: 'light',
-                               PyIndi.INDI_BLOB: 'blob',
-                               PyIndi.INDI_UNKNOWN: 'unknown' }
 
     @property
     def is_connected(self):
@@ -164,7 +167,7 @@ class IndiDevice(Base):
 
     def get_text(self, name, ctl=None):
         return self.get_prop_dict(name, 'text',
-                                  lambda c: {'value': c.text},
+                                  lambda c: {"value": c.text},
                                   ctl)
 
     def get_number(self, name, ctl=None):
@@ -177,7 +180,7 @@ class IndiDevice(Base):
     def get_light(self, name, ctl=None):
         return self.get_prop_dict(name, 'light',
                                   lambda c: {'value':
-                                             self.__state_to_str[c.s]},
+                                             IndiDevice.__state_str[c.s]},
                                   ctl)
 
     def get_prop_dict(self, prop_name, prop_type, transform,
@@ -188,7 +191,9 @@ class IndiDevice(Base):
             return dest
 
         prop = prop if prop else self.get_prop(prop_name, prop_type, timeout)
-        return dict((c.name, get_dict(c)) for c in prop)
+        d = dict((c.name, get_dict(c)) for c in prop)
+        d["state"] = IndiDevice.__state_str[prop.s]
+        return d
 
     def set_switch(self, name, on_switches=[], off_switches=[],
                    sync=True, timeout=None):
@@ -208,7 +213,7 @@ class IndiDevice(Base):
         self.indi_client.sendNewSwitch(pv)
         if sync:
             self.__wait_prop_status(pv, statuses=[PyIndi.IPS_IDLE,
-                                                PyIndi.IPS_OK],
+                                                  PyIndi.IPS_OK],
                                     timeout=timeout)
         return pv
         
@@ -243,11 +248,11 @@ class IndiDevice(Base):
             timeout = self.timeout
         while prop.s not in statuses:
             if 0 < timeout < time.time() - started:
-                self.logger.debug('IndiDevice: Timeout while waiting for '
-                                  'property status {} for device {}'.format(
-                                  prop.name, self.device_name))
-                raise RuntimeError('Timeout error while changing property '
-                  '{}'.format(prop.name))
+                self.logger.debug(f"IndiDevice: Timeout while waiting for "
+                                  f"property status {prop.name} for device "
+                                  f"{self.device_name}")
+                raise RuntimeError(f"Timeout error while changing property "
+                                   f"{prop.name}")
             time.sleep(0.01)
 
     def __get_prop_vect_indices_having_values(self, property_vector, values):
@@ -259,9 +264,21 @@ class IndiDevice(Base):
       return result
 
     def get_prop(self, propName, propType, timeout=None):
-        """ Return the value corresponding to the given propName"""
+        """ Return the value corresponding to the given propName
+            A prop often has the following attributes:
+            prop.device   : 'OpenWeatherMap'
+            prop.group    : 'Parameters', equiv to UI panel
+            prop.label    : 'Parameters', equiv to UI subtable name
+            prop.name     : 'WEATHER_PARAMETERS'
+            prop.nnp      : 9
+            prop.np       : Swig_stuff
+            prop.p        : 0
+            prop.s        : 1 , equiv to status: PyIndi.IPS_OK, PyIndi.IPS_ALERT
+            prop.timeout  : 60.0
+            prop.timestamp: ''
+        """
         prop = None
-        attr = IndiDevice.propTypeToGetterMap[propType]
+        attr = IndiDevice.__prop_getter[propType]
         if timeout is None:
             timeout = self.timeout
         started = time.time()

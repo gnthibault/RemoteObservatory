@@ -67,6 +67,8 @@ class IndiOpenWeatherMap(IndiWeather):
         """
         features = self.get_weather_features()
         data = {}
+        # Generic indi state for this property, can be OK, IDLE, BUSY, ALERT
+        data["state"] = features["state"]
         # name: WEATHER_FORECAST, label: Weather, format: '%4.2f'
         data["WEATHER_FORECAST"] = features["WEATHER_FORECAST"]['value']
         # name: WEATHER_TEMPERATURE, label: Temperature (C), format: '%4.2f'
@@ -104,7 +106,7 @@ class IndiOpenWeatherMap(IndiWeather):
         # min: 200, max: 810
         data["WEATHER_CODE"] = features["WEATHER_CODE"]['value']
         """
-        status = True
+        status = features["state"] == 'OK'
         status = status and (np.float32(features["WEATHER_WIND_SPEED"]) <
                              self.limits["MAX_WEATHER_WIND_SPEED_KPH"])
         status = status and (np.float32(features["WEATHER_CLOUD_COVER"]) <

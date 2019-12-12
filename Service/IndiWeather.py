@@ -170,6 +170,8 @@ class IndiWeather(threading.Thread, IndiDevice):
         #data['gust_condition'] = 'Gust_condition'
         #data['rain_condition'] = 'Rain_condition'
 
+        # Generic indi state for this property, can be OK, IDLE, BUSY, ALERT
+        data["state"] = features["state"]
         # name: WEATHER_FORECAST, label: Weather, format: '%4.2f'
         data["WEATHER_FORECAST"] = features["WEATHER_FORECAST"]['value']
         # name: WEATHER_TEMPERATURE, label: Temperature (C), format: '%4.2f'
@@ -192,7 +194,7 @@ class IndiWeather(threading.Thread, IndiDevice):
             name: WEATHER_WIND_GUST, label: Gust (kph), format: '%4.2f'
             name: WEATHER_RAIN_HOUR, label: Precip (mm), format: '%4.2f'
         """
-        status = True
+        status = features["state"] == 'OK'
         status = status and (np.float32(features["WEATHER_WIND_SPEED"]) <
                              self.limits["MAX_WEATHER_WIND_SPEED_KPH"])
         status = status and (np.float32(features["WEATHER_WIND_GUST"]) <
