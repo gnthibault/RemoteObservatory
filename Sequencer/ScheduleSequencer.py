@@ -52,7 +52,7 @@ class ScheduleSequencer:
         self.seq_builder.add_function(
             lambda : self.seq_builder.mount.unpark())
         self.seq_builder.add_function(
-            lambda : self.seq_builder.camera.prepareShoot())
+            lambda : self.seq_builder.camera.prepare_shoot())
         self.seq_builder.add_function(
             lambda : self.seq_builder.camera.setFrameType('FRAME_LIGHT'))
         self.seq_builder.add_function(

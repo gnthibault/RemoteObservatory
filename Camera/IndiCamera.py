@@ -87,13 +87,13 @@ class IndiCamera(IndiDevice):
 
     def on_emergency(self):
         self.logger.debug('on emergency routine started...')
-        self.abortShoot(sync=False)
+        self.abort_shoot(sync=False)
         self.logger.debug('on emergency routine finished')
 
     '''
       Indi CCD related stuff
     '''
-    def prepareShoot(self):
+    def prepare_shoot(self):
         '''
           We should inform the indi server that we want to receive the
           "CCD1" blob from this device
@@ -103,23 +103,23 @@ class IndiCamera(IndiDevice):
         self.indi_client.setBLOBMode(PyIndi.B_ALSO, self.device_name, 'CCD1')
         self.frame_blob = self.get_prop(propName='CCD1', propType='blob')
 
-    def synchronizeWithImageReception(self):
+    def synchronize_with_image_reception(self):
         try:
             #global IndiClientGlobalBlobEvent
-            self.logger.debug('synchronizeWithImageReception: Start waiting')
+            self.logger.debug('synchronize_with_image_reception: Start waiting')
             #IndiClientGlobalBlobEvent.wait()
             #IndiClientGlobalBlobEvent.clear()
             self.indi_client.blob_event.wait()
             self.indi_client.blob_event.clear()
-            self.logger.debug('synchronizeWithImageReception: Done')
+            self.logger.debug('synchronize_with_image_reception: Done')
         except Exception as e:
             self.logger.error('Indi Camera Error in '
-                'synchronizeWithImageReception: {}'.format(e))
+                'synchronize_with_image_reception: {}'.format(e))
 
-    def getReceivedImage(self):
+    def get_received_image(self):
         try:
             ret = []
-            self.logger.debug('getReceivedImage frame_blob: {}'.format(
+            self.logger.debug('get_received_image frame_blob: {}'.format(
                 self.frame_blob))
             for blob in self.frame_blob:
                 self.logger.debug('Indi camera, processing blob with name: {},'
@@ -129,55 +129,110 @@ class IndiCamera(IndiDevice):
                 # for accessing the contents of the blob, which is a bytearray
                 return fits.open(io.BytesIO(blob.getblobdata()))
         except Exception as e:
-            self.logger.error('Indi Camera Error in getReceivedImage: '+str(e))
+            self.logger.error('Indi Camera Error in get_received_image: '+str(e))
 
-    def shootAsync(self):
+    def shoot_async(self):
         try:
-            self.logger.info('launching acquisition with {} '
-                             'sec exposure time'.format(self.exp_time_sec))
+            self.logger.info(f"launching acquisition with {self.exp_time_sec} "
+                             "sec exposure time")
             self.set_number('CCD_EXPOSURE',
                            {'CCD_EXPOSURE_VALUE': self.sanitize_exp_time(
                                self.exp_time_sec)}, sync=False)
         except Exception as e:
-            self.logger.error('Indi Camera Error in shoot: {}'.format(e))
+            self.logger.error(f"Indi Camera Error in shoot: {e}")
+
+    def get_thumbnail(self, exp_time_sec, thumbnail_size):
+        """
+            There are 4 cases:
+            -ccd size is even, thumb size is even
+            2-2 = 0 ok
+            2-1 = 1 ok
+            -ccd size is even, thumb size is odd
+            2-1.5 = 0.5 floor
+            2-0.5 = 1.5 floor
+            -ccd size is odd, thumb size is even
+            2.5-2 = 0.5 floor
+            2.5-1 = 1.5 floor
+            -ccd size is odd, thumb size is odd
+            2.5-2.5 = 0 ok
+            2.5-1.5 = 1 ok
+        """
+        sensor_size = self.get_sensor_size()
+        assert (thumbnail_size < sensor_size["CCD_MAX_X"])
+        assert (thumbnail_size < sensor_size["CCD_MAX_Y"])
+        center_x = sensor_size["CCD_MAX_X"] / 2
+        center_y = sensor_size["CCD_MAX_Y"] / 2
+        left_most = np.floor(center_x - thumbnail_size / 2)
+        top_most = np.floor(center_y - thumbnail_size / 2)
+        roi = {'X': left_most, 'Y': top_most, 'WIDTH': thumbnail_size,
+                     'HEIGHT': thumbnail_size}
+        self.logger.debug("Setting camera {self.name} roi to {roi}")
+        self.set_roi(roi)
+        old_exp_time_sec = self.exp_time_sec
+        self.exp_time_sec = exp_time_sec
+        self.shoot_async()
+        self.synchronize_with_image_reception()
+        fits = self.get_received_image()
+        roi = {'X': 0, 'Y': 0, 'WIDTH': sensor_size["CCD_MAX_X"],
+                     'HEIGHT': sensor_size["CCD_MAX_Y"]}
+        self.logger.debug("Resetting camera {self.name} roi to {roi}")
+        self.set_roi(roi)
+        self.exp_time_sec = old_exp_time_sec
+        return fits
 
 
-    def abortShoot(self, sync=True):
+    def abort_shoot(self, sync=True):
         self.set_number('CCD_ABORT_EXPOSURE', {'ABORT': 1}, sync=sync)
 
-    def launchStreaming(self):
+    def launch_streaming(self):
         self.set_switch('VIDEO_STREAM',['ON'])
 
-    def setUploadPath(self, path, prefix = 'IMAGE_XXX'):
+    def set_upload_path(self, path, prefix = 'IMAGE_XXX'):
         self.set_text('UPLOAD_SETTINGS', {'UPLOAD_DIR': path,\
         'UPLOAD_PREFIX': prefix})
 
-    def getBinning(self):
+    def get_binning(self):
         return self.getPropertyValueVector('CCD_BINNING', 'number')
 
-    def setBinning(self, hbin, vbin = None):
+    def set_binning(self, hbin, vbin = None):
         if vbin == None:
             vbin = hbin
         self.set_number('CCD_BINNING', {'HOR_BIN': hbin, 'VER_BIN': vbin })
 
-    def getRoi(self):
-        return self.getPropertyValueVector('CCD_FRAME', 'number')
-
-    def setRoi(self, roi):
+    def get_roi(self):
         """"
             X: Left-most pixel position
             Y: Top-most pixel position
             WIDTH: Frame width in pixels
             HEIGHT: Frame width in pixels
-            ex: cam.setRoi({'X':256, 'Y':480, 'WIDTH':512, 'HEIGHT':640})
+            ex: {'X':256, 'Y':480, 'WIDTH':512, 'HEIGHT':640}
         """
-        self.set_number('CCD_FRAME', roi)
+        prop_vect = self.get_number('CCD_FRAME')
+        return {k:prop_vect[k]['value'] for k in ["X","Y","WIDTH","HEIGHT"]}
+
+    def set_roi(self, roi):
+        """"
+            X: Left-most pixel position
+            Y: Top-most pixel position
+            WIDTH: Frame width in pixels
+            HEIGHT: Frame width in pixels
+            ex: cam.set_roi({'X':256, 'Y':480, 'WIDTH':512, 'HEIGHT':640})
+        """
+        self.set_number('CCD_FRAME', roi, sync=True)
 
     def get_dynamic(self):
         return self.get_number('CCD_INFO')['CCD_BITSPERPIXEL']['value']
 
     def get_maximum_dynamic(self):
         return get_dynamic()
+
+    def get_sensor_size(self):
+        prop_vect = self.get_number('CCD_INFO')
+        return {k:prop_vect[k]['value'] for k in ["CCD_MAX_X","CCD_MAX_Y"]}
+
+    def get_pixel_size(self):
+        prop_vect = self.get_number('CCD_INFO')
+        return {k: prop_vect[k]['value'] for k in ["CCD_PIXEL_SIZE_X", "CCD_PIXEL_SIZE_Y"]}
 
     def get_temperature(self):
         return self.get_number(
@@ -269,11 +324,11 @@ class IndiCamera(IndiDevice):
 
         """
         self.logger.info(f"Camera {self.device_name} is going to start "
-                         f"autofocus with focuser {self.focuser.device_name}")
-        af = IndiAutoFocuser(self)
-
-        self.logger.info(f"Camera {self.device_name} just finished "
-                     f"autofocus with focuser {self.focuser.device_name}")
+                         f"autofocus with device {self.focuser.device_name}...")
+        af = IndiAutoFocuser(camera=self, autofocus_seconds=self.exp_time_sec)
+        af.autofocus(coarse=False, blocking=True)
+        self.logger.info(f"Camera {self.device_name} just finished autofocus "
+                         f"with focuser {self.focuser.device_name}")
         autofocus_event.set()
 
     def __str__(self):

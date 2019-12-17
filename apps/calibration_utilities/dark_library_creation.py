@@ -480,7 +480,7 @@ class DarkLibraryBuilder():
 
     def acquire_images(self):
         self.cam.set_frame_type('FRAME_DARK')
-        self.cam.prepareShoot()
+        self.cam.prepare_shoot()
         for temperature in self.temp_list:
             self.set_temperature(temperature)
             for gain in self.gain_list:
@@ -495,11 +495,11 @@ class DarkLibraryBuilder():
                             print('before set exp time')
                             self.cam.setExpTimeSec(exp_time)
                             print('before shoot')
-                            self.cam.shootAsync()
-                            print('After shootAsync, going to sync')
-                            self.cam.synchronizeWithImageReception()
+                            self.cam.shoot_async()
+                            print('After shoot_async, going to sync')
+                            self.cam.synchronize_with_image_reception()
                             print('After sync')
-                            fits = self.cam.getReceivedImage()
+                            fits = self.cam.get_received_image()
                             print('Image received')
                             with open(fname, "wb") as f:
                                 fits.writeto(f)

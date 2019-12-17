@@ -80,6 +80,16 @@ camera:
         module: IndiFocuser
         focuser_name : Focuser Simulator
         port : /dev/ttyUSB0
+        backlash : 10
+        focus_range :
+            min : 0
+            max : 100
+        autofocus_step :
+            fine : 1
+            coarse : 10
+        autofocus_range :
+            fine : 40
+            coarse : 60
         indi_client :
             indi_host : localhost
             indi_port : 7624

@@ -18,14 +18,29 @@ class IndiFocuser(IndiDevice):
 
         if config is None:
             config = dict(
+                module="IndiFocuser",
                 focuser_name="Focuser Simulator",
                 port="/dev/ttyUSB0",
+                backlash=10,
+                focus_range=dict(
+                    min=0,
+                    max=100),
+                autofocus_step=dict(
+                    coarse=1,
+                    fine=10),
+                autofocus_range=dict(
+                    coarse=40,
+                    fine=60),
                 indi_client=dict(
                     indi_host="localhost",
                     indi_port="7624"
                 ))
 
         self.port = config['port']
+        self.backlash = config["backlash"]
+        self.focus_range = config['focus_range']
+        self.autofocus_step = config['autofocus_step']
+        self.autofocus_range = config['autofocus_range']
 
         logger.debug(f"Indi Focuser, focuser name is: {config['focuser_name']}")
 
@@ -52,6 +67,16 @@ class IndiFocuser(IndiDevice):
     def on_emergency(self):
         self.logger.debug('Indi Focuser: on emergency routine started...')
         self.logger.debug('Indi Focuser: on emergency routine finished')
+
+    def get_position(self):
+        """ Current encoder position of the focuser """
+        return self.get_number("REL_FOCUS_POSITION")["FOCUS_RELATIVE_POSITION"]
+
+    def move_to(self, position):
+        """ Move focuser to new encoder position """
+        self.set_number('REL_FOCUS_POSITION',
+                        {'FOCUS_RELATIVE_POSITION': position},
+                        sync=True)
 
     def __str__(self):
         return f"Focuser: {self.device_name}"

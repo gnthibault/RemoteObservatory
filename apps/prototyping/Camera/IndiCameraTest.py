@@ -60,8 +60,8 @@ if __name__ == '__main__':
     cam.set_gain(10)
 
     # Acquire data
-    cam.prepareShoot()
+    cam.prepare_shoot()
     cam.setExpTimeSec(10)
-    cam.shootAsync()
-    cam.synchronizeWithImageReception()
-    fits = cam.getReceivedImage()
+    cam.shoot_async()
+    cam.synchronize_with_image_reception()
+    fits = cam.get_received_image()

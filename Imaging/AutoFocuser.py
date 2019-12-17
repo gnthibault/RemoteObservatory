@@ -36,8 +36,6 @@ class AutoFocuser(Base):
     def __init__(self,
                  camera=None,
                  initial_position=None,
-                 autofocus_range=None,
-                 autofocus_step=None,
                  autofocus_seconds=None,
                  autofocus_size=None,
                  autofocus_keep_files=None,
@@ -53,13 +51,17 @@ class AutoFocuser(Base):
         else:
             self._position = int(initial_position)
 
-        if autofocus_range:
-            self.autofocus_range = (int(autofocus_range[0]), int(autofocus_range[1]))
+        if self._camera.focuser is not None:
+            self.autofocus_range = (
+                int(self._camera.focuser.autofocus_range["coarse"]),
+                int(self._camera.focuser.autofocus_range["fine"]))
         else:
             self.autofocus_range = None
 
         if autofocus_step:
-            self.autofocus_step = (int(autofocus_step[0]), int(autofocus_step[1]))
+            self.autofocus_step = (
+                int(self._camera.focuser.autofocus_step["coarse"]),
+                int(self._camera.focuser.autofocus_step["fine"]))
         else:
             self.autofocus_step = None
 
@@ -74,8 +76,8 @@ class AutoFocuser(Base):
         self._camera = camera
 
         self.logger.debug(f"AutoFocuser successfully created with camera "
-                          f"{self.camera.device_name} and focuser "
-                          f"{self.camera.focuser.device_name}")
+                          f"{self._camera.device_name} and focuser "
+                          f"{self._camera.focuser.device_name}")
 
 ##################################################################################################
 # Properties
@@ -164,38 +166,38 @@ class AutoFocuser(Base):
             ValueError: If invalid values are passed for any of the focus parameters.
         """
         self.logger.debug('Starting autofocus')
-        assert self.camera.is_connected, self.logger.error(
-            f"Camera {self.camera} must be connected for autofocus")
-        assert self.camera.focuser.is_connected, self.logger.error(
-            f"Focuser {self.camera.focuser} must be connected for autofocus")
+        assert self._camera.is_connected, self.logger.error(
+            f"Camera {self._camera} must be connected for autofocus")
+        assert self._camera.focuser.is_connected, self.logger.error(
+            f"Focuser {self._camera.focuser} must be connected for autofocus")
 
         if not focus_range:
             if self.autofocus_range:
                 focus_range = self.autofocus_range
             else:
                 raise ValueError(f"No focus_range specified, aborting autofocus"
-                                 f" of {self.camera}")
+                                 f" of {self._camera}")
 
         if not focus_step:
             if self.autofocus_step:
                 focus_step = self.autofocus_step
             else:
                 raise ValueError("No focus_step specified, aborting autofocus "
-                                 f"of {self.camera}")
+                                 f"of {self._camera}")
 
         if not seconds:
             if self.autofocus_seconds:
                 seconds = self.autofocus_seconds
             else:
                 raise ValueError(f"No focus exposure time specified, aborting "
-                                 f"autofocus of {self.camera}")
+                                 f"autofocus of {self._camera}")
 
         if not thumbnail_size:
             if self.autofocus_size:
                 thumbnail_size = self.autofocus_size
             else:
                 raise ValueError(f"No focus thumbnail size specified, aborting"
-                                 f" autofocus of {self.camera}")
+                                 f" autofocus of {self._camera}")
 
         if keep_files is None:
             if self.autofocus_keep_files:
@@ -207,7 +209,7 @@ class AutoFocuser(Base):
             if self.autofocus_take_dark is not None:
                 take_dark = self.autofocus_take_dark
             else:
-                take_dark = True
+                take_dark = False
 
         if not merit_function:
             if self.autofocus_merit_function:
@@ -247,7 +249,6 @@ class AutoFocuser(Base):
         focus_thread.start()
         if blocking:
             focus_event.wait()
-
         return focus_event
 
     def _autofocus(self,
@@ -274,51 +275,51 @@ class AutoFocuser(Base):
             focus_type = 'coarse'
 
         initial_focus = self.position
-        self.logger.debug(f"Beginning {focus_type} autofocus of {self.camera}"
+        self.logger.debug(f"Beginning {focus_type} autofocus of {self._camera}"
                           f" - initial position: {initial_focus}")
 
         # Set up paths for temporary focus files, and plots if requested.
-        image_dir = self.config['directories']['images']
-        start_time = self.serv_time.get_current_time(flatten=True)
-        file_path_root = os.path.join(image_dir,
-                                      'focus',
-                                      self._camera.uid,
-                                      start_time)
+        # image_dir = self.config['directories']['images']
+        # start_time = self.serv_time.get_current_time(flatten=True)
+        # file_path_root = os.path.join(image_dir,
+        #                               'focus',
+        #                               self._camera.uid,
+        #                               start_time)
 
-        dark_thumb = None
-        if take_dark:
-            dark_path = os.path.join(file_path_root,
-                                     '{}.{}'.format('dark', self._camera.file_extension))
-            self.logger.debug('Taking dark frame {} on camera {}'.format(dark_path, self._camera))
-            try:
-                dark_thumb = self._camera.get_thumbnail(seconds,
-                                                        dark_path,
-                                                        thumbnail_size,
-                                                        keep_file=True,
-                                                        dark=True)
-                # Mask 'saturated' with a low threshold to remove hot pixels
-                dark_thumb = focus_utils.mask_saturated(dark_thumb, threshold=0.3)
-            except TypeError:
-                self.logger.warning("Camera {} does not support dark frames!".format(self._camera))
+        # dark_thumb = None
+        # if take_dark:
+        #     dark_path = os.path.join(file_path_root,
+        #                              '{}.{}'.format('dark', self._camera.file_extension))
+        #     self.logger.debug('Taking dark frame {} on camera {}'.format(dark_path, self._camera))
+        #     try:
+        #         dark_thumb = self._camera.get_thumbnail(seconds,
+        #                                                 dark_path,
+        #                                                 thumbnail_size,
+        #                                                 keep_file=True,
+        #                                                 dark=True)
+        #         # Mask 'saturated' with a low threshold to remove hot pixels
+        #         dark_thumb = focus_utils.mask_saturated(dark_thumb, threshold=0.3)
+        #     except TypeError:
+        #         self.logger.warning("Camera {} does not support dark frames!".format(self._camera))
 
         # Take an image before focusing, grab a thumbnail from the centre and add it to the plot
-        initial_fn = "{}_{}_{}.{}".format(initial_focus,
-                                          focus_type,
-                                          "initial",
-                                          self._camera.file_extension)
-        initial_path = os.path.join(file_path_root, initial_fn)
-
+        # initial_fn = "{}_{}_{}.{}".format(initial_focus,
+        #                                   focus_type,
+        #                                   "initial",
+        #                                   self._camera.file_extension)
+        # initial_path = os.path.join(file_path_root, initial_fn)
+        #
         initial_thumbnail = self._camera.get_thumbnail(
             seconds, initial_path, thumbnail_size, keep_file=True)
 
         # Set up encoder positions for autofocus sweep, truncating at focus travel
         # limits if required.
         if coarse:
-            focus_range = focus_range[1]
-            focus_step = focus_step[1]
-        else:
             focus_range = focus_range[0]
             focus_step = focus_step[0]
+        else:
+            focus_range = focus_range[1]
+            focus_step = focus_step[1]
 
         focus_positions = np.arange(max(initial_focus - focus_range / 2, self.min_position),
                                     min(initial_focus + focus_range / 2, self.max_position) + 1,
@@ -336,18 +337,18 @@ class AutoFocuser(Base):
             focus_positions[i] = self.move_to(position)
 
             # Take exposure
-            focus_fn = "{}_{:02d}.{}".format(focus_positions[i], i, self._camera.file_extension)
-            file_path = os.path.join(file_path_root, focus_fn)
-
+            # focus_fn = "{}_{:02d}.{}".format(focus_positions[i], i, self._camera.file_extension)
+            # file_path = os.path.join(file_path_root, focus_fn)
+            #
             thumbnail = self._camera.get_thumbnail(
                 seconds, file_path, thumbnail_size, keep_file=keep_files)
             masks[i] = focus_utils.mask_saturated(thumbnail).mask
-            if dark_thumb is not None:
-                thumbnail = thumbnail - dark_thumb
+            # if dark_thumb is not None:
+            #     thumbnail = thumbnail - dark_thumb
             thumbnails[i] = thumbnail
 
-        master_mask = masks.any(axis=0)
-        master_mask = binary_dilation(master_mask, iterations=mask_dilations)
+        # master_mask = masks.any(axis=0)
+        # master_mask = binary_dilation(master_mask, iterations=mask_dilations)
 
         # Apply the master mask and then get metrics for each frame.
         for i, thumbnail in enumerate(thumbnails):
@@ -551,7 +552,7 @@ class AutoFocuser(Base):
         if not saturation_level:
             try:
                 # If data is an integer type use iinfo to compute machine limits
-                dynamic = self.camera.dynamic
+                dynamic = self._camera.dynamic
             except ValueError:
                 # Not an integer type. Assume for now we have 16 bit data
                 dynamic = 2 ** 16

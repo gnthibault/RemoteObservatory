@@ -26,7 +26,7 @@ class IndiVirtualCamera(IndiCamera):
     '''
       Indi CCD related stuff
     '''
-    def shootAsync(self, coord={'ra':12.0, 'dec':45.0}):
+    def shoot_async(self, coord={'ra':12.0, 'dec':45.0}):
         '''
           Just in case one uses a virtual camera, you should provide 'ra' and
           'dec'
@@ -38,4 +38,4 @@ class IndiVirtualCamera(IndiCamera):
             'EQUATORIAL_PE', {'RA_PE': coord['ra'], 'DEC_PE': coord['dec']},
             sync=False)
         
-        IndiCamera.shootAsync(self)
+        IndiCamera.shoot_async(self)

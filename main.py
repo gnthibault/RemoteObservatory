@@ -90,11 +90,11 @@ if __name__ == '__main__':
     #  configFileName='IndiEos350DCamera.json', connect_on_create=False)
 
     cam.connect()
-    cam.prepareShoot()
+    cam.prepare_shoot()
     cam.setExpTimeSec(10)
-    #cam.shootAsync()
-    #cam.synchronizeWithImageReception()
-    #fits = cam.getReceivedImage()
+    #cam.shoot_async()
+    #cam.synchronize_with_image_reception()
+    #fits = cam.get_received_image()
 
     # Now test filterWheel
     filterWheel = IndiFilterWheel(logger=logger, indi_client=indiCli,

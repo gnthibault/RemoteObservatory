@@ -24,11 +24,11 @@ class IndiAbstractCamera(IndiCamera, AbstractCamera):
         self.indi_camera_config = config
 
     # TODO TN: setup event based acquisition properly
-    def shootAsyncWithEvent(self, exp_time_sec, filename, exposure_event):
+    def shoot_asyncWithEvent(self, exp_time_sec, filename, exposure_event):
         self.setExpTimeSec(exp_time_sec)
-        self.shootAsync()
-        self.synchronizeWithImageReception() 
-        image = self.getReceivedImage()
+        self.shoot_async()
+        self.synchronize_with_image_reception() 
+        image = self.get_received_image()
         try:
             with open(filename, "wb") as f:
                 image.writeto(f, overwrite=True)
@@ -42,7 +42,7 @@ class IndiAbstractCamera(IndiCamera, AbstractCamera):
         Should return an event
         """
         exposure_event = threading.Event()
-        w = threading.Thread(target=self.shootAsyncWithEvent,
+        w = threading.Thread(target=self.shoot_asyncWithEvent,
                              args=(exposure_time.to(u.second).value,
                                    filename,
                                    exposure_event))
@@ -66,7 +66,7 @@ class IndiAbstractCamera(IndiCamera, AbstractCamera):
         Should return an event
         """
         exposure_event = threading.Event()
-        w = threading.Thread(target=self.shootAsyncWithEvent,
+        w = threading.Thread(target=self.shoot_asyncWithEvent,
                              args=(exposure_time.to(u.second).value,
                                    filename,
                                    exposure_event))
@@ -79,7 +79,7 @@ class IndiAbstractCamera(IndiCamera, AbstractCamera):
         Should return an event
         """
         exposure_event = threading.Event()
-        w = threading.Thread(target=self.shootAsyncWithEvent,
+        w = threading.Thread(target=self.shoot_asyncWithEvent,
                              args=(exposure_time.to(u.second).value,
                                    filename,
                                    exposure_event))
@@ -92,7 +92,7 @@ class IndiAbstractCamera(IndiCamera, AbstractCamera):
         Should return an event
         """
         exposure_event = threading.Event()
-        w = threading.Thread(target=self.shootAsyncWithEvent,
+        w = threading.Thread(target=self.shoot_asyncWithEvent,
                              args=(exposure_time.to(u.second).value,
                                    filename,
                                    exposure_event))

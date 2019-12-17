@@ -696,7 +696,7 @@ class Manager(Base):
                 config=self.config['camera'],
                 connect_on_create=True,
                 primary=True)
-            cam.prepareShoot()
+            cam.prepare_shoot()
  
         except Exception as e:
             raise RuntimeError('Problem setting up camera: {}'.format(e))
