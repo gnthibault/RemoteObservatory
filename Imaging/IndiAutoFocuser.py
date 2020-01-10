@@ -13,19 +13,34 @@ class IndiAutoFocuser(AutoFocuser):
     # Properties
     ##################################################################################################
     @property
+    def uid(self):
+        """ Serial number of the focuser """
+        return self.camera.focuser.name
+
+    @property
+    def model(self):
+        """ Model of the focuser """
+        return self.camera.focuser.name
+
+    @property
+    def name(self):
+        """ Name of the focuser """
+        return self.camera.focuser.name
+
+    @property
     def position(self):
         """ Current encoder position of the focuser """
-        return self._camera.focuser.get_position()
+        return self.camera.focuser.get_position()
 
     @property
     def min_position(self):
         """ Get position of close limit of focus travel, in encoder units """
-        return self.focus_range["min"]
+        return self.camera.focuser.focus_range["min"]
 
     @property
     def max_position(self):
         """ Get position of far limit of focus travel, in encoder units """
-        return self.focus_range["max"]
+        return self.camera.focuser.focus_range["max"]
 
     ##################################################################################################
     # Methods
@@ -33,4 +48,4 @@ class IndiAutoFocuser(AutoFocuser):
 
     def move_to(self, position):
         """ Move focuser to new encoder position """
-        self._camera.focuser.move_to(position)
+        return self.camera.focuser.move_to(position)

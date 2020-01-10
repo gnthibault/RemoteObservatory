@@ -217,30 +217,36 @@ class IndiDevice(Base):
                                     timeout=timeout)
         return pv
         
-    def set_number(self, name, valueVector, sync=True, timeout=None):
-        pv = self.get_prop(name, 'number', timeout)
+    def set_number(self, number_name, value_vector, sync=True, timeout=None):
+        pv = self.get_prop(number_name, 'number', timeout)
         for property_name, index in self.__get_prop_vect_indices_having_values(
-                                   pv, valueVector.keys()).items():
-            pv[index].value = valueVector[property_name]
+                                   pv, value_vector.keys()).items():
+            pv[index].value = value_vector[property_name]
         self.indi_client.sendNewNumber(pv)
         if sync:
-            self.__wait_prop_status(pv, statuses=[PyIndi.IPS_ALERT,
-                                                PyIndi.IPS_OK],
-                                  timeout=timeout)
+            ret = self.__wait_prop_status(pv, statuses=[PyIndi.IPS_ALERT,
+                                                        PyIndi.IPS_OK],
+                                          timeout=timeout)
+            if ret == PyIndi.IPS_ALERT:
+                raise RuntimeError(f"Indi alert upon set_number, {number_name} "
+                                   f": {value_vector}")
         return pv
 
-    def set_text(self, property_name, valueVector, sync=True, timeout=None):
-        pv = self.get_prop(property_name, 'text')
+    def set_text(self, text_name, value_vector, sync=True, timeout=None):
+        pv = self.get_prop(text_name, 'text')
         for property_name, index in self.__get_prop_vect_indices_having_values(
-                                   pv, valueVector.keys()).items():
-            pv[index].text = valueVector[property_name]
+                                   pv, value_vector.keys()).items():
+            pv[index].text = value_vector[property_name]
         self.indi_client.sendNewText(pv)
         if sync:
-            self.__wait_prop_status(pv, timeout=timeout)
+            ret = self.__wait_prop_status(pv, timeout=timeout)
+            if ret == PyIndi.IPS_ALERT:
+                raise RuntimeError(f"Indi alert upon set_text, {text_name} "
+                                   f": {value_vector}")
         return pv
 
-    def __wait_prop_status(self, prop,\
-        statuses=[PyIndi.IPS_OK, PyIndi.IPS_IDLE], timeout=None):
+    def __wait_prop_status(self, prop, statuses=[PyIndi.IPS_OK,PyIndi.IPS_IDLE],
+                           timeout=None):
         """Wait for the specified property to take one of the status in param"""
 
         started = time.time()
@@ -254,6 +260,7 @@ class IndiDevice(Base):
                 raise RuntimeError(f"Timeout error while changing property "
                                    f"{prop.name}")
             time.sleep(0.01)
+        return prop.s
 
     def __get_prop_vect_indices_having_values(self, property_vector, values):
       """ return dict of name-index of prop that are in values"""

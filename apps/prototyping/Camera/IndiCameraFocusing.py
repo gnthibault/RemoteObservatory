@@ -12,7 +12,7 @@ import numpy as np
 # Local stuff : Camera
 from Camera.IndiCamera import IndiCamera
 
-
+# For this t
 if __name__ == '__main__':
 
     # load the logging configuration
@@ -20,20 +20,22 @@ if __name__ == '__main__':
 
     config = dict(
         camera_name='CCD Simulator',
+        autofocus_seconds=5,
+        autofocus_size=500,
         focuser=dict(
             module="IndiFocuser",
             focuser_name="Focuser Simulator",
             port="/dev/ttyUSB0",
             backlash=10,
             focus_range=dict(
-                min=0,
-                max=100),
+                min=1,
+                max=100000),
             autofocus_step=dict(
-                coarse=1,
-                fine=10),
+                coarse=10000,
+                fine=500),
             autofocus_range=dict(
-                coarse=40,
-                fine=60),
+                coarse=100000,
+                fine=20000),
             indi_client=dict(
                 indi_host="localhost",
                 indi_port="7624")
@@ -45,18 +47,24 @@ if __name__ == '__main__':
 
     # test indi virtual camera class
     cam = IndiCamera(config=config, connect_on_create=True)
+    cam.prepare_shoot()
+
+    def get_thumb(cam):
+        thumbnail_size = 500
+        #cam.prepare_shoot()
+        fits = cam.get_thumbnail(exp_time_sec=5, thumbnail_size=thumbnail_size)
+        try:
+            image = fits.data
+        except:
+            image = fits[0].data
+        plt.imshow(image)
+        plt.show()
 
     # Now focus
     assert(cam.focuser.is_connected)
     autofocus_event = threading.Event()
-    #cam.autofocus_async(autofocus_event)
+    #cam.autofocus_async(autofocus_event, coarse=True)
+    cam.autofocus_async(autofocus_event, coarse=False)
+    autofocus_event.wait()
 
-    thumbnail_size = 500
-    cam.prepare_shoot()
-    fits = cam.get_thumbnail(exp_time_sec=5, thumbnail_size=thumbnail_size)
-    try:
-        image = fits.data
-    except:
-        image = fits[0].data
-    plt.imshow(image)
-    plt.show()
+

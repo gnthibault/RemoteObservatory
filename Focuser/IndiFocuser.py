@@ -3,6 +3,9 @@ import io
 import json
 import logging
 
+# Numerical stuff
+import numpy as np
+
 # Indi stuff
 import PyIndi
 from helper.IndiDevice import IndiDevice
@@ -23,8 +26,8 @@ class IndiFocuser(IndiDevice):
                 port="/dev/ttyUSB0",
                 backlash=10,
                 focus_range=dict(
-                    min=0,
-                    max=100),
+                    min=60,
+                    max=40),
                 autofocus_step=dict(
                     coarse=1,
                     fine=10),
@@ -70,13 +73,21 @@ class IndiFocuser(IndiDevice):
 
     def get_position(self):
         """ Current encoder position of the focuser """
-        return self.get_number("REL_FOCUS_POSITION")["FOCUS_RELATIVE_POSITION"]
+        #ret = self.get_number("REL_FOCUS_POSITION")["FOCUS_RELATIVE_POSITION"][
+        ret = self.get_number("ABS_FOCUS_POSITION")["FOCUS_ABSOLUTE_POSITION"][
+            "value"]
+        self.logger.debug(f"{self} : current position is {ret}")
+        return ret
 
     def move_to(self, position):
         """ Move focuser to new encoder position """
-        self.set_number('REL_FOCUS_POSITION',
-                        {'FOCUS_RELATIVE_POSITION': position},
+        self.logger.debug(f"{self}  moving to position {position}")
+        self.set_number('ABS_FOCUS_POSITION', #REL_FOCUS_POSITION
+                        {'FOCUS_ABSOLUTE_POSITION': np.float64(position)}, #FOCUS_RELATIVE_POSITION
                         sync=True)
+        new_position = self.get_position()
+        self.logger.debug(f"{self} Now position is {new_position}")
+        return new_position
 
     def __str__(self):
         return f"Focuser: {self.device_name}"

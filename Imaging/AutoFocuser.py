@@ -1,9 +1,20 @@
 # Generic stuff
+from copy import copy
+import os
 from threading import Event
 from threading import Thread
 
 # Numerical stuff
+from astropy.modeling import models, fitting
 import numpy as np
+import skimage.morphology
+
+# Viz
+import matplotlib.pyplot as plt
+from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
+import matplotlib.colors as colours
+from matplotlib.figure import Figure
+from matplotlib import cm as colormap
 
 # Local stuff
 from Base.Base import Base
@@ -29,7 +40,7 @@ class AutoFocuser(Base):
             default vollath_F4
         autofocus_merit_function_kwargs (dict, optional): Dictionary of additional keyword arguments
             for the merit function.
-        autofocus_mask_dilations (int, optional): Number of iterations of dilation to perform on the
+        autofocus_structuring_element (int, optional): Number of iterations of dilation to perform on the
             saturated pixel mask (determine size of masked regions), default 10
     """
 
@@ -42,46 +53,64 @@ class AutoFocuser(Base):
                  autofocus_take_dark=None,
                  autofocus_merit_function=None,
                  autofocus_merit_function_kwargs=None,
-                 autofocus_mask_dilations=None,
+                 autofocus_structuring_element=None,
                  *args, **kwargs):
         super().__init__(self, args, kwargs)
+
+        self.camera = camera
 
         if initial_position is None:
             self._position = None
         else:
             self._position = int(initial_position)
 
-        if self._camera.focuser is not None:
+        if self.camera.focuser is not None:
             self.autofocus_range = (
-                int(self._camera.focuser.autofocus_range["coarse"]),
-                int(self._camera.focuser.autofocus_range["fine"]))
+                self.camera.focuser.autofocus_range["coarse"],
+                self.camera.focuser.autofocus_range["fine"])
         else:
             self.autofocus_range = None
 
-        if autofocus_step:
+        if self.camera.focuser is not None:
             self.autofocus_step = (
-                int(self._camera.focuser.autofocus_step["coarse"]),
-                int(self._camera.focuser.autofocus_step["fine"]))
+                self.camera.focuser.autofocus_step["coarse"],
+                self.camera.focuser.autofocus_step["fine"])
         else:
             self.autofocus_step = None
 
-        self.autofocus_seconds = autofocus_seconds
-        self.autofocus_size = autofocus_size
+        if self.camera is not None:
+            self.autofocus_seconds = self.camera.autofocus_seconds
+        if self.camera is not None:
+            self.autofocus_size = self.camera.autofocus_size
+
         self.autofocus_keep_files = autofocus_keep_files
         self.autofocus_take_dark = autofocus_take_dark
         self.autofocus_merit_function = autofocus_merit_function
         self.autofocus_merit_function_kwargs = autofocus_merit_function_kwargs
-        self.autofocus_mask_dilations = autofocus_mask_dilations
-
-        self._camera = camera
+        self.autofocus_structuring_element = autofocus_structuring_element
 
         self.logger.debug(f"AutoFocuser successfully created with camera "
-                          f"{self._camera.device_name} and focuser "
-                          f"{self._camera.focuser.device_name}")
+                          f"{self.camera.device_name} and focuser "
+                          f"{self.camera.focuser.device_name}")
 
 ##################################################################################################
 # Properties
 ##################################################################################################
+    @property
+    def uid(self):
+        """ Serial number of the focuser """
+        raise NotImplementedError
+
+    @property
+    def model(self):
+        """ Model of the focuser """
+        raise NotImplementedError
+
+    @property
+    def name(self):
+        """ Name of the focuser """
+        raise NotImplementedError
+
     @property
     def position(self):
         """ Current encoder position of the focuser """
@@ -123,7 +152,7 @@ class AutoFocuser(Base):
                   take_dark=None,
                   merit_function=None,
                   merit_function_kwargs=None,
-                  mask_dilations=None,
+                  structuring_element=None,
                   coarse=False,
                   make_plots=False,
                   blocking=False):
@@ -151,7 +180,7 @@ class AutoFocuser(Base):
                 focus metric, default vollath_F4.
             merit_function_kwargs (dict, optional): Dictionary of additional
                 keyword arguments for the merit function.
-            mask_dilations (int, optional): Number of iterations of dilation to perform on the
+            structuring_element (int, optional): Number of iterations of dilation to perform on the
                 saturated pixel mask (determine size of masked regions), default 10
             coarse (bool, optional): Whether to perform a coarse focus, otherwise will perform
                 a fine focus. Default False.
@@ -166,38 +195,38 @@ class AutoFocuser(Base):
             ValueError: If invalid values are passed for any of the focus parameters.
         """
         self.logger.debug('Starting autofocus')
-        assert self._camera.is_connected, self.logger.error(
-            f"Camera {self._camera} must be connected for autofocus")
-        assert self._camera.focuser.is_connected, self.logger.error(
-            f"Focuser {self._camera.focuser} must be connected for autofocus")
+        assert self.camera.is_connected, self.logger.error(
+            f"Camera {self.camera} must be connected for autofocus")
+        assert self.camera.focuser.is_connected, self.logger.error(
+            f"Focuser {self.camera.focuser} must be connected for autofocus")
 
         if not focus_range:
             if self.autofocus_range:
                 focus_range = self.autofocus_range
             else:
                 raise ValueError(f"No focus_range specified, aborting autofocus"
-                                 f" of {self._camera}")
+                                 f" of {self.camera}")
 
         if not focus_step:
             if self.autofocus_step:
                 focus_step = self.autofocus_step
             else:
                 raise ValueError("No focus_step specified, aborting autofocus "
-                                 f"of {self._camera}")
+                                 f"of {self.camera}")
 
         if not seconds:
             if self.autofocus_seconds:
                 seconds = self.autofocus_seconds
             else:
                 raise ValueError(f"No focus exposure time specified, aborting "
-                                 f"autofocus of {self._camera}")
+                                 f"autofocus of {self.camera}")
 
         if not thumbnail_size:
             if self.autofocus_size:
                 thumbnail_size = self.autofocus_size
             else:
                 raise ValueError(f"No focus thumbnail size specified, aborting"
-                                 f" autofocus of {self._camera}")
+                                 f" autofocus of {self.camera}")
 
         if keep_files is None:
             if self.autofocus_keep_files:
@@ -223,11 +252,11 @@ class AutoFocuser(Base):
             else:
                 merit_function_kwargs = {}
 
-        if mask_dilations is None:
-            if self.autofocus_mask_dilations is not None:
-                mask_dilations = self.autofocus_mask_dilations
+        if structuring_element is None:
+            if self.autofocus_structuring_element is not None:
+                structuring_element = self.autofocus_structuring_element
             else:
-                mask_dilations = 10
+                structuring_element = skimage.morphology.diamond(radius=10)
 
         # Set up the focus parameters
         focus_event = Event()
@@ -240,7 +269,7 @@ class AutoFocuser(Base):
             'take_dark': take_dark,
             'merit_function': merit_function,
             'merit_function_kwargs': merit_function_kwargs,
-            'mask_dilations': mask_dilations,
+            'structuring_element': structuring_element,
             'coarse': coarse,
             'make_plots': make_plots,
             'focus_event': focus_event,
@@ -251,6 +280,14 @@ class AutoFocuser(Base):
             focus_event.wait()
         return focus_event
 
+    def get_thumbnail(self, seconds, thumbnail_size):
+        fits = self.camera.get_thumbnail(seconds, thumbnail_size)
+        try:
+            image = fits.data
+        except:
+            image = fits[0].data
+        return image
+
     def _autofocus(self,
                    seconds,
                    focus_range,
@@ -260,7 +297,7 @@ class AutoFocuser(Base):
                    take_dark,
                    merit_function,
                    merit_function_kwargs,
-                   mask_dilations,
+                   structuring_element,
                    make_plots,
                    coarse,
                    focus_event,
@@ -275,42 +312,42 @@ class AutoFocuser(Base):
             focus_type = 'coarse'
 
         initial_focus = self.position
-        self.logger.debug(f"Beginning {focus_type} autofocus of {self._camera}"
+        self.logger.debug(f"Beginning {focus_type} autofocus of {self.camera}"
                           f" - initial position: {initial_focus}")
 
         # Set up paths for temporary focus files, and plots if requested.
-        # image_dir = self.config['directories']['images']
-        # start_time = self.serv_time.get_current_time(flatten=True)
-        # file_path_root = os.path.join(image_dir,
-        #                               'focus',
-        #                               self._camera.uid,
-        #                               start_time)
+        image_dir = self.config['directories']['images']
+        start_time = self.db.serv_time.flat_time()
+        file_path_root = os.path.join(image_dir,
+                                      'focus',
+                                      self.camera.name,
+                                      start_time)
+        os.makedirs(file_path_root, exist_ok=True)
 
         # dark_thumb = None
         # if take_dark:
         #     dark_path = os.path.join(file_path_root,
-        #                              '{}.{}'.format('dark', self._camera.file_extension))
-        #     self.logger.debug('Taking dark frame {} on camera {}'.format(dark_path, self._camera))
+        #                              '{}.{}'.format('dark', self.camera.file_extension))
+        #     self.logger.debug('Taking dark frame {} on camera {}'.format(dark_path, self.camera))
         #     try:
-        #         dark_thumb = self._camera.get_thumbnail(seconds,
+        #         dark_thumb = self.get_thumbnail(seconds,
         #                                                 dark_path,
         #                                                 thumbnail_size,
         #                                                 keep_file=True,
         #                                                 dark=True)
         #         # Mask 'saturated' with a low threshold to remove hot pixels
-        #         dark_thumb = focus_utils.mask_saturated(dark_thumb, threshold=0.3)
+        #         dark_thumb = self.mask_saturated(dark_thumb, threshold=0.3)
         #     except TypeError:
-        #         self.logger.warning("Camera {} does not support dark frames!".format(self._camera))
+        #         self.logger.warning("Camera {} does not support dark frames!".format(self.camera))
 
         # Take an image before focusing, grab a thumbnail from the centre and add it to the plot
         # initial_fn = "{}_{}_{}.{}".format(initial_focus,
         #                                   focus_type,
         #                                   "initial",
-        #                                   self._camera.file_extension)
+        #                                   self.camera.file_extension)
         # initial_path = os.path.join(file_path_root, initial_fn)
         #
-        initial_thumbnail = self._camera.get_thumbnail(
-            seconds, initial_path, thumbnail_size, keep_file=True)
+        initial_thumbnail = self.get_thumbnail(seconds, thumbnail_size)
 
         # Set up encoder positions for autofocus sweep, truncating at focus travel
         # limits if required.
@@ -324,11 +361,15 @@ class AutoFocuser(Base):
         focus_positions = np.arange(max(initial_focus - focus_range / 2, self.min_position),
                                     min(initial_focus + focus_range / 2, self.max_position) + 1,
                                     focus_step, dtype=np.int)
+        self.logger.debug(f"Autofocuser {self}  is going to sweep over the "
+                          f"following positions for autofocusing "
+                          f"{focus_positions}")
         n_positions = len(focus_positions)
 
         thumbnails = np.zeros((n_positions, thumbnail_size, thumbnail_size),
                               dtype=initial_thumbnail.dtype)
-        masks = np.empty((n_positions, thumbnail_size, thumbnail_size), dtype=np.bool)
+        masks = np.empty((n_positions, thumbnail_size, thumbnail_size),
+                         dtype=np.bool)
         metric = np.empty(n_positions)
 
         # Take and store an exposure for each focus position.
@@ -337,50 +378,52 @@ class AutoFocuser(Base):
             focus_positions[i] = self.move_to(position)
 
             # Take exposure
-            # focus_fn = "{}_{:02d}.{}".format(focus_positions[i], i, self._camera.file_extension)
+            # focus_fn = "{}_{:02d}.{}".format(focus_positions[i], i, self.camera.file_extension)
             # file_path = os.path.join(file_path_root, focus_fn)
             #
-            thumbnail = self._camera.get_thumbnail(
-                seconds, file_path, thumbnail_size, keep_file=keep_files)
-            masks[i] = focus_utils.mask_saturated(thumbnail).mask
+            thumbnail = self.get_thumbnail(seconds, thumbnail_size)
+            masks[i] = self.mask_saturated(thumbnail).mask
             # if dark_thumb is not None:
             #     thumbnail = thumbnail - dark_thumb
             thumbnails[i] = thumbnail
 
-        # master_mask = masks.any(axis=0)
-        # master_mask = binary_dilation(master_mask, iterations=mask_dilations)
+        master_mask = masks.any(axis=0)
+        master_mask = skimage.morphology.binary_dilation(master_mask,
+            selem=structuring_element)
 
         # Apply the master mask and then get metrics for each frame.
         for i, thumbnail in enumerate(thumbnails):
             thumbnail = np.ma.array(thumbnail, mask=master_mask)
-            metric[i] = focus_utils.focus_metric(
+            metric[i] = self.focus_metric(
                 thumbnail, merit_function, **merit_function_kwargs)
-
         fitted = False
 
-        # Find maximum values
-        imax = metric.argmax()
+        # Find best values
+        ibest = metric.argmin()
 
-        if imax == 0 or imax == (n_positions - 1):
+        if ibest == 0 or ibest == (n_positions - 1):
             # TODO: have this automatically switch to coarse focus mode if this happens
-            self.logger.warning(
-                "Best focus outside sweep range, aborting autofocus on {}!".format(self._camera))
-            best_focus = focus_positions[imax]
+            self.logger.warning(f"Best focus outside sweep range, aborting "
+                                f"autofocus on {self.camera}!")
+            best_focus = focus_positions[ibest]
 
         elif not coarse:
             # Fit data around the maximum value to determine best focus position.
             # Initialise models
-            shift = models.Shift(offset=-focus_positions[imax])
+            shift = models.Shift(offset=-focus_positions[ibest])
             poly = models.Polynomial1D(degree=4, c0=1, c1=0, c2=-1e-2, c3=0, c4=-1e-4,
                                        fixed={'c0': True, 'c1': True, 'c3': True})
-            scale = models.Scale(factor=metric[imax])
+            #poly = models.Polynomial1D(degree=2)
+            scale = models.Scale(factor=metric[ibest])
             reparameterised_polynomial = shift | poly | scale
 
             # Initialise fitter
             fitter = fitting.LevMarLSQFitter()
 
-            # Select data range for fitting. Tries to use 2 points either side of max, if in range.
-            fitting_indices = (max(imax - 2, 0), min(imax + 2, n_positions - 1))
+            # Select data range for fitting. Tries to use points on both side of
+            # max, if in range.
+            margin = max(3, np.int(np.ceil(n_positions/3)))
+            fitting_indices = (max(ibest - margin, 0), min(ibest + margin, n_positions - 1))
 
             # Fit models to data
             fit = fitter(reparameterised_polynomial,
@@ -394,39 +437,35 @@ class AutoFocuser(Base):
             min_focus = focus_positions[0]
             max_focus = focus_positions[-1]
             if best_focus < min_focus:
-                self.logger.warning("Fitting failure: best focus {} below sweep limit {}",
-                                    best_focus,
-                                    min_focus)
+                self.logger.warning(f"Fitting failure: best focus {best_focus} "
+                                    f"below sweep limit {min_focus}")
 
                 best_focus = focus_positions[1]
 
             if best_focus > max_focus:
-                self.logger.warning("Fitting failure: best focus {} above sweep limit {}",
-                                    best_focus,
-                                    max_focus)
+                self.logger.warning(f"Fitting failure: best focus {best_focus} "
+                                    f"above sweep limit {min_focus}")
 
                 best_focus = focus_positions[-2]
 
         else:
             # Coarse focus, just use max value.
-            best_focus = focus_positions[imax]
+            best_focus = focus_positions[ibest]
 
         final_focus = self.move_to(best_focus)
 
-        final_fn = "{}_{}_{}.{}".format(final_focus,
-                                        focus_type,
-                                        "final",
-                                        self._camera.file_extension)
-        file_path = os.path.join(file_path_root, final_fn)
-        final_thumbnail = self._camera.get_thumbnail(
-            seconds, file_path, thumbnail_size, keep_file=True)
+        #final_fn = "{}_{}_{}.{}".format(final_focus,
+        #                                focus_type,
+        #                                "final",
+        #                                self.camera.file_extension)
+        final_thumbnail = self.get_thumbnail(seconds, thumbnail_size)
 
         if make_plots:
-            initial_thumbnail = focus_utils.mask_saturated(initial_thumbnail)
-            final_thumbnail = focus_utils.mask_saturated(final_thumbnail)
-            if dark_thumb is not None:
-                initial_thumbnail = initial_thumbnail - dark_thumb
-                final_thumbnail = final_thumbnail - dark_thumb
+            initial_thumbnail = self.mask_saturated(initial_thumbnail)
+            final_thumbnail = self.mask_saturated(final_thumbnail)
+            #if dark_thumb is not None:
+            #    initial_thumbnail = initial_thumbnail - dark_thumb
+            #    final_thumbnail = final_thumbnail - dark_thumb
 
             fig = Figure()
             FigureCanvas(fig)
@@ -434,7 +473,7 @@ class AutoFocuser(Base):
 
             ax1 = fig.add_subplot(3, 1, 1)
             im1 = ax1.imshow(initial_thumbnail, interpolation='none',
-                             cmap=get_palette(), norm=colours.LogNorm())
+                             cmap=self.get_palette(), norm=colours.LogNorm())
             fig.colorbar(im1)
             ax1.set_title('Initial focus position: {}'.format(initial_focus))
 
@@ -457,28 +496,30 @@ class AutoFocuser(Base):
             ax2.set_xlabel('Focus position')
             ax2.set_ylabel('Focus metric')
 
-            ax2.set_title('{} {} focus at {}'.format(self._camera, focus_type, start_time))
+            ax2.set_title(f"{self.camera.name} {focus_type} focus at "
+                          f"{start_time}")
             ax2.legend(loc='best')
 
             ax3 = fig.add_subplot(3, 1, 3)
             im3 = ax3.imshow(final_thumbnail, interpolation='none',
-                             cmap=get_palette(), norm=colours.LogNorm())
+                             cmap=self.get_palette(), norm=colours.LogNorm())
             fig.colorbar(im3)
             ax3.set_title('Final focus position: {}'.format(final_focus))
             plot_path = os.path.join(file_path_root, '{}_focus.png'.format(focus_type))
 
             fig.tight_layout()
             fig.savefig(plot_path, transparent=False)
+            plt.show()
 
             # explicitly close and delete figure
             fig.clf()
             del fig
 
-            self.logger.info('{} focus plot for camera {} written to {}'.format(
-                focus_type.capitalize(), self._camera, plot_path))
+            self.logger.info(f"{focus_type.capitalize()} focus plot for camera "
+                             f"{self.camera.name} written to {plot_path}")
 
-        self.logger.debug(
-            'Autofocus of {} complete - final focus position: {}', self._camera, final_focus)
+        self.logger.debug(f"Autofocus of {self.camera.name} complete - final "
+                          f"focus position: {final_focus}")
 
         if focus_event:
             focus_event.set()
@@ -492,8 +533,6 @@ class AutoFocuser(Base):
         header.set('FOC-POS', self.position, 'Focuser position')
         return header
 
-    def __str__(self):
-        return "{} ({}) on {}".format(self.name, self.uid, self.port)
     def focus_metric(self, data, merit_function='vollath_F4', **kwargs):
         """Compute the focus metric.
 
@@ -552,7 +591,7 @@ class AutoFocuser(Base):
         if not saturation_level:
             try:
                 # If data is an integer type use iinfo to compute machine limits
-                dynamic = self._camera.dynamic
+                dynamic = self.camera.dynamic
             except ValueError:
                 # Not an integer type. Assume for now we have 16 bit data
                 dynamic = 2 ** 16
@@ -572,3 +611,27 @@ class AutoFocuser(Base):
         A1 = (data[:, 1:] * data[:, :-1]).mean()
         A2 = (data[:, 2:] * data[:, :-2]).mean()
         return A1 - A2
+
+    def get_palette(self, cmap='inferno'):
+        """Get a palette for drawing.
+
+        Returns a copy of the colormap palette with bad pixels marked.
+
+        Args:
+            cmap (str, optional): Colormap to use, default 'inferno'.
+
+        Returns:
+            `matplotlib.cm`: The colormap.
+        """
+        palette = copy(getattr(colormap, cmap))
+
+        # Mark bad pixels (e.g. saturated)
+        # when using vmin or vmax and a normalizer.
+        palette.set_over('w', 1.0)
+        palette.set_under('k', 1.0)
+        palette.set_bad('g', 1.0)
+
+        return palette
+
+    def __str__(self):
+        return f"Focuser {self.name} (uid {self.uid}) model {self.model}"

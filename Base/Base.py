@@ -12,7 +12,6 @@ from utils.database import DB
 # Global vars
 _config = None
 
-
 def reset_global_config():
     """Reset the global _config to None.
 

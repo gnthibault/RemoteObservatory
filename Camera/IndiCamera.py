@@ -37,6 +37,8 @@ class IndiCamera(IndiDevice):
         if config is None:
             config = dict(
                 camera_name='CCD Simulator',
+                autofocus_seconds=5,
+                autofocus_size=500,
                 focuser=dict(
                     module="IndiFocuser",
                     focuser_name=""),
@@ -45,6 +47,8 @@ class IndiCamera(IndiDevice):
                     indi_port="7624"
                 ))
         device_name = config['camera_name']
+        self.autofocus_seconds = float(config['autofocus_seconds'])
+        self.autofocus_size = int(config['autofocus_size'])
         # If scope focuser is specified in the config, load
         try:
             cfg = config['focuser']
@@ -166,7 +170,7 @@ class IndiCamera(IndiDevice):
         top_most = np.floor(center_y - thumbnail_size / 2)
         roi = {'X': left_most, 'Y': top_most, 'WIDTH': thumbnail_size,
                      'HEIGHT': thumbnail_size}
-        self.logger.debug("Setting camera {self.name} roi to {roi}")
+        self.logger.debug(f"Setting camera {self.name} roi to {roi}")
         self.set_roi(roi)
         old_exp_time_sec = self.exp_time_sec
         self.exp_time_sec = exp_time_sec
@@ -175,7 +179,7 @@ class IndiCamera(IndiDevice):
         fits = self.get_received_image()
         roi = {'X': 0, 'Y': 0, 'WIDTH': sensor_size["CCD_MAX_X"],
                      'HEIGHT': sensor_size["CCD_MAX_Y"]}
-        self.logger.debug("Resetting camera {self.name} roi to {roi}")
+        self.logger.debug(f"Resetting camera {self.name} roi to {roi}")
         self.set_roi(roi)
         self.exp_time_sec = old_exp_time_sec
         return fits
@@ -319,14 +323,14 @@ class IndiCamera(IndiDevice):
     def setExpTimeSec(self, exp_time_sec):
         self.exp_time_sec = self.sanitize_exp_time(exp_time_sec)
 
-    def autofocus_async(self, autofocus_event):
+    def autofocus_async(self, autofocus_event, coarse=True):
         """
 
         """
         self.logger.info(f"Camera {self.device_name} is going to start "
                          f"autofocus with device {self.focuser.device_name}...")
-        af = IndiAutoFocuser(camera=self, autofocus_seconds=self.exp_time_sec)
-        af.autofocus(coarse=False, blocking=True)
+        af = IndiAutoFocuser(camera=self)
+        af.autofocus(coarse=coarse, blocking=True, make_plots=True)
         self.logger.info(f"Camera {self.device_name} just finished autofocus "
                          f"with focuser {self.focuser.device_name}")
         autofocus_event.set()
