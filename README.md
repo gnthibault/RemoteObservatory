@@ -84,6 +84,9 @@ PYTHONPATH=. python3 ./apps/launch_arduino_capture.py
 * Need to try to kill PHD2 while guiding and check that we return to parking state
 * Need to simulate a PHD2 star lost and check that we return to parking state
 * The loop_mode in GuiderPHD2 is ambiguous (let it like this for now)
+* Check all states from the state machine, and make sure they often call model.check_messages()
+* If an observation is split into multiple observing block, shouldn't they have the same id ? that would allow to skip pointing when going from one block to another
+* check if we actually refocus in case the observation id is the same
 * the publisher_port parameter in weather config should be refactored with messaging parameter
 * use find . -path ./venv -prune -o -name '*.py' to search stuf not in venv
 * use find . -path ./venv -prune -o -name '*.py' -exec sed -i -e 's/get_local_time_from_ntp/get_local_time/g' {} \; to replace stuff

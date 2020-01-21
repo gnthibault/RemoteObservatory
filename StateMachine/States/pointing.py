@@ -67,8 +67,8 @@ def on_enter(event_data):
                         camera_events[cam_name] = camera_event
 
                     except Exception as e:
-                        model.logger.error('Problem waiting for images: '
-                            '{}:{}'.format(e,traceback.format_exc()))
+                        model.logger.error(f"Problem waiting for images: "
+                          f"{e}:{traceback.format_exc()}")
 
             wait_time = 0.
             while not all([event.is_set() for event in camera_events.values()]):
@@ -77,8 +77,8 @@ def on_enter(event_data):
                     model.say("Observation interrupted!")
                     break
 
-                model.logger.debug('State: pointing, waiting for images: {} '
-                    'seconds'.format(wait_time))
+                model.logger.debug(f"State: pointing, waiting for images: "
+                    '{wait_time} seconds')
                 model.status()
 
                 if wait_time > TIMEOUT_SECONDS:
@@ -100,12 +100,11 @@ def on_enter(event_data):
                 observation.pointing_image = pointing_image
                 model.logger.debug("Pointing file: {}".format(pointing_image))
                 pointing_error = pointing_image.pointing_error
-                model.say('Ok, I\'ve got the pointing picture, '
-                          'let\'s see how close we are.')
-                model.logger.debug('Pointing Coords: {}'.format(
-                                   pointing_image.pointing))
-                model.logger.debug('Pointing Error: {}'.format(
-                                   pointing_error))
+                model.say("Ok, I have the pointing picture, "
+                          "let's see how close we are.")
+                model.logger.debug(f"Pointing Coords: "
+                                   f"{pointing_image.pointing}")
+                model.logger.debug(f"Pointing Error: {pointing_error}")
                 # update mount with the actual position
                 model.manager.mount.sync_to_coord(pointing_image.pointing)
                 # update pointing process tracking information

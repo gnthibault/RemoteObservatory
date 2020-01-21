@@ -144,8 +144,8 @@ class RemoteObservatoryFSM(StateMachine, Base):
                 self.manager.initialize()
 
             except Exception as e:
-                self.logger.info('Oh wait. There was a problem initializing: '
-                                 '{}'.format(e))
+                self.logger.info(f"Oh wait. There was a problem initializing: "
+                                 f"{e}")
                 self.logger.info('Since we didn not initialize, I am going '
                                  'to exit.')
                 self.power_down()
@@ -178,8 +178,9 @@ class RemoteObservatoryFSM(StateMachine, Base):
             msg(str): Message to be sent
         """
         if self.has_messaging is False:
-            self.logger.info('Unit says: {}'.format(msg))
-        self.send_message('{}'.format(msg), channel='PANCHAT')
+            self.logger.info(f"Unit says: {msg}")
+        else:
+            self.send_message(f"{msg}", channel='PANCHAT')
 
     def send_message(self, msg, channel='POCS'):
         """ Send a message

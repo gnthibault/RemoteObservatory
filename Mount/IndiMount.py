@@ -186,7 +186,7 @@ class IndiMount(IndiDevice):
             assert len(v) == 1
             return v
         except Exception as e:
-            self.logger.error("Cannot retrieve track rate: {}".format(e))
+            self.logger.warning("Cannot retrieve track rate: {}".format(e))
             return "NA"
 
 

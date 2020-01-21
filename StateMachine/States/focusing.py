@@ -11,32 +11,28 @@ from utils import Timeout
 
 SLEEP_SECONDS = 1.0
 STATUS_INTERVAL = 10. * u.second
-GUIDER_STATUS_INTERVAL = 5. * u.second
 WAITING_MSG_INTERVAL = 5. * u.second
-MAX_EXTRA_TIME = 60 * u.second
+MAX_FOCUSING_TIME = 5 * 60 * u.second
 
 def on_enter(event_data):
-    """Wait for camera exposures to complete.
+    """Wait for camera autofocus
 
-    Frequently check for the exposures to complete, the observation to be
-    interrupted, messages to be received. Periodically post to the STATUS
+    Periodically post to the STATUS
     channel and to the debug log.
     """
 
     model = event_data.model
-    model.say("Starting observing")
+    model.say("Starting focusing")
     model.next_state = 'parking'
 
     try:
-        # Now manage actual acquisition
-        maximum_duration = (model.manager.current_observation.time_per_exposure
-                            + MAX_EXTRA_TIME)
+        # Before each observation, we should refocus
+        maximum_duration = MAX_FOCUSING_TIME
         start_time = model.manager.serv_time.get_astropy_time_from_utc()
-        camera_events = model.manager.observe()
+        camera_events = model.manager.autofocus_cameras(coarse=False)
 
         timeout = Timeout(maximum_duration)
         next_status_time = start_time + STATUS_INTERVAL
-        next_guider_status_time = start_time + GUIDER_STATUS_INTERVAL
         next_msg_time = start_time + WAITING_MSG_INTERVAL
 
         while not all([event.is_set() for event in
@@ -44,21 +40,15 @@ def on_enter(event_data):
             # check for important message in mq
             model.check_messages()
             if model.interrupted:
-                model.say("Observation interrupted!")
+                model.say("Pre-observation autofocus interrupted!")
                 break
 
             now = model.manager.serv_time.get_astropy_time_from_utc()
             if now >= next_msg_time:
                 elapsed_secs = (now - start_time).to(u.second).value
-                model.logger.debug(f"State: observing, waiting for images: "
+                model.logger.debug(f"State: focusing, elapsed "
                                    f"{round(elapsed_secs)}")
                 next_msg_time += WAITING_MSG_INTERVAL
-                now = model.manager.serv_time.get_astropy_time_from_utc()
-
-            if (now >= next_guider_status_time and
-                    model.manager.guider is not None):
-                model.manager.guider.receive()
-                next_guider_status_time += GUIDER_STATUS_INTERVAL
                 now = model.manager.serv_time.get_astropy_time_from_utc()
 
             if now >= next_status_time:
@@ -73,13 +63,12 @@ def on_enter(event_data):
             time.sleep(SLEEP_SECONDS)
 
     except error.Timeout as e:
-        model.logger.warning('Timeout while waiting for images. Something'
-                             ' wrong with camera, going to park.')
+        model.logger.warning("Timeout while waiting for focusing. Something is"
+                             "wrong either with camera/focuser, going to park")
     except Exception as e:
-        model.logger.warning("Problem with imaging, {}: {}".format(e,
-                             traceback.format_exc()))
-        model.say("Hmm, I'm not sure what happened with that exposure.")
+        model.logger.warning(f"Problem with focusing, {e}: "
+                             f"{traceback.format_exc()}")
+        model.say("Problem while focusing")
     else:
-        model.manager.current_observation.current_exp += 1
-        model.logger.debug('Finished with observing, going to analyze')
-        model.next_state = 'analyzing'
+        model.logger.debug('Finished with focusing, going to observe')
+        model.next_state = 'observing'

@@ -10,6 +10,7 @@ states:
     - slewing
     - pointing
     - tracking
+    - focusing
     - observing
     - analyzing
     - parking
@@ -21,6 +22,7 @@ transitions:
             - slewing
             - pointing
             - tracking
+            - focusing
             - observing
             - analyzing
         dest: parking
@@ -80,6 +82,11 @@ transitions:
         conditions: mount_is_tracking
     -
         source: tracking
+        dest: focusing
+        trigger: focus
+        conditions: mount_is_tracking
+    -
+        source: focusing
         dest: observing
         trigger: observe
         conditions: mount_is_tracking

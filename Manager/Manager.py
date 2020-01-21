@@ -301,7 +301,6 @@ class Manager(Base):
         """
         # Clear the offset info
         self.current_offset_info = None
-
         pointing_image = self.current_observation.pointing_image
 
         try:

@@ -4,7 +4,7 @@ def on_enter(event_data):
     model = event_data.model
     model.next_state = 'parking'
 
-    # If we came from pointing then don't try to adjust
+    # If we came from pointing then don't try to dither
     if event_data.transition.source != 'pointing':
         model.logger.debug("Checking our tracking")
         try:
