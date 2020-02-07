@@ -223,11 +223,28 @@ make -j6a
 sudo make install
 
 # Install als
-sudo aptitude install libblas-dev liblapack-dev libblas3 liblapack3 python3 python3-pip python3-dev python3-wheel python3-numpy pip3 python3-scipy
-pip3 install astropy tqdm watchdog astroalign rawpy dtcwt pywi qimage2ndarray
+sudo apt-get install libblas-dev liblapack-dev libblas3 liblapack3 python3 python3-pip python3-dev python3-wheel python3-numpy python3-scipy pkg-config libfreetype6-dev libpng-dev libraw-dev libjpeg-dev
+pip3 install astropy tqdm watchdog astroalign rawpy dtcwt pywi qimage2ndarray numba
 
 #llvm
-cmake -D CMAKE_BUILD_TYPE=Release -D LLVM_TARGETS_TO_BUILD="ARM" -D LLVM_INCLUDE_EXAMPLES=OFF -D LLVM_BUILD_EXAMPLES=OFF -D LLVM_INCLUDE_TESTS=OFF -D LLVM_BUILD_TESTS=OFF -D LLVM_INCLUDE_BENCHMARKS=OFF -D LLVM_BUILD_BENCHMARKS=OFF -D LLVM_TARGET_ARCH="ARM" ../../llvm-8.0.0.src
+cmake -D CMAKE_BUILD_TYPE=Release -D LLVM_TARGETS_TO_BUILD="ARM" -D LLVM_INCLUDE_EXAMPLES=OFF -D LLVM_BUILD_EXAMPLES=OFF -D LLVM_INCLUDE_TESTS=ON -D LLVM_BUILD_TESTS=ON -D LLVM_INCLUDE_BENCHMARKS=OFF -D LLVM_BUILD_BENCHMARKS=OFF -D LLVM_TARGET_ARCH="ARM" -DLLVM_DEFAULT_TARGET_TRIPLE=arm-unknown-linux-gnueabihf -DLLVM_ENABLE_PROJECTS=clang ../../llvm-8.0.0.src
+
+on aarch64:
+cmake -D CMAKE_BUILD_TYPE=Release -D LLVM_TARGETS_TO_BUILD="AArch64" -D LLVM_INCLUDE_EXAMPLES=OFF -D LLVM_BUILD_EXAMPLES=OFF -D LLVM_INCLUDE_TESTS=ON -D LLVM_BUILD_TESTS=ON -D LLVM_INCLUDE_BENCHMARKS=OFF -D LLVM_BUILD_BENCHMARKS=OFF -D LLVM_TARGET_ARCH="AArch64" -DLLVM_DEFAULT_TARGET_TRIPLE=aarch64-linux-gnu -DLLVM_ENABLE_PROJECTS="clang" ../../llvm-8.0.0.src
+
+# install cross compile for aarch64:
+sudo apt-get install debootstrap chroot
+ls /usr/share/debootstrap/scripts/
+sudo mkdir /chroot64
+sudo debootstrap --arch arm64 stretch /chroot64 http://ftp.debian.org/debian
+chroot /chroot64
+mkdir /home/projects
+
+// from outside also do 
+sudo mount --bind /home/rock/projects/ /chroot64/home/projects/
+sudo mount --bind /proc/ /chroot64/proc/
+sudo mount --bind /dev/shm/ /chroot64/dev/shm/
+sudo cp ~/.Xauthority /chroot64/root/
 
 ### More on wifi stuff
 
