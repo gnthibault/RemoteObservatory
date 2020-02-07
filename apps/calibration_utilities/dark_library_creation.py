@@ -6,6 +6,7 @@
 # Basic stuff
 import argparse
 import collections
+import logging
 import os
 from time import sleep
 
@@ -479,7 +480,7 @@ class DarkLibraryBuilder():
 
     def acquire_images(self):
         self.cam.set_frame_type('FRAME_DARK')
-        self.cam.prepareShoot()
+        self.cam.prepare_shoot()
         for temperature in self.temp_list:
             self.set_temperature(temperature)
             for gain in self.gain_list:
@@ -491,10 +492,15 @@ class DarkLibraryBuilder():
                         fname = self.gen_calib_filename(temperature, gain,
                                                         exp_time,i)
                         if not os.path.exists(fname):
+                            print('before set exp time')
                             self.cam.setExpTimeSec(exp_time)
-                            self.cam.shootAsync()
-                            self.cam.synchronizeWithImageReception()
-                            fits = self.cam.getReceivedImage()
+                            print('before shoot')
+                            self.cam.shoot_async()
+                            print('After shoot_async, going to sync')
+                            self.cam.synchronize_with_image_reception()
+                            print('After sync')
+                            fits = self.cam.get_received_image()
+                            print('Image received')
                             with open(fname, "wb") as f:
                                 fits.writeto(f)
         self.cleanup_device()
@@ -594,14 +600,14 @@ def main(config_file='./jsonModel/IndiCCDSimulatorCamera.json',
     # Instanciate a time server as well
     serv_time = NTPTimeService()    
 
-    #cam = IndiASI120MCCamera(indiClient=indiCli,
+    #cam = IndiASI120MCCamera(indi_client=indiCli,
     try:
         cam_module = load_module('Camera.{}'.format(cam_class))
         cam_ctor = getattr(cam_module, cam_class)
         print('cam_ctor is {}'.format(cam_ctor))
-        cam = cam_ctor(indiClient=indiCli,
+        cam = cam_ctor(indi_client=indiCli,
             config_filename=config_file,
-            connectOnCreate=False)
+            connect_on_create=False)
     except RuntimeError as e:
         raise RuntimeError('Please provide a valid cam_class. current one is '
                            '{} and error is {}'.format(cam_class, e))
@@ -638,14 +644,15 @@ def str2bool(v):
         raise argparse.ArgumentTypeError('Boolean value expected.')
 
 if __name__ == '__main__':
-  parser = argparse.ArgumentParser()
-  parser.add_argument('--config_file', help='Path to the config file of the '
+    logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.DEBUG)
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--config_file', help='Path to the config file of the '
                       'camera', default='./conf_files/IndiDatysonT7MC.json')
-  parser.add_argument('--cam_class', help='Name of the class of the camera '
+    parser.add_argument('--cam_class', help='Name of the class of the camera '
                       'can be IndiCamera or IndiASI120MCCamera',
                       default='IndiASI120MCCamera')
-  parser.add_argument('--show_plot', default='False')
-  args = parser.parse_args()
-  main(args.config_file, args.cam_class, str2bool(args.show_plot))
+    parser.add_argument('--show_plot', default='False')
+    args = parser.parse_args()
+    main(args.config_file, args.cam_class, str2bool(args.show_plot))
 
 #PYTHONPATH=. python ./apps/calibration_utilities/dark_library_creation.py --config_file ./conf_files/IndiDatysonT7MC.json --cam_class IndiASI120MCCamera

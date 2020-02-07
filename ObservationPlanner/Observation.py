@@ -59,7 +59,7 @@ class Observation(Base):
             observation
         """
         name = self.observing_block.target.name
-        return name if name else 'generic'
+        return name if name else 'observing_block.target.name'
 
     @property
     def seq_time(self):
@@ -145,14 +145,12 @@ class Observation(Base):
         status = {
             'current_exp': self.current_exp,
             'equinox': equinox,
-            'number_exposure': self.number_exposures,
+            'number_exposure': self.number_exposures.value,
             'time_per_exposure': self.time_per_exposure.to(u.second).value,
             'total_exposure': self.set_duration.to(u.second).value,
             'field_name': self.name,
-            'field_ra': self.target.coord.ra.value,
-            'ra_mnt': self.target.coord.ra.value,
-            'field_dec': self.target.coord.dec.value,
-            'dec_mnt': self.target.coord.dec.value,
+            'ra_field': self.target.coord.ra.to(u.deg).value,
+            'dec_field': self.target.coord.dec.to(u.deg).value,
             'merit': self.merit,
             'priority': self.priority,
             'seq_time': self.seq_time,

@@ -17,6 +17,7 @@ from tzwhere import tzwhere
 from Base.Base import Base
 from utils import load_module
 from utils.error import ScopeControllerError
+from utils.error import DomeControllerError
 
 class ShedObservatory(Base):
     """Shed Observatory 
@@ -71,7 +72,7 @@ class ShedObservatory(Base):
                                             scope_controller_name)(cfg)
         except Exception as e:
             self.scope_controller = None
-            msg = 'Cannot instantiate scope controller properly: '.format(e)
+            msg = 'Cannot instantiate scope controller properly: {}'.format(e)
             self.logger.error(msg)
             #raise ScopeControllerError(msg)
 
@@ -83,8 +84,9 @@ class ShedObservatory(Base):
             self.dome_controller = getattr(dome_controller,
                                            dome_controller_name)(cfg)
         except Exception as e:
-            self.logger.warning("Cannot load dome module: {}".format(e))
+            self.logger.error("Cannot load dome module: {}".format(e))
             self.dome_controller = None
+            # raise DomeControllerError(msg)
 
         # Other services
         self.servWeather = servWeather
@@ -167,7 +169,7 @@ class ShedObservatory(Base):
             return False
         return True
 
-    def onEmergency(self):
+    def on_emergency(self):
         self.logger.debug('ShedObservatory: on emergency routine started...')
         self.close_everything()
         self.logger.debug('ShedObservatory: on emergency routine finished')
@@ -191,7 +193,7 @@ class ShedObservatory(Base):
 
     def getAstroplanObserver(self):
         location = self.getAstropyEarthLocation()
-        pressure = 0.85 * u.bar
+        pressure = 1 * u.bar
         relative_humidity = 0.20
         temperature = 15 * u.deg_C
         if self.servWeather is not None:

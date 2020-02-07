@@ -2,9 +2,9 @@ name: gnthibault remote observatory
 observatory:
     module: ShedObservatory
     investigator: gnthibault
-    latitude: 45. # Degrees
-    longitude: 5. # Degrees
-    elevation: 600.0 # Meters
+    latitude: 43.56 # Degrees
+    longitude: 5.43 # Degrees
+    elevation: 150.0 # Meters
     # UTC+1 CET Central European Time,
     # UTC +2  CEST Central European Summer Time
     utc_offset: 1 # Hours
@@ -20,18 +20,25 @@ observatory:
     gmt_offset: 60 # Minutes
     scope_controller:
         #module: ArduiScopeController
-        module: IndiScopeController
-        board : Arduino
-        port: /dev/ttyACM0
-        cmd_port : 6502
-        msg_port : 6520
-        pin_scope_dustcap : 10
-        pin_finder_dustcap : 11
-        pin_flat_panel : 12
-        pin_fan_primary : 13
+        #module: IndiScopeController
+        #module: None
+        #board : Arduino
+        #port: /dev/ttyACM0
+        #cmd_port : 6502
+        #msg_port : 6520
+        #pin_scope_dustcap : 10
+        #pin_finder_dustcap : 11
+        #pin_flat_panel : 12
+        #pin_fan_primary : 13
+        indi_client :
+            indi_host : localhost
+            indi_port : 7624
     dome_controller:
         module : None
         port : /dev/ttyACM1
+        indi_client :
+            indi_host : localhost
+            indi_port : 7624
 directories:
     base: /var/RemoteObservatory
     images: images
@@ -45,24 +52,49 @@ db:
     type: file
 ntp:
     ntpserver: time.google.com
-indiclient: #To be removed, each device can have its own client
-    indi_host : localhost
-    indi_port : 7624
 mount:
     #module: IndiG11
     #mount_name: Losmandy Gemini
     module: IndiAbstractMount
     mount_name : Telescope Simulator
-    indi_host : localhost
-    indi_port : 7624
+    indi_client :
+        indi_host : localhost
+        indi_port : 7624
 camera:
-    #IndiEos6DCamera
     module: IndiAbstractCamera
     camera_name : CCD Simulator
-    indi_host : localhost
-    indi_port : 7624
+    #module: IndiEos6DCamera
+    #camera_name: Canon DSLR EOS 6D
+    #camera_name: GPhoto CCD
+    CCD_INFO :
+        CCD_MAX_X : 5472
+        CCD_MAX_Y : 3648
+        CCD_PIXEL_SIZE : 6.5
+        CCD_PIXEL_SIZE_X : 6.5
+        CCD_PIXEL_SIZE_Y : 6.5
+        CCD_BITSPERPIXEL : 14
+    autofocus_seconds: 5
+    autofocus_size : 500
+    indi_client :
+        indi_host : localhost
+        indi_port : 7624
     focuser:
         module: IndiFocuser
+        focuser_name : Focuser Simulator
+        port : /dev/ttyUSB0
+        backlash : 10
+        focus_range :
+            min : 0
+            max : 100
+        autofocus_step :
+            fine : 1
+            coarse : 10
+        autofocus_range :
+            fine : 40
+            coarse : 60
+        indi_client :
+            indi_host : localhost
+            indi_port : 7624
 #filterwheel:
 nofilterwheel: #maybe one day
     module : IndiFilterWheel 
@@ -76,10 +108,14 @@ nofilterwheel: #maybe one day
         OIII : 6
         SII : 7
         LPR : 8
+    indi_client :
+        indi_host : localhost
+        indi_port : 7624
 guider:
     module : GuiderPHD2
     host : localhost
     port : 4400
+    #profile_id : 1
     profile_id : 2
     exposure_time_sec : 2
     settle :
@@ -89,6 +125,23 @@ guider:
     dither :
         pixels : 3.0
         ra_only : False
+weather_service :
+    #module : IndiOpenWeatherMap
+    #service_name: OpenWeatherMap
+    module : IndiWeather
+    service_name : Weather Simulator
+    key_path : /var/RemoteObservatory/keys.json
+    publish_port : 6510
+    delay_sec : 60
+    limits :
+        MAX_WEATHER_WIND_SPEED_KPH : 25
+        MAX_WEATHER_WIND_GUST_KPH : 30
+        MAX_WEATHER_CLOUD_COVER : 5
+    indi_client :
+        indi_host : localhost
+        indi_port : 7624
+time_service :
+    module : HostTimeService
 messaging:
     # Must match ports in peas.yaml.
     cmd_port: 6500
@@ -103,5 +156,4 @@ messaging:
 #     slack:
 #         webhook_url: [your_webhook_url]
 #         output_timestamp: False
-
 state_machine: simple_state_table

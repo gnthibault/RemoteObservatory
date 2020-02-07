@@ -182,10 +182,10 @@ class ObservationPlanner(Base):
         if start_time is None or (isinstance(start_time, datetime.date) and not
                                   isinstance(start_time, datetime.datetime)):
             if start_time is None:
-                target_date = self.ntpServ.getLocalDateFromNTP()
+                target_date = self.ntpServ.get_local_date()
             else:
                 target_date = start_time
-            midnight = self.ntpServ.getNextLocalMidnightInUTC(target_date)
+            midnight = self.ntpServ.get_next_local_midnight_in_utc(target_date)
             midnight = ATime(midnight)
             start_time = midnight - duration_hour / 2
         else:
@@ -210,10 +210,10 @@ class ObservationPlanner(Base):
         if start_time is None or (isinstance(start_time, datetime.date) and not
                                   isinstance(start_time, datetime.datetime)):
             if start_time is None:
-                target_date = self.ntpServ.getLocalDateFromNTP()
+                target_date = self.ntpServ.get_local_date()
             else:
                 target_date = start_time
-            midnight = self.ntpServ.getNextLocalMidnightInUTC(target_date)
+            midnight = self.ntpServ.get_next_local_midnight_in_utc(target_date)
             d_h = float(duration_hour/AU.hour)
             start_time = midnight - datetime.timedelta(hours=d_h/2)
         else:
@@ -488,7 +488,7 @@ class ObservationPlanner(Base):
 
     def annotate_time_point(self, time_point=None, show_airmass=True):
         if time_point is None:
-            time_point = self.ntpServ.getLocalTimeFromNTP()
+            time_point = self.ntpServ.get_local_time()
         tm = matplotlib.dates.date2num(time_point)
         color = 'mediumslateblue'
         axes = []

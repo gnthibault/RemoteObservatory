@@ -4,7 +4,8 @@ import shutil
 import subprocess
 from warnings import warn
 
-# More generic image io
+# Numerical/image stugg
+import numpy as np
 import skimage.io as io
 
 # Astropy
@@ -16,7 +17,7 @@ from astropy import units as u
 from utils import error
 
 
-def solve_field(fname, timeout=15, solve_opts=None, **kwargs):
+def solve_field(fname, timeout=180, solve_opts=None, **kwargs):
     """ Plate solves an image.
 
     Args:
@@ -40,6 +41,7 @@ def solve_field(fname, timeout=15, solve_opts=None, **kwargs):
     if solve_opts is not None:
         options = solve_opts
     else:
+        # TODO TN URGENT THIS IS HORRIBLE AND SHOULD BE FIXED ASAP
         options = [
             '--guess-scale',
             '--cpulimit', str(timeout),
@@ -52,6 +54,10 @@ def solve_field(fname, timeout=15, solve_opts=None, **kwargs):
             '--wcs', 'none',
             '--downsample', '4',
         ]
+        #'-L', '1.55',
+        #'-H', '1.7',
+        #'-u', 'arcsecperpix'
+        #]
 
         if kwargs.get('overwrite', True):
             options.append('--overwrite')
@@ -82,7 +88,7 @@ def solve_field(fname, timeout=15, solve_opts=None, **kwargs):
         raise error.InvalidCommand(
             "Bad parameters to solve_field: {} \t {}".format(e, cmd))
     except Exception as e:
-        raise error.PanError("Timeout on plate solving: {}".format(e))
+        raise error.PanError("Error on plate solving: {}".format(e))
 
     if verbose:
         print("Returning proc from solve_field")
@@ -131,7 +137,7 @@ def get_solve_field(fname, replace=True, remove_extras=True, **kwargs):
 
     proc = solve_field(fname, **kwargs)
     try:
-        output, errs = proc.communicate(timeout=kwargs.get('timeout', 30))
+        output, errs = proc.communicate(timeout=kwargs.get('timeout', 180))
     except subprocess.TimeoutExpired:
         proc.kill()
         raise error.Timeout("Timeout while solving")
@@ -175,7 +181,6 @@ def get_solve_field(fname, replace=True, remove_extras=True, **kwargs):
     if errs is not None:
         warn("Error in solving: {}".format(errs))
     else:
-
         try:
             out_dict.update(fits.getheader(fname))
         except OSError:
@@ -351,8 +356,7 @@ def write_fits(data, header, filename, logger, exposure_event=None):
 def update_thumbnail(file_path, latest_path):
     with fits.open(file_path, 'readonly') as f:
         hdu = f[0]
-        data = hdu.data
-        io.imsave(latest_path, data)
+        io.imsave(latest_path, hdu.data.astype(np.uint8))
 
 def update_headers(file_path, info):
     with fits.open(file_path, 'update') as f:
@@ -360,8 +364,9 @@ def update_headers(file_path, info):
         hdu.header.set('IMAGEID', info.get('image_id', ''))
         hdu.header.set('SEQID', info.get('sequence_id', ''))
         hdu.header.set('FIELD', info.get('field_name', ''))
+        hdu.header.set('RA-FIELD', info.get('ra_field', ''), 'Degrees')
         hdu.header.set('RA-MNT', info.get('ra_mnt', ''), 'Degrees')
-        hdu.header.set('HA-MNT', info.get('ha_mnt', ''), 'Degrees')
+        hdu.header.set('DEC-FIELD', info.get('dec_field', ''), 'Degrees')
         hdu.header.set('DEC-MNT', info.get('dec_mnt', ''), 'Degrees')
         hdu.header.set('EQUINOX', info.get('equinox', 2000.))  # Assume J2000
         hdu.header.set('AIRMASS', info.get('airmass', ''), 'Sec(z)')
@@ -371,8 +376,8 @@ def update_headers(file_path, info):
         hdu.header.set('ELEV-OBS', info.get('elevation', ''), 'Meters')
         hdu.header.set('MOONSEP', info.get('moon_separation', ''), 'Degrees')
         hdu.header.set('MOONFRAC', info.get('moon_fraction', ''))
-        hdu.header.set('CREATOR', info.get('creator', ''), 'POCS Software version')
+        hdu.header.set('CREATOR', info.get('creator', ''), 'RemoteObservatory Software version')
         hdu.header.set('INSTRUME', info.get('camera_uid', ''), 'Camera ID')
-        hdu.header.set('OBSERVER', info.get('observer', ''), 'PANOPTES Unit ID')
+        hdu.header.set('OBSERVER', info.get('observer', ''), 'Observer name')
         hdu.header.set('ORIGIN', info.get('origin', ''))
         hdu.header.set('RA-RATE', info.get('tracking_rate_ra', ''), 'RA Tracking Rate')

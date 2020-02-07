@@ -1,6 +1,7 @@
 # Generic
 import logging
 import sys
+import threading
 
 # Local stuff
 #from pocs import hardware
@@ -10,7 +11,6 @@ from utils.database import DB
 
 # Global vars
 _config = None
-
 
 def reset_global_config():
     """Reset the global _config to None.

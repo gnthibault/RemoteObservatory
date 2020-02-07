@@ -85,8 +85,8 @@ class Model3D(QEntity):
         #    Model3D._model_centers[2], -self.RA + 90, QVector3D(1,0,0)))
         # self.DECtransform.setMatrix(QTransform.rotateAround(
         #    Model3D._model_centers[3], -self.DEC + 90, QVector3D(0,0,1)))
-        self.setLongitude(self.longitude)
-        self.setLatitude(self.latitude)
+        self.set_longitude(self.longitude)
+        self.set_latitude(self.latitude)
         self.setRA(self.RA)
         self.setDEC(self.DEC)
         self.crayfordtransform.setMatrix(QTransform.rotateAround(
@@ -160,7 +160,7 @@ class Model3D(QEntity):
     def setWorld(self, world):
         self.world = world
 
-    def setLatitude(self, latitude):
+    def set_latitude(self, latitude):
         self.latitude = latitude
         if self.latitude < 0.0:
             self.hemisphere = 'S'
@@ -170,7 +170,7 @@ class Model3D(QEntity):
             Model3D._model_centers[1], -self.latitude,
             QVector3D(0.0, 1.0, 0.0)))
 
-    def setLongitude(self, longitude):
+    def set_longitude(self, longitude):
         self.longitude = longitude
 
     def setRA(self, ra):

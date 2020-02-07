@@ -9,7 +9,9 @@ import PyIndi
 
 # Astropy stuff
 from astropy import units as u
-from astropy.coordinates import SkyCoord
+from astropy.coordinates import SkyCoord, FK5
+from astropy.time import Time
+
 #c = SkyCoord(ra=10.625*u.degree, dec=41.2*u.degree, frame='icrs')
 
 # Local stuff
@@ -37,20 +39,19 @@ class IndiAbstractMount(IndiMount, AbstractMount):
         ALT Altitude, degrees above horizon
         AZ Azimuth, degrees E of N
     """
-    def __init__(self, indiClient, location, serv_time,
-                 config=None, connectOnCreate=True):
+    def __init__(self, location, serv_time,
+                 config=None, connect_on_create=True):
 
         # device related intialization
-        IndiMount.__init__(self, indiClient=indiClient,
-                           config=config, 
-                           connectOnCreate=False)
+        IndiMount.__init__(self, config=config,
+                           connect_on_create=False)
         # setup AbstractMount config
         self._setup_abstract_config()
         #Setup AbstractMount
         AbstractMount.__init__(self, location=location,
                                serv_time=serv_time)
 
-        if connectOnCreate:
+        if connect_on_create:
             self.connect()
 
 ###############################################################################
@@ -88,6 +89,9 @@ class IndiAbstractMount(IndiMount, AbstractMount):
 ###############################################################################
 # Mandatory overriden methods
 ###############################################################################
+    def connect_driver(self):  # pragma: no cover
+        IndiMount.connect_driver(self)
+
     def connect(self):  # pragma: no cover
         IndiMount.connect(self)
         self._is_connected = True
@@ -99,8 +103,7 @@ class IndiAbstractMount(IndiMount, AbstractMount):
         self._is_connected = False
 
     def initialize(self, *arg, **kwargs):  # pragma: no cover
-        self.logger.debug('Initializing mount with args {}, {}'.format(
-                          arg, kwargs))
+        self.logger.debug(f"Initializing mount with args {arg}, {kwargs}")
         self.connect()
         self._is_initialized = True
 
@@ -153,8 +156,8 @@ class IndiAbstractMount(IndiMount, AbstractMount):
                 was_slewing = self.is_slewing
                 self._is_tracking = False
                 self._is_slewing = True
-                print('##################### SLEWING TO {}'.format(
-                      self.get_target_coordinates()))
+
+                target = self.get_target_coordinates()
                 IndiMount.slew_to_coord_and_track(self,
                     self.get_target_coordinates())
                 success = True
@@ -173,7 +176,7 @@ class IndiAbstractMount(IndiMount, AbstractMount):
 ###############################################################################
 
     def __str__(self):
-        return 'Mount: {}'.format(self.deviceName)
+        return 'Mount: {}'.format(self.device_name)
 
     def __repr__(self):
         return self.__str__()

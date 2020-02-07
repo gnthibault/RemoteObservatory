@@ -14,6 +14,7 @@ from astropy.coordinates import SkyCoord
 from astropy.coordinates import ICRS
 from astropy.coordinates import ITRS
 from astropy.coordinates import EarthLocation
+from astropy.coordinates import FK5
 #c = SkyCoord(ra=10.625*u.degree, dec=41.2*u.degree, frame='icrs', equinox='J2000.0')
 
 class IndiMount(IndiDevice):
@@ -43,18 +44,18 @@ class IndiMount(IndiDevice):
             PIER_EAST : Mount on the East side of pier (Pointing West).
             PIER_WEST : Mount on the West side of pier (Pointing East).
     """
-    def __init__(self, indiClient, connectOnCreate=True, logger=None,
+    def __init__(self, connect_on_create=True, logger=None,
                  config=None):
         logger = logger or logging.getLogger(__name__)
         
-        if config is None:
-            config = self.config
-        deviceName = config['mount_name']
+        assert (config is not None) and (type(config)==dict), ("Please provide "
+            "config as dictionary, with mount_name")
+        device_name = config['mount_name']
         logger.debug('Indi Mount, mount name is: {}'.format(
-            deviceName))
+            device_name))
         # device related intialization
-        IndiDevice.__init__(self, logger=logger, deviceName=deviceName,
-            indiClient=indiClient)
+        IndiDevice.__init__(self, logger=logger, device_name=device_name,
+            indi_client_config=config["indi_client"])
         try:
             #try to get timezone from config file
             self.gps = dict(latitude = self.config['observatory']['latitude'],
@@ -63,15 +64,15 @@ class IndiMount(IndiDevice):
         except:
             self.gps = None
 
-        if connectOnCreate:
+        if connect_on_create:
             self.connect()
 
         # Finished configuring
         self.logger.debug('Indi Mount configured successfully')
 
-    def onEmergency(self):
+    def on_emergency(self):
         self.logger.debug('on emergency routine started...')
-        self.abortMotion()
+        self.abort_motion()
         self.park()
         self.logger.debug('on emergency routine finished')
 
@@ -98,45 +99,24 @@ class IndiMount(IndiDevice):
 
     def set_coord(self, coord):
         """
-        Big concern here: coord should be given as Equatorial astrometric epoch
+        Subteletie here: coord should be given as Equatorial astrometric epoch
         of date coordinate (eod):  RA JNow RA, hours,  DEC JNow Dec, degrees +N
 
-        We found an interesting SO post explaining how to get that from astropy
-        https://stackoverflow.com/questions/52900678/coordinates-transformation-in-astropy
+        As our software only manipulates J2000. we decided to convert to jnow
+        for the generic case
         """
-        time = Time.now()
-        location = EarthLocation(lat=self.gps['latitude']*u.deg,
-                                 lon=self.gps['longitude']*u.deg,
-                                 height=self.gps['elevation']*u.m)
-        c_itrs = coord.transform_to(ITRS(obstime=time))
-        # Calculate local apparent Hour Angle (HA), wrap at 0/24h
-        local_ha = location.lon - c_itrs.spherical.lon
-        local_ha.wrap_at(24*u.hourangle, inplace=True)
-        # Calculate local apparent Declination
-        local_dec = c_itrs.spherical.lat
-        coord = SkyCoord(ra=local_ha, dec=local_dec)
-        #coord = coord.transform_to(ICRS(equinox='J2000.0'))
-        rahour_decdeg = {'RA': coord.ra.hour, 
-                         'DEC': coord.dec.degree}
+        fk5_now = FK5(equinox=Time.now())
+        coord_jnow = coord.transform_to(fk5_now)
+        rahour_decdeg = {'RA': coord_jnow.ra.hour,
+                         'DEC': coord_jnow.dec.degree}
         if self.is_parked:
             self.logger.warning('Cannot set coord: {} because mount is parked'
                                 ''.format(rahour_decdeg))
         else:
             self.logger.info('Now setting JNow coord: {}'.format(
                              rahour_decdeg)) 
-            self.setNumber('EQUATORIAL_EOD_COORD', rahour_decdeg, sync=True,
+            self.set_number('EQUATORIAL_EOD_COORD', rahour_decdeg, sync=True,
                            timeout=180)
-
-        #try:
-        #    #Read Only property set once requested EQUATORIAL_EOD_COORD is
-        #    #accepted by driver.
-        #    res = self.get_number('TARGET_EOD_COORD')
-        #    self.logger.debug('Indi Mount, coordinates accepted by driver, '
-        #        'Mount driver TARGET_EOD_COORD are: {} and '
-        #        'sent EQUATORIAL_EOD_COORD are: {}'.format(rahour_decdeg,res))
-        #except Exception as e:
-        #    self.logger.error('Indi Mount, coordinates not accepted by driver '
-        #                      ': {}'.format(e))
 
     def on_coord_set(self, what_to_do='TRACK'):
         """ What do to with the new set of given coordinates
@@ -147,25 +127,25 @@ class IndiMount(IndiDevice):
         """
         self.logger.debug('Setting ON_COORD_SET behaviour: {}'.format(
                           what_to_do))
-        self.setSwitch('ON_COORD_SET', [what_to_do])
+        self.set_switch('ON_COORD_SET', [what_to_do])
 
     # This does not work with simulator
     def setTrackRate(self, tracking_mode='TRACK_SIDEREAL'):
         self.logger.debug('Setting tracking mode: {}'.format(
                           tracking_mode))
-        self.setSwitch('TELESCOPE_TRACK_RATE', [tracking_mode])
+        self.set_switch('TELESCOPE_TRACK_RATE', [tracking_mode])
 
-    def abortMotion(self):
+    def abort_motion(self):
         self.logger.debug('Abort Motion')
-        self.setSwitch('TELESCOPE_ABORT_MOTION', ['ABORT_MOTION'])
+        self.set_switch('TELESCOPE_ABORT_MOTION', ['ABORT_MOTION'])
 
     def park(self):
         self.logger.debug('Slewing to Park')
-        self.setSwitch('TELESCOPE_PARK', ['PARK'])
+        self.set_switch('TELESCOPE_PARK', ['PARK'])
 
     def unpark(self):
         self.logger.debug('unpark')
-        self.setSwitch('TELESCOPE_PARK', ['UNPARK'])
+        self.set_switch('TELESCOPE_PARK', ['UNPARK'])
 
     def set_slew_rate(self, slew_rate='SLEW_FIND'):
         """
@@ -177,7 +157,7 @@ class IndiMount(IndiDevice):
         """
         self.logger.debug('Setting slewing rate: {}'.format(
                           slew_rate))
-        self.setSwitch('TELESCOPE_SLEW_RATE', [slew_rate])
+        self.set_switch('TELESCOPE_SLEW_RATE', [slew_rate])
 
     def get_pier_side(self):
         ''' GEM Pier Side
@@ -198,15 +178,23 @@ class IndiMount(IndiDevice):
                 TRACK_CUSTOM: custom
             WARNING: does not work with simulator
         '''
-        ret = self.get_switch('TELESCOPE_TRACK_RATE')
-        self.logger.debug('Got track rate: {}'.format(ret))
-        return ret
+        try:
+            ret = self.get_switch('TELESCOPE_TRACK_MODE')
+            self.logger.debug('Got track rate: {}'.format(ret))
+            # find actual name for which value is true
+            v = [k for k,v in ret.items() if v['value']]
+            assert len(v) == 1
+            return v
+        except Exception as e:
+            self.logger.warning("Cannot retrieve track rate: {}".format(e))
+            return "NA"
+
 
     # This does not work with simulator
     def set_track_rate(self, track_rate='TRACK_SIDEREAL'):
         self.logger.debug('Setting track rate: {}'.format(
                           track_rate))
-        self.setSwitch('TELESCOPE_TRACK_RATE', [track_rate])
+        self.set_switch('TELESCOPE_TRACK_MODE', [track_rate])
 
     @property
     def is_parked(self):
@@ -221,7 +209,7 @@ class IndiMount(IndiDevice):
 
     def get_current_coordinates(self):
         self.logger.debug('Asking mount {} for its current coordinates'.format(
-            self.deviceName)) 
+            self.device_name)) 
         rahour_decdeg = self.get_number('EQUATORIAL_EOD_COORD')
         self.logger.debug('Received current JNOW coordinates {}'.format(
                           rahour_decdeg))
@@ -238,7 +226,7 @@ class IndiMount(IndiDevice):
 ###############################################################################
 
     def __str__(self):
-        return 'Mount: {}'.format(self.deviceName)
+        return 'Mount: {}'.format(self.device_name)
 
     def __repr__(self):
         return self.__str__()

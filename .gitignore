@@ -1,4 +1,5 @@
 __pycache__
+.ipynb_checkpoints
 
 *.cr2
 *.fits
@@ -14,4 +15,4 @@ __pycache__
 /.idea
 /dark_calibration
 /state_images
-
+/venv

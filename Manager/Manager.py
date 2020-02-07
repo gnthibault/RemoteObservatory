@@ -30,8 +30,6 @@ from helper.IndiClient import IndiClient
 from ObservationPlanner.DefaultScheduler import DefaultScheduler
 
 # Local stuff: Service
-from Service.WUGWeatherService import WUGWeatherService
-from Service.NTPTimeService import NTPTimeService
 from Service.NovaAstrometryService import NovaAstrometryService
 
 # Local stuff: Utils
@@ -55,10 +53,6 @@ class Manager(Base):
         # Image directory and other ios
         self.logger.info('\tSetting up main image directory')
         self._setup_image_directory()
-
-        # setup indi client
-        self.logger.info('\tSetting up indi client')
-        self._setup_indi_client()
 
         # setup web services
         self.logger.info('\tSetting up web services')
@@ -105,20 +99,17 @@ class Manager(Base):
     @property
     def is_dark(self):
         horizon = -18 * u.degree
-
-        t0 = self.serv_time.getAstropyTimeFromUTC()
+        t0 = self.serv_time.get_astropy_time_from_utc()
         is_dark = self.observer.is_night(t0, horizon=horizon)
-
         if not is_dark:
             sun_pos = self.observer.altaz(t0, target=get_sun(t0)).alt
             self.logger.debug("Sun {:.02f} > {}".format(sun_pos, horizon))
-
         return is_dark
 
     @property
     def sidereal_time(self):
         return self.observer.local_sidereal_time(
-            self.serv_time.getAstropyTimeFromUTC())
+            self.serv_time.get_astropy_time_from_utc())
 
     @property
     def primary_camera(self):
@@ -159,8 +150,8 @@ class Manager(Base):
         """
         status = {}
         try:
-            t = self.serv_time.getAstropyTimeFromUTC()
-            local_time = str(self.serv_time.getLocalTimeFromNTP())
+            t = self.serv_time.get_astropy_time_from_utc()
+            local_time = str(self.serv_time.get_local_time())
 
             if self.mount.is_initialized:
                 status['mount'] = self.mount.status()
@@ -310,7 +301,6 @@ class Manager(Base):
         """
         # Clear the offset info
         self.current_offset_info = None
-
         pointing_image = self.current_observation.pointing_image
 
         try:
@@ -400,9 +390,9 @@ class Manager(Base):
                         dec_direction), '{:05.0f}'.format(dec_ms))
 
                 # Adjust tracking for up to 30 seconds then fail if not done.
-                start_tracking_time = self.serv_time.getAstropyTimeFromUTC()
+                start_tracking_time = self.serv_time.get_astropy_time_from_utc()
                 while self.mount.is_tracking is False:
-                    if (self.serv_time.getAstropyTimeFromUTC() -
+                    if (self.serv_time.get_astropy_time_from_utc() -
                             start_tracking_time).sec > 30:
                         raise Exception('Trying to adjust Dec tracking for '
                                         'more than 30 seconds')
@@ -422,9 +412,9 @@ class Manager(Base):
                         ra_direction), '{:05.0f}'.format(ra_ms))
 
                 # Adjust tracking for up to 30 seconds then fail if not done.
-                start_tracking_time = self.serv_time.getAstropyTimeFromUTC()
+                start_tracking_time = self.serv_time.get_astropy_time_from_utc()
                 while self.mount.is_tracking is False:
-                    if (self.serv_time.getAstropyTimeFromUTC() - 
+                    if (self.serv_time.get_astropy_time_from_utc() - 
                             start_tracking_time).sec > 30:
                         raise Exception('Trying to adjust RA tracking for '
                                         'more than 30 seconds')
@@ -433,15 +423,19 @@ class Manager(Base):
                     time.sleep(0.1)
         """
         if self.guider is not None:
-            self.guider.dither(*self.config['guider']['dither'])
-
+            self.guider.dither(**self.config['guider']['dither'])
 
     def initialize_tracking(self):
         # start each observation by setting up the guider
-        if self.guider is not None:
-            self.logger.info("Starting guider before observing")
-            self.guider.reset_guiding()
-            self.guider.guide()
+        try:
+            if self.guider is not None:
+                self.logger.info("Starting guider before observing")
+                self.guider.reset_guiding()
+                self.guider.guide()
+            return True
+        except Exception as e:
+            self.logger.error('Error while trying to initialize tracking')
+            return False
 
     def get_standard_headers(self, observation=None):
         """Get a set of standard headers
@@ -460,13 +454,14 @@ class Manager(Base):
         assert observation is not None, self.logger.warning(
             "No observation, can't get headers")
 
-        target = observation.target
+        # fetching various informations for the new image
         self.logger.debug("Getting headers for : {}".format(observation))
-        t0 = self.serv_time.getAstropyTimeFromUTC()
+        target = observation.target
+        t0 = self.serv_time.get_astropy_time_from_utc()
         moon = get_moon(t0, self.observer.location)
+        mnt_coord = self.mount.get_current_coordinates()
 
-        print('##################### TARGET HOURANGLE IS {}'.format(self.observer.target_hour_angle(t0, target).value))
-
+        # Filling up header for the new image to be written
         headers = {
             'airmass': self.observer.altaz(t0, target).secz.value,
             'creator': "RemoteObservatory_{}".format(self.__version__),
@@ -476,10 +471,10 @@ class Manager(Base):
             'moon_fraction': self.observer.moon_illumination(t0),
             'moon_separation': target.coord.separation(moon).value,
             'observer': self.config.get('name', ''),
-            'origin': 'gnthibault',
+            'ra_mnt': mnt_coord.ra.to(u.deg).value,
+            'dec_mnt': mnt_coord.dec.to(u.deg).value,
+            'tracking_rate_ra': self.mount.get_track_rate()
             #'ha_mnt': self.observer.target_hour_angle(t0, target).value,
-            #'tracking_rate_ra': self.mount.getTrackRate()
-            #TODO TN is that stuff worth implementing ?
         }
 
         # Add observation metadata
@@ -531,18 +526,17 @@ class Manager(Base):
             try:
                 assert camera.focuser.is_connected
             except AttributeError:
-                self.logger.debug('Camera {} has no focuser, skipping '
-                                  'autofocus'.format(cam_name))
+                self.logger.debug(f"Camera {cam_name} has no focuser, skipping "
+                                  f"autofocus")
             except AssertionError:
-                self.logger.debug('Camera {} focuser not connected, skipping '
-                                  'autofocus'.format(cam_name))
+                self.logger.debug(f"Camera {cam_name} focuser not connected, "
+                                  f"skipping autofocus")
             else:
                 try:
                     # Start the autofocus
-                    autofocus_event = camera.autofocus(coarse=coarse)
+                    autofocus_event = camera.autofocus_async(serv_time=self.serv_time)
                 except Exception as e:
-                    self.logger.error(
-                        "Problem running autofocus: {}".format(e))
+                    self.logger.error(f"Problem running autofocus: {e}")
                 else:
                     autofocus_events[cam_name] = autofocus_event
 
@@ -609,7 +603,6 @@ class Manager(Base):
             # park the observatory
             self.observatory.park()
 
-
             return True
         except Exception as e:
             self.logger.error(
@@ -623,32 +616,43 @@ class Manager(Base):
     def _setup_image_directory(self, path='.'):
         self._image_dir = self.config['directories']['images']
 
-    def _setup_indi_client(self):
-        """
-            setup the indi client that will communicate with devices
-        """
-        try:
-            #TODO TN: at some point, this is going to be removed, and each
-            # device will instanciate its own client, depending on which machine
-            # the physical device is attached to
-            self.indi_client = IndiClient(config=self.config['indiclient'])
-            self.indi_client.connect()
-        except Exception:
-            raise RuntimeError('Problem setting up indi client')
-
     def _setup_services(self):
         """
             setup various services that are supposed to provide infos/data
         """
         try:
-            self.serv_time = NTPTimeService()
-            #self.serv_weather = WUGWeatherService()
+            self._setup_time_service()
+            self._setup_weather_service()
             #self.serv_astrometry = NovaAstrometryService(configFileName='local')
-            #self.serv_astrometry.login()
-
         except Exception:
             raise RuntimeError('Problem setting up services')
 
+    def _setup_weather_service(self):
+        """
+            setup a service that will provide weather informations
+        """
+        try:
+            weather_name = self.config['weather_service']['module']
+            weather_module = load_module('Service.'+weather_name)
+            self.serv_weather = getattr(weather_module, weather_name)(
+                config = self.config['weather_service'],
+                serv_time=self.serv_time,
+                connect_on_create=True,
+                loop_on_create=True)
+        except Exception:
+            raise RuntimeError('Problem setting up weather service')
+
+    def _setup_time_service(self):
+        """
+            setup a service that will provide time
+        """
+        try:
+            time_name = self.config['time_service']['module']
+            time_module = load_module('Service.'+time_name)
+            self.serv_time = getattr(time_module, time_name)(
+                config = self.config['time_service'])
+        except Exception:
+            raise RuntimeError('Problem setting up time service')
 
     def _setup_observatory(self):
         """
@@ -670,11 +674,9 @@ class Manager(Base):
             mount_name = self.config['mount']['module']
             mount_module = load_module('Mount.'+mount_name)
             self.mount = getattr(mount_module, mount_name)(
-                indiClient = self.indi_client,
                 location = self.earth_location,
                 serv_time = self.serv_time,
                 config = self.config['mount'])
-
         except Exception as e:
             self.logger.warning("Cannot load mount module: {}".format(e))
             raise error.MountNotFound('Problem setting up mount')
@@ -690,11 +692,10 @@ class Manager(Base):
             cam_module = load_module('Camera.'+cam_name)
             cam = getattr(cam_module, cam_name)(
                 serv_time=self.serv_time,
-                indiClient=self.indi_client,
-                config = self.config['camera'],
-                primary=True,
-                connectOnCreate=True)
-            cam.prepareShoot()
+                config=self.config['camera'],
+                connect_on_create=True,
+                primary=True)
+            cam.prepare_shoot()
  
         except Exception as e:
             raise RuntimeError('Problem setting up camera: {}'.format(e))
@@ -716,9 +717,8 @@ class Manager(Base):
                 fw_name = self.config['filterwheel']['module']
                 fw_module = load_module('FilterWheel.'+fw_name)
                 self.filterwheel = getattr(fw_module, fw_name)(
-                    indiClient = self.indi_client,
                     config = self.config['filterwheel'],
-                    connectOnCreate=True)
+                    connect_on_create=True)
         except Exception:
             raise RuntimeError('Problem setting up filterwheel: {}'.format(e))
 

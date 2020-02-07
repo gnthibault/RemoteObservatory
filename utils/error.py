@@ -47,6 +47,12 @@ class ScopeControllerError(Error):
     def __init__(self, msg='Scope control problem'):
         super().__init__(msg)
 
+class DomeControllerError(Error):
+
+    """ Error for a dome controller system malfunction """
+
+    def __init__(self, msg='Dome control problem'):
+        super().__init__(msg)
 
 class InvalidSystemCommand(Error):
 

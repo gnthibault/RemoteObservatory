@@ -74,11 +74,10 @@ class Image(Base):
         self.header_dec = None
         #self.header_ha = None
 
-        # Coordinates from WCS
+        # Coordinates from WCS written by astrometry
         self.pointing = None
         self.ra = None
         self.dec = None
-        #self.ha = None
 
         self.get_header_pointing()
         self.get_wcs_pointing()
@@ -120,8 +119,7 @@ class Image(Base):
             namedtuple: Pointing error information
         """
         if self._pointing_error is None:
-            assert self.pointing is not None, self.logger.warning(
-                "No world coordinate system (WCS), can't get pointing_error")
+            assert self.pointing is not None, "No world coordinate system (WCS), can't get pointing_error"
             assert self.header_pointing is not None
 
             if self.wcs is None:
@@ -142,14 +140,15 @@ class Image(Base):
     def get_header_pointing(self):
         """Get the pointing information from the header
 
-        The header should contain the `RA` and `DEC` keywords, from which
-        the header pointing coordinates are built. Those two entries are
-        hopefully written by indi :) as J2000 format
+        The header should contain the `RA-FIELD` and `DEC-FIELD` keywords, from
+        which the header pointing coordinates are built. Those two entries are
+        written by us as J2000 format, which is also the expected format for the
+        astrometric resolution
         """
         try:
             self.header_pointing = SkyCoord(
-                ra=float(self.header['RA']) * u.degree,
-                dec=float(self.header['DEC']) * u.degree,
+                ra=float(self.header['RA-FIELD']) * u.degree,
+                dec=float(self.header['DEC-FIELD']) * u.degree,
                 frame='icrs', equinox='J2000.0')
 
             self.header_ra = self.header_pointing.ra.to(u.hourangle)
@@ -174,8 +173,8 @@ class Image(Base):
             ra = self.wcs.celestial.wcs.crval[0]
             dec = self.wcs.celestial.wcs.crval[1]
 
-            self.pointing = SkyCoord(ra=ra * u.degree,
-                                     dec=dec * u.degree,
+            self.pointing = SkyCoord(ra=ra*u.degree,
+                                     dec=dec*u.degree,
                                      frame='icrs', equinox='J2000.0')
             self.ra = self.pointing.ra.to(u.hourangle)
             self.dec = self.pointing.dec.to(u.degree)
@@ -194,7 +193,7 @@ class Image(Base):
             self.fits_file,
             ra=self.header_pointing.ra.value,
             dec=self.header_pointing.dec.value,
-            radius=1,
+            radius=5,
             **kwargs)
         self.wcs_file = solve_info['solved_fits_file']
         self.get_wcs_pointing()

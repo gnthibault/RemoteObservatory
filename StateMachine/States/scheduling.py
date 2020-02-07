@@ -26,6 +26,7 @@ def on_enter(event_data):
     except error.NoObservation as e:
         model.say('No valid observations found. Cannot schedule. '
                   'Going to park.')
+        model.next_state = 'parking'
     except Exception as e:
         model.logger.warning("Error in scheduling: {}, {}".format(e,
             traceback.format_exc()))

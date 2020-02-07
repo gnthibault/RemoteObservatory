@@ -12,23 +12,23 @@ from Camera.AbstractCamera import AbstractCamera
 from Camera.IndiCamera import IndiCamera
 
 class IndiAbstractCamera(IndiCamera, AbstractCamera):
-    def __init__(self, serv_time, indiClient, config=None,
-                 connectOnCreate=True, primary=False):
+    def __init__(self, serv_time, config=None,
+                 connect_on_create=True, primary=False):
 
         # Parent initialization
         AbstractCamera.__init__(self, serv_time=serv_time, primary=primary)
 
         # device related intialization
-        IndiCamera.__init__(self, indiClient=indiClient, logger=self.logger,
-                           config=config,
-                           connectOnCreate=connectOnCreate)
+        IndiCamera.__init__(self, logger=self.logger, config=config,
+                           connect_on_create=connect_on_create)
+        self.indi_camera_config = config
 
     # TODO TN: setup event based acquisition properly
-    def shootAsyncWithEvent(self, exp_time_sec, filename, exposure_event):
+    def shoot_asyncWithEvent(self, exp_time_sec, filename, exposure_event):
         self.setExpTimeSec(exp_time_sec)
-        self.shootAsync()
-        self.synchronizeWithImageReception() 
-        image = self.getReceivedImage()
+        self.shoot_async()
+        self.synchronize_with_image_reception() 
+        image = self.get_received_image()
         try:
             with open(filename, "wb") as f:
                 image.writeto(f, overwrite=True)
@@ -42,10 +42,21 @@ class IndiAbstractCamera(IndiCamera, AbstractCamera):
         Should return an event
         """
         exposure_event = threading.Event()
-        w = threading.Thread(target=self.shootAsyncWithEvent,
+        w = threading.Thread(target=self.shoot_asyncWithEvent,
                              args=(exposure_time.to(u.second).value,
                                    filename,
                                    exposure_event))
+        self.set_frame_type('FRAME_LIGHT')
+        w.start()
+        return exposure_event
+
+    def autofocus(self, *args, **kwargs):
+        """
+        Should return an event
+        """
+        autofocus_event = threading.Event()
+        w = threading.Thread(target=self.autofocus_async,
+                             args=(autofocus_event))
         self.set_frame_type('FRAME_LIGHT')
         w.start()
         return exposure_event
@@ -55,7 +66,7 @@ class IndiAbstractCamera(IndiCamera, AbstractCamera):
         Should return an event
         """
         exposure_event = threading.Event()
-        w = threading.Thread(target=self.shootAsyncWithEvent,
+        w = threading.Thread(target=self.shoot_asyncWithEvent,
                              args=(exposure_time.to(u.second).value,
                                    filename,
                                    exposure_event))
@@ -68,7 +79,7 @@ class IndiAbstractCamera(IndiCamera, AbstractCamera):
         Should return an event
         """
         exposure_event = threading.Event()
-        w = threading.Thread(target=self.shootAsyncWithEvent,
+        w = threading.Thread(target=self.shoot_asyncWithEvent,
                              args=(exposure_time.to(u.second).value,
                                    filename,
                                    exposure_event))
@@ -81,10 +92,15 @@ class IndiAbstractCamera(IndiCamera, AbstractCamera):
         Should return an event
         """
         exposure_event = threading.Event()
-        w = threading.Thread(target=self.shootAsyncWithEvent,
+        w = threading.Thread(target=self.shoot_asyncWithEvent,
                              args=(exposure_time.to(u.second).value,
                                    filename,
                                    exposure_event))
         self.set_frame_type('FRAME_FLAT')
         w.start()
         return exposure_event  
+
+    # TODO TN: we decide that IndiCamera takes over AbstractCamera in the
+    # case we have diamond like inheritance problem
+    def get_config(self):
+        return IndiCamera.config

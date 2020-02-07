@@ -144,8 +144,8 @@ class RemoteObservatoryFSM(StateMachine, Base):
                 self.manager.initialize()
 
             except Exception as e:
-                self.logger.info('Oh wait. There was a problem initializing: '
-                                 '{}'.format(e))
+                self.logger.info(f"Oh wait. There was a problem initializing: "
+                                 f"{e}")
                 self.logger.info('Since we didn not initialize, I am going '
                                  'to exit.')
                 self.power_down()
@@ -178,8 +178,9 @@ class RemoteObservatoryFSM(StateMachine, Base):
             msg(str): Message to be sent
         """
         if self.has_messaging is False:
-            self.logger.info('Unit says: {}'.format(msg))
-        self.send_message('{}'.format(msg), channel='PANCHAT')
+            self.logger.info(f"Unit says: {msg}")
+        else:
+            self.send_message(f"{msg}", channel='PANCHAT')
 
     def send_message(self, msg, channel='POCS'):
         """ Send a message
@@ -341,13 +342,6 @@ class RemoteObservatoryFSM(StateMachine, Base):
         # See if dark
         is_dark = self.manager.is_dark
 
-        # Check simulator TODO TN setup back simulator
-        #try:
-        #    if 'night' in self.config['simulator']:
-        #        is_dark = True
-        #except KeyError:
-        #    pass
-
         self.logger.debug("Dark Check: {}".format(is_dark))
         return is_dark
 
@@ -368,26 +362,14 @@ class RemoteObservatoryFSM(StateMachine, Base):
         is_safe = False
         record = {'safe': False}
 
-        # TODO TN: setup back simulator
-        #try:
-        #    if 'weather' in self.config['simulator']:
-        #        is_safe = True
-        #        self.logger.debug("Weather simulator always safe")
-        #        return is_safe
-        #except KeyError:
-        #    pass
-
         try:
             record = self.db.get_current('weather')
-
             is_safe = record['data'].get('safe', False)
             timestamp = record['date']
-            age = (self.manager.serv_time.getUTCFromNTP() -
+            age = (self.manager.serv_time.get_utc() -
                    timestamp).total_seconds()
-            self.logger.debug(
-                "Weather Safety: {} [{:.0f} sec old - {}]".format(is_safe,
-                age, timestamp))
-
+            self.logger.debug(f"Weather Safety: {is_safe} [{age:.0f} sec old "
+                              f"- {timestamp}]")
         except (TypeError, KeyError) as e:
             self.logger.warning("No record found in DB: {}", e)
         except BaseException as e:
@@ -586,6 +568,6 @@ if __name__ == '__main__':
     # load the logging configuration
     logging.config.fileConfig('logging.ini')
     m = Manager()
-    r = RemoteObservatoryFSM(manager = m)
+    r = RemoteObservatoryFSM(manager=m)
     r.initialize()
     r.run()

@@ -57,10 +57,10 @@ def load_config(config_files=None, parse=True, ignore_local=False):
 
     config = dict()
 
-    config_dir = '{}/conf_files'.format(os.curdir)
+    config_dir = f"{os.curdir}/conf_files"
     for f in config_files:
         if not f.endswith('.yaml'):
-            f = '{}.yaml'.format(f)
+            f = f"{f}.yaml"
 
         if not f.startswith('/'):
             path = os.path.join(config_dir, f)
@@ -70,7 +70,7 @@ def load_config(config_files=None, parse=True, ignore_local=False):
         try:
             _add_to_conf(config, path)
         except Exception as e:
-            warn("Problem with config file {}, skipping. {}".format(path, e))
+            warn(f"Problem with config file {path}, skipping. {e}")
 
     if parse:
         config = _parse_config(config)
@@ -90,14 +90,14 @@ def save_config(path, config, overwrite=True):
             for updates.
     """
     if not path.endswith('.yaml'):
-        path = '{}.yaml'.format(path)
+        path = f"{path}.yaml"
 
     if not path.startswith('/'):
-        config_dir = '{}/conf_files'.format(os.curdir)
+        config_dir = f"{os.curdir}/conf_files"
         path = os.path.join(config_dir, path)
 
     if os.path.exists(path) and not overwrite:
-        warn("Path exists and overwrite=False: {}".format(path))
+        warn(f"Path exists and overwrite=False: {path}")
     else:
         with open(path, 'w') as f:
             f.write(yaml.dump(config))
@@ -127,8 +127,8 @@ def _parse_config(config):
 def _add_to_conf(config, fn):
     try:
         with open(fn, 'r') as f:
-            c = yaml.load(f.read())
+            c = yaml.safe_load(f.read())
             if c is not None and isinstance(c, dict):
                 config.update(c)
-    except IOError:  # pragma: no cover
+    except IOError as e:  # pragma: no cover
         pass

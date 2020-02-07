@@ -14,6 +14,13 @@ from astroplan import is_observable
 from astroplan import Observer
 from astroplan import ObservingBlock
 
+#Might have to delete after refactoring with ObservationPlanner
+from astroplan.constraints import AtNightConstraint
+from astroplan.constraints import AirmassConstraint
+from astroplan.constraints import TimeConstraint
+from astroplan.constraints import MoonSeparationConstraint
+from ObservationPlanner.LocalHorizonConstraint import LocalHorizonConstraint
+
 # Local stuff
 from Base.Base import Base
 #from ObservationPlanner.ObservationPlanner import ObservationPlanner
@@ -25,7 +32,7 @@ class Scheduler(Base):
 
     # Max value for which a scheduling slot is programmed, otherwise
     # we split into smaller slots
-    MaximumSlotDurationSec = 60 * 16 * u.second
+    MaximumSlotDurationSec = 60 * 20 * u.second
 
     def __init__(self, ntpServ, obs, config=None, path='.'):
         """Loads `~pocs.scheduler.field.Field`s from a field
@@ -63,33 +70,17 @@ class Scheduler(Base):
 
         self.obs = obs
         self.serv_time = ntpServ
-        self.target_list = dict()
         self.observations = dict()
         self._current_observation = None
         self.observed_list = OrderedDict()
         self.constraints = []
 
         if config is None:
-            try:
-                config = load_config(config_files=['targets'])
-            except Exception as e:
-                self.logger.warning("Cannot load config: {}".format(e))
-                config = dict(
-                    constraints = dict(
-                        maxairmass = 4,
-                        minmoonseparationdeg = 45),
-                    targets = dict(
-                        M42 = dict(
-                            Luminance = dict(
-                                count = 3,
-                                exp_time_sec = 3)),
-                        M51 = dict(
-                            Luminance = dict(
-                                count = 3,
-                                exp_time_sec = 3))))
-        self.config = config
-        self.target_list = config['targets']
-        self.logger.debug('Target list: {}'.format(self.target_list))
+            self.read_config()
+        else:
+            self.config = config
+
+        self.logger.debug('Config: {}'.format(self.config))
 
         # Initialize obs planner, that does the main job
         #self.obs_planner = ObservationPlanner(ntpServ, obs, config_file, path)
@@ -156,6 +147,14 @@ class Scheduler(Base):
 # Methods
 ##########################################################################
 
+    def read_config(self):
+        self.config = load_config(config_files=['targets'])
+
+    def reread_config(self):
+        self.read_config()
+        # Initialize a list of targets
+        self.initialize_target_list()
+
     def clear_available_observations(self):
         """Reset the list of available observations"""
         # Clear out existing list and observations
@@ -218,20 +217,68 @@ class Scheduler(Base):
         else:
             self.observations[observation.id] = observation
 
+    def initialize_constraints(self):
+        # Initialize constraints for scheduling
+        self.constraints = []
+
+        if "constraints" not in self.config:
+            return
+
+        for constraint, constraint_config in self.config['constraints'].items():
+            if constraint == 'atnight':
+                try:
+                    if constraint_config == 'astronomical':
+                        self.constraints.append(
+                            AtNightConstraint.twilight_astronomical())
+                except Exception as e:
+                    self.logger.warning("Cannot add atnight constraint: {}"
+                                        "".format(e))
+            if constraint == "maxairmass":
+                try:
+                    # TODO TN maybe non boolean Airmass Constraint
+                    self.constraints.append(
+                        AirmassConstraint(max=constraint_config,
+                                          boolean_constraint=True))
+                except Exception as e:
+                    self.logger.warning("Cannot add airmass constraint: {}"
+                                        "".format(e))
+            if constraint == "minmoonseparationdeg":
+                try:
+                    self.constraints.append(
+                        MoonSeparationConstraint(min=constraint_config*u.deg))
+                except Exception as e:
+                    self.logger.warning("Cannot add moon sep constraint: {}"
+                                        "".format(e))
+
+        # We also always add the local horizon constraint:
+        try:
+            self.constraints.append(
+                LocalHorizonConstraint(horizon=self.obs.get_horizon(),
+                                       boolean_constraint=True))
+        except Exception as e:
+            self.logger.warning("Cannot add horizon constraint: {}".format(e))
+
     def initialize_target_list(self):
-        """Reads the field file and creates valid `Observations` """
+        """Creates valid `Observations` """
+
+        # Start by initializing the generic constraints
+        self.initialize_constraints()
 
         # Now add observation to the list
-        if not self.target_list:
+        if 'targets' not in self.config:
             self.logger.warning('Target list seems to be empty')
             return
 
         #TODO TN readout time, get that info from camera
         camera_time = 1*u.second
-        for target_name, filter_config in self.target_list.items():
+        for target_name, filter_config in self.config['targets'].items():
             #target = FixedTarget.from_name(target_name)
-            target = FixedTarget(SkyCoord(33.33*u.deg, 66.66*u.deg,
-                                          frame='icrs', equinox='J2000.0'))
+            # TODO TN Urgent: fix that temporary stuff
+            target = FixedTarget(SkyCoord(ra=1*u.deg, dec=89*u.deg,
+                                          frame='icrs', equinox='J2000.0'),
+                                 name="GenericTarget")
+            #target = FixedTarget(SkyCoord(33.33*u.deg, 66.66*u.deg,
+            #                              frame='icrs', equinox='J2000.0'))
             for filter_name, config in filter_config.items():
                 count = config["count"]
                 exp_time_sec = config["exp_time_sec"]*u.second

@@ -25,8 +25,8 @@ class ShootingSequence:
         for index in range(0, self.count):
             self.callbacks.run('onEachStarted', self, index)
             self.camera.setExpTimeSec(self.exposure)
-            self.camera.shootAsync()
-            self.camera.synchronizeWithImageReception()
+            self.camera.shoot_async()
+            self.camera.synchronize_with_image_reception()
             self.finished += 1
             self.callbacks.run('onEachFinished', self, index)
         self.callbacks.run('onFinished', self)

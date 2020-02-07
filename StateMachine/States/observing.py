@@ -28,11 +28,10 @@ def on_enter(event_data):
     model.next_state = 'parking'
 
     try:
-
         # Now manage actual acquisition
         maximum_duration = (model.manager.current_observation.time_per_exposure
                             + MAX_EXTRA_TIME)
-        start_time = model.manager.serv_time.getAstropyTimeFromUTC()
+        start_time = model.manager.serv_time.get_astropy_time_from_utc()
         camera_events = model.manager.observe()
 
         timeout = Timeout(maximum_duration)
@@ -48,24 +47,24 @@ def on_enter(event_data):
                 model.say("Observation interrupted!")
                 break
 
-            now = model.manager.serv_time.getAstropyTimeFromUTC()
+            now = model.manager.serv_time.get_astropy_time_from_utc()
             if now >= next_msg_time:
                 elapsed_secs = (now - start_time).to(u.second).value
-                model.logger.debug('Waiting for images: {} seconds '
-                                   'elapsed'.format(round(elapsed_secs)))
+                model.logger.debug(f"State: observing, waiting for images: "
+                                   f"{round(elapsed_secs)}")
                 next_msg_time += WAITING_MSG_INTERVAL
-                now = model.manager.serv_time.getAstropyTimeFromUTC()
+                now = model.manager.serv_time.get_astropy_time_from_utc()
 
             if (now >= next_guider_status_time and
                     model.manager.guider is not None):
                 model.manager.guider.receive()
                 next_guider_status_time += GUIDER_STATUS_INTERVAL
-                now = model.manager.serv_time.getAstropyTimeFromUTC()
+                now = model.manager.serv_time.get_astropy_time_from_utc()
 
             if now >= next_status_time:
                 model.status()
                 next_status_time += STATUS_INTERVAL
-                now = model.manager.serv_time.getAstropyTimeFromUTC()
+                now = model.manager.serv_time.get_astropy_time_from_utc()
 
             if timeout.expired():
                 raise error.Timeout
