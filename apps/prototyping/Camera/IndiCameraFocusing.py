@@ -26,7 +26,6 @@ if __name__ == '__main__':
             module="IndiFocuser",
             focuser_name="Focuser Simulator",
             port="/dev/ttyUSB0",
-            backlash=10,
             focus_range=dict(
                 min=1,
                 max=100000),

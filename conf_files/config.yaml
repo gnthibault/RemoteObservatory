@@ -82,7 +82,6 @@ camera:
         module: IndiFocuser
         focuser_name : Focuser Simulator
         port : /dev/ttyUSB0
-        backlash : 10
         focus_range :
             min : 0
             max : 100

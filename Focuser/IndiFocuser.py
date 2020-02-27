@@ -24,7 +24,6 @@ class IndiFocuser(IndiDevice):
                 module="IndiFocuser",
                 focuser_name="Focuser Simulator",
                 port="/dev/ttyUSB0",
-                backlash=10,
                 focus_range=dict(
                     min=60,
                     max=40),
@@ -40,7 +39,6 @@ class IndiFocuser(IndiDevice):
                 ))
 
         self.port = config['port']
-        self.backlash = config["backlash"]
         self.focus_range = config['focus_range']
         self.autofocus_step = config['autofocus_step']
         self.autofocus_range = config['autofocus_range']

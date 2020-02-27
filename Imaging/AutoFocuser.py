@@ -65,16 +65,16 @@ class AutoFocuser(Base):
             self._position = int(initial_position)
 
         if self.camera.focuser is not None:
-            self.autofocus_range = (
-                self.camera.focuser.autofocus_range["coarse"],
-                self.camera.focuser.autofocus_range["fine"])
+            self.autofocus_range = {
+                "coarse" : self.camera.focuser.autofocus_range["coarse"],
+                "fine" : self.camera.focuser.autofocus_range["fine"]}
         else:
             self.autofocus_range = None
 
         if self.camera.focuser is not None:
-            self.autofocus_step = (
-                self.camera.focuser.autofocus_step["coarse"],
-                self.camera.focuser.autofocus_step["fine"])
+            self.autofocus_step = {
+                "coarse": self.camera.focuser.autofocus_step["coarse"],
+                "fine": self.camera.focuser.autofocus_step["fine"]}
         else:
             self.autofocus_step = None
 
@@ -164,9 +164,9 @@ class AutoFocuser(Base):
         Args:
             seconds (scalar, optional): Exposure time for focus exposures, if not
                 specified will use value from config.
-            focus_range (2-tuple, optional): Coarse & fine focus sweep range, in
+            focus_range (dictionary, optional): Coarse & fine focus sweep range, in
                 encoder units. Specify to override values from config.
-            focus_step (2-tuple, optional): Coarse & fine focus sweep steps, in
+            focus_step (dictionary, optional): Coarse & fine focus sweep steps, in
                 encoder units. Specify to override values from config.
             thumbnail_size (int, optional): Size of square central region of image
                 to use, default 500 x 500 pixels.
@@ -352,11 +352,11 @@ class AutoFocuser(Base):
         # Set up encoder positions for autofocus sweep, truncating at focus travel
         # limits if required.
         if coarse:
-            focus_range = focus_range[0]
-            focus_step = focus_step[0]
+            focus_range = focus_range["coarse"]
+            focus_step = focus_step["coarse"]
         else:
-            focus_range = focus_range[1]
-            focus_step = focus_step[1]
+            focus_range = focus_range["fine"]
+            focus_step = focus_step["fine"]
 
         focus_positions = np.arange(max(initial_focus - focus_range / 2, self.min_position),
                                     min(initial_focus + focus_range / 2, self.max_position) + 1,
@@ -452,6 +452,8 @@ class AutoFocuser(Base):
             # Coarse focus, just use max value.
             best_focus = focus_positions[ibest]
 
+        # This allows to remove effects of backlas
+        reset_focus = self.move_to(focus_positions[0])
         final_focus = self.move_to(best_focus)
 
         #final_fn = "{}_{}_{}.{}".format(final_focus,
@@ -467,49 +469,42 @@ class AutoFocuser(Base):
             #    initial_thumbnail = initial_thumbnail - dark_thumb
             #    final_thumbnail = final_thumbnail - dark_thumb
 
-            fig = Figure()
-            FigureCanvas(fig)
-            fig.set_size_inches(9, 18)
+            fig, ax = plt.subplots(3,1,figsize=(9, 18))
 
-            ax1 = fig.add_subplot(3, 1, 1)
-            im1 = ax1.imshow(initial_thumbnail, interpolation='none',
+            im1 = ax[0].imshow(initial_thumbnail, interpolation='none',
                              cmap=self.get_palette(), norm=colours.LogNorm())
-            fig.colorbar(im1)
-            ax1.set_title('Initial focus position: {}'.format(initial_focus))
-
-            ax2 = fig.add_subplot(3, 1, 2)
-            ax2.plot(focus_positions, metric, 'bo', label='{}'.format(merit_function))
+            fig.colorbar(im1,  ax=ax[0])
+            ax[0].set_title('Initial focus position: {}'.format(initial_focus))
+            ax[1].plot(focus_positions, metric, 'bo', label='{}'.format(merit_function))
             if fitted:
                 fs = np.arange(focus_positions[fitting_indices[0]],
                                focus_positions[fitting_indices[1]] + 1)
-                ax2.plot(fs, fit(fs), 'b-', label='Polynomial fit')
+                ax[1].plot(fs, fit(fs), 'b-', label='Polynomial fit')
 
-            ax2.set_xlim(focus_positions[0] - focus_step / 2, focus_positions[-1] + focus_step / 2)
+            ax[1].set_xlim(focus_positions[0] - focus_step / 2, focus_positions[-1] + focus_step / 2)
             u_limit = 1.10 * metric.max()
             l_limit = min(0.95 * metric.min(), 1.05 * metric.min())
-            ax2.set_ylim(l_limit, u_limit)
-            ax2.vlines(initial_focus, l_limit, u_limit, colors='k', linestyles=':',
-                       label='Initial focus')
-            ax2.vlines(best_focus, l_limit, u_limit, colors='k', linestyles='--',
-                       label='Best focus')
+            ax[1].set_ylim(l_limit, u_limit)
+            ax[1].vlines(initial_focus, l_limit, u_limit, colors='k', linestyles=':',
+                         label='Initial focus')
+            ax[1].vlines(best_focus, l_limit, u_limit, colors='k', linestyles='--',
+                         label='Best focus')
 
-            ax2.set_xlabel('Focus position')
-            ax2.set_ylabel('Focus metric')
+            ax[1].set_xlabel('Focus position')
+            ax[1].set_ylabel('Focus metric')
 
-            ax2.set_title(f"{self.camera.name} {focus_type} focus at "
-                          f"{start_time}")
-            ax2.legend(loc='best')
+            ax[1].set_title(f"{self.camera.name} {focus_type} focus at "
+                            f"{start_time}")
+            ax[1].legend(loc='best')
 
-            ax3 = fig.add_subplot(3, 1, 3)
-            im3 = ax3.imshow(final_thumbnail, interpolation='none',
+            im3 = ax[2].imshow(final_thumbnail, interpolation='none',
                              cmap=self.get_palette(), norm=colours.LogNorm())
-            fig.colorbar(im3)
-            ax3.set_title('Final focus position: {}'.format(final_focus))
+            fig.colorbar(im3, ax=ax[2])
+            ax[2].set_title('Final focus position: {}'.format(final_focus))
             plot_path = os.path.join(file_path_root, '{}_focus.png'.format(focus_type))
 
             fig.tight_layout()
             fig.savefig(plot_path, transparent=False)
-            plt.show()
 
             # explicitly close and delete figure
             fig.clf()
