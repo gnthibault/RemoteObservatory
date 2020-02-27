@@ -88,5 +88,7 @@ PYTHONPATH=. python3 ./apps/launch_arduino_capture.py
 * If an observation is split into multiple observing block, shouldn't they have the same id ? that would allow to skip pointing when going from one block to another
 * check if we actually refocus in case the observation id is the same
 * the publisher_port parameter in weather config should be refactored with messaging parameter
+* PHD2 is not closed properly / two instance might be launched which cause error
 * use find . -path ./venv -prune -o -name '*.py' to search stuf not in venv
+* use find . -path ./venv -prune -o -name '*.py' -exec grep -H string_to_find {} \;
 * use find . -path ./venv -prune -o -name '*.py' -exec sed -i -e 's/get_local_time_from_ntp/get_local_time/g' {} \; to replace stuff

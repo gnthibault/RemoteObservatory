@@ -17,7 +17,7 @@ SLEEP_SECONDS = 5.
 TIMEOUT_SECONDS = 150.
 MAX_NUM_POINTING_IMAGES = 5
 
-max_pointing_error = OffsetError(1.5*u.arcsec, 1.5*u.arcsec, 1.5*u.arcsec)
+max_pointing_error = OffsetError(2*u.arcsec, 2*u.arcsec, 2*u.arcsec)
 
 
 def on_enter(event_data):
