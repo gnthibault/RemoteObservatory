@@ -1,10 +1,9 @@
 #Standard stuff
 import json
-import os 
 import time
 from transitions import Machine
 import socket
-import sys
+import subprocess
 
 #Astropy
 import astropy.units as u
@@ -15,7 +14,7 @@ from utils import Timeout
 from utils import error
 from utils.error import GuidingError
 
-MAXIMUM_CALIBRATION_TIMEOUT = 4 * 60 * u.second
+MAXIMUM_CALIBRATION_TIMEOUT = 6 * 60 * u.second
 MAXIMUM_DITHER_TIMEOUT = 45 * u.second
 STANDARD_TIMEOUT = 30 * u.second
 SOCKET_TIMEOUT = 5.0
@@ -80,6 +79,7 @@ class GuiderPHD2(Base):
 
         self.host = config["host"]
         self.port = config["port"]
+        self.process = None
         self.session = None
         self.sock = None
         self.recv_buffer = ''
@@ -102,7 +102,7 @@ class GuiderPHD2(Base):
           -R, --Reset                 Reset all PHD2 settings to default values
         """
         cmd = 'phd2' 
-        os.popen(cmd)
+        self.process = subprocess.Popen(cmd, stdout=subprocess.PIPE)
         time.sleep(20) #Did not found anything better than that...
 
     def terminate_server(self):
@@ -141,8 +141,8 @@ class GuiderPHD2(Base):
 
     def reset_profile(self, profile_id):
         self.set_connected(False)
-        self.logger.debug("About to set profile with id {} among the following "
-                          "list: {}".format(profile_id, self.get_profiles()))
+        self.logger.debug(f"About to set profile with id {profile_id} among the"
+                          f" following list: {self.get_profiles()}")
         self.set_profile(profile_id)
         self.set_connected(True)
 
@@ -186,18 +186,19 @@ class GuiderPHD2(Base):
         """
         req={"method": "shutdown",
              "params": [],
-             "id":self.id}
-        self.id+=1
+             "id": self.id}
+        self.id += 1
         try:
             self._send_request(req)
-            data = self._receive({"id":req["id"]})
+            data = self._receive({"id": req["id"]})
             if "result" not in data or data["result"] != 0:
-                raise GuidingError("Wrong answer to shutdown request: {}"
-                                   "".format(data))
+                raise GuidingError(f"Wrong answer to shutdown request: {data}")
         except Exception as e:
-            msg = "PHD2 error shutdown: {}".format(e)
+            msg = f"PHD2 error shutdown: {e}"
             self.logger.error(msg)
-            raise GuidingError(msg)
+            if self.process is not None:
+                self.process.kill()
+            #raise GuidingError(msg)
 
     def set_connected(self, connect=True):
         """
@@ -207,11 +208,11 @@ class GuiderPHD2(Base):
         """
         req={"method": "set_connected",
              "params": [connect],
-             "id":self.id}
-        self.id+=1
+             "id": self.id}
+        self.id += 1
         try:
             self._send_request(req)
-            data = self._receive({"id":req["id"]})
+            data = self._receive({"id": req["id"]})
             if "result" not in data or data["result"] != 0:
                 raise GuidingError("Wrong answer to set_connected request: {}"
                                    "".format(data))
@@ -230,16 +231,16 @@ class GuiderPHD2(Base):
         params = [int(profile_id)]
         req={"method": "set_profile",
              "params": params,
-             "id":self.id}
-        self.id+=1
+             "id": self.id}
+        self.id += 1
         try:
             self._send_request(req)
-            data = self._receive({"id":req["id"]})
+            data = self._receive({"id": req["id"]})
             if "result" not in data or data["result"] != 0:
-                raise GuidingError("Wrong answer to set_profile request: {}"
-                                   "".format(data))
+                raise GuidingError(f"Wrong answer to set_profile request: "
+                                   f"{data}")
         except Exception as e:
-            msg = "PHD2 error setting profile: {}".format(e)
+            msg = f"PHD2 error setting profile: {e}"
             self.logger.error(msg)
             raise GuidingError(msg)
 
@@ -258,16 +259,16 @@ class GuiderPHD2(Base):
             params.append(exp_time_milli)
         req={"method": "capture_single_frame",
              "params": params,
-             "id":self.id}
-        self.id+=1
+             "id": self.id}
+        self.id += 1
         try:
             self._send_request(req)
-            data = self._receive({"id":req["id"]})
+            data = self._receive({"id": req["id"]})
             if "result" not in data or data["result"] != 0:
-                raise GuidingError("Wrong answer to capture_single_frame "
-                                   "request: {}".format(data))
+                raise GuidingError(f"Wrong answer to capture_single_frame "
+                                   f"request: {data}")
         except Exception as e:
-            msg = "PHD2 error capturing frame: {}".format(e)
+            msg = "PHD2 error capturing frame: {e}"
             self.logger.error(msg)
             raise GuidingError(msg)
 
@@ -282,11 +283,11 @@ class GuiderPHD2(Base):
         req={"method": "clear_calibration",
              "params": [
                  "both"],
-             "id":self.id}
-        self.id+=1
+             "id": self.id}
+        self.id += 1
         try:
             self._send_request(req)
-            data = self._receive({"id":req["id"]})
+            data = self._receive({"id": req["id"]})
             if "result" not in data or data["result"] != 0:
                 raise GuidingError("Wrong answer to clear_calibration request: "
                                    "{}".format(data))
@@ -316,23 +317,22 @@ class GuiderPHD2(Base):
         params.append(self.settle)
         req={"method": "dither",
              "params": params,
-             "id":self.id}
-        self.id+=1
+             "id": self.id}
+        self.id += 1
 
         try:
             self._send_request(req)
             data = self._receive({"id": req["id"]})
             if "result" not in data or data["result"] != 0:
-                raise GuidingError("Wrong answer to dither request: {}"
-                                   "".format(data))
+                raise GuidingError(f"Wrong answer to dither request: {data}")
             timeout = Timeout(MAXIMUM_DITHER_TIMEOUT)
             while self.state != 'SteadyGuiding':
                 self._receive(loop_mode=True)
                 if timeout.expired():
-                    raise error.Timeout("Timeout while waiting for settle "
-                                        "after dither was sent to GuiderPHD2")
+                    raise error.Timeout(f"Timeout while waiting for settle "
+                                        f"after dither was sent to GuiderPHD2")
         except Exception as e:
-            msg = "PHD2 error dithering: {}".format(e)
+            msg = "PHD2 error dithering: {e}"
             self.logger.error(msg)
             raise GuidingError(msg)
         
@@ -345,19 +345,19 @@ class GuiderPHD2(Base):
         """
         req={"method": "find_star",
              "params": [],
-             "id":self.id}
-        self.id+=1
+             "id": self.id}
+        self.id += 1
         self._send_request(req)
-        status = self._receive({"id":req["id"]})
+        status = self._receive({"id": req["id"]})
         # Should generate an event like this:
         # {'Event': 'LockPositionSet', 'Timestamp': 15.16, 'Host': 'XXXX', 'Inst': 1, 'X': 1040.007, 'Y': 224.034}
         if 'result' in status:
             if not status["result"]:
-                msg = "PHD2 find_star failed"
+                msg = f"PHD2 find_star failed"
                 self.logger.error(msg)
                 raise GuidingError(msg)
         else:
-            msg = "Cannot find guiding star automatically"
+            msg = f"Cannot find guiding star automatically"
             self.logger.error(msg)
             raise GuidingError(msg)
 
@@ -369,16 +369,16 @@ class GuiderPHD2(Base):
         """
         req={"method": "set_dec_guide_mode",
              "params": [mode],
-             "id":self.id}
-        self.id+=1
+             "id": self.id}
+        self.id += 1
         try:
             self._send_request(req)
-            data = self._receive({"id":req["id"]})
+            data = self._receive({"id": req["id"]})
             if "result" not in data or data["result"] != 0:
-                raise GuidingError("Wrong answer to set_dec_guide_mode request:"
-                                   " {}".format(data))
+                raise GuidingError(f"Wrong answer to set_dec_guide_mode "
+                                   f"request: {data}")
         except Exception as e:
-            msg = "PHD2 error setting dec guide mode: {}".format(e)
+            msg = "PHD2 error setting dec guide mode: {e}"
             self.logger.error(msg)
             raise GuidingError(msg)
 
@@ -422,16 +422,16 @@ class GuiderPHD2(Base):
         params[0]["EXACT"] = False
         req={"method": "set_lock_position",
              "params": params,
-             "id":self.id}
-        self.id+=1
+             "id": self.id}
+        self.id += 1
         try:
             self._send_request(req)
-            data = self._receive({"id":req["id"]})
+            data = self._receive({"id": req["id"]})
             if "result" not in data or data["result"] != 0:
-                raise GuidingError("Wrong answer to set_lock_position request: "
-                                   "{}".format(data))
+                raise GuidingError(f"Wrong answer to set_lock_position "
+                                   f"request: {data}")
         except Exception as e:
-            msg = "PHD2 error setting lock position: {}".format(e)
+            msg = f"PHD2 error setting lock position: {e}"
             self.logger.error(msg)
             raise GuidingError(msg)
 
@@ -444,16 +444,16 @@ class GuiderPHD2(Base):
         exp_time_milli = exp_time_sec*1000
         req={"method": "set_exposure",
              "params": [exp_time_milli],
-             "id":self.id}
-        self.id+=1
+             "id": self.id}
+        self.id += 1
         try:
             self._send_request(req)
-            data = self._receive({"id":req["id"]})
+            data = self._receive({"id": req["id"]})
             if "result" not in data or data["result"] != 0:
-                raise GuidingError("Wrong answer to set_exposure request: {}"
-                                   "".format(data))
+                raise GuidingError(f"Wrong answer to set_exposure request: "
+                                   f"{data}")
         except Exception as e:
-            msg = "PHD2 error setting exposure: {}".format(e)
+            msg = f"PHD2 error setting exposure: {e}"
             self.logger.error(msg)
             raise GuidingError(msg)
 
@@ -466,16 +466,15 @@ class GuiderPHD2(Base):
         """
         req={"method": "loop",
              "params": [],
-             "id":self.id}
-        self.id+=1
+             "id": self.id}
+        self.id += 1
         try:
             self._send_request(req)
-            data = self._receive({"id":req["id"]})
+            data = self._receive({"id": req["id"]})
             if "result" not in data or data["result"] != 0:
-                raise GuidingError("Wrong answer to loop request: {}"
-                                   "".format(data))
+                raise GuidingError(f"Wrong answer to loop request: {data}")
         except Exception as e:
-            msg = "PHD2 error looping: {}".format(e)
+            msg = f"PHD2 error looping: {e}"
             self.logger.error(msg)
             raise GuidingError(msg)
 
@@ -487,22 +486,22 @@ class GuiderPHD2(Base):
         """
         req={"method": "stop_capture",
              "params": [],
-             "id":self.id}
-        self.id+=1
+             "id": self.id}
+        self.id += 1
         try:
             self._send_request(req)
-            data = self._receive({"id":req["id"]})
+            data = self._receive({"id": req["id"]})
             if "result" not in data or data["result"] != 0:
-                raise GuidingError("Wrong answer to stop_capture request: {}"
-                                   "".format(data))
+                raise GuidingError(f"Wrong answer to stop_capture request: "
+                                   f"{data}")
             timeout = Timeout(STANDARD_TIMEOUT)
             while self.state not in ['Stopped', 'GuidingStopped']:
                 data = self._receive(loop_mode=True)
                 if timeout.expired():
-                    raise error.Timeout("Timeout while waiting for response "
-                        "after stop_capture was sent to GuiderPHD2")
+                    raise error.Timeout(f"Timeout while waiting for response "
+                        f"after stop_capture was sent to GuiderPHD2")
         except Exception as e:
-            msg = "PHD2 error stopping capture: {}".format(e)
+            msg = f"PHD2 error stopping capture: {e}"
             self.logger.error(msg)
             raise GuidingError(msg)
 
@@ -533,23 +532,25 @@ class GuiderPHD2(Base):
         """
         req={"method": "guide",
              "params": [self.settle,recalibrate],
-             "id":self.id}
-        self.id+=1
+             "id": self.id}
+        self.id += 1
         try:
             self._send_request(req)
-            data = self._receive({"id":req["id"]})
+            data = self._receive({"id": req["id"]})
             if "result" not in data or data["result"] != 0:
-                raise GuidingError("Wrong answer to guide request: {}"
-                                   "".format(data))
+                raise GuidingError(f"Wrong answer to guide request: {data}")
 
             timeout = Timeout(MAXIMUM_CALIBRATION_TIMEOUT)
             while self.state != 'SteadyGuiding':
-                self._receive(loop_mode=True)
+                try:
+                    self._receive(loop_mode=True)
+                except error.Timeout as e:
+                    pass
                 if timeout.expired():
-                    raise error.Timeout("Timeout while waiting for settle "
-                                        "after guide was sent to GuiderPHD2")
+                    raise error.Timeout(f"Timeout while waiting for settle "
+                                        f"after guide was sent to GuiderPHD2")
         except Exception as e:
-            msg = "PHD2 error guiding: {}".format(e)
+            msg = f"PHD2 error guiding: {e}"
             self.logger.error(msg)
             raise GuidingError(msg)
 
@@ -562,14 +563,14 @@ class GuiderPHD2(Base):
         """
         req={"method": "get_app_state",
              "params": [],
-             "id":self.id}
-        self.id+=1
+             "id": self.id}
+        self.id += 1
         try:
             self._send_request(req)
-            data = self._receive({"id":req["id"]})
+            data = self._receive({"id": req["id"]})
             return data["result"]
         except Exception as e:
-            msg = "PHD2 error getting app state: {}".format(e)
+            msg = f"PHD2 error getting app state: {e}"
             self.logger.error(msg)
             raise GuidingError(msg)
 
@@ -581,14 +582,14 @@ class GuiderPHD2(Base):
         """
         req={"method": "get_calibrated",
              "params": [],
-             "id":self.id}
-        self.id+=1
+             "id": self.id}
+        self.id += 1
         try:
             self._send_request(req)
-            data = self._receive({"id":req["id"]})
+            data = self._receive({"id": req["id"]})
             return data["result"]
         except Exception as e:
-            msg = "PHD2 error getting calibration status: {}".format(e)
+            msg = f"PHD2 error getting calibration status: {e}"
             self.logger.error(msg)
             raise GuidingError(msg)
 
@@ -600,14 +601,14 @@ class GuiderPHD2(Base):
         """
         req={"method": "get_connected",
              "params": [],
-             "id":self.id}
-        self.id+=1
+             "id": self.id}
+        self.id += 1
         try:
             self._send_request(req)
-            data = self._receive({"id":req["id"]})
+            data = self._receive({"id": req["id"]})
             return data["result"]
         except Exception as e:
-            msg = "PHD2 error getting connection status: {}".format(e)
+            msg = f"PHD2 error getting connection status: {e}"
             self.logger.warning(msg)
             return self.state != 'NotConnected'
 
@@ -619,14 +620,14 @@ class GuiderPHD2(Base):
         """
         req={"method": "get_profiles",
              "params": [],
-             "id":self.id}
-        self.id+=1
+             "id": self.id}
+        self.id += 1
         try:
             self._send_request(req)
-            data = self._receive({"id":req["id"]})
+            data = self._receive({"id": req["id"]})
             return data["result"]
         except Exception as e:
-            msg = "PHD2 error getting profiles list: {}".format(e)
+            msg = f"PHD2 error getting profiles list: {e}"
             self.logger.warning(msg)
             return ''
 
@@ -638,10 +639,12 @@ class GuiderPHD2(Base):
         while not ret:
             ret = self._receive_from_socket(expected=expected, loop_mode=loop_mode)
             if not ret:
-                self.logger.warning("Received {}, still waiting for expected {}".format(ret, expected))
+                self.logger.warning(f"Received {ret}, still waiting for "
+                                    f"expected {expected} while loop mode is "
+                                    f"{loop_mode}")
             if timeout.expired():
-                raise error.Timeout("Timeout while waiting for reception of "
-                                    "response from GuiderPHD2")
+                raise error.Timeout(f"Timeout while waiting for reception of "
+                                    f"response from GuiderPHD2")
         return ret
 
     def _receive_from_socket(self, expected=None, loop_mode=False):
@@ -662,11 +665,11 @@ class GuiderPHD2(Base):
                 if loop_mode:
                     return
                 else:
-                    msg = "PHD2 Timeout: No response from server"
+                    msg = f"PHD2 Timeout: No response from server"
                     self.logger.error(msg)
                     raise GuidingError(msg)
             except Exception as e:
-                msg = "PHD2 error {}".format(e)
+                msg = f"PHD2 error {e}"
                 self.logger.error(msg)
                 raise GuidingError(msg)
             # Check if we receive termination symbol
@@ -686,14 +689,14 @@ class GuiderPHD2(Base):
         for msg in msgs[:-1]:          
             try:
                 event = json.loads(msg)
-                self.logger.debug("Received event: {}".format(event))
+                self.logger.debug(f"Received event: {event}")
                 valid_status = self._check_event(event, expected)
                 expected_status = (expected_status or valid_status)
                 self._handle_event(event)
                 if valid_status:
                     expected_event = event
             except Exception as e:
-                msg = "PHD2 error on message {}:{}".format(msg, e)
+                msg = f"PHD2 error on message {msg}:{e}"
                 self.logger.error(msg)
                 raise GuidingError(msg)
         return expected_event
@@ -702,11 +705,11 @@ class GuiderPHD2(Base):
         base = dict(jsonrpc="2.0")
         base.update(req)
         json_txt = json.dumps(base)+'\r\n'
-        self.logger.debug("sending msg {}".format(json_txt[:-2]))
+        self.logger.debug(f"sending msg {json_txt[:-2]}")
         try:
             self.sock.sendall(json_txt.encode())
         except Exception as e:
-            msg = "PHD2 error sending request: {}".format(e)
+            msg = f"PHD2 error sending request: {e}"
             self.logger.error(msg)
             raise GuidingError(msg)
 
@@ -721,18 +724,18 @@ class GuiderPHD2(Base):
                     status = False
         # Also check that there is no error
         if "error" in event:
-            msg = "Received error msg: {}".format(event["error"])
+            msg = f"Received error msg: {event['error']}"
             self.logger.error(msg)
         return status
 
     def _handle_event(self, event):
         if "Event" in event:
-            method_name = "_handle_{}".format(event["Event"])
+            method_name = f"_handle_{event['Event']}"
             if hasattr(self, method_name):
                 getattr(self, method_name)(event)
             else:
-                self.logger.warning("No method called {} to handle event !"
-                    "".format(method_name))
+                self.logger.warning(f"While processing event {event}, no "
+                    f"method called {method_name} to handle event !")
 
     def _handle_Version(self, event):
         """Describes the PHD and message protocol versions.
@@ -743,9 +746,14 @@ class GuiderPHD2(Base):
                               The current version is 1. We will bump this
                               number if the message protocol changes
         """
-        self.logger.debug("Received version {}:{} - msg ver {}".format(
-                          *[event[key] for key in ["PHDVersion","PHDSubver",
-                                                   "MsgVersion"]]))
+        self.logger.debug(f"Received version {event['PHDVersion']}:"
+            f"{event['PHDSubver']} - msg ver {event['MsgVersion']}")
+
+    def _handle_ConfigurationChange(self, event):
+        """Waiting for more info: https://github.com/OpenPHDGuiding/phd2/issues/845
+           Attribute   Type   Description
+        """
+        self.logger.debug(f"Received ConfigurationChange event: {event}")
 
     def _handle_LockPositionSet(self, event):
         """The lock position has been established.
@@ -753,8 +761,8 @@ class GuiderPHD2(Base):
            X         number  lock position X-coordinate
            Y         number  lock position Y-coordinate
         """
-        self.logger.debug("Lock position X:{} , Y:{} has been established"
-                          "".format(event["X"], event["Y"]))
+        self.logger.debug(f"Lock position X:{event['X']} , Y:{event['Y']} "
+                          f"has been established")
                           
     def _handle_Calibrating(self, event):
         """ Attribute Type            Description
@@ -768,9 +776,9 @@ class GuiderPHD2(Base):
             State     string          calibration status message
 
         """
-        self.logger.debug("Calibrating mount {}, on star position {}, "
-            "step number {}, current state {} ".format(
-            *[event[key] for key in ["Mount","pos","step","State"]]))
+        self.logger.debug(f"Calibrating mount {event['Mount']}, on star "
+            f"position {event['pos']}, step number {event['step']}, current "
+            f"state {event['State']}")
         self.StartCalibration()
 
 
@@ -779,27 +787,25 @@ class GuiderPHD2(Base):
            Attribute Type    Descriptiondd
            Mount     string  name of the mount that was calibrated
         """
-        self.logger.debug("Successfully calibrated mount {}".format(
-            event["Mount"]))
+        self.logger.debug("Successfully calibrated mount {event['Mount']}")
 
     def _handle_StartGuiding(self, event):
         """Guiding begins.
            (no message attributes)
         """
-        self.logger.debug("Guiding started !")
+        self.logger.debug(f"Guiding started !")
 
     def _handle_Paused(self, event):
         """Guiding has been paused.
         """
-        self.logger.debug("Guiding has been paused. {}")
+        self.logger.debug(f"Guiding has been paused. {event}")
 
     def _handle_StartCalibration(self, event):
         """Calibration begins.
            Attribute  Type    Description
            Mount      string  the name of the mount being calibrated
         """
-        self.logger.debug("Calibration is starting for mount {}".format(
-            event["Mount"]))
+        self.logger.debug(f"Calibration is starting for mount {event['Mount']}")
 
     def _handle_AppState(self, event):
         """ The state at connection time
@@ -820,7 +826,7 @@ class GuiderPHD2(Base):
             LoopingExposuresStopped  Stopped
             StarLost                 LostLock
         """
-        self.logger.debug("PHD2 state is {}".format(event["State"]))
+        self.logger.debug(f"PHD2 state is {event['State']}")
         self.machine.set_state(event["State"])    
 
     def _handle_CalibrationFailed(self, event):
@@ -828,16 +834,17 @@ class GuiderPHD2(Base):
            Attribute  Type    Description
            Reason     string  an error message string
         """
-        self.logger.debug("Calibration failed ! Reason: {}".format(
-            event["Reason"]))
+        msg = f"Calibration failed ! Reason: {event['Reason']}"
+        self.logger.error(msg)
+        raise GuidingError(msg)
 
     def _handle_CalibrationDataFlipped(self, event):
         """Calibration data has been flipped.
            Attribute   Type    Description
            Mount       string  the name of the mount
         """
-        self.logger.debug("Calibration data flipped for mount {}".format(
-            event["Mount"]))
+        self.logger.debug(f"Calibration data flipped for mount "
+                          f"{event['Mount']}")
 
     def _handle_LoopingExposures(self, event):
         """Sent for each exposure frame while looping exposures.
@@ -845,15 +852,15 @@ class GuiderPHD2(Base):
            Frame      number the exposure frame number; starts at 1 each time
                              looping starts
         """
-        self.logger.debug("Looping on exposure, frame number: {}".format(
-            event["Frame"]))
+        self.logger.debug(f"Looping on exposure, frame number: "
+                          f"{event['Frame']}")
         self.LoopingExposures()    
 
     def _handle_LoopingExposuresStopped(self, event):
         """Looping exposures has stopped.
            (no event attributes)
         """
-        self.logger.debug("Looping exposure has stopped ")
+        self.logger.debug(f"Looping exposure has stopped ")
         self.LoopingExposureStopped()
 
     def _handle_SettleBegin(self, event):
@@ -878,9 +885,9 @@ class GuiderPHD2(Base):
                                camera frame, false if the guide star was lost
         """
         self.logger.debug("Still in the process of settling, current distance "
-            " is {}, time since settling process started {}/{}. Target guiding "
-            " star status (is found?): {}".format(*[event[key] for key in
-            ["Distance", "Time", "SettleTime", "StarLocked"]]))
+            f"is {event['Distance']}, time since settling process started "
+            f"{event['Time']}/{event['SettleTime']}. Target guiding "
+            f"star status (is found?): {event['StarLocked']}")
 
     def _handle_SettleDone(self, event):
         """Sent after a dither or guide method invocation indicating whether
@@ -895,9 +902,9 @@ class GuiderPHD2(Base):
            DroppedFrames number  the number of dropped camera frames (guide
                                  star not found) while settling
         """
-        self.logger.debug("Done with settling, status: {}. Dropped frames: "
-            "{}/{}. Now proper imaging can start".format(*[event[key] for key in
-            ["Status","DroppedFrames","TotalFrames"]]))
+        self.logger.debug(f"Done with settling, status: {event['Status']}. "
+            f"Dropped frames: {event['DroppedFrames']}/{event['TotalFrames']}. "
+            f"Now proper imaging can start")
         self.SettleDone()
 
     def _handle_StarSelected(self, event):
@@ -906,8 +913,8 @@ class GuiderPHD2(Base):
            X          number  lock position X-coordinate
            Y          number  lock position Y-coordinate
         """
-        self.logger.debug("Star has been selected at coordinates "
-                          "x:{}, y:{}".format(event["X"], event["Y"]))
+        self.logger.debug(f"Star has been selected at coordinates "
+                          f"x:{event['X']}, y:{event['Y']}")
         self.StarSelected()
 
     def _handle_StarLost(self, event):
@@ -923,24 +930,22 @@ class GuiderPHD2(Base):
            ErrorCode  number  error code
            Status     string  error message
         """
-        self.logger.debug("Error {}: {}. Frame {} dropped because of lost star"
-            " SNR was {} and average distance was {}".format(*[event[key] for
-            key in ["ErrorCode","Status","Frame","SNR","AvgDist"]]))
+        self.logger.debug(f"Error {event['ErrorCode']}: {event['Status']}. "
+            f"Frame {event['Frame']} dropped because of lost star. SNR was "
+            f"{event['SNR']} and average distance was {event['AvgDist']}")
         self.StarLost()
 
     def _handle_GuidingStopped(self, event):
         """Guiding has stopped.
            (no event attributes)
         """
-        self.logger.debug("Guiding has stopped {}".format(
-            event))
+        self.logger.debug(f"Guiding has stopped {event}")
 
     def _handle_Resumed(self, event):
         """PHD has been resumed after having been paused.
            (no attributes)
         """
-        self.logger.debug("Guiding has resumed {}".format(
-            event))
+        self.logger.debug(f"Guiding has resumed {event}")
 
     def _handle_GuideStep(self, event):
         """This event corresponds to a line in the PHD Guide Log. The event is
@@ -977,9 +982,9 @@ class GuiderPHD2(Base):
                             setting (attribute omitted if step was not limited)
            ErrorCode        number  the star finder error code
         """
-        self.logger.debug("Guiding frame {}, for mount {} received."
-            "dx: {}, dy: {}, StarMass: {}, SNR".format(*[event[key] for key in
-            ["Frame","Mount","dx","dy","StarMass","SNR"]]))
+        self.logger.debug(f"Guiding frame {event['Frame']}, for mount "
+            f"{event['Mount']} received. dx: {event['dx']}, dy: {event['dy']}, "
+            f"StarMass: {event['StarMass']}, SNR: {event['SNR']}")
         self.GuideStep()
 
     def _handle_GuidingDithered(self, event):
@@ -988,14 +993,14 @@ class GuiderPHD2(Base):
            dx         number  the dither X-offset in pixels
            dy         number  the dither Y-offset in pixels
         """
-        self.logger.debug("Dithering from current position by x:{} pix, and "
-            "y:{} pix".format(*[event[key] for key in ["dx", "dy"]]))
+        self.logger.debug(f"Dithering from current position by x:{event['dx']} "
+                          f"pix, and y:{event['dy']} pix")
 
     def _handle_LockPositionLost(self, event):
         """The lock position has been lost.
            (no attributes)
         """
-        self.logger.warning("PHD2: The lock position has been lost")
+        self.logger.warning(f"PHD2: The lock position has been lost")
 
     def _handle_Alert(self, event):
         """An alert message was displayed in PHD2.
@@ -1004,24 +1009,16 @@ class GuiderPHD2(Base):
            Type       string  The type of alert: "info", "question", "warning",
                               or "error"
         """
-        def _handle_Alert(self, event):
-            """An alert message was displayed in PHD2.
-               Msg     string the text of the alert message
-               Type    string The type of alert: "info", "question", "warning",
-                              or "error"
-            """
-            if event["Type"] == "info":
-                self.logger.info("Received alert of type {} from PHD2: {}"
-                    "".format(*[event[key] for key in ["Type","Msg"]]))
-            if event["Type"] == "warning":
-                self.logger.warning("Received alert of type {} from PHD2: {}"
-                    "".format(*[event[key] for key in ["Type","Msg"]]))
-            if event["Type"] == "info":
-                self.logger.error("Received alert of type {} from PHD2: {}"
-                    "".format(*[event[key] for key in ["Type","Msg"]]))
-            else:
-                self.logger.info("Received alert of type {} from PHD2: {}"
-                    "".format(*[event[key] for key in ["Type","Msg"]]))
+        msg = f"Received alert of type {event['Type']} from PHD2: "\
+              f"{event['Msg']}"
+        if event["Type"] == "info":
+            self.logger.info(msg)
+        if event["Type"] == "warning":
+            self.logger.warning(msg)
+        if event["Type"] == "error":
+            self.logger.error(msg)
+        else:
+            self.logger.info(msg)
 
     def _handle_GuideParamChange(self, event):
         """A guiding parameter has been changed.
@@ -1029,5 +1026,5 @@ class GuiderPHD2(Base):
            Name       string  the name of the parameter that changed
            Value      any     the new value of the parameter
         """
-        self.logger.debug("PHD2 parameter {} changed: {}".format(
-            *[event[key] for key in ["Name","Value"]]))
+        self.logger.debug(f"PHD2 parameter {event['Name']} changed: "
+                          f"{event['Value']}")
