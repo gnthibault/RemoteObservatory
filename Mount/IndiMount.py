@@ -129,12 +129,6 @@ class IndiMount(IndiDevice):
                           what_to_do))
         self.set_switch('ON_COORD_SET', [what_to_do])
 
-    # This does not work with simulator
-    def setTrackRate(self, tracking_mode='TRACK_SIDEREAL'):
-        self.logger.debug('Setting tracking mode: {}'.format(
-                          tracking_mode))
-        self.set_switch('TELESCOPE_TRACK_RATE', [tracking_mode])
-
     def abort_motion(self):
         self.logger.debug('Abort Motion')
         self.set_switch('TELESCOPE_ABORT_MOTION', ['ABORT_MOTION'])
@@ -147,17 +141,42 @@ class IndiMount(IndiDevice):
         self.logger.debug('unpark')
         self.set_switch('TELESCOPE_PARK', ['UNPARK'])
 
-    def set_slew_rate(self, slew_rate='SLEW_FIND'):
+    def get_slew_rate(self):
+        """
+            Slew rate switch looks like this:
+            {'1x': {'name': '1x', 'label': 'Guide', 'value': False},
+             '2x': {'name': '2x', 'label': 'Centering', 'value': False},
+             '3x': {'name': '3x', 'label': 'Find', 'value': True},
+             '4x': {'name': '4x', 'label': 'Max', 'value': False},
+             'state': 'IDLE'}
+        """
+        slew_dict = self.get_switch('TELESCOPE_SLEW_RATE')
+        self.logger.debug(f"Got mount slewing rate dict: {slew_dict}")
+        slew_rate = [v for k,v in slew_dict.items() if
+                         ('value' in v and v['value'])]
+        self.logger.debug(f"Got mount slewing rate: {slew_rate}")
+        if len(slew_rate) == 1:
+            return slew_rate[0]
+        else:
+            return None
+
+    def set_slew_rate(self, slew_rate='3x'):
         """
         Should be one of (by order of speed):
-            -SLEW_GUIDE
-            -SLEW_CENTERING
-            -SLEW_FIND
-            -SLEW_MAX
+            -1x (equiv to SLEW_GUIDE)
+            -2x (equiv to SLEW_CENTERING)
+            -3x (equiv to SLEW_FIND)
+            -4x (equiv to SLEW_MAX)
         """
-        self.logger.debug('Setting slewing rate: {}'.format(
-                          slew_rate))
-        self.set_switch('TELESCOPE_SLEW_RATE', [slew_rate])
+        slew_dict = self.get_switch('TELESCOPE_SLEW_RATE')
+        self.logger.debug(f"Setting mount slewing rate: {slew_rate} while "
+                          f"dictionary is {slew_dict}")
+        if slew_rate in slew_dict:
+            self.set_switch('TELESCOPE_SLEW_RATE', [slew_rate])
+        else:
+            msg = f"Trying to set mount slewing rate: {slew_rate} while "\
+                  f"dictionary is {slew_dict}"
+            raise RuntimeError(msg)
 
     def get_pier_side(self):
         ''' GEM Pier Side
@@ -165,36 +184,47 @@ class IndiMount(IndiDevice):
             PIER_WEST Mount on the West side of pier (Pointing East).
             WARNING: does not work with simulator
         '''
-        ret = self.get_switch('TELESCOPE_PIER_SIDE')
-        self.logger.debug('Got pier side: {}'.format(ret))
+        pier_side = self.get_switch('TELESCOPE_PIER_SIDE')
+        self.logger.debug(f"Got mount pier side: {pier_side}")
         return ret
 
-    def get_track_rate(self):
-        ''' Available track rate
-            TELESCOPE_TRACK_RATE Switch:
+    def get_track_mode(self):
+        ''' Track mode switch looks like this
+         {'TRACK_SIDEREAL': 
+              {'name': 'TRACK_SIDEREAL', 'label': 'Sidereal', 'value': False},
+          'TRACK_CUSTOM':
+              {'name': 'TRACK_CUSTOM', 'label': 'Custom', 'value': False},
+          'state': 'OK'}
+        '''
+        track_dict = self.get_switch('TELESCOPE_TRACK_MODE')
+        self.logger.debug(f"Got mount tracking rate dict: {track_dict}")
+        track_mode = [v for k,v in track_dict.items() if
+                         ('value' in v and v['value'])]
+        self.logger.debug(f"Got mount tracking rate: {track_mode}")
+        if len(track_mode) == 1:
+            return track_mode[0]
+        else:
+            return None
+
+
+    # This does not work with simulator
+    def set_track_mode(self, track_mode='TRACK_SIDEREAL'):
+        ''' Available track mode
+            TELESCOPE_TRACK_MODE Switch:
                 TRACK_SIDEREAL: Track at sidereal rate.
                 TRACK_SOLAR: Track at solar rate.
                 TRACK_LUNAR: Track at lunar rate.
                 TRACK_CUSTOM: custom
-            WARNING: does not work with simulator
         '''
-        try:
-            ret = self.get_switch('TELESCOPE_TRACK_MODE')
-            self.logger.debug('Got track rate: {}'.format(ret))
-            # find actual name for which value is true
-            v = [k for k,v in ret.items() if v['value']]
-            assert len(v) == 1
-            return v
-        except Exception as e:
-            self.logger.warning("Cannot retrieve track rate: {}".format(e))
-            return "NA"
-
-
-    # This does not work with simulator
-    def set_track_rate(self, track_rate='TRACK_SIDEREAL'):
-        self.logger.debug('Setting track rate: {}'.format(
-                          track_rate))
-        self.set_switch('TELESCOPE_TRACK_MODE', [track_rate])
+        track_dict = self.get_switch('TELESCOPE_TRACK_MODE')
+        self.logger.debug(f"Setting mount tracking rate: {track_mode} while "
+                          f"dictionary is {track_dict}")
+        if track_mode in track_dict:
+            self.set_switch('TELESCOPE_TRACK_MODE', [track_mode])
+        else:
+            msg = f"Trying to set mount tracking rate: {track_mode} while "\
+                  f"dictionary is {track_dict}"
+            raise RuntimeError(msg)
 
     @property
     def is_parked(self):

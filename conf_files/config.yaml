@@ -87,7 +87,7 @@ camera:
             max : 100000
         autofocus_step :
             fine : 500
-            coarse : 100000
+            coarse : 2500
         autofocus_range :
             fine : 20000
             coarse : 100000

@@ -14,19 +14,27 @@ from astropy import units as u
 from astropy.coordinates import SkyCoord
 
 if __name__ == '__main__':
-
     # load the logging configuration
     logging.config.fileConfig('logging.ini')
 
-    # test indi client
-    indiCli = IndiClient()
-    indiCli.connect()
+    # Instanciate mount with the right parameters
+    config = dict(
+        mount_name='Telescope Simulator',
+        indi_client=dict(
+            indi_host="localhost",
+            indi_port="7624")
+        )
+    mount = IndiMount(config=config, connect_on_create=True)
 
-    # Now test Mount
-    mount = IndiMount(indi_client=indiCli,
-                      configFileName=None, connect_on_create=True)
-    # Set slew ret to be used afterwards
-    mount.set_slew_rate('SLEW_FIND')
+    # Set slew rate to be used afterwards
+    sr = mount.get_slew_rate()
+    mount.set_slew_rate('4x')
+    sr = mount.get_slew_rate()
+
+    # Set track rate to be used afterwards
+    tr = mount.get_track_mode()
+    mount.set_track_mode('TRACK_SIDEREAL')
+    tr = mount.get_track_mode()
 
     # Get Pier side, not supported by simulator
     #ps = mount.get_pier_side()

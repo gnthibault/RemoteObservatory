@@ -358,6 +358,14 @@ class AutoFocuser(Base):
             focus_range = focus_range["fine"]
             focus_step = focus_step["fine"]
 
+        self.logger.debug(f"Initial focus is {initial_focus} minus range/2 "
+                          f"gives {initial_focus - focus_range / 2}")
+        self.logger.debug(f"Initial focus is {initial_focus} plus range/2 gives "
+                          f"{initial_focus + focus_range / 2}")
+        self.logger.debug(f"Min position is {self.min_position}"
+                          f"Max position is {self.max_position}")
+        self.logger.debug(f"Focus step is {focus_step}")
+
         focus_positions = np.arange(max(initial_focus - focus_range / 2, self.min_position),
                                     min(initial_focus + focus_range / 2, self.max_position) + 1,
                                     focus_step, dtype=np.int)

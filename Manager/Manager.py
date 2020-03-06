@@ -540,7 +540,7 @@ class Manager(Base):
             else:
                 try:
                     # Start the autofocus
-                    autofocus_event = camera.autofocus_async()
+                    autofocus_event = camera.autofocus_async(coarse=coarse)
                 except Exception as e:
                     msg = f"Problem running autofocus: {e}"
                     self.logger.debug(msg)

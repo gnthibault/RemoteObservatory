@@ -164,11 +164,8 @@ class PanMessaging(object):
             message = self.scrub_message(message)
 
         msg_object = dumps(message, skipkeys=True)
-
-        full_message = '{} {}'.format(channel, msg_object)
-
-        if channel == 'PANCHAT':
-            self.logger.info("{} {}".format(channel, message['message']))
+        full_message = f"{channel} {msg_object}"
+        self.logger.debug(f"PanMessaging - sending - {channel}: {message}")
 
         # Send the message
         self.socket.send_string(full_message, flags=zmq.NOBLOCK)

@@ -293,8 +293,8 @@ class IndiDevice(Base):
             prop = getattr(self.device, attr)(propName)
             if not prop and 0 < timeout < time.time() - started:
                 self.logger.debug(f"Timeout while waiting for property "
-                                  "{propName} of type {propType}  for device "
-                                  "{self.device_name}")
+                                  f"{propName} of type {propType}  for device "
+                                  f"{self.device_name}")
                 raise RuntimeError(f"Timeout finding property {propName}")
             time.sleep(0.01)
         return prop
