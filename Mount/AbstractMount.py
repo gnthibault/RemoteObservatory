@@ -77,15 +77,17 @@ class AbstractMount(Base):
     def status(self):
         status = {}
         try:
-            status['tracking_rate'] = '{:0.04f}'.format(self.tracking_rate)
-            status['ra_guide_rate'] = self.ra_guide_rate
-            status['dec_guide_rate'] = self.dec_guide_rate
-            status['movement_speed'] = self.movement_speed
+            guide_rate = self.get_guide_rate()
+            status['track_mode'] = self.get_track_mode()
+            status['slew_rate'] = self.get_slew_rate()
+            status['guide_rate_ns'] = guide_rate['NS']
+            status['guide_rate_we'] = guide_rate['WE']
 
             current_coord = self.get_current_coordinates()
             if current_coord is not None:
-                status['current_ra'] = current_coord.ra
-                status['current_dec'] = current_coord.dec
+                status['current_ra'] = current_coord.ra.to(u.deg)
+                status['current_ha'] = current_coord.ra.to(u.hour)
+                status['current_dec'] = current_coord.dec.to(u.deg)
 
             if self.has_target:
                 target_coord = self.get_target_coordinates()

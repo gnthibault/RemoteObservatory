@@ -36,6 +36,11 @@ if __name__ == '__main__':
     mount.set_track_mode('TRACK_SIDEREAL')
     tr = mount.get_track_mode()
 
+    # Set track rate to be used afterwards
+    gr = mount.get_guide_rate()
+    mount.set_guide_rate({'NS':1, 'WE':1})
+    gr = mount.get_guide_rate()
+
     # Get Pier side, not supported by simulator
     #ps = mount.get_pier_side()
 

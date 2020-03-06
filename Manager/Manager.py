@@ -335,6 +335,12 @@ class Manager(Base):
 
         return self.current_offset_info
 
+    def slew(self):
+        """Slew to current target"""
+        self.manager.mount.set_slew_rate()
+        self.manager.mount.slew_to_target()
+
+
     def update_tracking(self):
         """Update tracking with rate adjustment.
 
@@ -422,12 +428,14 @@ class Manager(Base):
                     self.logger.debug("Waiting for RA tracking adjustment")
                     time.sleep(0.1)
         """
+        self.mount.set_track_mode('TRACK_SIDEREAL')
         if self.guider is not None:
             self.guider.dither(**self.config['guider']['dither'])
 
     def initialize_tracking(self):
         # start each observation by setting up the guider
         try:
+            self.mount.set_track_mode('TRACK_SIDEREAL')
             if self.guider is not None:
                 self.logger.info("Initializing guider before observing")
                 self.guider.reset_guiding()
@@ -462,6 +470,7 @@ class Manager(Base):
         t0 = self.serv_time.get_astropy_time_from_utc()
         moon = get_moon(t0, self.observer.location)
         mnt_coord = self.mount.get_current_coordinates()
+        guide_rate = self.mount.get_guide_rate()
 
         # Filling up header for the new image to be written
         headers = {
@@ -474,8 +483,12 @@ class Manager(Base):
             'moon_separation': target.coord.separation(moon).value,
             'observer': self.config.get('name', ''),
             'ra_mnt': mnt_coord.ra.to(u.deg).value,
+            'ha_mnt': mnt_coord.ra.to(u.hour).value,
             'dec_mnt': mnt_coord.dec.to(u.deg).value,
-            'tracking_rate_ra': self.mount.get_track_rate()
+            'track_mode_mnt': self.mount.get_track_mode()
+            'slew_rate_mnt': self.mount.get_slew_rate()[''],
+            'guide_rate_ns_mnt': guide_rate['NS'],
+            'guide_rate_we_mnt': guide_rate['WE'],
             #'ha_mnt': self.observer.target_hour_angle(t0, target).value,
         }
 

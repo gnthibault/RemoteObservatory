@@ -89,7 +89,6 @@ PYTHONPATH=. python3 ./apps/launch_arduino_capture.py
 * check if we actually refocus in case the observation id is the same
 * the publisher_port parameter in weather config should be refactored with messaging parameter
 * PHD2 is not closed properly / two instance might be launched which cause error
-* in focusing: 2020-03-05 20:13:00,003 - Manager - ERROR - Problem running autofocus: autofocus_async() got an unexpected keyword argument 'serv_time'
 * use find . -path ./venv -prune -o -name '*.py' to search stuf not in venv
 * use find . -path ./venv -prune -o -name '*.py' -exec grep -H string_to_find {} \;
 * use find . -path ./venv -prune -o -name '*.py' -exec sed -i -e 's/get_local_time_from_ntp/get_local_time/g' {} \; to replace stuff

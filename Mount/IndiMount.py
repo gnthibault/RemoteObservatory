@@ -110,11 +110,10 @@ class IndiMount(IndiDevice):
         rahour_decdeg = {'RA': coord_jnow.ra.hour,
                          'DEC': coord_jnow.dec.degree}
         if self.is_parked:
-            self.logger.warning('Cannot set coord: {} because mount is parked'
-                                ''.format(rahour_decdeg))
+            self.logger.warning(f"Cannot set coord: {rahour_decdeg} because "
+                                f"mount is parked")
         else:
-            self.logger.info('Now setting JNow coord: {}'.format(
-                             rahour_decdeg)) 
+            self.logger.info(f"Now setting JNow coord: {rahour_decdeg}")
             self.set_number('EQUATORIAL_EOD_COORD', rahour_decdeg, sync=True,
                            timeout=180)
 
@@ -140,6 +139,43 @@ class IndiMount(IndiDevice):
     def unpark(self):
         self.logger.debug('unpark')
         self.set_switch('TELESCOPE_PARK', ['UNPARK'])
+
+    def get_guide_rate(self):
+        """
+            GUIDE_RATE number should look like this:
+            {'GUIDE_RATE_WE': {
+                 'name': 'GUIDE_RATE_WE',
+                 'label': 'W/E Rate', 'value': 0.5,
+                 'min': 0.0,
+                 'max': 1.0,
+                 'step': 0.1,
+                 'format': '%g'},
+             'GUIDE_RATE_NS': {
+                 'name': 'GUIDE_RATE_NS',
+                 'label': 'N/S Rate',
+                 'value': 0.5,
+                 'min': 0.0,
+                 'max': 1.0,
+                 'step': 0.1,
+                 'format': '%g'},
+             'state': 'OK'}
+        """
+        guide_dict = self.get_number('GUIDE_RATE')
+        self.logger.debug(f"Got mount guidinging rate: {guide_dict}")
+        guide_rate = {}
+        guide_rate['NS'] = guide_dict['GUIDE_RATE_NS']['value']
+        guide_rate['WE'] = guide_dict['GUIDE_RATE_WE']['value']
+        self.logger.debug(f"Got mount guiding rate: {guide_rate}")
+        return guide_rate
+
+    def set_guide_rate(self, guide_rate={'NS':0.5,'WE':0.5}):
+        """
+        """
+        assert(all([v<=1 for k,v in guide_rate.items()]))
+        guide_dict = {'GUIDE_RATE_NS': guide_rate['NS'],
+                      'GUIDE_RATE_WE': guide_rate['WE']}
+        self.set_number('GUIDE_RATE', guide_dict, sync=True)
+
 
     def get_slew_rate(self):
         """
@@ -241,14 +277,13 @@ class IndiMount(IndiDevice):
         self.logger.debug('Asking mount {} for its current coordinates'.format(
             self.device_name)) 
         rahour_decdeg = self.get_number('EQUATORIAL_EOD_COORD')
-        self.logger.debug('Received current JNOW coordinates {}'.format(
-                          rahour_decdeg))
+        self.logger.debug(f"Received current JNOW coordinates {rahour_decdeg}")
         ret = SkyCoord(ra=rahour_decdeg['RA']['value']*u.hourangle,
                        dec=rahour_decdeg['DEC']['value']*u.degree,
                        frame='cirs',
                        obstime=Time.now())
-        self.logger.debug('Received coordinates in JNOw/CIRS from mount: {}'
-                          ''.format(ret))
+        self.logger.debug(f"Received coordinates in JNOw/CIRS from mount: "
+                          f"{ret}")
         return ret
 
 ###############################################################################
