@@ -245,12 +245,16 @@ class StateMachine(Machine, Base):
          core does feature a messaging service (has_messaging)
         -But most of the logic is contained inside of the body of the on_enter
          function defined in each state module in StateMachine/States
-         Those functions are defined the behaviour of the state, but more 
+         Those functions defines the behaviour of the state, but more 
          importantly of next_state. See StateMachine/States/ready.py for a
          good example
+        -For instance, inside a state module, you will find the own logic of the
+         state, plus in addition, the state defines model.next_state.
+         (model is always passed as an event parameter: event_data.model)
 
          Are some services running asynchronously, like weather checking ?
-         TODO TN: answer this question
+         Yes, some service are running in their own thread, but they have
+         access to the DB or the messaging service
 
         Args:
             exit_when_done (bool, optional): If True, the loop will exit when
@@ -273,6 +277,7 @@ class StateMachine(Machine, Base):
         while self.keep_running and self.connected:
             state_changed = False
 
+            # informations received from messaging can change the behaviour
             self.check_messages()
 
             # If we are processing the states

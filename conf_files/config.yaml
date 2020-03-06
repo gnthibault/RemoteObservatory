@@ -83,14 +83,14 @@ camera:
         focuser_name : Focuser Simulator
         port : /dev/ttyUSB0
         focus_range :
-            min : 0
-            max : 100
+            min : 1
+            max : 100000
         autofocus_step :
-            fine : 1
-            coarse : 10
+            fine : 500
+            coarse : 100000
         autofocus_range :
-            fine : 40
-            coarse : 60
+            fine : 20000
+            coarse : 100000
         indi_client :
             indi_host : localhost
             indi_port : 7624

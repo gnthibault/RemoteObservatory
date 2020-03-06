@@ -63,12 +63,17 @@ def on_enter(event_data):
             time.sleep(SLEEP_SECONDS)
 
     except error.Timeout as e:
-        model.logger.warning("Timeout while waiting for focusing. Something is"
-                             "wrong either with camera/focuser, going to park")
+        msg = f"Timeout while waiting for focusing: {e}. Something is wrong "\
+              f"with camera/focuser, going to park" 
+        model.logger.warning(msg)
+        model.say(msg)
     except Exception as e:
         model.logger.warning(f"Problem with focusing, {e}: "
                              f"{traceback.format_exc()}")
-        model.say("Problem while focusing")
+        model.logger.warning(msg)
+        model.say(f"Exception while focusing {e}")
     else:
-        model.logger.debug('Finished with focusing, going to observe')
+        msg = f"Finished with focusing, going to observe"
+        model.logger.debug(msg)
+        model.say(msg)
         model.next_state = 'observing'

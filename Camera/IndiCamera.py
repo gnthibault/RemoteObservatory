@@ -323,17 +323,18 @@ class IndiCamera(IndiDevice):
     def setExpTimeSec(self, exp_time_sec):
         self.exp_time_sec = self.sanitize_exp_time(exp_time_sec)
 
-    def autofocus_async(self, autofocus_event, coarse=True):
+    def autofocus_async(self, coarse=True):
         """
 
         """
         self.logger.info(f"Camera {self.device_name} is going to start "
                          f"autofocus with device {self.focuser.device_name}...")
         af = IndiAutoFocuser(camera=self)
-        af.autofocus(coarse=coarse, blocking=True, make_plots=True)
+        autofocus_event = af.autofocus(coarse=coarse, blocking=False,
+                                       make_plots=True)
         self.logger.info(f"Camera {self.device_name} just finished autofocus "
                          f"with focuser {self.focuser.device_name}")
-        autofocus_event.set()
+        return autofocus_event
 
     def __str__(self):
         return f"INDI Camera {self.device_name}"

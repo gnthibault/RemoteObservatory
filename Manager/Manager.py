@@ -429,9 +429,11 @@ class Manager(Base):
         # start each observation by setting up the guider
         try:
             if self.guider is not None:
-                self.logger.info("Starting guider before observing")
+                self.logger.info("Initializing guider before observing")
                 self.guider.reset_guiding()
+                self.logger.info("Starting guiding calibration")
                 self.guider.guide()
+                self.logger.info("Guiding calibration over")
             return True
         except Exception as e:
             self.logger.error('Error while trying to initialize tracking')
@@ -526,17 +528,23 @@ class Manager(Base):
             try:
                 assert camera.focuser.is_connected
             except AttributeError:
-                self.logger.debug(f"Camera {cam_name} has no focuser, skipping "
-                                  f"autofocus")
+                msg = f"Camera {cam_name} has no focuser, skipping "\
+                      f"autofocus"
+                self.logger.debug(msg)
+                raise RuntimeError("msg")
             except AssertionError:
-                self.logger.debug(f"Camera {cam_name} focuser not connected, "
-                                  f"skipping autofocus")
+                msg = f"Camera {cam_name} focuser not connected, "\
+                      f"skipping autofocus"
+                self.logger.debug(msg)
+                raise RuntimeError("msg")
             else:
                 try:
                     # Start the autofocus
-                    autofocus_event = camera.autofocus_async(serv_time=self.serv_time)
+                    autofocus_event = camera.autofocus_async()
                 except Exception as e:
-                    self.logger.error(f"Problem running autofocus: {e}")
+                    msg = f"Problem running autofocus: {e}"
+                    self.logger.debug(msg)
+                    raise RuntimeError("msg")
                 else:
                     autofocus_events[cam_name] = autofocus_event
 

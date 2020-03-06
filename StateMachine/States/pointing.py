@@ -104,7 +104,9 @@ def on_enter(event_data):
                           "let's see how close we are.")
                 model.logger.debug(f"Pointing Coords: "
                                    f"{pointing_image.pointing}")
-                model.logger.debug(f"Pointing Error: {pointing_error}")
+                msg = f"Pointing Error: {pointing_error}"
+                model.logger.debug(msg)
+                model.say(msg)
                 # update mount with the actual position
                 model.manager.mount.sync_to_coord(pointing_image.pointing)
                 # update pointing process tracking information

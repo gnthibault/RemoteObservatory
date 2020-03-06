@@ -10,14 +10,18 @@ def on_enter(event_data):
         try:
             # most likely setup dithering
             model.manager.update_tracking()
-            model.logger.debug('Done with tracking adjustment, going to '
-                               'observe')
-            model.next_state = 'observing'
+            msg = f"Done with tracking adjustment, going to observe"
+            model.logger.debug(msg)
+            model.say(msg)
+            model.next_state = 'focusing'
         except Exception as e:
             model.logger.warning("Problem adjusting tracking: {}".format(e))
     else:
         try:
             if model.manager.initialize_tracking():
-                model.next_state = 'observing'
+                msg = f"Tracking successfully initialized, going to focus"
+                model.logger.debug(msg)
+                model.say(msg)
+                model.next_state = 'focusing'
         except Exception as e:
-            model.logger.warning("Problem initializing tracking: {}".format(e))
+            model.logger.warning(f"Problem initializing tracking: {e}")
