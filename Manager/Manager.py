@@ -485,8 +485,8 @@ class Manager(Base):
             'ra_mnt': mnt_coord.ra.to(u.deg).value,
             'ha_mnt': mnt_coord.ra.to(u.hour).value,
             'dec_mnt': mnt_coord.dec.to(u.deg).value,
-            'track_mode_mnt': self.mount.get_track_mode()
-            'slew_rate_mnt': self.mount.get_slew_rate()[''],
+            'track_mode_mnt': self.mount.get_track_mode()['name'],
+            'slew_rate_mnt': self.mount.get_slew_rate()['name'],
             'guide_rate_ns_mnt': guide_rate['NS'],
             'guide_rate_we_mnt': guide_rate['WE'],
             #'ha_mnt': self.observer.target_hour_angle(t0, target).value,
@@ -573,8 +573,7 @@ class Manager(Base):
             self.observatory.open_everything()
             return True
         except Exception as e:
-            self.logger.error(
-                "Problem opening observatory: {}".format(e))
+            self.logger.error("Problem opening observatory: {e}")
             return False
 
     def close_observatory(self):
@@ -589,8 +588,7 @@ class Manager(Base):
 
             return True
         except Exception as e:
-            self.logger.error(
-                "Problem closing observatory: {}".format(e))
+            self.logger.error(f"Problem closing observatory: {e}")
             return False
 
     def unpark(self):

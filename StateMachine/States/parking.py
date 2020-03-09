@@ -8,9 +8,17 @@ def on_enter(event_data):
 
     model.next_state = 'parked'
 
-    model.logger.debug("Taking it on home and then parking.")
-    model.manager.park()
+    msg = f"Taking it on home and then parking."
+    model.logger.debug(msg)
+    model.say(msg)
     
+    if not model.manager.park():
+        msg = f"Unable to unpark everything"
+        model.logger.critical(msg)
+        model.say(msg)
+
     if not model.manager.close_observatory():
-        model.logger.critical('Unable to close dome!')
+        msg = f"Unable to close observatory!"
+        model.logger.critical(msg)
+        model.say(msg)
 

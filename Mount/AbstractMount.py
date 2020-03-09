@@ -78,8 +78,8 @@ class AbstractMount(Base):
         status = {}
         try:
             guide_rate = self.get_guide_rate()
-            status['track_mode'] = self.get_track_mode()
-            status['slew_rate'] = self.get_slew_rate()
+            status['track_mode'] = self.get_track_mode()['name']
+            status['slew_rate'] = self.get_slew_rate()['name']
             status['guide_rate_ns'] = guide_rate['NS']
             status['guide_rate_we'] = guide_rate['WE']
 
