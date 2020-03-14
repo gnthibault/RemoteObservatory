@@ -186,7 +186,7 @@ class IndiMount(IndiDevice):
              '4x': {'name': '4x', 'label': 'Max', 'value': False},
              'state': 'IDLE'}
         """
-        slew_dict = self.get_switch('TELESCOPE_LEW_RATE')
+        slew_dict = self.get_switch('TELESCOPE_SLEW_RATE')
         self.logger.debug(f"Got mount slewing rate dict: {slew_dict}")
         slew_rate = [v for k,v in slew_dict.items() if
                          ('value' in v and v['value'])]
@@ -236,7 +236,7 @@ class IndiMount(IndiDevice):
         self.logger.debug(f"Got mount tracking rate dict: {track_dict}")
         track_mode = [v for k,v in track_dict.items() if
                          ('value' in v and v['value'])]
-        self.logger.debug(f"Got mount tracking rate: {track_mode}")
+        self.logger.debug(f"Got mount tracking mode: {track_mode}")
         if len(track_mode) == 1:
             return track_mode[0]
         else:

@@ -155,8 +155,6 @@ class Manager(Base):
 
             if self.mount.is_initialized:
                 status['mount'] = self.mount.status()
-                status['mount']['current_ha'] = self.observer.target_hour_angle(
-                    t, self.mount.get_current_coordinates())
                 if self.mount.has_target:
                     status['mount']['mount_target_ha'] = (
                         self.observer.target_hour_angle(t, 

@@ -315,8 +315,7 @@ class RemoteObservatoryFSM(StateMachine, Base):
 
         if not safe:
             if no_warning is False:
-                self.logger.warning('Unsafe conditions: {}'.format(
-                                    is_safe_values))
+                self.logger.warning(f"Unsafe conditions: {is_safe_values}")
 
             if self.state not in ['sleeping', 'parked', 'parking',
                                   'housekeeping', 'ready']:

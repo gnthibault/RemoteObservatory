@@ -182,7 +182,7 @@ class IndiWeather(threading.Thread, IndiDevice):
         data["WEATHER_WIND_GUST"] = features["WEATHER_WIND_GUST"]['value']
         # name: WEATHER_RAIN_HOUR, label: Precip (mm), format: '%4.2f'
         data["WEATHER_RAIN_HOUR"] = features["WEATHER_RAIN_HOUR"]['value']
-        data["safe"] = self._make_safety_decision(data)
+        data["safe"] = self._make_safety_decision(data) #True or False
         return data
 
     def _make_safety_decision(self, features):
