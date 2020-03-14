@@ -83,7 +83,7 @@ class IndiWeather(threading.Thread, IndiDevice):
         self.set_geographic_coord()
         self.set_update_period()
 
-    def send_message(self, msg, channel='weather'):
+    def send_message(self, msg, channel='WEATHER'):
         if self.messaging is None:
             self.messaging = PanMessaging.create_publisher(self.publish_port)
         self.messaging.send_message(channel, msg)
@@ -91,14 +91,13 @@ class IndiWeather(threading.Thread, IndiDevice):
     def capture(self, send_message=True, store_result=True):
         """ Query the weather station and eventually publish results"""
         self.logger.debug("Updating weather")
-
         data = self._fill_in_weather_data()
         data['weather_sensor_name'] = self.device_name
         data['date'] = self.serv_time.get_utc()
         self.weather_entries.append(data)
 
         if send_message:
-            self.send_message({'data': data}, channel='weather')
+            self.send_message({'data': data}, channel='WEATHER')
 
         if store_result and self.store_result:
             self.db.insert_current('weather', data)
