@@ -22,10 +22,10 @@ def on_enter(event_data):
     """
 
     model = event_data.model
-    model.say("Starting focusing")
     model.next_state = 'parking'
 
     try:
+        model.say("Starting focusing")
         # Before each observation, we should refocus
         maximum_duration = MAX_FOCUSING_TIME
         start_time = model.manager.serv_time.get_astropy_time_from_utc()

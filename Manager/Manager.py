@@ -335,8 +335,8 @@ class Manager(Base):
 
     def slew(self):
         """Slew to current target"""
-        self.manager.mount.set_slew_rate()
-        self.manager.mount.slew_to_target()
+        self.mount.set_slew_rate()
+        self.mount.slew_to_target()
 
 
     def update_tracking(self):
@@ -481,7 +481,7 @@ class Manager(Base):
             'moon_separation': target.coord.separation(moon).value,
             'observer': self.config.get('name', ''),
             'ra_mnt': mnt_coord.ra.to(u.deg).value,
-            'ha_mnt': mnt_coord.ra.to(u.hour).value,
+            'ha_mnt': mnt_coord.ra.to(u.hourangle).value,
             'dec_mnt': mnt_coord.dec.to(u.deg).value,
             'track_mode_mnt': self.mount.get_track_mode()['name'],
             'slew_rate_mnt': self.mount.get_slew_rate()['name'],

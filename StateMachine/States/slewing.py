@@ -1,6 +1,7 @@
 def on_enter(event_data):
     """ Once inside the slewing state, set the mount slewing. """
     model = event_data.model
+    model.next_state = 'parking'
     try:
         model.logger.debug(f"Inside slew state")
 
@@ -17,5 +18,5 @@ def on_enter(event_data):
         model.next_state = 'pointing'
 
     except Exception as e:
-        model.logger.debug('Wait a minute, there was a problem slewing. '
-                           'Sending to parking. {}'.format(e))
+        model.logger.debug(f"Wait a minute, there was a problem slewing. "
+                           f"Sending to parking. {e}")
