@@ -366,7 +366,7 @@ def update_headers(file_path, info):
         hdu.header.set('FIELD', info.get('field_name', ''))
         hdu.header.set('RA-FIELD', info.get('field_ra', ''), 'Degrees')
         hdu.header.set('RA-MNT', info.get('ra_mnt', ''), 'Degrees')
-        hdu.header.set('DEC-FIELD', info.get('dec_field', ''), 'Degrees')
+        hdu.header.set('DEC-FIELD', info.get('field_dec', ''), 'Degrees')
         hdu.header.set('DEC-MNT', info.get('dec_mnt', ''), 'Degrees')
         hdu.header.set('EQUINOX', info.get('equinox', 2000.))  # Assume J2000
         hdu.header.set('AIRMASS', info.get('airmass', ''), 'Sec(z)')
