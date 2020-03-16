@@ -96,8 +96,8 @@ class AbstractCamera(Base):
 
         # Process the exposure once readout is complete
         t = Thread(target=self.process_exposure, args=(metadata,
-            observation_event, exposure_event))
-        t.name = '{}Thread'.format(self.name)
+                   observation_event, exposure_event))
+        t.name = f"{self.name}Thread"
         t.start()
 
         return observation_event
@@ -158,11 +158,8 @@ class AbstractCamera(Base):
             'start_time': start_time,
         }
         metadata.update(headers)
-
         exp_time = kwargs.get('exp_time', observation.time_per_exposure)
-
         metadata['exp_time'] = exp_time.to(u.second).value
-
         return exp_time, file_path, image_id, metadata
 
     def take_dark(self, temperature, exp_time, headers=None,
@@ -287,15 +284,14 @@ class AbstractCamera(Base):
         file_path = info['file_path']
         title=info['target_name']
         primary=info['is_primary']
-        self.logger.debug("Processing {}".format(image_id))
+        self.logger.debug(f"Processing {image_id}")
 
         try:
             latest_path = '{}/latest.jpg'.format(
                 self.config['directories']['images'])
             fits_utils.update_thumbnail(file_path, latest_path)
         except Exception as e:
-            self.logger.warning('Problem with extracting pretty image: '
-                                '{}'.format(e))
+            self.logger.warning(f"Problem with extracting pretty image: {e}")
 
         file_path = self._process_fits(file_path, info)
         try:
@@ -304,8 +300,7 @@ class AbstractCamera(Base):
             pass
 
         if info['is_primary']:
-            self.logger.debug("Adding current observation to db: {}".format(
-                              image_id))
+            self.logger.debug(f"Adding current observation to db: {image_id}")
             try:
                 self.db.insert_current('observations', info,
                                        store_permanently=False)
@@ -370,11 +365,12 @@ class AbstractCamera(Base):
 
         # Mark the event as done
         observation_event.set()
+
     def _process_fits(self, file_path, info):
         """
         Add FITS headers from info the same as images.cr2_to_fits()
         """
-        self.logger.debug("Updating FITS headers: {}".format(file_path))
+        self.logger.debug(f"Updating FITS headers: {file_path}")
         fits_utils.update_headers(file_path, info)
         return file_path
 

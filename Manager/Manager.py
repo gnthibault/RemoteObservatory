@@ -155,18 +155,11 @@ class Manager(Base):
 
             if self.mount.is_initialized:
                 status['mount'] = self.mount.status()
-                if self.mount.has_target:
-                    status['mount']['mount_target_ha'] = (
-                        self.observer.target_hour_angle(t, 
-                            self.mount.get_target_coordinates()))
 
             status['observatory'] = self.observatory.status()
 
             if self.current_observation:
                 status['observation'] = self.current_observation.status()
-                status['observation']['field_ha'] = (
-                    self.observer.target_hour_angle(t,
-                        self.current_observation.target))
 
             evening_astro_time = self.observer.twilight_evening_astronomical(t,
                                  which='next')
@@ -463,7 +456,7 @@ class Manager(Base):
             "No observation, can't get headers")
 
         # fetching various informations for the new image
-        self.logger.debug("Getting headers for : {}".format(observation))
+        self.logger.debug(f"Getting headers for : {observation}")
         target = observation.target
         t0 = self.serv_time.get_astropy_time_from_utc()
         moon = get_moon(t0, self.observer.location)

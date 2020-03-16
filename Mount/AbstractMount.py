@@ -92,9 +92,9 @@ class AbstractMount(Base):
 
             current_coord = self.get_current_coordinates()
             if current_coord is not None:
-                status['current_ra'] = current_coord.ra.to(u.deg)
-                status['current_ha'] = current_coord.ra.to(u.hourangle)
-                status['current_dec'] = current_coord.dec.to(u.deg)
+                status['current_ra'] = current_coord.ra.to(u.deg).value
+                status['current_ha'] = current_coord.ra.to(u.hourangle).value
+                status['current_dec'] = current_coord.dec.to(u.deg).value
 
             if self.has_target:
                 target_coord = self.get_target_coordinates()
