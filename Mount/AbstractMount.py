@@ -98,8 +98,9 @@ class AbstractMount(Base):
 
             if self.has_target:
                 target_coord = self.get_target_coordinates()
-                status['mount_target_ra'] = target_coord.ra
-                status['mount_target_dec'] = target_coord.dec
+                status['mount_target_ra'] = target_coord.ra.to(u.deg).value
+                status['mount_target_ha'] = target_coord.ra.to(u.hourangle).value
+                status['mount_target_dec'] = target_coord.dec.to(u.deg).value
         except Exception as e:
             self.logger.debug('Problem getting mount status: {}'.format(e))
 
