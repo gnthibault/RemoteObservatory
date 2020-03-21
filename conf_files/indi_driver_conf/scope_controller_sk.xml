@@ -105,6 +105,16 @@ On
 
 
 
+<defSwitchVector device="scope_controller" name="MOUNT_RELAY" label="Main mount relay" group="Main Control" state="Idle" perm="rw" rule="OneOfMany" timeout="1">
+    <defSwitch name="RELAY_CMD" label="ON">
+    <indiduino pin="5"/>
+Off
+    </defSwitch>
+    <defSwitch name="DUMMY" label="OFF">
+On
+    </defSwitch>
+</defSwitchVector>
+
 
 <defSwitchVector device="scope_controller" name="CAMERA_RELAY" label="Main camera relay" group="Main Control" state="Idle" perm="rw" rule="OneOfMany" timeout="1">
     <defSwitch name="RELAY_CMD" label="ON">
