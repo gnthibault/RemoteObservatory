@@ -1,0 +1,163 @@
+<INDIDriver>
+<newSwitchVector device='AAG Cloud Watcher NG' name='DEBUG'>
+  <oneSwitch name='ENABLE'>
+      Off
+  </oneSwitch>
+  <oneSwitch name='DISABLE'>
+      On
+  </oneSwitch>
+</newSwitchVector>
+<newNumberVector device='AAG Cloud Watcher NG' name='POLLING_PERIOD'>
+  <oneNumber name='PERIOD_MS'>
+      1000
+  </oneNumber>
+</newNumberVector>
+<newSwitchVector device='AAG Cloud Watcher NG' name='CONNECTION_MODE'>
+  <oneSwitch name='CONNECTION_SERIAL'>
+      On
+  </oneSwitch>
+  <oneSwitch name='CONNECTION_TCP'>
+      Off
+  </oneSwitch>
+</newSwitchVector>
+<newTextVector device='AAG Cloud Watcher NG' name='DEVICE_PORT'>
+  <oneText name='PORT'>
+      /dev/ttyUSB1
+  </oneText>
+</newTextVector>
+<newSwitchVector device='AAG Cloud Watcher NG' name='DEVICE_BAUD_RATE'>
+  <oneSwitch name='9600'>
+      On
+  </oneSwitch>
+  <oneSwitch name='19200'>
+      Off
+  </oneSwitch>
+  <oneSwitch name='38400'>
+      Off
+  </oneSwitch>
+  <oneSwitch name='57600'>
+      Off
+  </oneSwitch>
+  <oneSwitch name='115200'>
+      Off
+  </oneSwitch>
+  <oneSwitch name='230400'>
+      Off
+  </oneSwitch>
+</newSwitchVector>
+<newSwitchVector device='AAG Cloud Watcher NG' name='DEVICE_AUTO_SEARCH'>
+  <oneSwitch name='ENABLED'>
+      On
+  </oneSwitch>
+  <oneSwitch name='DISABLED'>
+      Off
+  </oneSwitch>
+</newSwitchVector>
+<newSwitchVector device='AAG Cloud Watcher NG' name='DEBUG_LEVEL'>
+  <oneSwitch name='DBG_ERROR'>
+      On
+  </oneSwitch>
+  <oneSwitch name='DBG_WARNING'>
+      On
+  </oneSwitch>
+  <oneSwitch name='DBG_SESSION'>
+      On
+  </oneSwitch>
+  <oneSwitch name='DBG_DEBUG'>
+      Off
+  </oneSwitch>
+  <oneSwitch name='DBG_EXTRA_1'>
+      Off
+  </oneSwitch>
+</newSwitchVector>
+<newSwitchVector device='AAG Cloud Watcher NG' name='LOGGING_LEVEL'>
+  <oneSwitch name='LOG_ERROR'>
+      On
+  </oneSwitch>
+  <oneSwitch name='LOG_WARNING'>
+      On
+  </oneSwitch>
+  <oneSwitch name='LOG_SESSION'>
+      On
+  </oneSwitch>
+  <oneSwitch name='LOG_DEBUG'>
+      Off
+  </oneSwitch>
+  <oneSwitch name='LOG_EXTRA_1'>
+      Off
+  </oneSwitch>
+</newSwitchVector>
+<newSwitchVector device='AAG Cloud Watcher NG' name='LOG_OUTPUT'>
+  <oneSwitch name='CLIENT_DEBUG'>
+      On
+  </oneSwitch>
+  <oneSwitch name='FILE_DEBUG'>
+      Off
+  </oneSwitch>
+</newSwitchVector>
+<newTextVector device='AAG Cloud Watcher NG' name='ACTIVE_DEVICES'>
+  <oneText name='ACTIVE_GPS'>
+      GPS Simulator
+  </oneText>
+</newTextVector>
+<newNumberVector device='AAG Cloud Watcher NG' name='GEOGRAPHIC_COORD'>
+  <oneNumber name='LAT'>
+      0
+  </oneNumber>
+  <oneNumber name='LONG'>
+      0
+  </oneNumber>
+  <oneNumber name='ELEV'>
+      0
+  </oneNumber>
+</newNumberVector>
+<newNumberVector device='AAG Cloud Watcher NG' name='WEATHER_UPDATE'>
+  <oneNumber name='PERIOD'>
+      60
+  </oneNumber>
+</newNumberVector>
+<newNumberVector device='AAG Cloud Watcher NG' name='WEATHER_BRIGHTNESS'>
+  <oneNumber name='MIN_OK'>
+      2100
+  </oneNumber>
+  <oneNumber name='MAX_OK'>
+      1000000
+  </oneNumber>
+  <oneNumber name='PERC_WARN'>
+      10
+  </oneNumber>
+</newNumberVector>
+<newNumberVector device='AAG Cloud Watcher NG' name='WEATHER_WIND_SPEED'>
+  <oneNumber name='MIN_OK'>
+      0
+  </oneNumber>
+  <oneNumber name='MAX_OK'>
+      30
+  </oneNumber>
+  <oneNumber name='PERC_WARN'>
+      10
+  </oneNumber>
+</newNumberVector>
+<newNumberVector device='AAG Cloud Watcher NG' name='WEATHER_RAIN'>
+  <oneNumber name='MIN_OK'>
+      2000
+  </oneNumber>
+  <oneNumber name='MAX_OK'>
+      10000
+  </oneNumber>
+  <oneNumber name='PERC_WARN'>
+      10
+  </oneNumber>
+</newNumberVector>
+<newNumberVector device='AAG Cloud Watcher NG' name='WEATHER_CLOUD'>
+  <oneNumber name='MIN_OK'>
+      -5
+  </oneNumber>
+  <oneNumber name='MAX_OK'>
+      10
+  </oneNumber>
+  <oneNumber name='PERC_WARN'>
+      10
+  </oneNumber>
+</newNumberVector>
+</INDIDriver>
