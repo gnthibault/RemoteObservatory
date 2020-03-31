@@ -30,5 +30,3 @@ echo "start /usr/local/bin/indi_aagcloudwatcher" > /tmp/INDI_FIFO
 
 #echo "start /usr/local/bin/indi_gphoto_ccd" > /tmp/INDI_FIFO
 #echo "stop /usr/local/bin/indi_gphoto_ccd" > /tmp/INDI_FIFO 
-
-
