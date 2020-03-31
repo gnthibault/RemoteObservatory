@@ -16,22 +16,22 @@ class IndiScopeController(IndiDevice, Base):
 
         if config is None:
             config = dict(
-                board_name = "Arduino",
-                port = "/dev/ttyACM0",
+                port = "/dev/ttyUSB0",
+                controller_name = "Arduino",
                 indi_client=dict(
                     indi_host="localhost",
                     indi_port="7624"
                 ))
 
-        self.board = config['board_name']
         self.port = config['port']
 
         # Indi stuff
-        logger.debug('Indi ScopeController, controller board name is: {}'
-                     ''.format(self.board))
+        logger.debug(f"Indi ScopeController, controller board port is: "
+                     f"{self.port}")
       
         # device related intialization
-        IndiDevice.__init__(self, logger=logger, device_name=self.board,
+        IndiDevice.__init__(self, logger=logger,
+                            device_name=config["controller_name"],
                             indi_client_config=config["indi_client"])
         if connect_on_create:
             self.initialize()
@@ -44,8 +44,8 @@ class IndiScopeController(IndiDevice, Base):
         return self._is_initialized
 
     def initialize(self):
-        self.set_port()
         self.connect()
+        self.set_port()
         self._is_initialized = True
 
     def deinitialize(self):
@@ -61,6 +61,8 @@ class IndiScopeController(IndiDevice, Base):
         self.switch_off_corrector_dew_heater()
         self.switch_off_finder_dew_heater()
         self.switch_off_camera()
+        self.switch_off_mount()
+        self.close()
 
     def set_port(self):
         self.set_text("DEVICE_PORT", {"PORT":self.port})
@@ -69,104 +71,132 @@ class IndiScopeController(IndiDevice, Base):
         """ blocking call: opens both main telescope and guiding scope dustcap
         """
         self.logger.debug("Opening IndiScopeController")
-        self.set_switch('SCOPE_SERVO_DUSTCAP_SWITCH',
-            onSwitches=['SERVO_SWITCH'])
-        self.set_switch("FINDER_SERVO_DUSTCAP_SWITCH",
-            onSwitches=['SERVO_SWITCH'])
+        self.open_finder_dustcap()
+        self.open_scope_dustcap()
 
     def close(self):
         """ blocking call: closes both main telescope and guiding scope dustcap
         """
         self.logger.debug("Closing ArduiScopeController")
-        self.set_switch('SCOPE_SERVO_DUSTCAP_SWITCH',
-            offSwitches=['SERVO_SWITCH'])
-        self.set_switch("FINDER_SERVO_DUSTCAP_SWITCH",
-            offSwitches=['SERVO_SWITCH'])
+        self.close_finder_dustcap()
+        self.close_scope_dustcap()
 
     def switch_on_camera(self):
         """ blocking call: switch on camera
         """
         self.logger.debug("Switching on camera")
-        self.set_switch("CAMERA_RELAY", onSwitches=['RELAY_CMD'])
+        self.set_switch("CAMERA_RELAY", on_switches=['RELAY_CMD'])
 
     def switch_off_camera(self):
         """ blocking call: switch off camera
         """
         self.logger.debug("Switching off camera")
-        self.set_switch("CAMERA_RELAY", offSwitches=['RELAY_CMD'])
+        self.set_switch("CAMERA_RELAY", off_switches=['RELAY_CMD'])
 
     def switch_on_flat_panel(self):
         """ blocking call: switch on flip flat
         """
         self.logger.debug("Switching on flip flat")
-        self.set_switch("FLAT_PANEL_RELAY", onSwitches=['RELAY_CMD'])
+        self.set_switch("FLAT_PANEL_RELAY", on_switches=['RELAY_CMD'])
 
     def switch_off_flat_panel(self):
         """ blocking call: switch off flip flat
         """
         self.logger.debug("Switching off flip flat")
-        self.set_switch("FLAT_PANEL_RELAY", offSwitches=['RELAY_CMD'])
+        self.set_switch("FLAT_PANEL_RELAY", off_switches=['RELAY_CMD'])
 
     def switch_on_scope_fan(self):
         """ blocking call: switch on fan to cool down primary mirror
         """
         self.logger.debug("Switching on fan to cool down primary mirror")
-        self.set_switch("PRIMARY_FAN_RELAY", onSwitches=['RELAY_CMD'])
+        self.set_switch("PRIMARY_FAN_RELAY", on_switches=['RELAY_CMD'])
 
     def switch_off_scope_fan(self):
         """ blocking call: switch off fan for primary mirror
         """
         self.logger.debug("Switching off telescope fan on primary mirror")
-        self.set_switch("PRIMARY_FAN_RELAY", offSwitches=['RELAY_CMD'])
+        self.set_switch("PRIMARY_FAN_RELAY", off_switches=['RELAY_CMD'])
 
     def switch_on_scope_dew_heater(self):
         """ blocking call: switch on dew heater to avoid dew on secondary mirror
         """
         self.logger.debug("Switching on dew heater for secondary mirror")
-        self.set_switch("SCOPE_DEW_HEAT_RELAY", onSwitches=['RELAY_CMD'])
+        self.set_switch("SCOPE_DEW_HEAT_RELAY", on_switches=['RELAY_CMD'])
 
     def switch_off_scope_dew_heater(self):
         """ blocking call: switch off dew heater on secondary mirror
         """
         self.logger.debug("Switching off telescope dew heater on secondary "
                           "mirror")
-        self.set_switch("SCOPE_DEW_HEAT_RELAY", offSwitches=['RELAY_CMD'])
+        self.set_switch("SCOPE_DEW_HEAT_RELAY", off_switches=['RELAY_CMD'])
 
     def switch_on_corrector_dew_heater(self):
         """ blocking call: switch on dew heater to avoid dew on corrector
         """
         self.logger.debug("Switching on dew heater for corrector")
-        self.set_switch("CORRECTOR_DEW_HEAT_RELAY", onSwitches=['RELAY_CMD'])
+        self.set_switch("CORRECTOR_DEW_HEAT_RELAY", on_switches=['RELAY_CMD'])
 
     def switch_off_corrector_dew_heater(self):
         """ blocking call: switch off dew heater on corrector
         """
         self.logger.debug("Switching off dew heater for corrector")
-        self.set_switch("CORRECTOR_DEW_HEAT_RELAY", offSwitches=['RELAY_CMD'])
+        self.set_switch("CORRECTOR_DEW_HEAT_RELAY", off_switches=['RELAY_CMD'])
 
     def switch_on_finder_dew_heater(self):
         """ blocking call: switch on dew heater to avoid dew on finder lens
         """
         self.logger.debug("Switching on dew heater for finder lens")
-        self.set_switch("FINDER_DEW_HEAT_RELAY", onSwitches=['RELAY_CMD'])
+        self.set_switch("FINDER_DEW_HEAT_RELAY", on_switches=['RELAY_CMD'])
 
     def switch_off_finder_dew_heater(self):
         """ blocking call: switch off dew heater on finder lens
         """
         self.logger.debug("Switching off dew heater on finder lens ")
-        self.set_switch("FINDER_DEW_HEAT_RELAY", offSwitches=['RELAY_CMD'])
+        self.set_switch("FINDER_DEW_HEAT_RELAY", off_switches=['RELAY_CMD'])
 
-    def receive_status(self):
-        try:
-            return {} #TODO TN URGENT
-        except Exception as e:
-            msg=("Cannot receive status from arduino board "
-                 "{}".format(self.board))
-            self.logger.error(msg)
-            raise ScopeControllerError(msg)
+    def switch_on_mount(self):
+        """ blocking call: switch on main mount
+        """
+        self.logger.debug("Switching on main mount")
+        self.set_switch("MOUNT_RELAY", on_switches=['RELAY_CMD'])
+
+    def switch_off_mount(self):
+        """ blocking call: switch off main mount
+        """
+        self.logger.debug("Switching off main mount")
+        self.set_switch("MOUNT_RELAY", off_switches=['RELAY_CMD'])
+
+    def open_scope_dustcap(self):
+        """ blocking call: open up main scope dustcap
+        """
+        self.logger.debug("Opening up main scope dustcap")
+        self.set_switch("SCOPE_SERVO_DUSTCAP_SWITCH",
+                        on_switches=['SERVO_SWITCH'])
+
+    def close_scope_dustcap(self):
+        """ blocking call: close main scope dustcap
+        """
+        self.logger.debug("close main scope dustcap")
+        self.set_switch("SCOPE_SERVO_DUSTCAP_SWITCH",
+                        off_switches=['SERVO_SWITCH'])
+
+    def open_finder_dustcap(self):
+        """ blocking call: open up finder dustcap
+        """
+        self.logger.debug("Opening up finder dustcap")
+        self.set_switch("FINDER_SERVO_DUSTCAP_SWITCH",
+                        on_switches=['SERVO_SWITCH'])
+
+    def close_finder_dustcap(self):
+        """ blocking call: close finder dustcap
+        """
+        self.logger.debug("close finder dustcap")
+        self.set_switch("FINDER_SERVO_DUSTCAP_SWITCH",
+                        off_switches=['SERVO_SWITCH'])
+   
 
     def status(self):
         if self.is_initialized:
-            return self.receive_status()
+            return {}
         else:
             return {}
