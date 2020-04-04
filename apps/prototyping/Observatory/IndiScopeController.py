@@ -27,7 +27,8 @@ if __name__ == '__main__':
     config = {
         "port": "/dev/ttyUSB0",
         "controller_name": "Arduino",
-        "indi_client": dict(indi_host = "192.168.0.33",
+        "indi_server_fifo": "/tmp/INDI_FIFO",
+        "indi_client": dict(indi_host = "192.168.0.34",
                             indi_port = 7624) }
 
     # Now test Mount
@@ -36,41 +37,72 @@ if __name__ == '__main__':
         connect_on_create=True)
 
     delay_sec = 5
-    #print("Switching on flat panel")
-    #controller.switch_on_flat_panel()
-    #time.sleep(delay_sec)
-    #controller.switch_off_flat_panel()
-    #print("Switching on scope fan")
-    #controller.switch_on_scope_fan()
-    #time.sleep(delay_sec)
-    #controller.switch_off_scope_fan()
-    #print("Switching on scope dew heater")
-    #controller.switch_on_scope_dew_heater()
-    #time.sleep(delay_sec)
-    #controller.switch_off_scope_dew_heater()
-    #print("Switching on corrector dew heater")
-    #controller.switch_on_corrector_dew_heater()
-    #time.sleep(delay_sec)
-    #controller.switch_off_corrector_dew_heater()
-    #print("Switching on finder dew heater")
-    #controller.switch_on_finder_dew_heater()
-    #time.sleep(delay_sec)
-    #controller.switch_off_finder_dew_heater()
-    #print("Switching on camera")
-    #controller.switch_on_camera()
-    #time.sleep(delay_sec)
-    #controller.switch_off_camera()
-    print("Switching on main mount")
+    print(f"Switching on flat panel {controller.status()}")
+    controller.switch_on_flat_panel()
+    print(f"{controller.status()}")
+    time.sleep(delay_sec)
+    controller.switch_off_flat_panel()
+    print(f"Switching on scope fan {controller.status()}")
+    controller.switch_on_scope_fan()
+    print(f"{controller.status()}")
+    time.sleep(delay_sec)
+    controller.switch_off_scope_fan()
+    print(f"Switching on scope dew heater {controller.status()}")
+    controller.switch_on_scope_dew_heater()
+    print(f"{controller.status()}")
+    time.sleep(delay_sec)
+    controller.switch_off_scope_dew_heater()
+    print(f"Switching on corrector dew heater {controller.status()}")
+    controller.switch_on_corrector_dew_heater()
+    print(f"{controller.status()}")
+    time.sleep(delay_sec)
+    controller.switch_off_corrector_dew_heater()
+    print(f"Switching on finder dew heater {controller.status()}")
+    controller.switch_on_finder_dew_heater()
+    print(f"{controller.status()}")
+    time.sleep(delay_sec)
+    controller.switch_off_finder_dew_heater()
+    print(f"Switching on camera {controller.status()}")
+    controller.switch_on_camera()
+    print(f"{controller.status()}")
+    time.sleep(delay_sec)
+    controller.switch_off_camera()
+    print(f"Switching on main mount {controller.status()}")
     controller.switch_on_mount()
+    print(f"{controller.status()}")
     time.sleep(delay_sec)
     controller.switch_off_mount()
-    print("Opening up main scope dustcap")
-    controller.open_scope_dustcap()
-    time.sleep(delay_sec)
-    controller.close_scope_dustcap()
-    print("Opening up finder dustcap")
+    print(f"Opening up main scope dustcap {controller.status()}")
+    print(f"Before opening scope dustcap status: "
+          f"{controller.get_switch('FINDER_SERVO_DUSTCAP_SWITCH')}")
     controller.open_finder_dustcap()
+    print(f"{controller.status()}")
     time.sleep(delay_sec)
+    print(f"After opening scope dustcap status: "
+          f"{controller.get_switch('FINDER_SERVO_DUSTCAP_SWITCH')}")
     controller.close_finder_dustcap()
+    print(f"After closing scope dustcap: "
+          f"{controller.get_switch('FINDER_SERVO_DUSTCAP_SWITCH')}")
+    print(f"{controller.status()}")
+    print("Opening up finder dustcap")
+    print(f"Before opening finder dustcap status: "
+          f"{controller.get_switch('SCOPE_SERVO_DUSTCAP_SWITCH')}")
+    controller.open_scope_dustcap()
+    print(f"{controller.status()}")
     time.sleep(delay_sec)
+    print(f"After opening finder dustcap status: "
+          f"{controller.get_switch('SCOPE_SERVO_DUSTCAP_SWITCH')}")
+    controller.close_scope_dustcap()
+    print(f"After closing finder dustcap status: "
+          f"{controller.get_switch('SCOPE_SERVO_DUSTCAP_SWITCH')}")
+    print(f"{controller.status()}")
+    time.sleep(delay_sec)
+
+    #res = controller.get_switch("CAMERA_RELAY")
+    #res = controller.device.getSwitch("CAMERA_RELAY")
+    #print(res)
+    #for i in res:
+    #    print("======")
+    #    print(i.name)
+    #    print(i.s)
 
