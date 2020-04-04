@@ -233,7 +233,6 @@ class IndiScopeController(IndiDevice, Base):
         self.set_switch("FINDER_SERVO_DUSTCAP_SWITCH",
                         off_switches=['SERVO_SWITCH'])
    
-
     def status(self):
         if self.is_connected:
             status = self.statuses
