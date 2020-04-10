@@ -21,7 +21,7 @@ difference() {
 
         translate([296,-2.2,22]) {
             rotate([0,-70,0]) {
-                translate([0,0,0]) {
+                translate([-13,0,1.4]) {
                     minkowski() {
                         cube(size = [33.8,8.8,13], center = false);
                         rotate([90,0,0]) {
@@ -86,6 +86,19 @@ difference() {
                     translate([6,8,-1]) {
                         cylinder(h=7, r=2.5);
                     }
+                }
+                
+                // vis centrale
+                translate([0,0,-5]) {
+                    cylinder(h=10, r=1);
+                }
+                // vis extremite 1
+                translate([0,20,-5]) {
+                    cylinder(h=10, r=1);
+                }
+                // vis extremite 2
+                translate([0,24,-5]) {
+                    cylinder(h=10, r=1);
                 }
             }
         }
