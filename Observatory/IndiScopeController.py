@@ -7,6 +7,7 @@ from Base.Base import Base
 from helper.IndiDevice import IndiDevice
 from utils.error import ScopeControllerError
 
+
 class IndiScopeController(IndiDevice, Base):
     def __init__(self, config=None, connect_on_create=True,
                  logger=None):
@@ -17,12 +18,12 @@ class IndiScopeController(IndiDevice, Base):
 
         if config is None:
             config = dict(
-                port = "/dev/ttyUSB0",
-                controller_name = "Arduino",
-                indi_camera_driver_name = "Canon DSLR",
-                indi_mount_driver_name = "Losmandy Gemini",
-                indi_webserver_host = "192.168.0.33",
-                indi_webserver_port = "8624",
+                port="/dev/ttyUSB0",
+                controller_name="Arduino",
+                indi_camera_driver_name="Canon DSLR",
+                indi_mount_driver_name="Losmandy Gemini",
+                indi_webserver_host="192.168.0.33",
+                indi_webserver_port="8624",
                 indi_client=dict(
                     indi_host="localhost",
                     indi_port="7624"

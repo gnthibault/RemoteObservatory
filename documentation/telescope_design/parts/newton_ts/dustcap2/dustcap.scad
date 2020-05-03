@@ -3,7 +3,7 @@ difference() {
         difference() {
             difference() {
                 scale (2.18) {
-                    import("./TelescopeDustCap-for-INDI-ServoBlasterCap.stl", convexity = 5);
+                    import("./TelescopeDustCap-for-INDI-ServoBlasterCap-fixed.stl", convexity = 5);
                 }
                 cylinder(h = 42, r1 = 252, r2 = 252);
             }
