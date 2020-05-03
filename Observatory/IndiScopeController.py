@@ -1,5 +1,6 @@
 # Basic stuff
 import logging
+import requests
 
 # Local
 from Base.Base import Base
@@ -18,14 +19,20 @@ class IndiScopeController(IndiDevice, Base):
             config = dict(
                 port = "/dev/ttyUSB0",
                 controller_name = "Arduino",
-                indi_server_fifo = "/tmp/INDI_FIFO",
+                indi_camera_driver_name = "Canon DSLR",
+                indi_mount_driver_name = "Losmandy Gemini",
+                indi_webserver_host = "192.168.0.33",
+                indi_webserver_port = "8624",
                 indi_client=dict(
                     indi_host="localhost",
                     indi_port="7624"
                 ))
 
-        self.port = config['port']
-        self._indi_server_fifo = config['indi_server_fifo']
+        self.port = config["port"]
+        self._indi_camera_driver_name = config["indi_camera_driver_name"]
+        self._indi_mount_driver_name = config["indi_mount_driver_name"]
+        self._indi_webserver_host = config["indi_webserver_host"]
+        self._indi_webserver_port = config["indi_webserver_port"]
         # Indi stuff
         logger.debug(f"Indi ScopeController, controller board port is: "
                      f"{self.port}")
@@ -101,8 +108,10 @@ class IndiScopeController(IndiDevice, Base):
         self.logger.debug("Switching on camera")
         self.set_switch("CAMERA_RELAY", on_switches=['RELAY_CMD'])
         try:
-            with open(self._indi_server_fifo,"w") as fp:
-                fp.write("start /usr/local/bin/indi_gphoto_ccd\n")
+            base_url = f"{self._indi_webserver_host}:{self._indi_webserver_port}"
+            req = (f"{base_url}/api/drivers/start/"
+            	   f"{self._indi_camera_driver_name.replace(' ', '%20')}")
+            response = requests.post(req)
         except Exception as e:
             self.logger.warning(f"Cannot load camera module: {e}")
         self.statuses["camera_relay"] = True
@@ -114,8 +123,10 @@ class IndiScopeController(IndiDevice, Base):
         self.logger.debug("Switching off camera")
         self.set_switch("CAMERA_RELAY", off_switches=['RELAY_CMD'])
         try:
-            with open(self._indi_server_fifo,"w") as fp:
-                fp.write("stop /usr/local/bin/indi_gphoto_ccd\n")
+            base_url = f"{self._indi_webserver_host}:{self._indi_webserver_port}"
+            req = (f"{base_url}/api/drivers/stop/"
+            	   f"{self._indi_camera_driver_name.replace(' ', '%20')}")
+            response = requests.post(req)
         except Exception as e:
             self.logger.warning(f"Cannot unload camera module: {e}")
         self.statuses["camera_relay"] = False
@@ -196,6 +207,13 @@ class IndiScopeController(IndiDevice, Base):
         """
         self.logger.debug("Switching on main mount")
         self.set_switch("MOUNT_RELAY", on_switches=['RELAY_CMD'])
+        try:
+            base_url = f"{self._indi_webserver_host}:{self._indi_webserver_port}"
+            req = (f"{base_url}/api/drivers/start/"
+            	   f"{self._indi_mount_driver_name.replace(' ', '%20')}")
+            response = requests.post(req)
+        except Exception as e:
+            self.logger.warning(f"Cannot unload camera module: {e}")
         self.statuses["mount_relay"] = True
 
     def switch_off_mount(self):
@@ -203,6 +221,13 @@ class IndiScopeController(IndiDevice, Base):
         """
         self.logger.debug("Switching off main mount")
         self.set_switch("MOUNT_RELAY", off_switches=['RELAY_CMD'])
+        try:
+            base_url = f"{self._indi_webserver_host}:{self._indi_webserver_port}"
+            req = (f"{base_url}/api/drivers/stop/"
+            	   f"{self._indi_mount_driver_name.replace(' ', '%20')}")
+            response = requests.post(req)
+        except Exception as e:
+            self.logger.warning(f"Cannot unload camera module: {e}")
         self.statuses["mount_relay"] = False
 
     def open_scope_dustcap(self):

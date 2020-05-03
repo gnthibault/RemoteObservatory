@@ -20,9 +20,12 @@ observatory:
     gmt_offset: 60 # Minutes
     scope_controller:
         module: IndiScopeController
-        #port: /dev/ttyUSB0
-        #controller_name: Arduino
-        #indi_server_fifo: /tmp/INDI_FIFO
+        port: /dev/ttyUSB0
+        controller_name: Arduino
+        indi_camera_driver_name: Canon DSLR
+        indi_mount_driver_name: Losmandy Gemini
+        indi_webserver_host: 192.168.0.33
+        indi_webserver_port: 8624
         indi_client :
             indi_host : localhost
             indi_port : 7624
