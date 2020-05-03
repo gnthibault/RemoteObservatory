@@ -1,0 +1,24 @@
+# From https://github.com/knro/indiwebmanager
+# sudo pip install indiweb
+# sudo cp indiwebmanager.service /etc/systemd/system/
+# sudo chmod 644 /etc/systemd/system/indiwebmanager.service
+# sudo systemctl daemon-reload
+# sudo systemctl enable indiwebmanager.service
+# sudo reboot
+# sudo systemctl status indiwebmanager.service
+
+[Unit]
+Description=INDI Web Manager
+After=multi-user.target
+
+[Service]
+Type=idle
+# MUST SET YOUR USERNAME HERE.
+
+User=rock
+ExecStart=/usr/local/bin/indi-web -v --xmldir /home/rock/projects/RemoteObservatory/conf_files/indi_driver_conf
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

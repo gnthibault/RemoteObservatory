@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<driversList>
+<devGroup group="Auxiliary">
+	<device label="Arduino telescope controller" skel="scope_controller_sk.xml">
+                <driver name="Scope controller">indi_duino</driver>
+                <version>0.6</version>
+        </device>
+</devGroup>
+</driversList>
+
