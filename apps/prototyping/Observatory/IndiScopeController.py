@@ -27,6 +27,7 @@ if __name__ == '__main__':
     config = {
         "port": "/dev/ttyUSB0",
         "controller_name": "Arduino",
+        "indi_driver_connect_delay_s": 5,
         "indi_camera_driver_name": "Canon DSLR",
         "indi_mount_driver_name": "Losmandy Gemini",
         "indi_webserver_host": "192.168.0.33",

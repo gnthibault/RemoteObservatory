@@ -1,6 +1,7 @@
 # Basic stuff
 import logging
 import requests
+import time
 
 # Local
 from Base.Base import Base
@@ -20,6 +21,7 @@ class IndiScopeController(IndiDevice, Base):
             config = dict(
                 port="/dev/ttyUSB0",
                 controller_name="Arduino",
+                indi_driver_connect_delay_s = 5,
                 indi_camera_driver_name="Canon DSLR",
                 indi_mount_driver_name="Losmandy Gemini",
                 indi_webserver_host="192.168.0.33",
@@ -31,6 +33,8 @@ class IndiScopeController(IndiDevice, Base):
 
         self.port = config["port"]
         self._indi_camera_driver_name = config["indi_camera_driver_name"]
+        self._indi_driver_connect_delay_s = \
+            config["indi_driver_connect_delay_s"]
         self._indi_mount_driver_name = config["indi_mount_driver_name"]
         self._indi_webserver_host = config["indi_webserver_host"]
         self._indi_webserver_port = config["indi_webserver_port"]
@@ -102,19 +106,35 @@ class IndiScopeController(IndiDevice, Base):
         self.close_finder_dustcap()
         self.close_scope_dustcap()
 
+    def start_driver(self, driver_name):
+        try:
+            base_url = f"http://{self._indi_webserver_host}:"\
+                       f"{self._indi_webserver_port}"
+            req = f"{base_url}/api/drivers/start/"\
+                  f"{driver_name.replace(' ', '%20')}"
+            response = requests.post(req)
+        except Exception as e:
+            self.logger.warning(f"Cannot load indi driver : {e}")
+
+    def stop_driver(self, driver_name):
+        try:
+            base_url = f"http://{self._indi_webserver_host}:"\
+                       f"{self._indi_webserver_port}"
+            req = f"{base_url}/api/drivers/stop/"\
+                  f"{driver_name.replace(' ', '%20')}"
+            response = requests.post(req)
+        except Exception as e:
+            self.logger.warning(f"Cannot load indi driver : {e}")
+
     def switch_on_camera(self):
         """ blocking call: switch on camera. We also need to load the
                            corresponding indi driver
         """
         self.logger.debug("Switching on camera")
         self.set_switch("CAMERA_RELAY", on_switches=['RELAY_CMD'])
-        try:
-            base_url = f"{self._indi_webserver_host}:{self._indi_webserver_port}"
-            req = (f"{base_url}/api/drivers/start/"
-            	   f"{self._indi_camera_driver_name.replace(' ', '%20')}")
-            response = requests.post(req)
-        except Exception as e:
-            self.logger.warning(f"Cannot load camera module: {e}")
+        # Now we need to wait a bit before trying to connect driver
+        time.sleep(self._indi_driver_connect_delay_s)
+        self.start_driver(self._indi_camera_driver_name)
         self.statuses["camera_relay"] = True
 
 
@@ -123,13 +143,7 @@ class IndiScopeController(IndiDevice, Base):
         """
         self.logger.debug("Switching off camera")
         self.set_switch("CAMERA_RELAY", off_switches=['RELAY_CMD'])
-        try:
-            base_url = f"{self._indi_webserver_host}:{self._indi_webserver_port}"
-            req = (f"{base_url}/api/drivers/stop/"
-            	   f"{self._indi_camera_driver_name.replace(' ', '%20')}")
-            response = requests.post(req)
-        except Exception as e:
-            self.logger.warning(f"Cannot unload camera module: {e}")
+        self.stop_driver(self._indi_camera_driver_name)
         self.statuses["camera_relay"] = False
 
     def switch_on_flat_panel(self):
@@ -208,13 +222,9 @@ class IndiScopeController(IndiDevice, Base):
         """
         self.logger.debug("Switching on main mount")
         self.set_switch("MOUNT_RELAY", on_switches=['RELAY_CMD'])
-        try:
-            base_url = f"{self._indi_webserver_host}:{self._indi_webserver_port}"
-            req = (f"{base_url}/api/drivers/start/"
-            	   f"{self._indi_mount_driver_name.replace(' ', '%20')}")
-            response = requests.post(req)
-        except Exception as e:
-            self.logger.warning(f"Cannot unload camera module: {e}")
+        # Now we need to wait a bit before trying to connect driver
+        time.sleep(self._indi_driver_connect_delay_s)
+        self.start_driver(self._indi_mount_driver_name)
         self.statuses["mount_relay"] = True
 
     def switch_off_mount(self):
@@ -222,13 +232,7 @@ class IndiScopeController(IndiDevice, Base):
         """
         self.logger.debug("Switching off main mount")
         self.set_switch("MOUNT_RELAY", off_switches=['RELAY_CMD'])
-        try:
-            base_url = f"{self._indi_webserver_host}:{self._indi_webserver_port}"
-            req = (f"{base_url}/api/drivers/stop/"
-            	   f"{self._indi_mount_driver_name.replace(' ', '%20')}")
-            response = requests.post(req)
-        except Exception as e:
-            self.logger.warning(f"Cannot unload camera module: {e}")
+        self.stop_driver(self._indi_mount_driver_name)
         self.statuses["mount_relay"] = False
 
     def open_scope_dustcap(self):
