@@ -49,9 +49,6 @@ class IndiScopeController(IndiDevice, Base):
         if connect_on_create:
             self.initialize()
 
-        # Finished configuring
-        self.logger.debug('configured successfully')
-
         # pin on arduino need to be configured either as input or ouput
         # it means that we need to keep track of pin status internally
         self.statuses = {
@@ -63,6 +60,9 @@ class IndiScopeController(IndiDevice, Base):
             "camera_relay": False,
             "mount_relay": False,
         }
+
+        # Finished configuring
+        self.logger.debug('configured successfully')
 
     @property
     def is_initialized(self):
@@ -102,7 +102,7 @@ class IndiScopeController(IndiDevice, Base):
     def close(self):
         """ blocking call: closes both main telescope and guiding scope dustcap
         """
-        self.logger.debug("Closing ArduiScopeController")
+        self.logger.debug("Closing IndiScopeController")
         self.close_finder_dustcap()
         self.close_scope_dustcap()
 
@@ -265,7 +265,7 @@ class IndiScopeController(IndiDevice, Base):
    
     def status(self):
         if self.is_connected:
-            status = self.statuses
+            status = self.statuses.copy()
             status["finder_dustcap_open"] = self.get_switch(
                 'FINDER_SERVO_DUSTCAP_SWITCH')['SERVO_SWITCH']['value']
             status["scope_dustcap_open"] = self.get_switch(

@@ -131,16 +131,15 @@ class GuiderPHD2(Base):
             raise GuidingError(msg)
 
     def disconnect_and_terminate_server(self):
-        self.logger.info("Closing connection to server PHD2 {}:{}".format(
-                         self.host,self.port))
-        print(f"PHD2 STATE IS {self.state}")
+        self.logger.info(f"Closing connection to server PHD2 {self.host}"
+                         ":{self.port}")
         if self.state != 'NotConnected':
             self.reset_guiding()
             self.terminate_server()
             self.sock.close()
             self.disconnection_trig()
         else:
-            self.force_kill_server(self):
+            self.force_kill_server()
             if sock is not None:
                 self.sock.close()
             self.disconnection_trig()
@@ -206,7 +205,7 @@ class GuiderPHD2(Base):
         except Exception as e:
             msg = f"PHD2 error shutdown: {e}"
             self.logger.error(msg)
-            self.force_kill_server(self):
+            self.force_kill_server()
 
     def set_connected(self, connect=True):
         """

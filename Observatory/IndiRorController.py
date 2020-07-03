@@ -14,8 +14,10 @@ class IndiRorController(Base):
         # TODO TN: this statement should be deleted and value should be
         # received fron a sensor """
         self.is_open = False
+        self.is_initialized = False
 
     def initialize(self):
+        self.is_initialized = True
         self.logger.debug("Initializing IndiRorController")
         
     def deinitialize(self):

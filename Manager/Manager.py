@@ -598,7 +598,7 @@ class Manager(Base):
             return True
         except Exception as e:
             self.logger.error(
-                "Problem parking: {}".format(e))
+                "Problem unparking: {}".format(e))
             return False
 
     def park(self):

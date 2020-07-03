@@ -19,6 +19,18 @@ class DummyScopeController(Base):
             config = dict(
                 controller_name="Dummy")
 
+        self.statuses = {
+            "finder_dew": False,
+            "finder_dustcap_open": False,
+            "flat_panel": False,
+            "scope_fan": False,
+            "scope_dustcap_open": False,
+            "scope_dew": False,
+            "corrector_dew": False,
+            "camera_relay": False,
+            "mount_relay": False,
+        }
+
         # Indi stuff
         logger.debug(f"Indi Dummy ScopeController constructor")
       
@@ -155,21 +167,25 @@ class DummyScopeController(Base):
     def open_scope_dustcap(self):
         """ blocking call: open up main scope dustcap
         """
+        self.statuses["scope_dustcap_open"] = True
         self.logger.debug("Opening up main scope dustcap")
 
     def close_scope_dustcap(self):
         """ blocking call: close main scope dustcap
         """
+        self.statuses["scope_dustcap_open"] = False
         self.logger.debug("close main scope dustcap")
 
     def open_finder_dustcap(self):
         """ blocking call: open up finder dustcap
         """
+        self.statuses["finder_dustcap_open"] = True
         self.logger.debug("Opening up finder dustcap")
 
     def close_finder_dustcap(self):
         """ blocking call: close finder dustcap
         """
+        self.statuses["finder_dustcap_open"] = False
         self.logger.debug("close finder dustcap")
    
     def status(self):
