@@ -133,10 +133,16 @@ class GuiderPHD2(Base):
     def disconnect_and_terminate_server(self):
         self.logger.info("Closing connection to server PHD2 {}:{}".format(
                          self.host,self.port))
+        print(f"PHD2 STATE IS {self.state}")
         if self.state != 'NotConnected':
             self.reset_guiding()
             self.terminate_server()
             self.sock.close()
+            self.disconnection_trig()
+        else:
+            self.force_kill_server(self):
+            if sock is not None:
+                self.sock.close()
             self.disconnection_trig()
 
     def reset_profile(self, profile_id):
@@ -176,6 +182,10 @@ class GuiderPHD2(Base):
         """
         self.settle = dict(pixels=pixels, time=time, timeout=timeout)
 
+    def force_kill_server(self):
+        if self.process is not None:
+            self.process.kill()
+
     ####    PHD2 rpc API methods ####
 
     def shutdown(self):
@@ -196,9 +206,7 @@ class GuiderPHD2(Base):
         except Exception as e:
             msg = f"PHD2 error shutdown: {e}"
             self.logger.error(msg)
-            if self.process is not None:
-                self.process.kill()
-            #raise GuidingError(msg)
+            self.force_kill_server(self):
 
     def set_connected(self, connect=True):
         """

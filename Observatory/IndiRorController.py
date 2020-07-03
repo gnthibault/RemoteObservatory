@@ -4,7 +4,7 @@ import logging
 # Local
 from Base.Base import Base
 
-class ArduiRorController(Base):
+class IndiRorController(Base):
     """Controller roll off roof and other stuff
     """
 
@@ -16,19 +16,19 @@ class ArduiRorController(Base):
         self.is_open = False
 
     def initialize(self):
-        self.logger.debug("Initializing ArduiRorController")
+        self.logger.debug("Initializing IndiRorController")
         
     def deinitialize(self):
-        self.logger.debug("Deinitializing ArduiRorController")
+        self.logger.debug("Deinitializing IndiRorController")
 
     def open(self):
-        self.logger.debug("Opening ArduiRorController")
+        self.logger.debug("Opening IndiRorController")
         # TODO TN: this statement should be deleted and value should be
         # received fron a sensor """
         self.is_open = True
 
     def close(self):
-        self.logger.debug("Closing ArduiRorController")
+        self.logger.debug("Closing IndiRorController")
         self._is_open = False
 
     @property

@@ -15,6 +15,7 @@ from mpl_toolkits.axes_grid1 import make_axes_locatable
 
 # Miscellaneous ios
 from astropy.io import fits
+from skimage import io as io
 
 # Astropy
 import astropy.units as u
@@ -95,8 +96,12 @@ def multiscale_variance_analysis(image):
 
 def main(input_file, show_plot=False):
 
-    f = fits.open(input_file)
-    header, im = f[0].header, f[0].data
+    if (input_file.lower().endswith('fits') or 
+        input_file.lower().endswith('fit')):
+        f = fits.open(input_file)
+        header, im = f[0].header, f[0].data
+    else:
+        im = io.imread(input_file)
     #import scipy.misc as misc
     #im = misc.face()[:,:,0]
     multiscale_variance_analysis(im)

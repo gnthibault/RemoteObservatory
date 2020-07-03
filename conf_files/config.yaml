@@ -19,8 +19,8 @@ observatory:
     # Greenwich Mean Time ( GMT+1 ).
     gmt_offset: 60 # Minutes
     scope_controller:
-        module: IndiScopeController
-        port: /dev/ttyUSB0
+        module: DummyScopeController #IndiArduiScopeController
+        port: /dev/ttyACM0
         controller_name: Arduino
         indi_driver_connect_delay_s: 5
         indi_camera_driver_name: Canon DSLR
@@ -31,7 +31,7 @@ observatory:
             indi_host : localhost
             indi_port : 7624
     dome_controller:
-        module : None
+        module : IndiRorController
         port : /dev/ttyACM1
         indi_client :
             indi_host : localhost

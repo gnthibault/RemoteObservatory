@@ -41,10 +41,10 @@ class ShedObservatory(Base):
                     180 : 30,
                     270 : 30},
                 scope_controller = dict(
-                    module = 'ArduiScopeController',
+                    module = 'IndiScopeController',
                     port = '/dev/ttyACM0'),
                 dome_controller = dict(
-                    module = None,
+                    module = 'IndiRorController',
                     port = '/dev/ttyACM1')
             )
 
@@ -72,9 +72,9 @@ class ShedObservatory(Base):
                                             scope_controller_name)(cfg)
         except Exception as e:
             self.scope_controller = None
-            msg = 'Cannot instantiate scope controller properly: {}'.format(e)
+            msg = f"Cannot instantiate scope controller properly: {e}"
             self.logger.error(msg)
-            #raise ScopeControllerError(msg)
+            raise ScopeControllerError(msg)
 
         # If dome controller is specified in the config, load
         try:
@@ -84,9 +84,10 @@ class ShedObservatory(Base):
             self.dome_controller = getattr(dome_controller,
                                            dome_controller_name)(cfg)
         except Exception as e:
-            self.logger.error("Cannot load dome module: {}".format(e))
             self.dome_controller = None
-            # raise DomeControllerError(msg)
+            msg = f"Cannot load dome module: {e}"
+            self.logger.error(msg)
+            raise DomeControllerError(msg)
 
         # Other services
         self.servWeather = servWeather
