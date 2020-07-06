@@ -157,7 +157,7 @@ class Manager(Base):
                 status['mount'] = self.mount.status()
 
             status['observatory'] = self.observatory.status()
-
+            status['scheduler'] = self.scheduler.status()
             if self.current_observation:
                 status['observation'] = self.current_observation.status()
 

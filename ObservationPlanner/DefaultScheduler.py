@@ -58,10 +58,10 @@ class DefaultScheduler(Scheduler):
         observer = self.obs.getAstroplanObserver()
 
         for constraint in self.constraints:
-            self.logger.info("Checking Constraint: {}".format(constraint))
+            self.logger.info(f"Checking Constraint: {constraint}")
             for obs_key, observation in self.observations.items():
                 if obs_key in valid_obs:
-                    self.logger.debug("\tObservation: {}".format(obs_key))
+                    self.logger.debug(f"\tObservation: {obs_key}")
                     score = constraint.compute_constraint(time, observer,
                         observation.target.coord)
                     # Check if the computed score is a boolean
