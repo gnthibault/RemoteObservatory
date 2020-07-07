@@ -25,6 +25,7 @@ from ObservationPlanner.LocalHorizonConstraint import LocalHorizonConstraint
 from Base.Base import Base
 #from ObservationPlanner.ObservationPlanner import ObservationPlanner
 from ObservationPlanner.Observation import Observation
+from utils import is_jsonable
 from utils.config import load_config
 from utils.config import save_config
 
@@ -177,10 +178,11 @@ class Scheduler(Base):
         raise NotImplementedError
 
     def status(self):
-        return {
-            'constraints': self.constraints,
-            'current_observation': self.current_observation,
+        status =  {
+            'constraints': {str(type(i)):(i.__dict__ if is_jsonable(i.__dict__) else "") for i in self.constraints}
         }
+        if self.current_observation is not None:
+            status['current_observation'] = self.current_observation.status()
 
     def reset_observed_list(self):
         """Reset the observed list """
@@ -231,8 +233,7 @@ class Scheduler(Base):
                         self.constraints.append(
                             AtNightConstraint.twilight_astronomical())
                 except Exception as e:
-                    self.logger.warning("Cannot add atnight constraint: {}"
-                                        "".format(e))
+                    self.logger.warning(f"Cannot add atnight constraint: {e}")
             if constraint == "maxairmass":
                 try:
                     # TODO TN maybe non boolean Airmass Constraint
@@ -240,15 +241,13 @@ class Scheduler(Base):
                         AirmassConstraint(max=constraint_config,
                                           boolean_constraint=True))
                 except Exception as e:
-                    self.logger.warning("Cannot add airmass constraint: {}"
-                                        "".format(e))
+                    self.logger.warning(f"Cannot add airmass constraint: {e}")
             if constraint == "minmoonseparationdeg":
                 try:
                     self.constraints.append(
                         MoonSeparationConstraint(min=constraint_config*u.deg))
                 except Exception as e:
-                    self.logger.warning("Cannot add moon sep constraint: {}"
-                                        "".format(e))
+                    self.logger.warning(f"Cannot add moon sep constraint: {e}")
 
         # We also always add the local horizon constraint:
         try:
@@ -256,7 +255,7 @@ class Scheduler(Base):
                 LocalHorizonConstraint(horizon=self.obs.get_horizon(),
                                        boolean_constraint=True))
         except Exception as e:
-            self.logger.warning("Cannot add horizon constraint: {}".format(e))
+            self.logger.warning(f"Cannot add horizon constraint: {e}")
 
     def initialize_target_list(self):
         """Creates valid `Observations` """
@@ -274,7 +273,7 @@ class Scheduler(Base):
         for target_name, filter_config in self.config['targets'].items():
             #target = FixedTarget.from_name(target_name)
             # TODO TN Urgent: fix that temporary stuff
-            target = FixedTarget(SkyCoord(ra=15*u.deg, dec=30*u.deg,
+            target = FixedTarget(SkyCoord(ra=15*u.deg, dec=55*u.deg,
                                           frame='icrs', equinox='J2000.0'),
                                  name="GenericTarget")
             #target = FixedTarget(SkyCoord(33.33*u.deg, 66.66*u.deg,

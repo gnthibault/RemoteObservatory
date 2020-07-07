@@ -1,7 +1,7 @@
 constraints :
     #atnight : astronomical
-    maxairmass : 2
-    minmoonseparationdeg : 45
+    maxairmass : 17 #for testing, normally use 2
+    minmoonseparationdeg : 2 # normally put 45
 targets :
     M42 :
         Luminance :

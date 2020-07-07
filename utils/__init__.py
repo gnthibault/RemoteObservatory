@@ -1,4 +1,5 @@
 # Generic stuff
+import json
 import os
 import re
 import shutil
@@ -12,6 +13,15 @@ from astropy.coordinates import ICRS
 from astropy.coordinates import SkyCoord
 from astropy.time import Time
 from astropy.utils import resolve_name
+
+
+def is_jsonable(x):
+    try:
+        json.dumps(x)
+        return True
+    except:
+        return False
+
 
 # This is a streamlined variant of PySerial's serialutil.Timeout.
 class Timeout(object):
