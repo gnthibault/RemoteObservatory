@@ -83,7 +83,7 @@ class IndiAAGCloudWatcher(threading.Thread, IndiDevice):
         self.set_geographic_coord()
         self.set_update_period()
 
-    def send_message(self, msg, channel='weather'):
+    def send_message(self, msg, channel='WEATHER'):
         if self.messaging is None:
             self.messaging = PanMessaging.create_publisher(self.publish_port)
         self.messaging.send_message(channel, msg)
@@ -98,7 +98,7 @@ class IndiAAGCloudWatcher(threading.Thread, IndiDevice):
         self.weather_entries.append(data)
 
         if send_message:
-            self.send_message({'data': data}, channel='weather')
+            self.send_message({'data': data}, channel='WEATHER')
 
         if store_result and self.store_result:
             self.db.insert_current('weather', data)

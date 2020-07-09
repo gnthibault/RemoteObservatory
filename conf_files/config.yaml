@@ -111,6 +111,7 @@ guider:
     module : GuiderPHD2
     host : localhost
     port : 4400
+    publish_port : 6510
     #profile_id : 1
     profile_id : 2
     exposure_time_sec : 2

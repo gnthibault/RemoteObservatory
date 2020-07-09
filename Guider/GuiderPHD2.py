@@ -13,6 +13,7 @@ from Base.Base import Base
 from utils import Timeout
 from utils import error
 from utils.error import GuidingError
+from utils.messaging import PanMessaging
 
 MAXIMUM_CALIBRATION_TIMEOUT = 6 * 60 * u.second
 MAXIMUM_DITHER_TIMEOUT = 45 * u.second
@@ -69,6 +70,7 @@ class GuiderPHD2(Base):
             config = dict(
                 host = "localhost",
                 port = 4400,
+                publish_port = 6510,
                 profile_id = '2',
                 exposure_time_sec = '3',
                 settle = {
@@ -88,6 +90,10 @@ class GuiderPHD2(Base):
         self.mount = None
         self.settle = config["settle"]
         self.exposure_time_sec = config['exposure_time_sec']
+
+        # we broadcast data throught a message queue style mecanism
+        self.messaging = None
+        self.publish_port = config["publish_port"]
 
         # Initialize the state machine
         self.machine = Machine(model=self,
@@ -132,7 +138,7 @@ class GuiderPHD2(Base):
 
     def disconnect_and_terminate_server(self):
         self.logger.info(f"Closing connection to server PHD2 {self.host}"
-                         ":{self.port}")
+                         f":{self.port}")
         if self.state != 'NotConnected':
             self.reset_guiding()
             self.terminate_server()
@@ -157,6 +163,16 @@ class GuiderPHD2(Base):
         """
         self.stop_capture()
         self.clear_calibration()
+
+    def status(self):
+        return {'state': self.state}
+
+    def send_message(self, msg, channel='GUIDING'):
+        if self.messaging is None:
+            self.messaging = PanMessaging.create_publisher(self.publish_port)
+        #put state in msg
+        msg['state'] = self.state
+        self.messaging.send_message(channel, msg)
 
     def receive(self):
         return self._receive()
@@ -502,11 +518,13 @@ class GuiderPHD2(Base):
                 raise GuidingError(f"Wrong answer to stop_capture request: "
                                    f"{data}")
             timeout = Timeout(STANDARD_TIMEOUT)
-            while self.state not in ['Stopped', 'GuidingStopped']:
-                data = self._receive(loop_mode=True)
-                if timeout.expired():
-                    raise error.Timeout(f"Timeout while waiting for response "
-                        f"after stop_capture was sent to GuiderPHD2")
+            if self.state in ["Guiding","Looping"]:
+                while self.state not in ['Stopped', 'GuidingStopped']:
+                    data = self._receive(loop_mode=True)
+                    if timeout.expired():
+                        raise error.Timeout(f"Timeout while waiting for "
+                            f"response after stop_capture was sent to "
+                            f"GuiderPHD2")
         except Exception as e:
             msg = f"PHD2 error stopping capture: {e}"
             self.logger.error(msg)
@@ -787,7 +805,7 @@ class GuiderPHD2(Base):
             f"position {event['pos']}, step number {event['step']}, current "
             f"state {event['State']}")
         self.StartCalibration()
-
+        self.send_message(self.status(), channel='GUIDING_STATUS')
 
     def _handle_CalibrationComplete(self, event):
         """Calibration completed successfully.
@@ -806,6 +824,8 @@ class GuiderPHD2(Base):
         """Guiding has been paused.
         """
         self.logger.debug(f"Guiding has been paused. {event}")
+        self.Paused()
+        self.send_message(self.status(), channel='GUIDING_STATUS')
 
     def _handle_StartCalibration(self, event):
         """Calibration begins.
@@ -813,6 +833,8 @@ class GuiderPHD2(Base):
            Mount      string  the name of the mount being calibrated
         """
         self.logger.debug(f"Calibration is starting for mount {event['Mount']}")
+        self.StartCalibration()
+        self.send_message(self.status(), channel='GUIDING_STATUS')
 
     def _handle_AppState(self, event):
         """ The state at connection time
@@ -835,6 +857,7 @@ class GuiderPHD2(Base):
         """
         self.logger.debug(f"PHD2 state is {event['State']}")
         self.machine.set_state(event["State"])    
+        self.send_message(self.status(), channel='GUIDING_STATUS')
 
     def _handle_CalibrationFailed(self, event):
         """Calibration failed.
@@ -862,6 +885,7 @@ class GuiderPHD2(Base):
         self.logger.debug(f"Looping on exposure, frame number: "
                           f"{event['Frame']}")
         self.LoopingExposures()    
+        self.send_message(self.status(), channel='GUIDING_STATUS')
 
     def _handle_LoopingExposuresStopped(self, event):
         """Looping exposures has stopped.
@@ -869,6 +893,7 @@ class GuiderPHD2(Base):
         """
         self.logger.debug(f"Looping exposure has stopped ")
         self.LoopingExposureStopped()
+        self.send_message(self.status(), channel='GUIDING_STATUS')
 
     def _handle_SettleBegin(self, event):
         """Sent when settling begins after a dither or guide method invocation.
@@ -941,6 +966,7 @@ class GuiderPHD2(Base):
             f"Frame {event['Frame']} dropped because of lost star. SNR was "
             f"{event['SNR']} and average distance was {event['AvgDist']}")
         self.StarLost()
+        self.send_message(self.status(), channel='GUIDING_STATUS')
 
     def _handle_GuidingStopped(self, event):
         """Guiding has stopped.
@@ -993,6 +1019,8 @@ class GuiderPHD2(Base):
             f"{event['Mount']} received. dx: {event['dx']}, dy: {event['dy']}, "
             f"StarMass: {event['StarMass']}, SNR: {event['SNR']}")
         self.GuideStep()
+        self.send_message(self.status(), channel='GUIDING_STATUS')
+        self.send_message({'data': event}, channel='GUIDING')
 
     def _handle_GuidingDithered(self, event):
         """The lock position has been dithered.
