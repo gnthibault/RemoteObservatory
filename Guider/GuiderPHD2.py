@@ -167,12 +167,10 @@ class GuiderPHD2(Base):
     def status(self):
         return {'state': self.state}
 
-    def send_message(self, msg, channel='GUIDING'):
+    def send_message(self, data, channel='GUIDING'):
         if self.messaging is None:
             self.messaging = PanMessaging.create_publisher(self.publish_port)
-        #put state in msg
-        msg['state'] = self.state
-        self.messaging.send_message(channel, msg)
+        self.messaging.send_message(channel, {"data": data})
 
     def receive(self):
         return self._receive()
@@ -1020,7 +1018,7 @@ class GuiderPHD2(Base):
             f"StarMass: {event['StarMass']}, SNR: {event['SNR']}")
         self.GuideStep()
         self.send_message(self.status(), channel='GUIDING_STATUS')
-        self.send_message({'data': event}, channel='GUIDING')
+        self.send_message(event, channel='GUIDING')
 
     def _handle_GuidingDithered(self, event):
         """The lock position has been dithered.
