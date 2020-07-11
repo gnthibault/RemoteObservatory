@@ -49,6 +49,10 @@ db:
     type: file
 ntp:
     ntpserver: time.google.com
+scheduler:
+    module: DefaultScheduler
+    #module: SpectroScheduler
+    target_file: targets
 mount:
     #module: IndiG11
     #mount_name: Losmandy Gemini
@@ -60,6 +64,9 @@ mount:
 pointing_camera:
     module: IndiAbstractCamera
     camera_name : Guide Simulator
+    pointing_seconds: 30
+    autofocus_seconds: 5
+    autofocus_size : 500
     indi_client :
         indi_host : localhost
         indi_port : 7624
@@ -76,6 +83,7 @@ acquisition_camera:
         CCD_PIXEL_SIZE_X : 6.5
         CCD_PIXEL_SIZE_Y : 6.5
         CCD_BITSPERPIXEL : 14
+    pointing_seconds: 30
     autofocus_seconds: 5
     autofocus_size : 500
     indi_client :

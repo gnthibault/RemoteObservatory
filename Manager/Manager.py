@@ -265,7 +265,7 @@ class Manager(Base):
         camera_events = dict()
 
         # Take exposure with each camera
-        for cam_name, camera in self.cameras.items():
+        for cam_name, camera in self.acquisition_cameras.items():
             self.logger.debug("Exposing for camera: {}".format(cam_name))
 
             try:
@@ -511,9 +511,9 @@ class Manager(Base):
         if camera_list:
             # Have been passed a list of camera names, extract dictionary
             # containing only cameras named in the list
-            cameras = {cam_name: self.cameras[
+            cameras = {cam_name: self.acquisitions_cameras[
                 cam_name] for cam_name in camera_list if cam_name in
-                self.cameras.keys()}
+                self.acquisition_cameras.keys()}
 
             if cameras == {}:
                 self.logger.warning('Passed a list of camera names ({}) but no'
@@ -521,7 +521,7 @@ class Manager(Base):
         else:
             # No cameras specified, will try to autofocus all cameras from
             # self.cameras
-            cameras = self.cameras
+            cameras = self.acquisition_cameras
 
         autofocus_events = dict()
 
@@ -696,24 +696,27 @@ class Manager(Base):
             setup camera object(s)
 
         """
-        self.cameras = OrderedDict()
-        try:
-            cam_name = self.config['camera']['module']
-            cam_module = load_module('Camera.'+cam_name)
-            cam = getattr(cam_module, cam_name)(
-                serv_time=self.serv_time,
-                config=self.config['camera'],
-                connect_on_create=True,
-                primary=True)
-            cam.prepare_shoot()
- 
-        except Exception as e:
-            raise RuntimeError('Problem setting up camera: {}'.format(e))
+        self.acquisition_cameras = OrderedDict()
 
-        self.primary_camera = cam
-        self.cameras[cam.name] = cam
+        def setup_cam(cam_type, primary):
+            try:
+                cam_name = self.config[cam_type]['module']
+                cam_module = load_module('Camera.'+cam_name)
+                cam = getattr(cam_module, cam_name)(
+                    serv_time=self.serv_time,
+                    config=self.config[cam_type],
+                    connect_on_create=True,
+                    primary=primary)
+                cam.prepare_shoot()
+                return cam
+            except Exception as e:
+                raise RuntimeError(f"Problem setting up camera: {e}")
 
-        if len(self.cameras) == 0:
+        self.pointing_camera = setup_cam("pointing_camera", primary=True)
+        acquisition_camera = setup_cam("acquisition_camera", primary=True)
+        self.acquisition_cameras[acquisition_camera.name] = acquisition_camera
+
+        if len(self.acquisition_cameras) == 0:
             raise error.CameraNotFound(
                 msg="No cameras available. Exiting.", exit=True)
 
@@ -751,11 +754,16 @@ class Manager(Base):
         """
         
         try:
-            self.scheduler = DefaultScheduler(
-                ntpServ=self.serv_time,
-                obs=self.observatory,
-                config=load_config(config_files=['targets']))
+            if 'scheduler' in self.config:
+                scheduler_name = self.config['scheduler']['module']
+                scheduler_target_file = self.config[
+                    'scheduler']['target_file']
+                scheduler_module = load_module('ObservationPlanner.'+
+                                               scheduler_name)
+                self.scheduler = getattr(scheduler_module, scheduler_name)(
+                    ntpServ=self.serv_time,
+                    obs=self.observatory,
+                    config=load_config(config_files=[scheduler_target_file]))
         except Exception as e:
-            raise RuntimeError('Problem setting up observation planner: '
-                               '{}'.format(e))
+            raise RuntimeError(f"Problem setting up scheduler: {e}")
 

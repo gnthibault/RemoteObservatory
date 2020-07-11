@@ -51,24 +51,22 @@ def on_enter(event_data):
             model.logger.debug("Pointing headers: {}".format(fits_headers))
             camera_events = dict()
 
-            for cam_name, camera in model.manager.cameras.items():
-                if camera.is_primary:
-                    model.logger.debug("Exposing for camera: {}".format(
-                                        cam_name))
-                    try:
-                        # Start the exposures
-                        camera_event = camera.take_observation(
-                            observation,
-                            fits_headers,
-                            exp_time=30.*u.second,
-                            filename='pointing{:02d}'.format(img_num)
-                        )
+            cam_name = model.manager.pointing_camera.name
+            camera = model.manager.pointing_camera
+            model.logger.debug(f"Exposing for camera: {cam_name}")
+            try:
+                # Start the exposures
+                camera_event = camera.take_observation(
+                    observation,
+                    fits_headers,
+                    exp_time=camera.pointing_seconds*u.second,
+                    filename='pointing{:02d}'.format(img_num)
+                )
+                camera_events[cam_name] = camera_event
 
-                        camera_events[cam_name] = camera_event
-
-                    except Exception as e:
-                        model.logger.error(f"Problem waiting for images: "
-                          f"{e}:{traceback.format_exc()}")
+            except Exception as e:
+                model.logger.error(f"Problem waiting for images: "
+                  f"{e}:{traceback.format_exc()}")
 
             wait_time = 0.
             while not all([event.is_set() for event in camera_events.values()]):
@@ -78,7 +76,7 @@ def on_enter(event_data):
                     break
 
                 model.logger.debug(f"State: pointing, waiting for images: "
-                    '{wait_time} seconds')
+                    f'{wait_time} seconds')
                 model.status()
 
                 if wait_time > TIMEOUT_SECONDS:
@@ -98,7 +96,7 @@ def on_enter(event_data):
 
                 pointing_image.solve_field(verbose=True)
                 observation.pointing_image = pointing_image
-                model.logger.debug("Pointing file: {}".format(pointing_image))
+                model.logger.debug(f"Pointing file: {pointing_image}")
                 pointing_error = pointing_image.pointing_error
                 model.say("Ok, I have the pointing picture, "
                           "let's see how close we are.")

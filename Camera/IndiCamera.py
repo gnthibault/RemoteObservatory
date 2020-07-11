@@ -38,6 +38,7 @@ class IndiCamera(IndiDevice):
             config = dict(
                 camera_name='CCD Simulator',
                 autofocus_seconds=5,
+                pointing_seconds=30,
                 autofocus_size=500,
                 focuser=dict(
                     module="IndiFocuser",
@@ -48,6 +49,7 @@ class IndiCamera(IndiDevice):
                 ))
         device_name = config['camera_name']
         self.autofocus_seconds = float(config['autofocus_seconds'])
+        self.pointing_seconds = float(config['pointing_seconds'])
         self.autofocus_size = int(config['autofocus_size'])
         # If scope focuser is specified in the config, load
         try:
