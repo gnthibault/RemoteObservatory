@@ -447,13 +447,11 @@ class AutoFocuser(Base):
             if best_focus < min_focus:
                 self.logger.warning(f"Fitting failure: best focus {best_focus} "
                                     f"below sweep limit {min_focus}")
-
                 best_focus = focus_positions[1]
 
             if best_focus > max_focus:
                 self.logger.warning(f"Fitting failure: best focus {best_focus} "
-                                    f"above sweep limit {min_focus}")
-
+                                    f"above sweep limit {max_focus}")
                 best_focus = focus_positions[-2]
 
         else:
@@ -477,7 +475,7 @@ class AutoFocuser(Base):
             #    initial_thumbnail = initial_thumbnail - dark_thumb
             #    final_thumbnail = final_thumbnail - dark_thumb
 
-            fig, ax = plt.subplots(3,1,figsize=(9, 18))
+            fig, ax = plt.subplots(1,3,figsize=(22, 7))
 
             im1 = ax[0].imshow(initial_thumbnail, interpolation='none',
                              cmap=self.get_palette(), norm=colours.LogNorm())
@@ -485,8 +483,9 @@ class AutoFocuser(Base):
             ax[0].set_title('Initial focus position: {}'.format(initial_focus))
             ax[1].plot(focus_positions, metric, 'bo', label='{}'.format(merit_function))
             if fitted:
-                fs = np.arange(focus_positions[fitting_indices[0]],
-                               focus_positions[fitting_indices[1]] + 1)
+                fs = np.linspace(focus_positions[fitting_indices[0]],
+                                 focus_positions[fitting_indices[1]],
+                                 100)
                 ax[1].plot(fs, fit(fs), 'b-', label='Polynomial fit')
 
             ax[1].set_xlim(focus_positions[0] - focus_step / 2, focus_positions[-1] + focus_step / 2)
@@ -512,7 +511,10 @@ class AutoFocuser(Base):
             plot_path = os.path.join(file_path_root, '{}_focus.png'.format(focus_type))
 
             fig.tight_layout()
+            latest_path = '{}/latest_focus.jpg'.format(
+                self.config['directories']['images'])
             fig.savefig(plot_path, transparent=False)
+            fig.savefig(latest_path, transparent=False)
 
             # explicitly close and delete figure
             fig.clf()

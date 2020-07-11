@@ -57,7 +57,13 @@ mount:
     indi_client :
         indi_host : localhost
         indi_port : 7624
-camera:
+pointing_camera:
+    module: IndiAbstractCamera
+    camera_name : Guide Simulator
+    indi_client :
+        indi_host : localhost
+        indi_port : 7624
+acquisition_camera:
     module: IndiAbstractCamera
     camera_name : CCD Simulator
     #module: IndiEos6DCamera

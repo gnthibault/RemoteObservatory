@@ -99,10 +99,6 @@ class Scheduler(Base):
         return len(self.observations.keys()) > 0
 
     @property
-    def has_valid_observations(self):
-        return len(self.observations.keys()) > 0
-
-    @property
     def current_observation(self):
         """The observation that is currently selected by the scheduler
 
@@ -273,7 +269,7 @@ class Scheduler(Base):
         for target_name, filter_config in self.config['targets'].items():
             #target = FixedTarget.from_name(target_name)
             # TODO TN Urgent: fix that temporary stuff
-            target = FixedTarget(SkyCoord(ra=15*u.deg, dec=55*u.deg,
+            target = FixedTarget(SkyCoord(ra=195*u.deg, dec=55*u.deg,
                                           frame='icrs', equinox='J2000.0'),
                                  name="GenericTarget")
             #target = FixedTarget(SkyCoord(33.33*u.deg, 66.66*u.deg,
@@ -283,27 +279,29 @@ class Scheduler(Base):
                 exp_time_sec = config["exp_time_sec"]*u.second
                 #TODO TN retrieve priority from the file ?
                 priority = 0 if (filter_name=='Luminance') else 1
-                try:
-                    # number of image per scheduled "round" of imaging
-                    # min number of exposure must be an integer number of times
-                    # this number
-                    exp_set_size = max(1, min(count,
-                        self.MaximumSlotDurationSec//exp_time_sec))
-                    #to be fixed
-                    #min_nexp = (count+exp_set_size-1)//exp_set_size
-                    #min_nexp = min_nexp * exp_set_size
-                    b = ObservingBlock.from_exposures(
-                            target,
-                            priority,
-                            exp_time_sec,
-                            exp_set_size,
-                            camera_time,
-                            configuration={'filter': filter_name},
-                            constraints=self.constraints)
-                    self.add_observation(b,)
-                except AssertionError as e:
-                    self.logger.debug("Error while adding target : {}"
-                                      "".format(e))
+                while count>0:
+                    try:
+                        # number of image per scheduled "round" of imaging
+                        # min number of exposure must be an integer number of times
+                        # this number
+                        exp_set_size = max(1, min(count,
+                            self.MaximumSlotDurationSec//exp_time_sec))
+                        #to be fixed
+                        #min_nexp = (count+exp_set_size-1)//exp_set_size
+                        #min_nexp = min_nexp * exp_set_size
+                        b = ObservingBlock.from_exposures(
+                                target,
+                                priority,
+                                exp_time_sec,
+                                exp_set_size,
+                                camera_time,
+                                configuration={'filter': filter_name},
+                                constraints=self.constraints)
+                        self.add_observation(b,)
+                        count -= exp_set_size
+                    except AssertionError as e:
+                        self.logger.debug("Error while adding target : {}"
+                                          "".format(e))
 
 ##########################################################################
 # Utility Methods

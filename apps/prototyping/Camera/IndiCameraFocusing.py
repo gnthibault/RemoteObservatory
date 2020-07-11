@@ -61,9 +61,8 @@ if __name__ == '__main__':
 
     # Now focus
     assert(cam.focuser.is_connected)
-    autofocus_event = threading.Event()
-    #cam.autofocus_async(autofocus_event, coarse=True)
-    cam.autofocus_async(autofocus_event, coarse=False)
+    #autofocus_event = cam.autofocus_async(coarse=True)
+    autofocus_event = cam.autofocus_async(coarse=False)
     autofocus_event.wait()
 
 

@@ -40,7 +40,7 @@ class Observation(Base):
         self._seq_time = None
         self.id = self.name+'_'+str(hash(self))
 
-        self.logger.debug("Observation created: {}".format(self))
+        self.logger.debug(f"Observation created: {self}")
 
 
 ###############################################################################
