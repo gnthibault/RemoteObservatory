@@ -26,9 +26,6 @@ from Base.Base import Base
 # Local stuff: IndiClient
 from helper.IndiClient import IndiClient
 
-# Local stuff: Observation planning
-from ObservationPlanner.DefaultScheduler import DefaultScheduler
-
 # Local stuff: Service
 from Service.NovaAstrometryService import NovaAstrometryService
 

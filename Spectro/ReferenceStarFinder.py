@@ -15,49 +15,54 @@ v19-03-05
 # Generic stuff
 import csv
 
+# Numerical stuff
+import numpy as np
+
 # Astronomy stuff
 from astropy import units as u
 from astropy.coordinates import FK5
-from astropy.coordinates import SkyCoord
 from astropy.coordinates import  SkyCoord, FK5, AltAz, Angle
 
 # local defs
 #Maximum Eb-v (0.1), or None
-maxebv = None
-csvfilename=''
+csvfilename='Spectro/spectral_references.csv'
 
-def starload(star,target,maxseparation,altaz): #Compute an OrderedDict : separation, alt, az
+def starload(star, target, altaz_frame, maxseparation, maxebv):
+    """ Compute an OrderedDict : separation, alt, az
+    """
     try:
         if (float(star['EB-V'])<0):
-            star['EB-V'] = '0'
-        if (maxebv is not None and float(star['EB-V']) > maxebv):
-            return None #maximum Eb-v
-        star['Sky'] = SkyCoord(star['RA_dec'], star['de_dec'], unit='deg')
-        if (not Angle(star['de_dec']+'d').is_within_bounds((target['Dec'].deg-maxseparation)*u.deg,(target['Dec'].deg+maxseparation)*u.deg)):
+            star['EB-V'] = 0
+        else:
+            star['EB-V'] = float(star['EB-V'])
+        if star['EB-V'] > maxebv:
             return None
-        star['Separation'] = target['Sky'].separation(star['Sky']).deg
+        star['Sky'] = SkyCoord(ra=float(star['RA_dec'])*u.deg,
+                               dec=float(star['de_dec'])*u.deg)
+        star['Separation'] = target.coord.separation(star['Sky'])
         if star['Separation']>maxseparation:
             return None
-        altaz = star['Sky'].transform_to(altaz)
-        star['Alt'] = float(altaz.alt.to_string(decimal=True))
-        if (star['Alt']<=-10):
-            return None
-        star['Delta'] = star['Alt'] - target['Alt']
-        star['secz'] = float(altaz.secz)
+        altaz = star['Sky'].transform_to(altaz_frame)
+        star['Alt'] = altaz.alt
+        star['Delta'] = star['Alt']-target.coord.transform_to(altaz_frame).alt
+        star['secz'] = altaz.secz.value
     except Exception as e:
+        print(e)
         return None
     return star
 
-def baseload(target,maxseparation,altaz): #Read CSV database to put it in an OrderedDict
+def baseload(target, altaz_frame, maxseparation, maxebv):
+    """ Read CSV database to put it in an OrderedDict
+    """
     starbase = []
     with open(csvfilename, newline='\n') as csvfile:
         csvbase = csv.DictReader(csvfile, delimiter=',')
 
         #if parallelize:	#Joblib.Parallel : parallelise main loop        loky multiprocessing threading
-        #    starbase = Parallel(n_jobs=-1,backend="multiprocessing",verbose=0)(delayed(starload)(star,target,maxseparation,altaz) for star in csvbase)
+        #    starbase = Parallel(n_jobs=-1,backend="multiprocessing",verbose=0)(delayed(starload)(star,target,maxseparation,altaz_frame) for star in csvbase)
         #else:
-        starbase = [starload(star,target,maxseparation,altaz) for star in csvbase] #old way
-
+        starbase = [starload(star, target, altaz_frame, maxseparation, maxebv)
+                    for star in csvbase]
     return starbase
 
 def stardisplay(num,star): # display a star
@@ -84,28 +89,23 @@ def stardisplay(num,star): # display a star
 
 
 
-def TODOTN(target, maxseparation, altaz):
+def best_references(target, altaz_frame, maxseparation, maxebv=5):
     #Geting stars database, with separation and altaz computed :
-    base = baseload(target=target,maxseparation=maxseparation,altaz=altaz)
-    if (base == []):
-        return ['Error while loading database from csv or processing it']
+    base = baseload(target=target,
+                    altaz_frame=altaz_frame,
+                    maxseparation=maxseparation,
+                    maxebv=maxebv)
+    if not base:
+        raise RuntimeError(f"Error while loading database from csv or "
+                           f"processing it")
 
     #Setting final stars array
     final = []  #will contain only nearest stars
     for num, star in enumerate(base):
-        if star is not None and star['Separation'] <= maxseparation and float(star['EB-V']) < 10.1 : final.append(star)
+        if (star is not None):
+            final.append(star)
 
     #sorting stars by Δh :
-    final = sorted(final, key=lambda item: math.fabs(item['Delta']))
+    final = sorted(final, key=lambda item: np.abs(item['Delta'].to(u.deg).value))
 
-    #setting table header :
-    #displayed.append('\n##  Star:\tSep:\tVMag:\tRA:\t  Dec:\t\tHeight:\t\tB-V:\tEb-v:\tSpType:\t secz:\tMiles:')
-
-    #setting line for each displayed star
-    #line=1
-    #for star in final :
-    #    displayed.append(stardisplay(line,star))
-    #    line += 1
-
-    #finished !
-    #return displayed
+    return final

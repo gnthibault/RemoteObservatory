@@ -53,6 +53,7 @@ scheduler:
     module: DefaultScheduler
     #module: SpectroScheduler
     target_file: targets
+    #target_file: spectral_targets
 mount:
     #module: IndiG11
     #mount_name: Losmandy Gemini

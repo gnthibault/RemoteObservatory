@@ -209,8 +209,8 @@ class Scheduler(Base):
         try:
             observation = Observation(observing_block, exp_set_size)
         except Exception as e:
-            self.logger.warning('Skipping invalid observing_block: {}'.format(
-                                observing_block))
+            self.logger.warning(f"Cannot add  observing_block: "
+                                f"{observing_block}")
             self.logger.warning(e)
         else:
             self.observations[observation.id] = observation
@@ -253,6 +253,22 @@ class Scheduler(Base):
         except Exception as e:
             self.logger.warning(f"Cannot add horizon constraint: {e}")
 
+    def define_target(self, target_name):
+        try:
+            target = FixedTarget.from_name(target_name)
+        except:
+            try:
+                #"5h12m43.2s +31d12m43s" is perfectly valid
+                target = FixedTarget(name=target_name.replace(" ", ""),
+                                     coord=SkyCoord(
+                                         target_name,
+                                         frame='icrs',
+                                         equinox='J2000.0'))
+            except:
+                raise RuntimeError(f"SpectroScheduler: did not managed to "
+                                   f"define target {target_name}")
+        return target
+
     def initialize_target_list(self):
         """Creates valid `Observations` """
 
@@ -267,13 +283,7 @@ class Scheduler(Base):
         #TODO TN readout time, get that info from camera
         camera_time = 1*u.second
         for target_name, filter_config in self.config['targets'].items():
-            #target = FixedTarget.from_name(target_name)
-            # TODO TN Urgent: fix that temporary stuff
-            target = FixedTarget(SkyCoord(ra=95*u.deg, dec=55*u.deg,
-                                          frame='icrs', equinox='J2000.0'),
-                                 name="GenericTarget")
-            #target = FixedTarget(SkyCoord(33.33*u.deg, 66.66*u.deg,
-            #                              frame='icrs', equinox='J2000.0'))
+            target = self.define_target(target_name)
             for filter_name, config in filter_config.items():
                 count = config["count"]
                 exp_time_sec = config["exp_time_sec"]*u.second
@@ -300,8 +310,7 @@ class Scheduler(Base):
                         self.add_observation(b,)
                         count -= exp_set_size
                     except AssertionError as e:
-                        self.logger.debug("Error while adding target : {}"
-                                          "".format(e))
+                        self.logger.debug(f"Error while adding target : {e}")
 
 ##########################################################################
 # Utility Methods

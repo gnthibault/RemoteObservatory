@@ -41,7 +41,7 @@ class ShedObservatory(Base):
                     180 : 30,
                     270 : 30},
                 scope_controller = dict(
-                    module = 'IndiScopeController',
+                    module = 'DummyScopeController',
                     port = '/dev/ttyACM0'),
                 dome_controller = dict(
                     module = 'IndiRorController',
