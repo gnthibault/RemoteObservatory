@@ -21,6 +21,7 @@ if __name__ == '__main__':
     config = dict(
         camera_name='CCD Simulator',
         autofocus_seconds=5,
+        pointing_seconds=10,
         autofocus_size=500,
         focuser=dict(
             module="IndiFocuser",

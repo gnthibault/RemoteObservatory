@@ -26,6 +26,13 @@ class Error(AstropyWarning, Base):
         print("TERMINATING: {}".format(msg))
         sys.exit(1)
 
+class BLOBError(Error):
+
+    """ Error for Indi Blob communication problem """
+    def __init(self, message="Indi BLOB Error"):
+        super().__init__(message)
+
+
 class GuidingError(Error):
 
     """ Error for a guiding system malfunction """

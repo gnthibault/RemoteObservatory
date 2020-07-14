@@ -33,8 +33,7 @@ class IndiAbstractCamera(IndiCamera, AbstractCamera):
             with open(filename, "wb") as f:
                 image.writeto(f, overwrite=True)
         except Exception as e:
-            self.logger.error('Error while writing file {} : {}'
-                              ''.format(filename,e))
+            self.logger.error(f"Error while writing file {filename} : {e}")
         exposure_event.set()
 
     def take_exposure(self, exposure_time, filename, *args, **kwargs):

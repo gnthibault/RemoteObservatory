@@ -30,6 +30,7 @@ class IndiCamera(IndiDevice):
         'both': 'UPLOAD_BOTH'}
     DEFAULT_EXP_TIME_SEC = 5
     MAXIMUM_EXP_TIME_SEC = 3601
+    READOUT_TIME_MARGIN = 10
 
     def __init__(self, logger=None, config=None, connect_on_create=True):
         logger = logger or logging.getLogger(__name__)
@@ -71,7 +72,8 @@ class IndiCamera(IndiDevice):
             self.connect()
 
         # Frame Blob: reference that will be used to receive binary
-        self.frame_blob = None
+        #self.frame_blob = None
+        self.last_blob = None
 
         # Default exposureTime, gain
         self.exp_time_sec=5
@@ -107,43 +109,64 @@ class IndiCamera(IndiDevice):
         self.logger.debug('Indi client will register to server in order to '
                           'receive blob CCD1 when it is ready')
         self.indi_client.setBLOBMode(PyIndi.B_ALSO, self.device_name, 'CCD1')
-        self.frame_blob = self.get_prop(propName='CCD1', propType='blob')
+        #self.frame_blob = self.get_prop(propName='CCD1', propType='blob')
 
     def synchronize_with_image_reception(self):
         try:
             #global IndiClientGlobalBlobEvent
             self.logger.debug('synchronize_with_image_reception: Start waiting')
-            #IndiClientGlobalBlobEvent.wait()
-            #IndiClientGlobalBlobEvent.clear()
-            self.indi_client.blob_event.wait()
-            self.indi_client.blob_event.clear()
+            received = False
+            #while not received:
+            #    self.indi_client.blob_event.wait()
+            #    for blob in self.frame_blob:
+            #        device = blob.bvp.device
+            #        self.logger.debug(f"Received blob for device {device}")
+            #        if device == self.device_name:
+            #            received = True
+            #    self.indi_client.blob_event.clear()
+            ##with self.indi_client.listener(self.device_name) as blob_listener:
+            ##    self.last_blob = blob_listener.get()
             self.logger.debug('synchronize_with_image_reception: Done')
+
         except Exception as e:
-            self.logger.error('Indi Camera Error in '
-                'synchronize_with_image_reception: {}'.format(e))
+            self.logger.error(f"Indi Camera Error in "
+                f"synchronize_with_image_reception: {e}")
 
     def get_received_image(self):
         try:
-            ret = []
-            self.logger.debug('get_received_image frame_blob: {}'.format(
-                self.frame_blob))
-            for blob in self.frame_blob:
-                self.logger.debug('Indi camera, processing blob with name: {},'
-                                   ', size: {}, format: {}'.format(
-                                   blob.name,blob.size,blob.format))
-                # pyindi-client adds a getblobdata() method to IBLOB item
-                # for accessing the contents of the blob, which is a bytearray
-                return fits.open(io.BytesIO(blob.getblobdata()))
+            #ret = []
+            #self.logger.debug(f"get_received_image frame_blob: "
+            #                  f"{self.frame_blob}")
+            #blobs = [b for b in self.frame_blob]
+            #for blob in blobs: #self.frame_blob:
+            #    self.logger.debug(f"Indi camera, processing blob with name: "
+            #                      f"{blob.name}, size: {blob.size}, format: "
+            #                      f"blob.format")#format generates an error
+            #    # pyindi-client adds a getblobdata() method to IBLOB item
+            #    # for accessing the contents of the blob, which is a bytearray
+            #    #return fits.open(io.BytesIO(blob.getblobdata()))
+            #return fits.open(io.BytesIO(blobs[0].getblobdata()))
+            if self.last_blob is None:
+                with self.indi_client.listener(self.device_name) as blob_listener:
+                    image = blob_listener.get(timeout=self.exp_time_sec+
+                        self.READOUT_TIME_MARGIN).get_fits()
+            else:
+                image = self.last_blob.get_fits()
+                self.last_blob = None
+            return image
         except Exception as e:
             self.logger.error('Indi Camera Error in get_received_image: '+str(e))
 
     def shoot_async(self):
         try:
-            self.logger.info(f"launching acquisition with {self.exp_time_sec} "
-                             "sec exposure time")
-            self.set_number('CCD_EXPOSURE',
-                           {'CCD_EXPOSURE_VALUE': self.sanitize_exp_time(
+            with self.indi_client.listener(self.device_name) as blob_listener:
+                self.logger.info(f"launching acquisition with {self.exp_time_sec} "
+                                 "sec exposure time")
+                self.set_number('CCD_EXPOSURE',
+                               {'CCD_EXPOSURE_VALUE': self.sanitize_exp_time(
                                self.exp_time_sec)}, sync=False)
+                self.last_blob = blob_listener.get(timeout=self.exp_time_sec+
+                                                   self.READOUT_TIME_MARGIN)
         except Exception as e:
             self.logger.error(f"Indi Camera Error in shoot: {e}")
 
@@ -334,8 +357,8 @@ class IndiCamera(IndiDevice):
         af = IndiAutoFocuser(camera=self)
         autofocus_event = af.autofocus(coarse=coarse, blocking=False,
                                        make_plots=True)
-        self.logger.info(f"Camera {self.device_name} just finished autofocus "
-                         f"with focuser {self.focuser.device_name}")
+        self.logger.info(f"Camera {self.device_name} just launched async "
+                         f"autofocus with focuser {self.focuser.device_name}")
         return autofocus_event
 
     def __str__(self):
