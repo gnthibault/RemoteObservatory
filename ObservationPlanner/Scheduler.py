@@ -74,6 +74,7 @@ class Scheduler(Base):
         self.observations = dict()
         self._current_observation = None
         self.observed_list = OrderedDict()
+        self.calibrated_list = OrderedDict()
         self.constraints = []
 
         if config is None:
@@ -136,8 +137,7 @@ class Scheduler(Base):
                     self.observed_list[new_observation.seq_time] = (
                         new_observation)
 
-        self.logger.info("Setting new observation to {}".format(
-            new_observation))
+        self.logger.info(f"Setting new observation to {new_observation}")
         self._current_observation = new_observation
 
 ##########################################################################
@@ -184,6 +184,15 @@ class Scheduler(Base):
         """Reset the observed list """
         self.logger.debug('Resetting observed list')
         self.observed_list = OrderedDict()
+
+    def reset_calibrated_list(self):
+        """Reset the observed list """
+        self.logger.debug('Resetting calibrated list')
+        self.calibrated_list = OrderedDict()
+
+    def set_observed_to_calibrated(self):
+        self.calibrated_list.update(self.observed_list)
+        self.reset_observed_list()
 
     def observation_available(self, observation, time_range):
         """Check if observation is available at given time

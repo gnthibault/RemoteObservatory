@@ -475,16 +475,16 @@ class RemoteObservatoryFSM(StateMachine, Base):
                 msg_obj = q.get_nowait()
                 call_method = msg_obj.get('message', '')
                 # Lookup and call the method
-                self.logger.info('Message received: {} {}'.format(queue_type,
-                                                                  call_method))
+                self.logger.info(f"Message received: {queue_type} "
+                                 f"{call_method}")
                 cmd_dispatch[queue_type][call_method]()
             except queue.Empty:
                 break
             except KeyError:
                 pass
             except Exception as e:
-                self.logger.warning('Problem calling method from messaging: '
-                                    '{}'.format(e))
+                self.logger.warning(f"Problem calling method from messaging: "
+                                    f"{e}")
             else:
                 break
 

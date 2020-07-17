@@ -35,7 +35,6 @@ from utils.config import load_config
 #from pocs.utils import images as img_utils
 from utils import load_module
 
-
 class Manager(Base):
 
     def __init__(self, *args, **kwargs):
@@ -74,6 +73,10 @@ class Manager(Base):
         # setup guider
         self.logger.info('\tSetting up guider')
         self._setup_guider()
+
+        # Setup filter wheel
+        self.logger.info('\tSetting up calibration module')
+        self._setup_calibration()
 
         # Setup observation planner
         self.logger.info('\tSetting up observation planner')
@@ -210,6 +213,17 @@ class Manager(Base):
 
         return self.current_observation
 
+    def acquire_calibration(self):
+        for seq_time, observation in self.scheduler.observed_list.items():
+            self.logger.debug("Housekeeping for {}".format(observation))
+
+        for cam_name, camera in self.acquisition_cameras.items():
+            self.logger.debug(f"Going to start calibration of camera {cam_name}"
+                              f"[{camera.uid}]")
+            calibration = self._get_calibration(camera)
+            calibration.calibrate(self.scheduler.observed_list)
+        self.scheduler.set_observed_to_calibrated().
+
     def cleanup_observations(self):
         """Cleanup observation list
 
@@ -243,6 +257,7 @@ class Manager(Base):
         self.scheduler.reset_observed_list()
         """
         self.logger.warning("TODO TN SHOULD CLEANUP THE DATA HERE")
+        self.scheduler.reset_calibrated_list()
 
     def observe(self):
         """Take individual images for the current observation
@@ -709,7 +724,7 @@ class Manager(Base):
             except Exception as e:
                 raise RuntimeError(f"Problem setting up camera: {e}")
 
-        self.pointing_camera = setup_cam("pointing_camera", primary=True)
+        self.pointing_camera = setup_cam("pointing_camera", primary=False)
         acquisition_camera = setup_cam("acquisition_camera", primary=True)
         self.acquisition_cameras[acquisition_camera.name] = acquisition_camera
 
@@ -744,6 +759,25 @@ class Manager(Base):
                     config = self.config['guider'])
         except Exception as e:
             raise RuntimeError('Problem setting up guider: {}'.format(e))
+
+    def _get_calibration(self, camera):
+        """
+            Sets up the calibration / calibration acquisition procedure
+        """
+        calibration = None
+        try:
+            if 'calibration' in self.config:
+                calibration_name = self.config["calibration"]["module"]
+                calibration_module = load_module("calibration."+
+                                               calibration_name)
+                calibration = getattr(calibration_module,
+                                           calibration_name)(
+                    camera=camera,
+                    config=self.config["calibration"])
+        except Exception as e:
+            raise RuntimeError(f"Problem setting up scheduler: {e}")
+        
+        return calibration
 
     def _setup_scheduler(self):
         """

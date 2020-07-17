@@ -73,11 +73,11 @@ def on_enter(event_data):
             time.sleep(SLEEP_SECONDS)
 
     except error.Timeout as e:
-        model.logger.warning('Timeout while waiting for images. Something'
-                             ' wrong with camera, going to park.')
+        model.logger.warning("Timeout while waiting for images. Something "
+                             "wrong with camera, going to park.")
     except Exception as e:
-        model.logger.warning("Problem with imaging, {}: {}".format(e,
-                             traceback.format_exc()))
+        model.logger.warning(f"Problem with imaging, {e}: "
+                             f"{traceback.format_exc()}")
         model.say("Hmm, I'm not sure what happened with that exposure.")
     else:
         model.manager.current_observation.current_exp += 1

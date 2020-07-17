@@ -54,6 +54,16 @@ scheduler:
     #module: SpectroScheduler
     target_file: targets
     #target_file: spectral_targets
+spectroscope_controller:
+    module: IndiSpectroController
+calibration:
+    module: ImagingCalibration
+    #module: SpectralCalibration
+    spectral_calib_sec: 30
+    flat_sec: 5
+    #controller:
+        #module: IndiSpectroController
+        #controller_name: spox
 mount:
     #module: IndiG11
     #mount_name: Losmandy Gemini

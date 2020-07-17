@@ -22,5 +22,5 @@ def on_enter(event_data):
             if observation.current_exp % observation.number_exposures == 0:
                 model.next_state = 'scheduling'
     except Exception as e:
-        model.logger.error("Problem in analyzing: {}".format(e))
+        model.logger.error(f"Problem in analyzing: {e}")
         model.next_state = 'parking'

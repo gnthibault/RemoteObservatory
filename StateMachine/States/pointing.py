@@ -47,7 +47,7 @@ def on_enter(event_data):
             fits_headers = model.manager.get_standard_headers(
                 observation=observation
             )
-            fits_headers['POINTING'] = 'True'
+            fits_headers["POINTING"] = "True"
             model.logger.debug("Pointing headers: {}".format(fits_headers))
             camera_events = dict()
 
@@ -57,16 +57,16 @@ def on_enter(event_data):
             try:
                 # Start the exposures
                 camera_event = camera.take_observation(
-                    observation,
-                    fits_headers,
+                    observation=observation,
+                    headers=fits_headers,
+                    filename='pointing{:02d}'.format(img_num),
                     exp_time=camera.pointing_seconds*u.second,
-                    filename='pointing{:02d}'.format(img_num)
                 )
                 camera_events[cam_name] = camera_event
 
             except Exception as e:
                 model.logger.error(f"Problem waiting for images: "
-                  f"{e}:{traceback.format_exc()}")
+                                   f"{e}:{traceback.format_exc()}")
 
             wait_time = 0.
             while not all([event.is_set() for event in camera_events.values()]):
@@ -76,7 +76,7 @@ def on_enter(event_data):
                     break
 
                 model.logger.debug(f"State: pointing, waiting for images: "
-                    f'{wait_time} seconds')
+                                   f'{wait_time} seconds')
                 model.status()
 
                 if wait_time > TIMEOUT_SECONDS:
@@ -88,7 +88,7 @@ def on_enter(event_data):
             if model.manager.current_observation is not None:
                 #TODO Integrate this feature with our own solver class
                 pointing_id, pointing_path = (
-                    model.manager.current_observation.last_exposure)
+                    model.manager.current_observation.last_pointing)
                 pointing_image = Image(
                     pointing_path,
                     location=model.manager.earth_location

@@ -5,6 +5,7 @@ states:
     - parked
     - sleeping
     - housekeeping
+    - calib_acq
     - ready
     - scheduling
     - slewing
@@ -25,6 +26,7 @@ transitions:
             - focusing
             - observing
             - analyzing
+            - calib_acq
         dest: parking
         trigger: park
     -
@@ -35,6 +37,14 @@ transitions:
         source: parked
         dest: housekeeping
         trigger: clean_up
+    -
+        source: housekeeping
+        dest: calib_acq
+        trigger: acquire_calibration
+    -
+        source: calib_acq
+        dest: housekeeping
+        trigger: calibration_done
     -
         source: housekeeping
         dest: sleeping

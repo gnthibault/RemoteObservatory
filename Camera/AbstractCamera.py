@@ -74,7 +74,7 @@ class AbstractCamera(Base):
             filename (str, optional): pass a filename for the output FITS file 
                                       to overrride the default file naming
                                       system
-            **kwargs (dict): Optional keyword arguments (`exp_time`, dark)
+            **kwargs (dict): Optional keyword arguments (`exp_time`)
 
         Returns:
             threading.Event: An event to be set when the image is done
@@ -84,8 +84,9 @@ class AbstractCamera(Base):
         # (see `process_exposure`)
         observation_event = Event()
 
-        exp_time, file_path, image_id, metadata = self._setup_observation(
-            observation, headers, filename, *args, **kwargs)
+        exp_time, file_path, image_id, metadata, is_pointing = (
+            self._setup_observation(observation, headers, filename, *args,
+                                    **kwargs))
        
         exposure_event = self.take_exposure(exposure_time=exp_time,
             filename=file_path, *args, **kwargs)
@@ -93,6 +94,8 @@ class AbstractCamera(Base):
         # Add most recent exposure to list
         if self.is_primary:
             observation.exposure_list[image_id] = file_path
+        if is_pointing:
+            observation.pointing_list[image_id] = file_path
 
         # Process the exposure once readout is complete
         t = Thread(target=self.process_exposure, args=(metadata,
@@ -145,6 +148,9 @@ class AbstractCamera(Base):
             observation.seq_time
         )
 
+        # check if it is a pointing image
+        is_pointing = ('POINTING' in headers) and (headers["POINTING"]=="True")
+
         # Camera metadata
         metadata = {
             'camera_name': self.name,
@@ -160,7 +166,7 @@ class AbstractCamera(Base):
         metadata.update(headers)
         exp_time = kwargs.get('exp_time', observation.time_per_exposure)
         metadata['exp_time'] = exp_time.to(u.second).value
-        return exp_time, file_path, image_id, metadata
+        return exp_time, file_path, image_id, metadata, is_pointing
 
     def take_dark(self, temperature, exp_time, headers=None,
                   calibration_ref=None, filename=None,
@@ -305,14 +311,12 @@ class AbstractCamera(Base):
                 self.db.insert_current('observations', info,
                                        store_permanently=False)
             except Exception as e:
-                self.logger.error('Problem adding observation to db: {}'
-                                  ''.format(e))
+                self.logger.error(f"Problem adding observation to db: {e}")
         else:
-            self.logger.debug('Compressing {}'.format(file_path))
+            self.logger.debug(f"Compressing {file_path}")
             fits_utils.fpack(file_path)
 
-        self.logger.debug("Adding image metadata to db: {}".format(image_id))
-
+        self.logger.debug(f"Adding image metadata to db: {image_id}")
         self.db.insert('observations', {
             'data': info,
             'date': self.serv_time.get_utc(),

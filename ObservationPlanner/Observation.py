@@ -36,6 +36,7 @@ class Observation(Base):
         #self.exp_time = exp_time
         #self.min_nexp = min_nexp
         self.exposure_list = OrderedDict()
+        self.pointing_list = OrderedDict()
         self.pointing_image = None
         self._seq_time = None
         self.id = self.name+'_'+str(hash(self))
@@ -100,6 +101,19 @@ class Observation(Base):
             self.logger.warning("No exposure available")
 
     @property
+    def last_pointing(self):
+        """ Return the latest exposure information
+
+        Returns:
+            tuple: `image_id` and full path of most recent exposure from the
+                   pointing camera
+        """
+        try:
+            return list(self.pointing_list.items())[-1]
+        except IndexError:
+            self.logger.warning("No pointing available")
+
+    @property
     def time_per_exposure(self):
         return self.observing_block.time_per_exposure
 
@@ -122,7 +136,7 @@ class Observation(Base):
     def reset(self):
         """Resets the exposure values for the observation
         """
-        self.logger.debug("Resetting observation {}".format(self))
+        self.logger.debug(f"Resetting observation {self}")
 
         self.current_exp = 0
         self.merit = 0.0
@@ -145,7 +159,7 @@ class Observation(Base):
         status = {
             'current_exp': self.current_exp,
             'equinox': equinox,
-            'number_exposure': self.number_exposures.value,
+            'number_exposure': self.number_exposures,
             'time_per_exposure': self.time_per_exposure.to(u.second).value,
             'total_exposure': self.set_duration.to(u.second).value,
             'field_name': self.name,
