@@ -37,6 +37,59 @@ If you are interested in compiling/using the arduino stuff here, please download
 ## Building 3D support for virtual telescope
 pip install PyQt5 PyQt3D pyqtgraph
 
+## Setup indiweb on the machine that will host drivers
+check installation information on: https://github.com/knro/indiwebmanager
+pip install indiweb
+sudo cp indiwebmanager.service /etc/systemd/system/
+sudo chmod 644 /etc/systemd/system/indiwebmanager.service
+sudo systemctl daemon-reload
+sudo systemctl enable indiwebmanager.service
+
+content of indiwebmanager.service
+```bash
+# From https://github.com/knro/indiwebmanager
+# sudo pip install indiweb
+# sudo cp indiwebmanager.service /etc/systemd/system/
+# sudo chmod 644 /etc/systemd/system/indiwebmanager.service
+# sudo systemctl daemon-reload
+# sudo systemctl enable indiwebmanager.service
+# sudo reboot
+# sudo systemctl status indiwebmanager.service
+
+[Unit]
+Description=INDI Web Manager
+After=multi-user.target
+
+[Service]
+Type=idle
+# MUST SET YOUR USERNAME HERE.
+
+User=rock
+ExecStart=/usr/local/bin/indi-web -v --xmldir /home/user/projects/RemoteObservatory/conf_files/indi_driver_conf
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
+```
+
+# Specific case of aarch64 kernel and armv8 userland
+go to your set of build directories:
+* indi-altair
+* indi-duino
+* indi-libaltaircam
+* indi-toupbase
+* libmallincam
+* libstarshootg
+* indi
+* indi-asi
+* indi-gphoto
+* indi-shelyak
+* libASICamera2
+* libnncam
+* libtoupcam
+Then edit CMakeFiles/3.7.2/CMakeSystem.cmake
+replace aarch64 by armv8
 
 # How to launch the full stuff
 
