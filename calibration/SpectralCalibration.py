@@ -5,6 +5,9 @@ from threading import Thread
 # Numerical stuff
 import numpy as np
 
+# Astropy stuff
+import astropy.units as u
+
 # Local stuff
 from Base.Base import Base
 
@@ -27,7 +30,11 @@ class SpectralCalibration(Base):
         self.gpsCoordinates = dict(latitude = config['latitude'],
                                    longitude = config['longitude'])
         self.spectral_calib_exp_sec = config["spectral_calib_sec"]
+        self.spectral_calib_nb = config["spectral_calib_nb"]
         self.flat_exp_sec = config["flat_sec"]
+        self.flat_nb = config["flat_nb"]
+        self.dark_exp_sec = []
+        self.dark_nb = config["dark_nb"]
  
         # If controller is specified in the config, load
         try:
@@ -48,16 +55,31 @@ class SpectralCalibration(Base):
                           f"{self.controller.device_name}")
 
     def calibrate(self, observed_list):
+        self.dark_exp_sec = []
         for seq_time, observation in self.observed_list.items():
-        pass
-    def switch_on_spectro_light(self):
-        self.logger("Switching-on spectro light")
+            self.dark_exp_sec.append(
+                observation.time_per_exposure.to(u.second).value)
+        
+        self.dark_exp_sec = np.unique(self.dark_exp_sec).tolist()
+        self.take_flat()
+        self.take_spectral_calib()
+        self.take_dark()
 
-    def switch_off_spectro_light(self):
-        self.logger("Switching-off spectro light")
+    def take_flat(self):
+        self.controller.switch_on_flat_light()
+        self.flat_exp_sec
+        self.flat_nb
+        self.controller.switch_on_flat_light()
 
-    def switch_on_flat_light(self):
-        self.logger("Switching-on flat light")
+    def take_spectral_calib(self):
+        self.controller.switch_on_spectro_light()
+        self.spectral_calib_exp_sec
+        self.spectral_calib_nb
+        self.controller.switch_off_spectro_light()
 
-    def switch_off_flat_light(self):
+    def take_dark(self):
+        self.controller.close_optical_path_for_dark()
+        self.dark_exp_sec = []
+        self.dark_nb
+        self.controller.open_optical_path()
 

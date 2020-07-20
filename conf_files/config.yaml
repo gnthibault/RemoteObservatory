@@ -59,8 +59,12 @@ spectroscope_controller:
 calibration:
     module: ImagingCalibration
     #module: SpectralCalibration
+    spectral_calib_nb: 11
     spectral_calib_sec: 30
+    flat_nb: 21
     flat_sec: 5
+    dark_nb: 11
+
     #controller:
         #module: IndiSpectroController
         #controller_name: spox

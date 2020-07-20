@@ -185,11 +185,14 @@ class AbstractCamera(Base):
         # Process the exposure once readout is complete
         t = Thread(target=self.process_calibration, args=(metadata,
             dark_event, exposure_event))
-        t.name = '{}Thread'.format(self.name)
+        t.name = f"{self.name}_Thread"
         t.start()
 
         return dark_event
 
+    def get_dark_calibration_directory(self, temperature, exp_time,
+                                calibration_ref=None, filename=None):
+        return self.get_calibration_directory(temperature)
     def get_dark_calibration_directory(self, temperature, exp_time,
                                 calibration_ref=None, filename=None):
         calibration_name='dark'
@@ -255,12 +258,16 @@ class AbstractCamera(Base):
     def take_exposure(self, *args, **kwargs):
         """ Must be implemented"""
         raise NotImplementedError
+
     def take_bias_exposure(self, *args, **kwargs):
-        return take_exposure(args, kwargs)
+        return self.take_exposure(*args, **kwargs)
+
     def take_dark_exposure(self, *args, **kwargs):
-        return take_exposure(args, kwargs)
+        return self.take_exposure(*args, **kwargs)
+
     def take_flat_exposure(self, *args, **kwargs):
-        return take_exposure(args, kwargs)
+        return self.take_exposure(*args, **kwargs)
+
     def get_temperature(self):
         """ Must be implemented"""
         return np.NaN
