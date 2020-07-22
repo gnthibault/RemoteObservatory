@@ -58,26 +58,12 @@ class SpectralCalibration(Base):
                           f"{self.controller.device_name}")
 
     def calibrate(self, observed_list):
-        dark_config_list = []
-        for seq_time, observation in self.observed_list.items():
-            dark_config_list.append(
-                (observation.time_per_exposure
-                 observation.configuration['gain'],
-                 observation.configuration['temperature']))
-        #dark_config_list = np.unique(dark_config_list, axis=0).tolist()
-        #dark_config_list = np.unique(self.dark_exp_sec).tolist()
-        # Equivalent of np.unique for non numeric tuple
-        dark_config_list = [dark_config_list[i] for i in 
-            np.unique([np.nonzero([k==m for k in dark_config_list])[0][0]
-                       for m in dark_config_list]
-                     )
-            ]
 
-        self.take_flat()
-        self.take_spectral_calib()
-        self.take_dark(dark_config_list)
+        self.take_flat(observed_list)
+        self.take_spectral_calib(observed_list)
+        self.take_dark(observed_list)
 
-    def take_flat(self):
+    def take_flat(self, observed_list):
         self.controller.switch_on_flat_light()
         for i in range(self.flat_nb):
             event = self.camera.take_calibration(
@@ -89,7 +75,7 @@ class SpectralCalibration(Base):
             event.wait()
         self.controller.switch_off_flat_light()
 
-    def take_spectral_calib(self):
+    def take_spectral_calib(self, observed_list):
         self.controller.switch_on_spectro_light()
         for i in range(self.spectral_calib_nb):
             event = self.camera.take_calibration(
@@ -101,15 +87,34 @@ class SpectralCalibration(Base):
             event.wait()
         self.controller.switch_off_spectro_light()
 
-    def take_dark(self, dark_config_list):
+    def take_dark(self, observed_list):
+        dark_config_dict = {}
+        for seq_time, observation in observed_list.items():
+            conf = (
+                observation.time_per_exposure
+                observation.configuration['gain'],
+                observation.configuration['temperature'])
+            if conf in dark_config_dict:
+                dark_config_dict[conf].append(seq_time)
+            else:
+                dark_config_dict[conf] = [seq_time]
+
+        # Equivalent of np.unique for non numeric tuple
+        #dark_config_dict = [dark_config_dict[i] for i in 
+        #    np.unique([np.nonzero([k==m for k in dark_config_dict])[0][0]
+        #               for m in dark_config_dict]
+        #             )
+        #    ]
         self.controller.close_optical_path_for_dark()
-        for exp_time_sec, gain, temperature in dark_config_list:
+        for obsk, (exp_time_sec, gain, temperature) in dark_config_dict.items():
             for i in range(self.dark_nb):
                 event = self.camera.take_calibration(
                     temperature=temperature,
                     gain=gain,
                     exp_time=exp_time_sec,
-                    calibration_name="dark")
+                    calibration_name="dark",
+                    observations=[observed_list[i] for i in 
+                                  dark_config_dict[obsk]]
                 #yield event
                 event.wait()
         self.controller.open_optical_path()
