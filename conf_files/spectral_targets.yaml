@@ -6,5 +6,7 @@ targets :
     "5h12m43.2s +31d12m43s" :
         priority : 10
         count : 2
+        temperature :
+        gain : 1
         exp_time_sec : 100
 

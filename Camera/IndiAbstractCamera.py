@@ -25,8 +25,19 @@ class IndiAbstractCamera(IndiCamera, AbstractCamera):
 
     # TODO TN: setup event based acquisition properly
     def shoot_asyncWithEvent(self, exp_time_sec, filename, exposure_event,
-                             frame_type='FRAME_LIGHT'):
+                             **kwargs):
+        # set frame type
+        frame_type = kwargs.get("frame_type", "FRAME_LIGHT")
         self.set_frame_type(frame_type)
+        # set gain
+        gain = kwargs.get("gain", self.gain)
+        self.set_gain(gain)
+        # set temperature
+        temperature = kwargs.get("temperature", None)
+        if temperature is not None:
+            self.set_cooling_on()
+            self.set_temperature(temperature)
+        # Now shoot
         self.setExpTimeSec(exp_time_sec)
         self.shoot_async()
         self.synchronize_with_image_reception() 
@@ -43,12 +54,12 @@ class IndiAbstractCamera(IndiCamera, AbstractCamera):
         Should return an event
         """
         exposure_event = threading.Event()
-        frame_type = kwargs.get("frame_type", "FRAME_LIGHT")
         w = threading.Thread(target=self.shoot_asyncWithEvent,
                              args=(exposure_time.to(u.second).value,
                                    filename,
                                    frame_type=frame_type
-                                   exposure_event))
+                                   exposure_event,
+                                   **kwargs))
         w.start()
         return exposure_event
 

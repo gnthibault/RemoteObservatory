@@ -283,9 +283,7 @@ class IndiCamera(IndiDevice):
         self.set_switch('CCD_COOLER',['COOLER_OFF'])
 
     def set_gain(self, value):
-        pass
-        #TODO TN, Try to solve this
-        #self.set_number('DETECTOR_GAIN', [{'Gain': value}])
+        self.set_number('CCD_GAIN', [{'Gain': value}])
 
     def get_gain(self):
         gain = self.get_number('CCD_GAIN')

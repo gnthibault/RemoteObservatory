@@ -142,6 +142,9 @@ PYTHONPATH=. python3 ./apps/launch_arduino_capture.py
 * check if we actually refocus in case the observation id is the same
 * the publisher_port parameter in weather config should be refactored with messaging parameter
 * PHD2 is not closed properly / two instance might be launched which cause error
+* Transform the Manager.acquire_calibration into a generator, so that every acquisition is yielded toward the State, and it may issue messages in the meantime
+
+# Helper
 * use find . -path ./venv -prune -o -name '*.py' to search stuf not in venv
 * use find . -path ./venv -prune -o -name '*.py' -exec grep -H string_to_find {} \;
 * use find . -path ./venv -prune -o -name '*.py' -exec sed -i -e 's/get_local_time_from_ntp/get_local_time/g' {} \; to replace stuff

@@ -84,10 +84,14 @@ class AbstractCamera(Base):
         # (see `process_exposure`)
         observation_event = Event()
 
-        exp_time, file_path, image_id, metadata, is_pointing = (
-            self._setup_observation(observation, headers, filename, *args,
-                                    **kwargs))
-       
+        (exp_time, gain, temperature, file_path, image_id, metadata,
+            is_pointing) = self._setup_observation(observation,
+                                                   headers,
+                                                   filename,
+                                                   *args,
+                                                   **kwargs))
+        kwargs["gain"] = gain
+        kwargs["temperature"] = temperature
         exposure_event = self.take_exposure(exposure_time=exp_time,
             filename=file_path, *args, **kwargs)
 
@@ -151,51 +155,56 @@ class AbstractCamera(Base):
         # check if it is a pointing image
         is_pointing = ('POINTING' in headers) and (headers["POINTING"]=="True")
 
+        # get values
+        exp_time = kwargs.get('exp_time', observation.time_per_exposure)
+        gain = observation.configuration["gain"]
+        temperature = observation.configuration["temperature"]
+        filter_name = observation.configuration.get("filter", "no-filter")
+
         # Camera metadata
         metadata = {
             'camera_name': self.name,
+            'observation_id': observation.id,
             'camera_uid': self.uid,
             'target_name': observation.name,
             'file_path': file_path,
-            'filter': self.filter_type,
+            'filter': filter_name,
             'image_id': image_id,
             'is_primary': self.is_primary,
             'sequence_id': sequence_id,
             'start_time': start_time,
+            'exp_time': exp_time.to(u.second).value,
+            'temperature_degC' : temperature
         }
         metadata.update(headers)
-        exp_time = kwargs.get('exp_time', observation.time_per_exposure)
-        metadata['exp_time'] = exp_time.to(u.second).value
-        return exp_time, file_path, image_id, metadata, is_pointing
+        return (exp_time, gain, temperature, file_path, image_id, metadata,
+            is_pointing)
 
-    def take_dark(self, temperature, exp_time, headers=None,
-                  calibration_ref=None, filename=None,
-                  *args, **kwargs):
+    def take_calibration(self, temperature, gain, exp_time, headers=None,
+                  calibration_ref=None, calibration_name="unknown_calibration",
+                  filename=None, *args, **kwargs):
         # To be used for marking when exposure is complete
         # (see `process_calibration`)
-        dark_event = Event()
+        calib_event = Event()
 
-        file_path, metadata = self._setup_dark_calibration(temperature,
-            exp_time, headers, calibration_ref, filename,
-            *args, **kwargs)
+        file_path, metadata = self._setup_calibration(temperature,
+           gain,  exp_time, headers, calibration_ref, calibration_name,
+           filename, *args, **kwargs)
  
-        exposure_event = self.take_dark_exposure(exposure_time=exp_time,
+        exposure_event = self.take_calibration_exposure(exposure_time=exp_time,
             filename=file_path, *args, **kwargs)
 
         # Process the exposure once readout is complete
         t = Thread(target=self.process_calibration, args=(metadata,
-            dark_event, exposure_event))
+            calib_event, exposure_event))
         t.name = f"{self.name}_Thread"
         t.start()
 
-        return dark_event
+        return calib_event
 
-    def get_dark_calibration_directory(self, temperature, exp_time,
-                                calibration_ref=None, filename=None):
-        return self.get_calibration_directory(temperature)
-    def get_dark_calibration_directory(self, temperature, exp_time,
-                                calibration_ref=None, filename=None):
-        calibration_name='dark'
+    def get_calibration_directory(self, temperature, gain, exp_time,
+        calibration_ref=None, filename=None,
+        calibration_name='unknown_calibration'):
         if headers is None:
             headers = {}
         if calibration_ref is None:
@@ -204,18 +213,20 @@ class AbstractCamera(Base):
         start_time = headers.get('start_time', self.serv_time.flat_time())
 
         # Get the filepath
-        image_dir = "{}/calibration/{}/{}/{}/{}".format(
+        image_dir = "{}/calibration/{}/{}".format(
             self.config['directories']['images'],
             calibration_name,
-            self.uid,
-            temperature,
-            exp_time.to(u.second).value
+            self.uid
         )
         os.makedirs(image_dir, exist_ok=True)
 
         # Get full file path with filename
         if filename is None:
-            file_path = "{}/{}.{}".format(image_dir, start_time,
+            file_path = "{}/{}_{}_{}_{}.{}".format(image_dir,
+                                          start_time,
+                                          temperature,
+                                          gain,
+                                          exp_time.to(u.second).value,
                                           self.file_extension)
         else:
             # Add extension
@@ -229,28 +240,29 @@ class AbstractCamera(Base):
             file_path = filename
         return file_path
 
-    def _setup_dark_calibration(self, temperature, exp_time,
+    def _setup_calibration(self, temperature, gain, exp_time,
                                 headers=None, calibration_ref=None,
+                                calibration_name='unknown_calibration'
                                 filename=None, **kwargs):
         """
             parameter can be temperature for dark or filter for flat ?
         """
-        file_path = self.get_dark_calibration_directory(temperature, exp_time,
-            calibration_ref, filename)
+        file_path = self.get_calibration_directory(temperature, gain,
+            exp_time, calibration_ref, calibration_name, filename)
 
         # Camera metadata
         metadata = {
             'camera_name': self.name,
             'camera_uid': self.uid,
-            'target_name': 'dark_calibration',
+            'calibration_name': calibration_name,
             'file_path': file_path,
             'image_id': image_id,
             'is_primary': self.is_primary,
             'sequence_id': sequence_id,
             'start_time': start_time,
             'exp_time' : exp_time.to(u.second).value,
-            'temperature_target_degC' : temperature.to(u.Celsius).value,
-            'temperature_actual_degC' : self.get_temperature().to(u.Celsius).value
+            'gain': gain,
+            'temperature_degC' : temperature.to(u.Celsius).value,
         }
         metadata.update(headers)
         return file_path, metadata
@@ -258,6 +270,16 @@ class AbstractCamera(Base):
     def take_exposure(self, *args, **kwargs):
         """ Must be implemented"""
         raise NotImplementedError
+
+    def take_calibration_exposure(self, *args, **kwargs):
+        try:
+            exp_meth = f"take_{kwargs['calibration_name']}_exposure"
+            return self.__getattribute__(exp_meth)(*args, **kwargs)
+        except KeyError as e:
+        except AttributeError as e:
+            self.logger.debug(f"calibration exposure falling back to normal "
+                              f"exposure because of: {e}")
+            return self.take_exposure(*args, **kwargs)
 
     def take_bias_exposure(self, *args, **kwargs):
         return self.take_exposure(*args, **kwargs)
@@ -293,7 +315,7 @@ class AbstractCamera(Base):
             exposure_event.wait()
 
         image_id = info['image_id']
-        seq_id = info['sequence_id']
+        observation_id = info['observation_id']
         file_path = info['file_path']
         title=info['target_name']
         primary=info['is_primary']
@@ -327,7 +349,7 @@ class AbstractCamera(Base):
         self.db.insert('observations', {
             'data': info,
             'date': self.serv_time.get_utc(),
-            'sequence_id': seq_id,
+            'observation_id': observation_id,
         })
 
         # Mark the event as done
@@ -345,7 +367,7 @@ class AbstractCamera(Base):
         seq_id = info['sequence_id']
         title=info['target_name']
         primary=info['is_primary']
-        self.logger.debug("Processing {}".format(image_id))
+        self.logger.debug(f"Processing {image_id}")
 
         file_path = self._process_fits(file_path, info)
         try:
@@ -360,13 +382,12 @@ class AbstractCamera(Base):
                 self.db.insert_current('calibrations', info,
                                        store_permanently=False)
             except Exception as e:
-                self.logger.error('Problem adding calibration to db: {}'
-                                  ''.format(e))
+                self.logger.error(f"Problem adding calibration to db: {e}")
         else:
-            self.logger.debug('Compressing {}'.format(file_path))
+            self.logger.debug(f"Compressing {file_path}")
             fits_utils.fpack(file_path)
 
-        self.logger.debug("Adding image metadata to db: {}".format(image_id))
+        self.logger.debug(f"Adding image metadata to db: {image_id}")
 
         self.db.insert('calibrations', {
             'data': info,

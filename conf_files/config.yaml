@@ -59,11 +59,18 @@ spectroscope_controller:
 calibration:
     module: ImagingCalibration
     #module: SpectralCalibration
-    spectral_calib_nb: 11
-    spectral_calib_sec: 30
-    flat_nb: 21
-    flat_sec: 5
-    dark_nb: 11
+    spectral_calib:
+        nb: 11
+        sec: 30
+        gain: 1
+        temperature:
+    flat:
+        nb: 21
+        sec: 5
+        gain: 1
+        temperature:
+    dark:
+        dark_nb: 11
 
     #controller:
         #module: IndiSpectroController
