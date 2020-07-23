@@ -312,11 +312,6 @@ class IndiCamera(IndiDevice):
           'maximum': pv.max,
           'step': pv.step }
 
-    def getRelevantFlatDuration(self, filterName):
-        #expRange = self.getExposureRange()
-        #return int(expRange['minimum']+2*expRange['step'])
-        return 1
-
     def sanitize_exp_time(self, exp_time_sec):
         if isinstance(exp_time_sec, u.Quantity):
             exp_time_sec = exp_time_sec.to(u.s).value

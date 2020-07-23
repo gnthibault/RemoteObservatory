@@ -19,7 +19,7 @@ class FilterWheelStep:
             self.filterNumber = self.filterWheel.filters()[self.filterName]
         elif self.filterNumber:
             self.filterName = self.filterWheel.filterName(filterNumber)
-        self.filterWheel.setFilterNumber(self.filterNumber)
+        self.filterWheel.set_filter_number(self.filterNumber)
         self.callbacks.run('onFinished', self)
 
     def __str__(self):

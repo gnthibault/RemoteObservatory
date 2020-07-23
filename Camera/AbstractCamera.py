@@ -182,14 +182,14 @@ class AbstractCamera(Base):
 
     def take_calibration(self, temperature, gain, exp_time, headers=None,
                   calibration_ref=None, calibration_name="unknown_calibration",
-                  filename=None, *args, **kwargs):
+                  observations=None, filename=None, *args, **kwargs):
         # To be used for marking when exposure is complete
         # (see `process_calibration`)
         calib_event = Event()
 
         file_path, metadata = self._setup_calibration(temperature,
            gain,  exp_time, headers, calibration_ref, calibration_name,
-           filename, *args, **kwargs)
+           observations, filename, *args, **kwargs)
  
         exposure_event = self.take_calibration_exposure(exposure_time=exp_time,
             filename=file_path, *args, **kwargs)
@@ -243,7 +243,7 @@ class AbstractCamera(Base):
     def _setup_calibration(self, temperature, gain, exp_time,
                                 headers=None, calibration_ref=None,
                                 calibration_name='unknown_calibration'
-                                filename=None, **kwargs):
+                                observations, filename=None, **kwargs):
         """
             parameter can be temperature for dark or filter for flat ?
         """
@@ -263,6 +263,7 @@ class AbstractCamera(Base):
             'exp_time' : exp_time.to(u.second).value,
             'gain': gain,
             'temperature_degC' : temperature.to(u.Celsius).value,
+            'observation_ids'=[o.id for o in observations]
         }
         metadata.update(headers)
         return file_path, metadata
@@ -367,6 +368,8 @@ class AbstractCamera(Base):
         seq_id = info['sequence_id']
         title=info['target_name']
         primary=info['is_primary']
+        observation_ids=info['observation_ids']
+        del info['observation_ids']
         self.logger.debug(f"Processing {image_id}")
 
         file_path = self._process_fits(file_path, info)
@@ -389,11 +392,14 @@ class AbstractCamera(Base):
 
         self.logger.debug(f"Adding image metadata to db: {image_id}")
 
-        self.db.insert('calibrations', {
-            'data': info,
-            'date': self.serv_time.get_utc(),
-            'sequence_id': seq_id,
-        })
+        # We are actually looping on each observation, so that a calibration is
+        # actually featured once per observation
+        for observation_id in observation_ids:
+            self.db.insert('calibrations', {
+                'data': info,
+                'date': self.serv_time.get_utc(),
+                'observation_id': observation_id,
+            })
 
         # Mark the event as done
         observation_event.set()

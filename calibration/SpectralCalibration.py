@@ -27,8 +27,6 @@ class SpectralCalibration(Base):
             )
 
         # Get info from config
-        self.gpsCoordinates = dict(latitude = config['latitude'],
-                                   longitude = config['longitude'])
         self.spectral_calib_exp_sec = config["spectral_calib"]["sec"]*u.second
         self.spectral_calib_nb = config["spectral_calib"]["nb"]
         self.spectral_calib_gain = config["spectral_calib"]["gain"]
@@ -70,7 +68,8 @@ class SpectralCalibration(Base):
                 temperature=self.flat_temperature,
                 gain=self.flat_gain,
                 exp_time=self.flat_exp_sec,
-                calibration_name="flat")
+                calibration_name="flat",
+                observations=observed_list.values())
             #yield event
             event.wait()
         self.controller.switch_off_flat_light()
@@ -82,7 +81,8 @@ class SpectralCalibration(Base):
                 temperature=self.spectral_calib_temperature,
                 gain=self.spectral_calib_gain,
                 exp_time=self.spectral_calib_exp_sec,
-                calibration_name="spectral_calib")
+                calibration_name="spectral_calib",
+                observations=observed_list.values())
             # yield event
             event.wait()
         self.controller.switch_off_spectro_light()
@@ -99,12 +99,6 @@ class SpectralCalibration(Base):
             else:
                 dark_config_dict[conf] = [seq_time]
 
-        # Equivalent of np.unique for non numeric tuple
-        #dark_config_dict = [dark_config_dict[i] for i in 
-        #    np.unique([np.nonzero([k==m for k in dark_config_dict])[0][0]
-        #               for m in dark_config_dict]
-        #             )
-        #    ]
         self.controller.close_optical_path_for_dark()
         for obsk, (exp_time_sec, gain, temperature) in dark_config_dict.items():
             for i in range(self.dark_nb):

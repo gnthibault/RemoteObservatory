@@ -748,7 +748,7 @@ class Manager(Base):
                     config = self.config['filterwheel'],
                     connect_on_create=True)
         except Exception:
-            raise RuntimeError('Problem setting up filterwheel: {}'.format(e))
+            raise RuntimeError(f'Problem setting up filterwheel: {e}')
 
     def _setup_guider(self):
         """
