@@ -283,11 +283,11 @@ class IndiCamera(IndiDevice):
         self.set_switch('CCD_COOLER',['COOLER_OFF'])
 
     def set_gain(self, value):
-        self.set_number('CCD_GAIN', [{'Gain': value}])
+        self.set_number('CCD_GAIN', {'Gain': value})
 
     def get_gain(self):
         gain = self.get_number('CCD_GAIN')
-        print('returned Gain is {}'.format(gain))
+        print(f"returned Gain is {gain}")
         return gain
 
     def get_frame_type(self):

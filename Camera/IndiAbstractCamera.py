@@ -57,9 +57,9 @@ class IndiAbstractCamera(IndiCamera, AbstractCamera):
         w = threading.Thread(target=self.shoot_asyncWithEvent,
                              args=(exposure_time.to(u.second).value,
                                    filename,
-                                   frame_type=frame_type
                                    exposure_event,
-                                   **kwargs))
+                                   *args),
+                             kwargs=kwargs)
         w.start()
         return exposure_event
 

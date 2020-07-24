@@ -89,7 +89,7 @@ class AbstractCamera(Base):
                                                    headers,
                                                    filename,
                                                    *args,
-                                                   **kwargs))
+                                                   **kwargs)
         kwargs["gain"] = gain
         kwargs["temperature"] = temperature
         exposure_event = self.take_exposure(exposure_time=exp_time,
@@ -242,8 +242,8 @@ class AbstractCamera(Base):
 
     def _setup_calibration(self, temperature, gain, exp_time,
                                 headers=None, calibration_ref=None,
-                                calibration_name='unknown_calibration'
-                                observations, filename=None, **kwargs):
+                                calibration_name='unknown_calibration',
+                                observations=[], filename=None, **kwargs):
         """
             parameter can be temperature for dark or filter for flat ?
         """
@@ -262,8 +262,8 @@ class AbstractCamera(Base):
             'start_time': start_time,
             'exp_time' : exp_time.to(u.second).value,
             'gain': gain,
-            'temperature_degC' : temperature.to(u.Celsius).value,
-            'observation_ids'=[o.id for o in observations]
+            'temperature_degC': temperature.to(u.Celsius).value,
+            'observation_ids': [o.id for o in observations]
         }
         metadata.update(headers)
         return file_path, metadata
@@ -277,6 +277,9 @@ class AbstractCamera(Base):
             exp_meth = f"take_{kwargs['calibration_name']}_exposure"
             return self.__getattribute__(exp_meth)(*args, **kwargs)
         except KeyError as e:
+            self.logger.debug(f"calibration exposure falling back to normal "
+                              f"exposure because of: {e}")
+            return self.take_exposure(*args, **kwargs)
         except AttributeError as e:
             self.logger.debug(f"calibration exposure falling back to normal "
                               f"exposure because of: {e}")
@@ -342,9 +345,11 @@ class AbstractCamera(Base):
                                        store_permanently=False)
             except Exception as e:
                 self.logger.error(f"Problem adding observation to db: {e}")
-        else:
-            self.logger.debug(f"Compressing {file_path}")
-            fits_utils.fpack(file_path)
+        #else:
+            #self.logger.debug(f"Compressing {file_path}")
+            #fits_utils.fpack(file_path)
+            #TODO TN I don't understand the rationale here.
+            #It generates an error when tryin to read pointing image
 
         self.logger.debug(f"Adding image metadata to db: {image_id}")
         self.db.insert('observations', {
@@ -394,6 +399,8 @@ class AbstractCamera(Base):
 
         # We are actually looping on each observation, so that a calibration is
         # actually featured once per observation
+        if len(observation_ids)<1:
+            observation_ids=[""]
         for observation_id in observation_ids:
             self.db.insert('calibrations', {
                 'data': info,

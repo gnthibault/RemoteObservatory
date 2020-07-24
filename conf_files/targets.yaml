@@ -3,7 +3,7 @@ constraints :
     maxairmass : 17 #for testing, normally use 2
     minmoonseparationdeg : 2 # normally put 45
 targets :
-    "5h12m43.2s +31d12m43s" :
+    "15h12m43.2s +31d12m43s" :
         Luminance :
             count : 2
             temperature : 

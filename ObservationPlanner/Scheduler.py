@@ -295,9 +295,8 @@ class Scheduler(Base):
             target = self.define_target(target_name)
             for filter_name, config in filter_config.items():
                 count = config["count"]
-                temperature = (int(config["temperature"]) if "temperature" in
-                    config else None)
-                gain = int(config["gain"]) if "gain" in config else None
+                temperature = config["temperature"]
+                gain = config["gain"]
                 exp_time_sec = config["exp_time_sec"]*u.second
                 configuration={
                     'filter': filter_name,

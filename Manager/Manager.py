@@ -74,10 +74,6 @@ class Manager(Base):
         self.logger.info('\tSetting up guider')
         self._setup_guider()
 
-        # Setup filter wheel
-        self.logger.info('\tSetting up calibration module')
-        self._setup_calibration()
-
         # Setup observation planner
         self.logger.info('\tSetting up observation planner')
         self._setup_scheduler()

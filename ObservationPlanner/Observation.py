@@ -55,6 +55,10 @@ class Observation(Base):
                 self.time_per_exposure)
 
     @property
+    def configuration(self):
+        return self.observing_block.configuration
+
+    @property
     def name(self):
         """ Name of the `~pocs.scheduler.field.Field` associated with the 
             observation
