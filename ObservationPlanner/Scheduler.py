@@ -295,7 +295,14 @@ class Scheduler(Base):
             target = self.define_target(target_name)
             for filter_name, config in filter_config.items():
                 count = config["count"]
+                temperature = config["temperature"]
+                gain = config["gain"]
                 exp_time_sec = config["exp_time_sec"]*u.second
+                configuration={
+                    'filter': filter_name,
+                    'temperature': temperature,
+                    'gain': gain
+                }
                 #TODO TN retrieve priority from the file ?
                 priority = 0 if (filter_name=='Luminance') else 1
                 while count>0:
@@ -314,7 +321,7 @@ class Scheduler(Base):
                                 exp_time_sec,
                                 exp_set_size,
                                 camera_time,
-                                configuration={'filter': filter_name},
+                                configuration=configuration,
                                 constraints=self.constraints)
                         self.add_observation(b,)
                         count -= exp_set_size

@@ -37,6 +37,59 @@ If you are interested in compiling/using the arduino stuff here, please download
 ## Building 3D support for virtual telescope
 pip install PyQt5 PyQt3D pyqtgraph
 
+## Setup indiweb on the machine that will host drivers
+check installation information on: https://github.com/knro/indiwebmanager
+pip install indiweb
+sudo cp indiwebmanager.service /etc/systemd/system/
+sudo chmod 644 /etc/systemd/system/indiwebmanager.service
+sudo systemctl daemon-reload
+sudo systemctl enable indiwebmanager.service
+
+content of indiwebmanager.service
+```bash
+# From https://github.com/knro/indiwebmanager
+# sudo pip install indiweb
+# sudo cp indiwebmanager.service /etc/systemd/system/
+# sudo chmod 644 /etc/systemd/system/indiwebmanager.service
+# sudo systemctl daemon-reload
+# sudo systemctl enable indiwebmanager.service
+# sudo reboot
+# sudo systemctl status indiwebmanager.service
+
+[Unit]
+Description=INDI Web Manager
+After=multi-user.target
+
+[Service]
+Type=idle
+# MUST SET YOUR USERNAME HERE.
+
+User=rock
+ExecStart=/usr/local/bin/indi-web -v --xmldir /home/user/projects/RemoteObservatory/conf_files/indi_driver_conf
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
+```
+
+# Specific case of aarch64 kernel and armv8 userland
+go to your set of build directories:
+* indi-altair
+* indi-duino
+* indi-libaltaircam
+* indi-toupbase
+* libmallincam
+* libstarshootg
+* indi
+* indi-asi
+* indi-gphoto
+* indi-shelyak
+* libASICamera2
+* libnncam
+* libtoupcam
+Then edit CMakeFiles/3.7.2/CMakeSystem.cmake
+replace aarch64 by armv8
 
 # How to launch the full stuff
 
@@ -89,6 +142,9 @@ PYTHONPATH=. python3 ./apps/launch_arduino_capture.py
 * check if we actually refocus in case the observation id is the same
 * the publisher_port parameter in weather config should be refactored with messaging parameter
 * PHD2 is not closed properly / two instance might be launched which cause error
+* Transform the Manager.acquire_calibration into a generator, so that every acquisition is yielded toward the State, and it may issue messages in the meantime
+
+# Helper
 * use find . -path ./venv -prune -o -name '*.py' to search stuf not in venv
 * use find . -path ./venv -prune -o -name '*.py' -exec grep -H string_to_find {} \;
 * use find . -path ./venv -prune -o -name '*.py' -exec sed -i -e 's/get_local_time_from_ntp/get_local_time/g' {} \; to replace stuff

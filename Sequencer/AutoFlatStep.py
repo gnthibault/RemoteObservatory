@@ -49,7 +49,7 @@ class AutoFlatSequence:
         for filterName in self.autoFlatCalculator.filterNames:
             self.logger.debug('AutoFlatSequence: processing filter {}'.format(
                               filterName))
-            self.filterWheel.setFilter(filterName)
+            self.filterWheel.set_filter(filterName)
             if self.exposure is None:
                 exposure = self.camera.getRelevantFlatDuration(filterName)
             else:

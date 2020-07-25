@@ -74,10 +74,6 @@ class Manager(Base):
         self.logger.info('\tSetting up guider')
         self._setup_guider()
 
-        # Setup filter wheel
-        self.logger.info('\tSetting up calibration module')
-        self._setup_calibration()
-
         # Setup observation planner
         self.logger.info('\tSetting up observation planner')
         self._setup_scheduler()
@@ -214,15 +210,18 @@ class Manager(Base):
         return self.current_observation
 
     def acquire_calibration(self):
-        for seq_time, observation in self.scheduler.observed_list.items():
-            self.logger.debug("Housekeeping for {}".format(observation))
+        obs_list = [obs for seq_t, obs in self.scheduler.observed_list.items()]
+        self.logger.debug(f"Acquiring calibratrions for {obs_list}")
 
         for cam_name, camera in self.acquisition_cameras.items():
             self.logger.debug(f"Going to start calibration of camera {cam_name}"
                               f"[{camera.uid}]")
             calibration = self._get_calibration(camera)
             calibration.calibrate(self.scheduler.observed_list)
-        self.scheduler.set_observed_to_calibrated().
+            #calib_event_generator = calibration.calibrate(self.scheduler.observed_list)
+            #yield from calib_event_generator
+        self.scheduler.set_observed_to_calibrated()
+        #raise StopIteration
 
     def cleanup_observations(self):
         """Cleanup observation list
@@ -745,7 +744,7 @@ class Manager(Base):
                     config = self.config['filterwheel'],
                     connect_on_create=True)
         except Exception:
-            raise RuntimeError('Problem setting up filterwheel: {}'.format(e))
+            raise RuntimeError(f'Problem setting up filterwheel: {e}')
 
     def _setup_guider(self):
         """

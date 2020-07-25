@@ -45,7 +45,7 @@ class IndiFilterWheel(IndiDevice, Base):
 
     def on_emergency(self):
         self.logger.debug('on emergency routine started...')
-        setFilterNumber(1)
+        set_filter_number(1)
         self.logger.debug('on emergency routine finished')
 
     def initFilterWheelConfiguration(self):
@@ -56,11 +56,11 @@ class IndiFilterWheel(IndiDevice, Base):
             self.set_text('FILTER_NAME',{'FILTER_SLOT_NAME_{}'.format(
                                          filterNumber):filterName})
 
-    def setFilter(self, name):
+    def set_filter(self, name):
         self.logger.debug('setting filter {}'.format(name)) 
-        self.setFilterNumber(self.filters()[name])
+        self.set_filter_number(self.filters()[name])
 
-    def setFilterNumber(self, number):
+    def set_filter_number(self, number):
         self.logger.debug('setting filter number {}'.format(
                           number)) 
         self.set_number('FILTER_SLOT', {'FILTER_SLOT_VALUE': number})

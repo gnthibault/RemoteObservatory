@@ -67,12 +67,20 @@ class IndiSpectroController(IndiDevice):
 
     def switch_off_spectro_light(self):
         self.logger("Switching-off spectro light")
+        self.open_optical_path()
 
     def switch_on_flat_light(self):
         self.logger("Switching-on flat light")
 
     def switch_off_flat_light(self):
         self.logger("Switching-off flat light")
+        self.open_optical_path()
+
+    def close_optical_path_for_dark(self):
+        self.logger("Close optical path for dark")
+
+    def open_optical_path(self):
+        self.logger("Open optical path")
 
     def __str__(self):
         return f"Spectro controller: {self.device_name}"

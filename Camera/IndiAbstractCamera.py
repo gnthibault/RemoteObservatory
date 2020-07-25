@@ -24,7 +24,20 @@ class IndiAbstractCamera(IndiCamera, AbstractCamera):
         self.indi_camera_config = config
 
     # TODO TN: setup event based acquisition properly
-    def shoot_asyncWithEvent(self, exp_time_sec, filename, exposure_event):
+    def shoot_asyncWithEvent(self, exp_time_sec, filename, exposure_event,
+                             **kwargs):
+        # set frame type
+        frame_type = kwargs.get("frame_type", "FRAME_LIGHT")
+        self.set_frame_type(frame_type)
+        # set gain
+        gain = kwargs.get("gain", self.gain)
+        self.set_gain(gain)
+        # set temperature
+        temperature = kwargs.get("temperature", None)
+        if temperature is not None:
+            self.set_cooling_on()
+            self.set_temperature(temperature)
+        # Now shoot
         self.setExpTimeSec(exp_time_sec)
         self.shoot_async()
         self.synchronize_with_image_reception() 
@@ -44,8 +57,9 @@ class IndiAbstractCamera(IndiCamera, AbstractCamera):
         w = threading.Thread(target=self.shoot_asyncWithEvent,
                              args=(exposure_time.to(u.second).value,
                                    filename,
-                                   exposure_event))
-        self.set_frame_type('FRAME_LIGHT')
+                                   exposure_event,
+                                   *args),
+                             kwargs=kwargs)
         w.start()
         return exposure_event
 
@@ -60,44 +74,17 @@ class IndiAbstractCamera(IndiCamera, AbstractCamera):
         w.start()
         return exposure_event
 
-    def take_bias_exposure(self, exposure_time, filename, *args, **kwargs):
-        """
-        Should return an event
-        """
-        exposure_event = threading.Event()
-        w = threading.Thread(target=self.shoot_asyncWithEvent,
-                             args=(exposure_time.to(u.second).value,
-                                   filename,
-                                   exposure_event))
-        self.set_frame_type('FRAME_BIAS')
-        w.start()
-        return exposure_event
+    def take_bias_exposure(self, *args, **kwargs):
+        kwargs["frame_type"]="FRAME_BIAS"
+        return self.take_exposure(*args, **kwargs)
 
-    def take_dark_exposure(self, exposure_time, filename, *args, **kwargs):
-        """
-        Should return an event
-        """
-        exposure_event = threading.Event()
-        w = threading.Thread(target=self.shoot_asyncWithEvent,
-                             args=(exposure_time.to(u.second).value,
-                                   filename,
-                                   exposure_event))
-        self.set_frame_type('FRAME_DARK')
-        w.start()
-        return exposure_event
+    def take_dark_exposure(self, *args, **kwargs):
+        kwargs["frame_type"]="FRAME_DARK"
+        return self.take_exposure(*args, **kwargs)
 
-    def take_flat_exposure(self, exposure_time, filename, *args, **kwargs):
-        """
-        Should return an event
-        """
-        exposure_event = threading.Event()
-        w = threading.Thread(target=self.shoot_asyncWithEvent,
-                             args=(exposure_time.to(u.second).value,
-                                   filename,
-                                   exposure_event))
-        self.set_frame_type('FRAME_FLAT')
-        w.start()
-        return exposure_event  
+    def take_flat_exposure(self, *args, **kwargs):
+        kwargs["frame_type"]="FRAME_FLAT"
+        return self.take_exposure(*args, **kwargs)
 
     # TODO TN: we decide that IndiCamera takes over AbstractCamera in the
     # case we have diamond like inheritance problem

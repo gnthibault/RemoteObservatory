@@ -39,8 +39,8 @@ def on_enter(event_data):
         else:
             model.say(f"Got it! I am going to check out: {observation.name}")
 
-            model.logger.debug("Setting Observation coords: "
-                               f"observation.target.coord}")
+            model.logger.debug(f"Setting Observation coords: "
+                               f"{observation.target.coord}")
             if model.manager.mount.set_target_coordinates(
                                observation.target.coord):
                 model.next_state = 'slewing'
