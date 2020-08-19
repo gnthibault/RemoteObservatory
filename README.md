@@ -201,6 +201,9 @@ PYTHONPATH=. python3 ./apps/launch_arduino_capture.py
 * PHD2 is not closed properly / two instance might be launched which cause error
 * Transform the Manager.acquire_calibration into a generator, so that every acquisition is yielded toward the State, and it may issue messages in the meantime
 
+
+
+
 # Helper
 * use find . -path ./venv -prune -o -name '*.py' to search stuf not in venv
 * use find . -path ./venv -prune -o -name '*.py' -exec grep -H string_to_find {} \;

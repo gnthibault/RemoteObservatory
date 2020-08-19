@@ -50,15 +50,15 @@ db:
 ntp:
     ntpserver: time.google.com
 scheduler:
-    module: DefaultScheduler
-    #module: SpectroScheduler
-    target_file: targets
-    #target_file: spectral_targets
+    #module: DefaultScheduler
+    module: SpectroScheduler
+    #target_file: targets
+    target_file: spectral_targets
 spectroscope_controller:
     module: IndiSpectroController
 calibration:
-    module: ImagingCalibration
-    #module: SpectralCalibration
+    #module: ImagingCalibration
+    module: SpectralCalibration
     spectral_calib:
         nb: 11
         sec: 30
@@ -71,8 +71,9 @@ calibration:
         temperature:
     dark:
         dark_nb: 11
-
-    #controller:
+    controller:
+        module: DummySpectroController
+        controller_name: dummy
         #module: IndiSpectroController
         #controller_name: spox
 mount:

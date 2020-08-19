@@ -11,7 +11,7 @@ from astropy.io import fits
 from helper.IndiClient import IndiClient
 
 # Local stuff : Camera
-from Camera.IndiVirtualCamera import IndiVirtualCamera
+from Camera.IndiCamera import IndiCamera
 
 
 if __name__ == '__main__':
@@ -20,11 +20,18 @@ if __name__ == '__main__':
     logging.config.fileConfig('logging.ini')
 
     # test indi client
-    indiCli = IndiClient()
-    indiCli.connect()
+    config = dict(
+    camera_name='Altair AA183MPRO',
+    autofocus_seconds=5,
+    pointing_seconds=30,
+    autofocus_size=500,
+    indi_client=dict(
+        indi_host="192.168.0.33",
+        indi_port="7624"
+    ))
 
     # test indi virtual camera class
-    cam = IndiVirtualCamera(indi_client=indiCli, configFileName=None,
+    cam = IndiCamera(config=config,
                      connect_on_create=False)
     cam.connect()
 
@@ -40,28 +47,28 @@ if __name__ == '__main__':
     #cam.set_cooling_on() that just never work
     print('Current camera temperature is: {}'.format(cam.get_temperature()))
     target_temp = 15
-    print('Now, setting temperature to: {}'.format(target_temp))
-    cam.set_temperature(target_temp)
+    #print('Now, setting temperature to: {}'.format(target_temp))
+    #cam.set_temperature(target_temp)
     print('Current camera temperature is: {}'.format(cam.get_temperature()))
-    target_temp = 17.5
-    print('Now, setting temperature to: {}'.format(target_temp))
-    cam.set_temperature(target_temp)
-    print('Current camera temperature is: {}'.format(cam.get_temperature()))
+    #target_temp = 17.5
+    #print('Now, setting temperature to: {}'.format(target_temp))
+    #cam.set_temperature(target_temp)
+    #print('Current camera temperature is: {}'.format(cam.get_temperature()))
     #cam.set_cooling_off() that just never work
 
     # set frame type (mostly for simulation purpose
-    cam.set_frame_type('FRAME_LIGHT')
-    cam.set_frame_type('FRAME_DARK')
-    cam.set_frame_type('FRAME_FLAT')
-    cam.set_frame_type('FRAME_BIAS')
+    #cam.set_frame_type('FRAME_LIGHT')
+    #cam.set_frame_type('FRAME_DARK')
+    #cam.set_frame_type('FRAME_FLAT')
+    #cam.set_frame_type('FRAME_BIAS')
 
     # set gain
-    print('gain is {}'.format(cam.get_gain()))
-    cam.set_gain(10)
+    print(f"gain is {cam.get_gain()}")
+    #cam.set_gain(100)
 
     # Acquire data
-    cam.prepare_shoot()
-    cam.setExpTimeSec(10)
-    cam.shoot_async()
-    cam.synchronize_with_image_reception()
-    fits = cam.get_received_image()
+    #cam.prepare_shoot()
+    #cam.setExpTimeSec(10)
+    #cam.shoot_async()
+    #cam.synchronize_with_image_reception()
+    #fits = cam.get_received_image()

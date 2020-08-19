@@ -16,8 +16,10 @@ from astroplan import FixedTarget
 
 # Local stuff
 from ObservationPlanner.Scheduler import Scheduler
+from ObservationPlanner.SpectralObservation import SpectralObservation
 from utils import listify
 from Spectro.OTypes import otypes
+from Spectro.ReferenceStarFinder import best_references
 
 # Locally defined constraints
 from ObservationPlanner.LocalHorizonConstraint import LocalHorizonConstraint
@@ -40,12 +42,66 @@ class SpectroScheduler(Scheduler):
         spinfo={}
         try:
             simbad = Simbad()
-            simbad.add_votable_fields('otype')            
+            #standard name of the object type
+            simbad.add_votable_fields('otype')
+            #list of (secondary) object types for one object
+            simbad.add_votable_fields('otypes')
+            #spectral type value
+            simbad.add_votable_fields('sp')
+            #spectral type nature ('s'pectroscopic, 'a'bsorbtion, 'e'mmission
+            simbad.add_votable_fields('sp_nature')
+            #spectral type quality (A: best, .., E: worst)
+            simbad.add_votable_fields('sp_qual')
+            #all fields related with the spectral type
+            simbad.add_votable_fields('sptype')
+            #all fields related with radial velocity and redshift
+            simbad.add_votable_fields('velocity')
+            #all fields related with the proper motions
+            simbad.add_votable_fields('propermotions')
             CDS = simbad.query_object(target_name)
         except:
             CDS = None
 
         if CDS is not None: #Object found in SIMBAD, along with all info
+            # overview of keywords with the previous votable fields
+            #CDS.colnames
+            #['MAIN_ID',
+            #'RA',
+            #'DEC',
+            #'RA_PREC',
+            #'DEC_PREC',
+            #'COO_ERR_MAJA',
+            #'COO_ERR_MINA',
+            #'COO_ERR_ANGLE',
+            #'COO_QUAL',
+            #'COO_WAVELENGTH',
+            #'COO_BIBCODE',
+            #'OTYPE',
+            #'OTYPES',
+            #'RVZ_TYPE',
+            #'RVZ_RADVEL',
+            #'RVZ_ERROR',
+            #'RVZ_QUAL',
+            #'RVZ_WAVELENGTH',
+            #'RVZ_BIBCODE',
+            #'SP_TYPE',
+            #'SP_QUAL',
+            #'SP_TYPE_2',
+            #'SP_QUAL_2',
+            #'SP_BIBCODE',
+            #'OTYPE_2',
+            #'PMRA',
+            #'PMDEC',
+            #'PMRA_PREC',
+            #'PMDEC_PREC',
+            #'PM_ERR_MAJA',
+            #'PM_ERR_MINA',
+            #'PM_ERR_ANGLE',
+            #'PM_QUAL',
+            #'PM_BIBCODE']
+            # for sptypes, check 
+            # http://simbad.u-strasbg.fr/simbad/sim-display?data=sptypes
+            # eventually CDS["SP_TYPE"][0] returns 'B8.5Ib-II'
             coord = SkyCoord(
                 ra=CDS['RA'][0]*u.hourangle,
                 dec=CDS['DEC'][0]*u.deg,
@@ -53,11 +109,13 @@ class SpectroScheduler(Scheduler):
                 equinox='J2000.0')
             target = FixedTarget(name=target_name.replace(" ", ""),
                                  coord=coord)
-            spinfo["mainid"] = str(CDS['MAIN_ID'][0].decode("utf-8"))
-            spinfo["otype"] =  str(CDS['OTYPE'][0].decode("utf-8"))
-            spinfo["otype_comment"] =  otypes[target.otype]
-            spinfo["Sp"] = str(CDS['Sp'][0].decode("utf-8"))
-            spinfo["Sp_s"] = str(CDS['Sp_s'][0].decode("utf-8"))
+            spinfo["MAIN_ID"] = str(CDS['MAIN_ID'][0].decode("utf-8"))
+            spinfo["OTYPE"] =  str(CDS['OTYPE'][0].decode("utf-8"))
+            spinfo["OTYPES"] =  str(CDS['OTYPES'][0].decode("utf-8"))
+            spinfo["OTYPE_COMMENT"] =  otypes[spinfo["otype"]]
+            spinfo["SP_TYPE"] = str(CDS['SP_TYPE'][0].decode("utf-8"))
+            spinfo["RVZ_RADVEL"] = str(CDS['RVZ_RADVEL'][0].decode("utf-8"))
+            spinfo["RVZ_TYPE"] = str(CDS['RVZ_TYPE'][0].decode("utf-8"))
         if CDS is None:
             try:
                 coord = SkyCoord.from_name(target_name, parse=True)
@@ -76,6 +134,48 @@ class SpectroScheduler(Scheduler):
                                        "define target {target_name}")
         return target, spinfo
 
+    def get_best_reference_target(self, observation):
+        ob = observation.observing_block
+        maxseparation = 5*u.deg
+        altaz_frame = AltAz(obstime=self.serv_time.get_astropy_time_from_utc(),
+                            location=self.obs.getAstropyEarthLocation())
+
+        ref_list = best_references(ob.target, altaz_frame, maxseparation)
+        return ref_list[0]
+
+    def get_spectral_reference_observation(self, observation):
+        target_name = self.get_best_reference_target()["Name"]
+        target, spinfo = self.define_target(target_name)
+        if "reference_observation" not in self.config:
+            self.logger.warning("Empty reference_observation configuration")
+            return None
+        else:
+            config = self.config["reference_observation"]
+        count = config["count"]
+        temperature = config["temperature"]
+        gain = config["gain"]
+        exp_time_sec = config["exp_time_sec"]*u.second
+        configuration={
+            'temperature': temperature,
+            'gain': gain,
+            'spinfo' : spinfo
+        }
+        exp_set_size = count
+        #TODO TN readout time, get that info from camera
+        camera_time = 1*u.second
+        observing_block = ObservingBlock.from_exposures(
+                target,
+                priority,
+                exp_time_sec,
+                exp_set_size,
+                camera_time,
+                configuration=configuration,
+                constraints=self.constraints)
+        reference_observation ] SpectralObservation(observing_block,
+            exp_set_size=exp_set_size,
+            is_reference_observation=True)
+        return reference_observation
+
     def initialize_target_list(self):
         """Creates valid `Observations` """
 
@@ -92,7 +192,15 @@ class SpectroScheduler(Scheduler):
         for target_name, config in self.config['targets'].items():
             target, spinfo = self.define_target(target_name)
             count = config["count"]
+            temperature = config["temperature"]
+            gain = config["gain"]
             exp_time_sec = config["exp_time_sec"]*u.second
+            configuration={
+                'temperature': temperature,
+                'gain': gain,
+                'spinfo' : spinfo
+            }
+            #TODO TN retrieve priority from the file ?
             priority = config["priority"]
             while count>0:
                 try:
@@ -110,14 +218,15 @@ class SpectroScheduler(Scheduler):
                             exp_time_sec,
                             exp_set_size,
                             camera_time,
-                            configuration=spinfo,
+                            configuration=configuration,
                             constraints=self.constraints)
-                    self.add_observation(b,)
+                    self.add_observation(b, is_reference_observation=False)
                     count -= exp_set_size
                 except AssertionError as e:
                     self.logger.debug(f"Error while adding target : {e}")
 
-    def add_observation(self, observing_block, exp_set_size=None):
+    def add_observation(self, observing_block, exp_set_size=None,
+                        is_reference_observation=False):
         """Adds an `Observation` to the scheduler
         Args:
             target_name (str): Name of the target, should be referenced in a
@@ -125,7 +234,9 @@ class SpectroScheduler(Scheduler):
         """
 
         try:
-            observation = SpectralObservation(observing_block, exp_set_size)
+            observation = SpectralObservation(observing_block,
+                exp_set_size=exp_set_size,
+                is_reference_observation=is_reference_observation)
         except Exception as e:
             self.logger.warning(f"Cannot add  observing_block: "
                                 f"{observing_block}")
@@ -149,6 +260,18 @@ class SpectroScheduler(Scheduler):
             tuple or list: A tuple (or list of tuples) with name and score of
             ranked observations
         """
+        # Before doing anything, we want to know if we need to acquire a
+        # reference observation
+        if self.current_observation is not None:
+            # If observation does not feaures a reference yet
+            if self.current_observation.reference_observation_id is None:
+            get_spectral_reference_observation(self, observation):
+
+
+
+            # Favor the current observation if still available
+
+
         if reread_target_file:
             self.logger.debug("Rereading target file")
             self.reread_config()
@@ -172,7 +295,7 @@ class SpectroScheduler(Scheduler):
                     # Check if the computed score is a boolean
                     if np.any([isinstance(score, ty) for ty in
                               [bool, np.bool, np.bool_]]):
-                        self.logger.debug("\t\tVetoed if false: {}".format(score))
+                        self.logger.debug(f"\t\tVetoed if false: {score}")
                         # Log vetoed observations
                         if not score:
                             # if not valid, remove from valid_obs
@@ -194,7 +317,8 @@ class SpectroScheduler(Scheduler):
 
             # Check new best against current_observation
             if (self.current_observation is not None and
-                best_obs[0][0] != self.current_observation.id):
+                best_obs[0].id!= self.current_observation.id):
+                #best_obs[0][0]!= self.current_observation.id):
 
                 # Favor the current observation if still doable
                 end_of_next_set = time + self.current_observation.set_duration

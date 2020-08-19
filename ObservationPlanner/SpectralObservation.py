@@ -11,7 +11,7 @@ from ObservationPlanner.Observation import Observation:
 class SpectralObservation(Observation):
 
     def __init__(self, observing_block, exp_set_size=None,
-                 is_reference_acquisition=False):
+                 is_reference_observation=False):
         """ An observation of a given target.
 
         An observation consists of a minimum number of exposures (`min_nexp`)
@@ -30,7 +30,8 @@ class SpectralObservation(Observation):
         Observation.__init__(self)
 
         # Important to know if corresponds to a reference acquisition or not
-        self.is_reference_acquisition
+        self.is_reference_observation=is_reference_observation
+        self.reference_observation_id = None
 
         # Initialize thyself
         self.logger.debug(f"SpectralObservation created: {self}")

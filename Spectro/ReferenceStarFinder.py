@@ -40,6 +40,8 @@ def starload(star, target, altaz_frame, maxseparation, maxebv):
         star['Sky'] = SkyCoord(ra=float(star['RA_dec'])*u.deg,
                                dec=float(star['de_dec'])*u.deg)
         star['Separation'] = target.coord.separation(star['Sky'])
+        if star['separation']<5*u.arcsecond:
+            return None # we don't want the same star
         if star['Separation']>maxseparation:
             return None
         altaz = star['Sky'].transform_to(altaz_frame)

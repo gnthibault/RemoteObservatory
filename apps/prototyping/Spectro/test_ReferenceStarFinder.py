@@ -38,4 +38,4 @@ if __name__ == '__main__':
     find_reference(target_name=args.target_name)
 
 #launch with
-
+#PYTHONPATH=. python3 ./apps/prototyping/Spectro/test_ReferenceStarFinder.py -t sheliak
