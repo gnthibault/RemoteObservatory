@@ -70,7 +70,7 @@ sudo apt-get install \
     libtheora-dev\
     phd2\
     libcurl4-openssl-dev\
-    wx-common\
+    libwxgtk3.0-dev\
     libusb-1.0-0-dev\
     libgsl-dev\
     libogg-dev\
