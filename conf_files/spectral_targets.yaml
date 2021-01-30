@@ -3,7 +3,13 @@ constraints :
     maxairmass : 17 #for testing, normally use 2
     minmoonseparationdeg : 2 # normally put 45
 targets :
-    "5h12m43.2s +31d12m43s" :
+    "Sheliak" :
+        priority : 10
+        count : 2
+        temperature :
+        gain : 1
+        exp_time_sec : 100
+    "R Coronae Borealis" :
         priority : 10
         count : 2
         temperature :

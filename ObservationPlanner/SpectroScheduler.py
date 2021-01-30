@@ -13,6 +13,7 @@ from astroquery.mpc import MPC
 
 # Astroplan stuff
 from astroplan import FixedTarget
+from astroplan import ObservingBlock
 
 # Local stuff
 from ObservationPlanner.Scheduler import Scheduler
@@ -102,20 +103,22 @@ class SpectroScheduler(Scheduler):
             # for sptypes, check 
             # http://simbad.u-strasbg.fr/simbad/sim-display?data=sptypes
             # eventually CDS["SP_TYPE"][0] returns 'B8.5Ib-II'
+            ra_h_m_s = np.array([*map(np.float, CDS['RA'][0].split(" "))])
+            dec_d_m_s = np.array([*map(np.float, CDS['DEC'][0].split(" "))])
             coord = SkyCoord(
-                ra=CDS['RA'][0]*u.hourangle,
-                dec=CDS['DEC'][0]*u.deg,
+                ra=np.dot(ra_h_m_s,np.array([u.hourangle, u.hourangle/60, u.hourangle/3600])).to(u.degree),
+                dec=np.dot(dec_d_m_s,np.array([u.degree, u.arcminute, u.arcsecond])),
                 frame='icrs',
                 equinox='J2000.0')
             target = FixedTarget(name=target_name.replace(" ", ""),
                                  coord=coord)
             spinfo["MAIN_ID"] = str(CDS['MAIN_ID'][0].decode("utf-8"))
-            spinfo["OTYPE"] =  str(CDS['OTYPE'][0].decode("utf-8"))
-            spinfo["OTYPES"] =  str(CDS['OTYPES'][0].decode("utf-8"))
-            spinfo["OTYPE_COMMENT"] =  otypes[spinfo["otype"]]
+            spinfo["OTYPE"] = str(CDS['OTYPE'][0].decode("utf-8"))
+            spinfo["OTYPES"] = str(CDS['OTYPES'][0].decode("utf-8"))
+            spinfo["OTYPE_COMMENT"] = otypes[spinfo["OTYPE"]]
             spinfo["SP_TYPE"] = str(CDS['SP_TYPE'][0].decode("utf-8"))
-            spinfo["RVZ_RADVEL"] = str(CDS['RVZ_RADVEL'][0].decode("utf-8"))
-            spinfo["RVZ_TYPE"] = str(CDS['RVZ_TYPE'][0].decode("utf-8"))
+            spinfo["RVZ_RADVEL"] = float(CDS['RVZ_RADVEL'][0])
+            spinfo["RVZ_TYPE"] = str(CDS['RVZ_TYPE'][0])
         if CDS is None:
             try:
                 coord = SkyCoord.from_name(target_name, parse=True)
@@ -171,7 +174,8 @@ class SpectroScheduler(Scheduler):
                 camera_time,
                 configuration=configuration,
                 constraints=self.constraints)
-        reference_observation ] SpectralObservation(observing_block,
+        reference_observation = SpecralObservation(
+            observing_block,
             exp_set_size=exp_set_size,
             is_reference_observation=True)
         return reference_observation
@@ -265,12 +269,8 @@ class SpectroScheduler(Scheduler):
         if self.current_observation is not None:
             # If observation does not feaures a reference yet
             if self.current_observation.reference_observation_id is None:
-            get_spectral_reference_observation(self, observation):
-
-
-
-            # Favor the current observation if still available
-
+                get_spectral_reference_observation(self, observation)
+                # Favor the current observation if still available
 
         if reread_target_file:
             self.logger.debug("Rereading target file")

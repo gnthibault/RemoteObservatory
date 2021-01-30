@@ -129,7 +129,7 @@ acquisition_camera:
             indi_host : localhost
             indi_port : 7624
 #filterwheel:
-nofilterwheel: #maybe one day
+nofilterwheel:
     module : IndiFilterWheel 
     filterwheel_name : Filter Simulator
     filter_list : 
@@ -186,7 +186,7 @@ messaging:
 #         consumer_key: [your_consumer_key]
 #         consumer_secret: [your_consumer_secret]
 #         access_token: [your_access_token]
-#         access_token_secret: [your_access_token_secret] 
+#         access_token_secret: [your_access_token_secret]
 #     slack:
 #         webhook_url: [your_webhook_url]
 #         output_timestamp: False

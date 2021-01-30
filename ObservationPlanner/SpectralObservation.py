@@ -6,7 +6,7 @@ import logging
 from astropy import units as u
 
 # Local
-from ObservationPlanner.Observation import Observation:
+from ObservationPlanner.Observation import Observation
 
 class SpectralObservation(Observation):
 
