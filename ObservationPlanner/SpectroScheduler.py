@@ -112,11 +112,11 @@ class SpectroScheduler(Scheduler):
                 equinox='J2000.0')
             target = FixedTarget(name=target_name.replace(" ", ""),
                                  coord=coord)
-            spinfo["MAIN_ID"] = str(CDS['MAIN_ID'][0].decode("utf-8"))
-            spinfo["OTYPE"] = str(CDS['OTYPE'][0].decode("utf-8"))
-            spinfo["OTYPES"] = str(CDS['OTYPES'][0].decode("utf-8"))
+            spinfo["MAIN_ID"] = CDS['MAIN_ID'][0]
+            spinfo["OTYPE"] = CDS['OTYPE'][0]
+            spinfo["OTYPES"] = CDS['OTYPES'][0]
             spinfo["OTYPE_COMMENT"] = otypes[spinfo["OTYPE"]]
-            spinfo["SP_TYPE"] = str(CDS['SP_TYPE'][0].decode("utf-8"))
+            spinfo["SP_TYPE"] = CDS['SP_TYPE'][0]
             spinfo["RVZ_RADVEL"] = float(CDS['RVZ_RADVEL'][0])
             spinfo["RVZ_TYPE"] = str(CDS['RVZ_TYPE'][0])
         if CDS is None:
