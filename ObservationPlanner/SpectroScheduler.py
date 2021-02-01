@@ -2,7 +2,7 @@
 import numpy as np
 
 # Astropy stuff
-from astropy.coordinates import get_moon
+from astropy.coordinates import AltAz
 from astropy.time import Time
 from astropy import units as u
 from astropy.coordinates import SkyCoord
@@ -147,7 +147,7 @@ class SpectroScheduler(Scheduler):
         return ref_list[0]
 
     def get_spectral_reference_observation(self, observation):
-        target_name = self.get_best_reference_target()["Name"]
+        target_name = self.get_best_reference_target(observation)["Name"]
         target, spinfo = self.define_target(target_name)
         if "reference_observation" not in self.config:
             self.logger.warning("Empty reference_observation configuration")
@@ -166,6 +166,7 @@ class SpectroScheduler(Scheduler):
         exp_set_size = count
         #TODO TN readout time, get that info from camera
         camera_time = 1*u.second
+        priority=1
         observing_block = ObservingBlock.from_exposures(
                 target,
                 priority,
@@ -174,7 +175,7 @@ class SpectroScheduler(Scheduler):
                 camera_time,
                 configuration=configuration,
                 constraints=self.constraints)
-        reference_observation = SpecralObservation(
+        reference_observation = SpectralObservation(
             observing_block,
             exp_set_size=exp_set_size,
             is_reference_observation=True)
@@ -238,7 +239,8 @@ class SpectroScheduler(Scheduler):
         """
 
         try:
-            observation = SpectralObservation(observing_block,
+            observation = SpectralObservation(
+                observing_block=observing_block,
                 exp_set_size=exp_set_size,
                 is_reference_observation=is_reference_observation)
         except Exception as e:
@@ -268,9 +270,11 @@ class SpectroScheduler(Scheduler):
         # reference observation
         if self.current_observation is not None:
             # If observation does not feaures a reference yet
-            if self.current_observation.reference_observation_id is None:
-                get_spectral_reference_observation(self, observation)
-                # Favor the current observation if still available
+            if ((not self.current_observation.is_reference_observation) and
+                (self.current_observation.reference_observation_id is None)):
+                return self.get_spectral_reference_observation(self.current_observation)
+
+        # Favor the current observation if still available
 
         if reread_target_file:
             self.logger.debug("Rereading target file")

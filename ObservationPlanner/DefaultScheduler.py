@@ -97,7 +97,7 @@ class DefaultScheduler(Scheduler):
                         self.current_observation, 
                         Time([time, end_of_next_set])):
 
-                    # If current is better or equal to top, add it to bestof
+                    # If current is better or equal to top, add it to best
                     # but no need to update current_observation
                     if self.current_observation.merit >= best_obs[0][1]:
                         best_obs.insert(0,(self.current_observation.id,
