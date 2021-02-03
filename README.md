@@ -26,61 +26,66 @@ sudo apt-add-repository ppa:mutlaqja/ppa
 sudo add-apt-repository ppa:pch/phd2
 sudo apt-get update
 sudo apt-get install \
-    libcfitsio-dev\
-    libnova-dev\
-    swig3.0\
+    astrometry-data-4208-4219\
+    extra-cmake-modules\
+    gpsd\
     indi-full\
-    libindi-dev\
-    libindi1\
+    kdelibs5-dev\
+    kdoctools-dev\
     kstars-bleeding\
-    libftdi-dev\
-    libraw-dev\
-    libgphoto2-dev\
+    libastrometry*\
     libboost-dev\
     libboost-regex-dev\
-    librtlsdr-dev\
+    libcfitsio-dev\
+    libcurl4-openssl-dev\
     libfftw3-dev\
-    libastrometry*\
-    libnova*\
-    astrometry-data-4208-4219\
-    xplanet\
-    extra-cmake-modules\
-    kdelibs5-dev\
+    libftdi-dev\
+    libftdi1-dev\
+    libgphoto2-dev\
+    libgps-dev\
+    libgraphviz-dev \
+    libgsl-dev\
+    libindi-dev\
+    libindi1\
+    libjpeg-dev\
+    libkf5configwidgets-dev\
+    libkf5crash-dev\
     libkf5declarative-dev\
     libkf5globalaccel-dev\
-    libkf5configwidgets-dev\
-    libkf5xmlgui-dev\
-    libkf5windowsystem-dev\
-    kdoctools-dev\
-    libkf5notifications-dev\
     libkf5kdelibs4support5-bin\
     libkf5newstuff-dev\
-    libkf5crash-dev\
-    libkf5plotting-dev\
+    libkf5notifications-dev\
     libkf5notifyconfig-dev\
-    libraw-dev\
-    libgphoto2-dev\
-    wcslib-dev\
+    libkf5plotting-dev\
+    libkf5windowsystem-dev\
+    libkf5xmlgui-dev\
+    libnova*\
+    libogg-dev\
+    libpython3-dev\
     libqt5svg5-dev\
     libqt5websockets5-dev\
-    qttools5-dev-tools\
-    libftdi1-dev\
-    libgps-dev\
-    gpsd\
-    libtheora-dev\
-    phd2\
-    libcurl4-openssl-dev\
-    libwxgtk3.0-dev\
-    libusb-1.0-0-dev\
-    libgsl-dev\
-    libogg-dev\
+    libraw-dev\
+    librtlsdr-dev\
     libtheora-dev\
     libtiff-dev\
+    libusb-1.0-0-dev\
+    libwxgtk3.0-dev\
+    phd2\
+    qttools5-dev-tools\
     swig3.0\
+    wcslib-dev\
+    xplanet\
     zlib1g-dev\
-    libpython3-dev\
-    libjpeg-dev\
     -y
+```
+
+## Setup virtual environment
+
+```console
+    pip install virtualenv
+    virtualenv venv
+    source venv/bin/activate
+    pip install -r requirements.txt
 ```
 
 ## Python requirements
