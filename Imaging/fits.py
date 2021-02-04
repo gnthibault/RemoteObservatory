@@ -42,12 +42,12 @@ def solve_field(fname, timeout=180, solve_opts=None, **kwargs):
         options = solve_opts
     else:
         # TODO TN URGENT THIS IS HORRIBLE AND SHOULD BE FIXED ASAP
+        #'--no-fits2fits',
         options = [
             '--guess-scale',
             '--cpulimit', str(timeout),
             '--no-verify',
             '--no-plots',
-            '--no-fits2fits',
             '--crpix-center',
             '--match', 'none',
             '--corr', 'none',

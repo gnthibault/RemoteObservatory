@@ -106,8 +106,8 @@ class SpectroScheduler(Scheduler):
             ra_h_m_s = np.array([*map(np.float, CDS['RA'][0].split(" "))])
             dec_d_m_s = np.array([*map(np.float, CDS['DEC'][0].split(" "))])
             coord = SkyCoord(
-                ra=np.dot(ra_h_m_s,np.array([u.hourangle, u.hourangle/60, u.hourangle/3600])).to(u.degree),
-                dec=np.dot(dec_d_m_s,np.array([u.degree, u.arcminute, u.arcsecond])),
+                ra=np.dot(ra_h_m_s, np.array([u.hourangle, u.hourangle/60, u.hourangle/3600])).to(u.degree),
+                dec=np.dot(dec_d_m_s, np.array([u.degree, u.arcminute, u.arcsecond])),
                 frame='icrs',
                 equinox='J2000.0')
             target = FixedTarget(name=target_name.replace(" ", ""),

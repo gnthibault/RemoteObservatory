@@ -125,6 +125,9 @@ class Image(Base):
             if self.wcs is None:
                 self.solve_field()
 
+            # First, make sure both coordinates are in the same coordinate system
+
+
             mag = self.pointing.separation(self.header_pointing)
             d_ra = self.pointing.ra - self.header_pointing.ra
             d_dec = self.pointing.dec - self.header_pointing.dec
@@ -185,7 +188,7 @@ class Image(Base):
 
     def solve_field(self, **kwargs):
         """ Solve field and populate WCS information
-
+            If you use basic catalog for astrometry.net, it is J2K!
         Args:
             **kwargs (dict): Options to be passed to `get_solve_field`
         """

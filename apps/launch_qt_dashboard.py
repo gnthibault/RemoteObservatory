@@ -152,7 +152,7 @@ class GuiLoop():
         # Initialize various widgets/views
         view3D = View3D.View3D(serv_time=self.serv_time)
         camera_widget = CameraWidget(url=0)
-        dashboard_widget = DashboardWidget(url='http://localhost:8888')
+        dashboard_widget = DashboardWidget(url='http://localhost:8000')
 
         # Now initialize main window
         self.main_window = MainWindow(view3D=view3D,
@@ -194,7 +194,7 @@ if __name__ == "__main__":
 
     # build+connect indi client
     config = load_config()
-    indi_client = Indi3DSimulatorClient(config=config['indiclient'])
+    indi_client = Indi3DSimulatorClient(config=config["mount"]["indi_client"])
     indi_client.connect()
 
     # Build the observatory
@@ -211,7 +211,6 @@ if __name__ == "__main__":
     mount_name = config['mount']['module']
     mount_module = load_module('Mount.' + mount_name)
     mount = getattr(mount_module, mount_name)(
-        indi_client=indi_client,
         location=earth_location,
         serv_time=serv_time,
         config=config['mount'])

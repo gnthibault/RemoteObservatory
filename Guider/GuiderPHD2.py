@@ -71,7 +71,7 @@ class GuiderPHD2(Base):
                 host = "localhost",
                 port = 4400,
                 publish_port = 6510,
-                profile_id = '2',
+                profile_id = '1',
                 exposure_time_sec = '3',
                 settle = {
                     "pixels": 1.5,
@@ -462,7 +462,7 @@ class GuiderPHD2(Base):
             result: integer(0)
             desc. : 
         """
-        exp_time_milli = exp_time_sec*1000
+        exp_time_milli = int(exp_time_sec*1000)
         req={"method": "set_exposure",
              "params": [exp_time_milli],
              "id": self.id}

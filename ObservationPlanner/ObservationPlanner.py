@@ -1,9 +1,10 @@
 # Basic stuff
 import datetime
-import json
 import logging
 import os.path
 import pickle
+import yaml
+
 
 # Numerical stuff
 import numpy as np
@@ -64,7 +65,7 @@ class ObservationPlanner(Base):
         self.obs = obs
         
         if configFileName is None:
-            self.configFileName = './jsonModel/TargetList.json'
+            self.configFileName = './conf_files/targets.yaml'
         else:
             self.configFileName = configFileName
 
@@ -74,7 +75,7 @@ class ObservationPlanner(Base):
 
         # Get config from json
         with open(self.configFileName) as jsonFile:
-            self.targetList = json.load(jsonFile)
+            self.targetList = yaml.load(jsonFile, Loader=yaml.FullLoader)
             self.logger.debug('ObservationPlanner, targetList is: {}'.format(
                               self.targetList))
         self.schedule = None
@@ -134,12 +135,13 @@ class ObservationPlanner(Base):
 
         obs_blocks = []
 
-        for target_name, config in self.targetList.items():
-            #target = FixedTarget.from_name(target_name)
-            target = FixedTarget(SkyCoord(239*AU.deg, 49*AU.deg))
-            for filter_name, (count, exp_time_sec) in config.items():
+        for target_name, config in self.targetList["targets"].items():
+            target = FixedTarget.from_name(target_name)
+            #target = FixedTarget(SkyCoord(239*AU.deg, 49*AU.deg))
+            for filter_name, acq_config in config.items():
                 # We split big observing blocks into smaller blocks for better
                 # granularity
+                (count, temperature, gain, exp_time_sec) = [acq_config[k] for k in ["count", "temperature", "gain", "exp_time_sec"]]
                 while count > 0:
                     l_count = max(1, min(count,
                         self.MaximumSlotDurationSec//exp_time_sec))
@@ -333,7 +335,7 @@ class ObservationPlanner(Base):
 
         # Now plot observatory horizon
         hor_az = np.sort(list(map(int,self.obs.get_horizon().keys())))
-        hor_alt = np.array([int(self.obs.get_horizon()[str(i)]) for i in
+        hor_alt = np.array([int(self.obs.get_horizon()[i]) for i in
                             hor_az])
         # Now add virtual point to cover the circle
         hor_az = np.concatenate((hor_az,[360]))

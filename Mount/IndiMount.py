@@ -99,7 +99,7 @@ class IndiMount(IndiDevice):
 
     def set_coord(self, coord):
         """
-        Subteletie here: coord should be given as Equatorial astrometric epoch
+        Subtleties here: coord should be given as Equatorial astrometric epoch
         of date coordinate (eod):  RA JNow RA, hours,  DEC JNow Dec, degrees +N
 
         As our software only manipulates J2000. we decided to convert to jnow
