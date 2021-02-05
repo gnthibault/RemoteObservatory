@@ -112,14 +112,14 @@ def on_enter(event_data):
                 img_num = img_num + 1
                 
         if pointing_error.magnitude > max_pointing_error.magnitude:
-            raise PointingError('Pointing accuracy was not good enough after '
-                                '{} iterations, pointing error stack was: {}'
-                                ''.format(img_num, pointing_error_stack))
+            raise PointingError(f"Pointing accuracy was not good enough after "
+                                f"{img_num} iterations, pointing error stack was: "
+                                f"{pointing_error_stack}")
 
         model.next_state = 'tracking'
 
     except Exception as e:
-        msg = ('Hmm, I had a problem checking the pointing error. '
-                  'Going to park. {}:{}'.format(e, traceback.format_exc()))
+        msg = (f"Hmm, I had a problem checking the pointing error. "
+               f"Going to park. {e}:{traceback.format_exc()}")
         model.logger.error(msg)
         model.say(msg)

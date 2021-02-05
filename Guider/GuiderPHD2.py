@@ -175,6 +175,18 @@ class GuiderPHD2(Base):
     def receive(self):
         return self._receive()
 
+    def wait_for_state(self, one_of_states, timeout=STANDARD_TIMEOUT):
+        assert isinstance(one_of_states, list)
+        tout = Timeout(timeout)
+        while self.state not in one_of_states:
+            try:
+                self._receive(loop_mode=True)
+            except error.Timeout as e:
+                pass
+            if tout.expired():
+                raise error.Timeout(f"Timeout while waiting for one of "
+                                    f"those states: {one_of_states}")
+
     def set_settle(self, pixels, time, timeout):
         """
            Settle parameter:
@@ -265,6 +277,32 @@ class GuiderPHD2(Base):
             self.logger.error(msg)
             raise GuidingError(msg)
 
+    def set_paused(self, paused=True, full="full"):
+        """
+           params: PAUSED: boolean, FULL: string (optional)
+           result: integer(0)
+           desc. : When setting paused to true, an optional
+                second parameter with value "full" can be provided
+                to fully pause phd, including pausing looping exposures.
+                Otherwise, exposures continue to loop, and only
+                guide output is paused. Example:
+                {"method":"set_paused","params":[true,"full"],"id":42}
+        """
+        params = [paused, full]
+        req={"method": "set_paused",
+             "params": params,
+             "id": self.id}
+        self.id += 1
+        try:
+            self._send_request(req)
+            data = self._receive({"id": req["id"]})
+            if "result" not in data or data["result"] != 0:
+                raise GuidingError(f"Wrong answer to set_paused request: "
+                                   f"{data}")
+        except Exception as e:
+            msg = f"PHD2 error setting paused status: {e}"
+            self.logger.error(msg)
+            raise GuidingError(msg)
 
     def capture_single_frame(self, exp_time_sec=None):
         """
@@ -554,7 +592,7 @@ class GuiderPHD2(Base):
                     or failure of the guide sequence.
         """
         req={"method": "guide",
-             "params": [self.settle,recalibrate],
+             "params": [self.settle, recalibrate],
              "id": self.id}
         self.id += 1
         try:

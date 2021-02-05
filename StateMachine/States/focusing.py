@@ -11,7 +11,6 @@ from utils import Timeout
 
 SLEEP_SECONDS = 1.0
 STATUS_INTERVAL = 10. * u.second
-GUIDER_STATUS_INTERVAL = 5. * u.second
 WAITING_MSG_INTERVAL = 5. * u.second
 MAX_FOCUSING_TIME = 5 * 60 * u.second
 
@@ -25,6 +24,14 @@ def on_enter(event_data):
     model = event_data.model
     model.next_state = 'parking'
 
+    # Try to pause guiding first
+    if model.manager.guider is not None:
+        msg = f"Going to start focusing, need to pause guiding first"
+        model.logger.debug(msg)
+        model.say(msg)
+        model.manager.guider.set_paused(paused=True)
+        model.manager.guider.wait_for_state(one_of_states=["Paused"])
+
     try:
         model.say("Starting focusing")
         # Before each observation, we should refocus
@@ -34,7 +41,6 @@ def on_enter(event_data):
 
         timeout = Timeout(maximum_duration)
         next_status_time = start_time + STATUS_INTERVAL
-        next_guider_status_time = start_time + GUIDER_STATUS_INTERVAL
         next_msg_time = start_time + WAITING_MSG_INTERVAL
 
         while not all([event.is_set() for event in
@@ -51,12 +57,6 @@ def on_enter(event_data):
                 model.logger.debug(f"State: focusing, elapsed "
                                    f"{round(elapsed_secs)}")
                 next_msg_time += WAITING_MSG_INTERVAL
-                now = model.manager.serv_time.get_astropy_time_from_utc()
-
-            if (now >= next_guider_status_time and
-                    model.manager.guider is not None):
-                model.manager.guider.receive()
-                next_guider_status_time += GUIDER_STATUS_INTERVAL
                 now = model.manager.serv_time.get_astropy_time_from_utc()
 
             if now >= next_status_time:
@@ -81,6 +81,13 @@ def on_enter(event_data):
         model.logger.warning(str(e))
         model.say(f"Exception while focusing {e}")
     else:
+        if model.manager.guider is not None:
+            msg = f"Finished with focusing, going to resume guiding"
+            model.logger.debug(msg)
+            model.say(msg)
+            model.manager.guider.set_paused(paused=False)
+            model.manager.guider.wait_for_state(one_of_states=["Guiding"])
+
         msg = f"Finished with focusing, going to observe"
         model.logger.debug(msg)
         model.say(msg)

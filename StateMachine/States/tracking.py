@@ -10,7 +10,7 @@ def on_enter(event_data):
         try:
             # most likely setup dithering
             model.manager.update_tracking()
-            msg = f"Done with tracking adjustment, going to observe"
+            msg = f"Done with tracking adjustment, going to focus"
             model.logger.debug(msg)
             model.say(msg)
             model.next_state = 'focusing'

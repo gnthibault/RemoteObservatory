@@ -362,7 +362,7 @@ class AutoFocuser(Base):
                           f"gives {initial_focus - focus_range / 2}")
         self.logger.debug(f"Initial focus is {initial_focus} plus range/2 gives "
                           f"{initial_focus + focus_range / 2}")
-        self.logger.debug(f"Min position is {self.min_position}"
+        self.logger.debug(f"Min position is {self.min_position} and "
                           f"Max position is {self.max_position}")
         self.logger.debug(f"Focus step is {focus_step}")
 
