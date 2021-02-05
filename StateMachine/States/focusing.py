@@ -78,7 +78,7 @@ def on_enter(event_data):
     except Exception as e:
         model.logger.warning(f"Problem with focusing, {e}: "
                              f"{traceback.format_exc()}")
-        model.logger.warning(msg)
+        model.logger.warning(str(e))
         model.say(f"Exception while focusing {e}")
     else:
         msg = f"Finished with focusing, going to observe"
