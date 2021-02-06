@@ -15,6 +15,12 @@ from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
 import matplotlib.colors as colours
 from matplotlib.figure import Figure
 from matplotlib import cm as colormap
+from matplotlib.patches import Ellipse
+
+# Photometry stuff
+from astropy.visualization import SqrtStretch
+from astropy.visualization.mpl_normalize import ImageNormalize
+import sep
 
 # Local stuff
 from Base.Base import Base
@@ -244,7 +250,7 @@ class AutoFocuser(Base):
             if self.autofocus_merit_function:
                 merit_function = self.autofocus_merit_function
             else:
-                merit_function = 'vollath_F4'
+                merit_function = 'half_flux_radius' #'vollath_F4'
 
         if not merit_function_kwargs:
             if self.autofocus_merit_function_kwargs:
@@ -286,7 +292,7 @@ class AutoFocuser(Base):
             image = fits.data
         except:
             image = fits[0].data
-        return image
+        return image.astype(np.float32)
 
     def _autofocus(self,
                    seconds,
@@ -390,18 +396,18 @@ class AutoFocuser(Base):
             # file_path = os.path.join(file_path_root, focus_fn)
             #
             thumbnail = self.get_thumbnail(seconds, thumbnail_size)
-            masks[i] = self.mask_saturated(thumbnail).mask
+            #masks[i] = self.mask_saturated(thumbnail).mask
             # if dark_thumb is not None:
             #     thumbnail = thumbnail - dark_thumb
             thumbnails[i] = thumbnail
 
-        master_mask = masks.any(axis=0)
-        master_mask = skimage.morphology.binary_dilation(master_mask,
-            selem=structuring_element)
+        #master_mask = masks.any(axis=0)
+        # master_mask = skimage.morphology.binary_dilation(master_mask,
+        #     selem=structuring_element)
 
         # Apply the master mask and then get metrics for each frame.
         for i, thumbnail in enumerate(thumbnails):
-            thumbnail = np.ma.array(thumbnail, mask=master_mask)
+            #thumbnail = np.ma.array(thumbnail, mask=master_mask)
             metric[i] = self.focus_metric(
                 thumbnail, merit_function, **merit_function_kwargs)
         fitted = False
@@ -469,17 +475,18 @@ class AutoFocuser(Base):
         final_thumbnail = self.get_thumbnail(seconds, thumbnail_size)
 
         if make_plots:
-            initial_thumbnail = self.mask_saturated(initial_thumbnail)
-            final_thumbnail = self.mask_saturated(final_thumbnail)
+            initial_thumbnail = initial_thumbnail #self.mask_saturated(initial_thumbnail)
+            final_thumbnail = final_thumbnail #self.mask_saturated(final_thumbnail)
             #if dark_thumb is not None:
             #    initial_thumbnail = initial_thumbnail - dark_thumb
             #    final_thumbnail = final_thumbnail - dark_thumb
 
             fig, ax = plt.subplots(1,3,figsize=(22, 7))
 
-            im1 = ax[0].imshow(initial_thumbnail, interpolation='none',
-                             cmap=self.get_palette(), norm=colours.LogNorm())
-            fig.colorbar(im1,  ax=ax[0])
+            #im1 = ax[0].imshow(initial_thumbnail, interpolation='none',
+            #                 cmap=self.get_palette(), norm=colours.LogNorm())
+            self.plot_nice_detection_image(initial_thumbnail, ax[0])
+            #fig.colorbar(im1,  ax=ax[0])
             ax[0].set_title('Initial focus position: {}'.format(initial_focus))
             ax[1].plot(focus_positions, metric, 'bo', label='{}'.format(merit_function))
             if fitted:
@@ -504,9 +511,10 @@ class AutoFocuser(Base):
                             f"{start_time}")
             ax[1].legend(loc='best')
 
-            im3 = ax[2].imshow(final_thumbnail, interpolation='none',
-                             cmap=self.get_palette(), norm=colours.LogNorm())
-            fig.colorbar(im3, ax=ax[2])
+            #im3 = ax[2].imshow(final_thumbnail, interpolation='none',
+            #                 cmap=self.get_palette(), norm=colours.LogNorm())
+            #fig.colorbar(im3, ax=ax[2])
+            self.plot_nice_detection_image(final_thumbnail, ax[2])
             ax[2].set_title('Final focus position: {}'.format(final_focus))
             plot_path = os.path.join(file_path_root, '{}_focus.png'.format(focus_type))
 
@@ -562,6 +570,47 @@ class AutoFocuser(Base):
                                f"found in AutoFocuser")
 
         return merit_function(data, **kwargs)
+
+    def detect_objects(self, data):
+        """
+            https://sep.readthedocs.io/en/v1.1.x/tutorial.html
+        """
+        # measure a spatially varying background on the image
+        bkg = sep.Background(data)
+        # subtract the background
+        data_sub = data - bkg
+        #Now that we’ve subtracted the background, we can run object detection on the background-subtracted data.
+        #You can see the background noise level is pretty flat. So here we’re setting the detection threshold to
+        # be a constant value of 3σ where σ is the global background RMS.
+        objects = sep.extract(data_sub, 3, err=bkg.globalrms)
+        return objects
+
+    def plot_nice_detection_image(self, data, ax):
+        objects = self.detect_objects(data)
+        norm = ImageNormalize(stretch=SqrtStretch())
+        ax.imshow(data, cmap='Greys', origin='lower', norm=norm, interpolation='nearest')
+        # plot an ellipse for each object
+        for i in range(len(objects)):
+            e = Ellipse(xy=(objects['x'][i], objects['y'][i]),
+                        width=6 * objects['a'][i],
+                        height=6 * objects['b'][i],
+                        angle=objects['theta'][i] * 180. / np.pi)
+            e.set_facecolor('none')
+            e.set_edgecolor('red')
+            ax.add_artist(e)
+
+
+    def half_flux_radius(self, data, axis=None):
+        """
+            https://sep.readthedocs.io/en/v1.1.x/api/sep.flux_radius.html?highlight=half%20flux
+        """
+        objects = self.detect_objects(data)
+        radius, flag = sep.flux_radius(
+            data, objects['x'], objects['y'],
+            rmax=6. * objects['a'], frac=0.5,
+            subpix=5)
+        return radius.mean()
+
 
 
     def vollath_F4(self, data, axis=None):

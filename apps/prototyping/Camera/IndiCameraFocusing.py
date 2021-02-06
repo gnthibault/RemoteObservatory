@@ -51,7 +51,7 @@ if __name__ == '__main__':
 
     def get_thumb(cam):
         thumbnail_size = 500
-        #cam.prepare_shoot()
+        cam.prepare_shoot()
         fits = cam.get_thumbnail(exp_time_sec=5, thumbnail_size=thumbnail_size)
         try:
             image = fits.data
