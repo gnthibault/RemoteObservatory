@@ -140,10 +140,11 @@ class SpectroScheduler(Scheduler):
     def get_best_reference_target(self, observation):
         ob = observation.observing_block
         maxseparation = 5*u.deg
+        maxebv = 1
         altaz_frame = AltAz(obstime=self.serv_time.get_astropy_time_from_utc(),
                             location=self.obs.getAstropyEarthLocation())
 
-        ref_list = best_references(ob.target, altaz_frame, maxseparation)
+        ref_list = best_references(ob.target, altaz_frame, maxseparation, maxebv)
         return ref_list[0]
 
     def get_spectral_reference_observation(self, observation):

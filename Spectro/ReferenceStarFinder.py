@@ -38,18 +38,21 @@ def starload(star, target, altaz_frame, maxseparation, maxebv):
         if star['EB-V'] > maxebv:
             return None
         star['Sky'] = SkyCoord(ra=float(star['RA_dec'])*u.deg,
-                               dec=float(star['de_dec'])*u.deg)
-        star['Separation'] = target.coord.separation(star['Sky'])
+                               dec=float(star['de_dec'])*u.deg,
+                               frame='icrs',
+                               equinox='J2000.0')
+        star['separation'] = target.coord.separation(star['Sky'])
         if star['separation']<5*u.arcsecond:
             return None # we don't want the same star
-        if star['Separation']>maxseparation:
+        if star['separation']>maxseparation:
             return None
         altaz = star['Sky'].transform_to(altaz_frame)
         star['Alt'] = altaz.alt
         star['Delta'] = star['Alt']-target.coord.transform_to(altaz_frame).alt
         star['secz'] = altaz.secz.value
     except Exception as e:
-        print(e)
+        print(f"Error while trying to load star from spectral reference "
+              f"catalog: {e}")
         return None
     return star
 
@@ -65,6 +68,7 @@ def baseload(target, altaz_frame, maxseparation, maxebv):
         #else:
         starbase = [starload(star, target, altaz_frame, maxseparation, maxebv)
                     for star in csvbase]
+        starbase = [s for s in starbase if s is not None]
     return starbase
 
 def stardisplay(num,star): # display a star
@@ -91,7 +95,7 @@ def stardisplay(num,star): # display a star
 
 
 
-def best_references(target, altaz_frame, maxseparation, maxebv=5):
+def best_references(target, altaz_frame, maxseparation, maxebv):
     #Geting stars database, with separation and altaz computed :
     base = baseload(target=target,
                     altaz_frame=altaz_frame,

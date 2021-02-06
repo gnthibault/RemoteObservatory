@@ -17,6 +17,7 @@ from Spectro.ReferenceStarFinder import best_references
 def find_reference(target_name="Shelyak"):
     target = FixedTarget.from_name(target_name)
     maxseparation = 5*u.deg
+    maxebv = 5
     obs = ShedObservatory()
     serv_time = NTPTimeService()
 
@@ -24,7 +25,7 @@ def find_reference(target_name="Shelyak"):
     altaz_frame = AltAz(obstime=serv_time.get_astropy_time_from_utc(),
                         location=obs.getAstropyEarthLocation())
 
-    ref = best_references(target, altaz_frame, maxseparation)
+    ref = best_references(target, altaz_frame, maxseparation, maxebv)
     print(ref)
 
 if __name__ == '__main__':

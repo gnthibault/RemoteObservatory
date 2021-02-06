@@ -131,33 +131,6 @@ class GuiLoop():
         self.main_window.view3D.model.setHA(coord['RA'])
         self.main_window.view3D.model.setDEC(coord['DEC'])
 
-class ObservationRun(QThread):
-
-    def __init__(self,  mount):
-        super(ObservationRun, self).__init__()
-        self.mount = mount
-
-    def __del__(self):
-        print('Backend thread is going to exit')
-
-    @pyqtSlot()
-    def run(self):
-        ''' Keep in min that backend thread should not do anything because
-            every action should be launched asynchronously from the gui
-        '''
-        # Now start to do stuff
-        mount.set_slew_rate('SLEW_FIND')
-
-        # Unpark if you want something useful to actually happen
-        mount.unpark()
-
-        #Do a slew and stop
-        c = SkyCoord(ra=10*u.hour, dec=60*u.degree, frame='icrs')
-        mount.slew_to_coord_and_stop(c)
-
-        # Park before standby
-        mount.park()
-
 if __name__ == "__main__":
 
     # load the logging configuration
