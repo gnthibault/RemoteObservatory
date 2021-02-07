@@ -15,12 +15,19 @@ targets :
         temperature :
         gain : 1
         exp_time_sec : 100
-    "Mirfak":
+    "Alderamin":
         priority: 10
         count: 2
         temperature:
         gain: 1
         exp_time_sec: 100
+    "HD31398":
+        priority: 10
+        count: 2
+        temperature:
+        gain: 1
+        exp_time_sec: 100
+
 
 reference_observation:
     count : 5

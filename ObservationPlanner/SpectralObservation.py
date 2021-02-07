@@ -33,7 +33,7 @@ class SpectralObservation(Observation):
                          exp_set_size=exp_set_size)
 
         # Important to know if corresponds to a reference acquisition or not
-        self.is_reference_observation=is_reference_observation
+        self.is_reference_observation = is_reference_observation
         self.reference_observation_id = None
 
         # Initialize thyself

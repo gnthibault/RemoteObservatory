@@ -18,13 +18,24 @@
 #include "image.h"
 
 
-Image::Image() {
+//Image::Image() {
+//    ResetData();
+//}
+
+Image::~Image() {
+    //m_workerThread.quit();
+    //m_workerThread.wait();
     ResetData();
 }
 
-Image::~Image() {
-    ResetData();
+void Image::run()
+{
+    // Do processing here
+    std::string filepath = "/home/gnthibault/Documents/pointing00.fits";
+    LoadFromFile(filepath);
+    SolveStars();
 }
+
 
 void Image::ResetData(void) {
 }
@@ -159,9 +170,9 @@ bool Image::LoadFromFile(std::string& filepath)
     img.clear();
     img.resize(stats.width ,stats.height,1,1);
     cimg_forXY(img, x, y)
-        {
-            img(x, img.height() - y - 1) = (reinterpret_cast<uint16_t *>(m_ImageBuffer))[img.offset(x, y)]; // FIXME ???
-        }
+    {
+        img(x, img.height() - y - 1) = (reinterpret_cast<uint16_t *>(m_ImageBuffer))[img.offset(x, y)]; // FIXME ???
+    }
 
     CalcStats();
     return true;
@@ -187,7 +198,6 @@ void Image::SolveStars(void)
 
     stellarSolver = new StellarSolver(stats, m_ImageBuffer, this);
     stellarSolver->moveToThread(this->thread());
-    stellarSolver->setParent(this);
     connect(stellarSolver,&StellarSolver::logOutput,this,&Image::sslogOutput);
     connect(stellarSolver,&StellarSolver::ready,this,&Image::ssReadySolve);
     stellarSolver->setLogLevel(LOG_ALL);
@@ -212,9 +222,29 @@ void Image::SolveStars(void)
     stellarSolver->setProperty("ProcessType",SOLVE);
     stellarSolver->setProperty("ExtractorType",EXTRACTOR_INTERNAL);
     stellarSolver->setProperty("SolverType",SOLVER_STELLARSOLVER);
+    
+    stellarSolver->setSearchScale(0.01, 1,"degwidth");
+    //stellarSolver->setProperty("UseScale", false);
+    //stellarSolver->setSearchPositionRaDec(ui->ra->text().toDouble(), ui->dec->text().toDouble());
+    //stellarSolver->setProperty("UsePosition", false);
+    
+    
     stellarSolver->start();
     std::cout << "IMG stellarSolver Solve Start\n";
 }
+
+/*void Image::SolveStarsSync(void)
+{
+    m_workerTimer.setSingleShot(true);
+    QEventLoop loop;
+    connect( this, &Image::successSolve, &loop, &QEventLoop::quit );
+    connect( &timer, &QTimer::timeout, &loop, &QEventLoop::quit );
+    timer.start(msTimeout);
+    loop.exec();
+    std::cout <<"RA is "<<24*stellarSolver->getSolution().ra/360 <<  "\n";
+    std::cout <<"Dec is "<<24*stellarSolver->getSolution().dec << "\n";
+}
+*/
 
 void Image::sslogOutput(QString text)
 {
@@ -224,9 +254,11 @@ void Image::sslogOutput(QString text)
 void Image::ssReadySolve(void)
 {
     std::cout << "IMG stellarSolver ready\n";
+    std::cout <<"RA is "<<24*stellarSolver->getSolution().ra/360 <<  "\n";
+    std::cout <<"Dec is "<<24*stellarSolver->getSolution().dec << "\n";
     FindStarsFinished = true;
     SolveStarsFinished = true;
-    //emit successSolve();
+    emit successSolve();
 }
 
 

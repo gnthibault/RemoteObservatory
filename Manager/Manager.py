@@ -287,9 +287,8 @@ class Manager(Base):
                 camera_events[cam_name] = cam_event
 
             except Exception as e:
-                self.logger.error("Problem waiting for images, {}: {}".format(
-                    e, traceback.format_exc()))
-
+                self.logger.error(f"Problem waiting for images, {e}: "
+                                  f"{traceback.format_exc()}")
         return camera_events
 
     def analyze_recent(self):
@@ -344,91 +343,7 @@ class Manager(Base):
 
 
     def update_tracking(self):
-        """Update tracking with rate adjustment.
-
-        The `current_offset_info` contains information about how far off
-        the center of the current image is from the pointing image taken
-        at the start of an observation. This offset info is given in arcseconds
-        for the RA and Dec.
-
-        A mount will accept guiding adjustments in number of milliseconds
-        to move in a specified direction, where the direction is either `east/west`
-        for the RA axis and `north/south` for the Dec.
-
-        Here we take the number of arcseconds that the mount is offset and,
-        via the `mount.get_ms_offset`, find the number of milliseconds we
-        should adjust in a given direction, one for each axis.
-
-        Uses the `rate_adjustment` key from the `self.current_offset_info`
-        
-        if self.current_offset_info is not None:
-            self.logger.debug("Updating the tracking")
-
-            # find the number of ms and direction for Dec axis
-            dec_offset = self.current_offset_info.delta_dec
-            dec_ms = self.mount.get_ms_offset(dec_offset, axis='dec')
-            if dec_offset >= 0:
-                dec_direction = 'north'
-            else:
-                dec_direction = 'south'
-
-            # find the number of ms and direction for RA axis
-            ra_offset = self.current_offset_info.delta_ra
-            ra_ms = self.mount.get_ms_offset(ra_offset, axis='ra')
-            if ra_offset >= 0:
-                ra_direction = 'west'
-            else:
-                ra_direction = 'east'
-
-            dec_ms = abs(dec_ms.value) * 1.5  # TODO(wtgee): Figure out why 1.5
-            ra_ms = abs(ra_ms.value) * 1.
-
-            # Ensure we don't try to move for too long
-            max_time = 99999
-
-            # Correct the Dec axis (if offset is large enough)
-            if dec_ms > max_time:
-                dec_ms = max_time
-
-            if dec_ms >= 50:
-                self.logger.info("Adjusting Dec: {} {:0.2f} ms {:0.2f}".format(
-                    dec_direction, dec_ms, dec_offset))
-                if dec_ms >= 1. and dec_ms <= max_time:
-                    self.mount.query('move_ms_{}'.format(
-                        dec_direction), '{:05.0f}'.format(dec_ms))
-
-                # Adjust tracking for up to 30 seconds then fail if not done.
-                start_tracking_time = self.serv_time.get_astropy_time_from_utc()
-                while self.mount.is_tracking is False:
-                    if (self.serv_time.get_astropy_time_from_utc() -
-                            start_tracking_time).sec > 30:
-                        raise Exception('Trying to adjust Dec tracking for '
-                                        'more than 30 seconds')
-
-                    self.logger.debug("Waiting for Dec tracking adjustment")
-                    time.sleep(0.1)
-
-            # Correct the RA axis (if offset is large enough)
-            if ra_ms > max_time:
-                ra_ms = max_time
-
-            if ra_ms >= 50:
-                self.logger.info("Adjusting RA: {} {:0.2f} ms {:0.2f}".format(
-                    ra_direction, ra_ms, ra_offset))
-                if ra_ms >= 1. and ra_ms <= max_time:
-                    self.mount.query('move_ms_{}'.format(
-                        ra_direction), '{:05.0f}'.format(ra_ms))
-
-                # Adjust tracking for up to 30 seconds then fail if not done.
-                start_tracking_time = self.serv_time.get_astropy_time_from_utc()
-                while self.mount.is_tracking is False:
-                    if (self.serv_time.get_astropy_time_from_utc() - 
-                            start_tracking_time).sec > 30:
-                        raise Exception('Trying to adjust RA tracking for '
-                                        'more than 30 seconds')
-
-                    self.logger.debug("Waiting for RA tracking adjustment")
-                    time.sleep(0.1)
+        """Update tracking with dithering.
         """
         self.mount.set_track_mode('TRACK_SIDEREAL')
         if self.guider is not None:

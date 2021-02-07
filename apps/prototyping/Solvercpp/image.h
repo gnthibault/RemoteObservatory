@@ -18,13 +18,16 @@ class Image : public QObject
 {
     Q_OBJECT
 public:
-    Image();
-
+    //Image();
+    Image(QObject *parent = 0) : QObject(parent) {}
     ~Image();
+    
+    // Main point of this worker
+    void run(void);
+    
     // Stellasolver stuff
     QPointer<StellarSolver> stellarSolver;
-    //std::unique_ptr<StellarSolver> stellarSolver =nullptr;
-    
+
     // Regular stuff
     FITSImage::Statistic stats;
 
@@ -39,7 +42,6 @@ public:
     bool LoadFromFile(std::string& filepath);
     void ResetData(void);
     void CalcStats(void);
-    void FindStars(void);
     void SolveStars(void);
 
     bool FindStarsFinished = true;
@@ -48,8 +50,10 @@ public:
 public slots:
     void sslogOutput(QString text);
     void ssReadySolve(void);
-//signals:
-//    void successSolve(void);
+
+
+signals:
+    void successSolve(void);
 
 };
 

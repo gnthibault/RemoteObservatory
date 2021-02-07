@@ -149,6 +149,7 @@ class SpectroScheduler(Scheduler):
 
     def get_spectral_reference_observation(self, observation):
         target_name = self.get_best_reference_target(observation)["Name"]
+        # TODO TN: spinfo is actually not used here
         target, spinfo = self.define_target(target_name)
         if "reference_observation" not in self.config:
             self.logger.warning("Empty reference_observation configuration")
@@ -273,10 +274,10 @@ class SpectroScheduler(Scheduler):
             # If observation does not feaures a reference yet
             if ((not self.current_observation.is_reference_observation) and
                 (self.current_observation.reference_observation_id is None)):
-                return self.get_spectral_reference_observation(self.current_observation)
+                self.current_observation = self.get_spectral_reference_observation(self.current_observation)
+                return
 
         # Favor the current observation if still available
-
         if reread_target_file:
             self.logger.debug("Rereading target file")
             self.reread_config()

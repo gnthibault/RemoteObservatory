@@ -335,8 +335,8 @@ class AbstractCamera(Base):
         file_path = self._process_fits(file_path, info)
         try:
             info['exp_time'] = info['exp_time'].value
-        except Exception:
-            pass
+        except Exception as e:
+            self.logger.error(f"Problem getting exp_time information: {e}")
 
         if info['is_primary']:
             self.logger.debug(f"Adding current observation to db: {image_id}")
