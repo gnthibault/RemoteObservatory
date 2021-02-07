@@ -43,7 +43,8 @@ bool Image::LoadFromFile(std::string& filepath)
     fileToProcess = filepath.c_str();
     if (fits_open_diskfile(&fptr, fileToProcess.toLatin1() , READONLY, &status))
     {
-        std::cout<< "Unsupported type or read error loading FITS blob";
+    	std::string utf8_text = fileToProcess.toUtf8().constData();
+        std::cout<< "Unsupported type or read error loading FITS file "<< utf8_text <<"\n";
         return false;
     }
     else
@@ -118,7 +119,7 @@ bool Image::LoadFromFile(std::string& filepath)
 
     if (naxes[0] == 0 || naxes[1] == 0)
     {
-        std::cout<<"IMG Image has invalid dimensions "<<naxes[0]<<" x "<<naxes[1];
+        std::cout<<"IMG Image has invalid dimensions "<<naxes[0]<<" x "<<naxes[1]<<"\n";
         return false;
     }
 
@@ -135,7 +136,7 @@ bool Image::LoadFromFile(std::string& filepath)
 
     if (m_ImageBuffer == nullptr)
     {
-        std::cout<<"IMG FITSData: Not enough memory for image_buffer channel.";
+        std::cout<<"IMG FITSData: Not enough memory for image_buffer channel.\n";
         delete[] m_ImageBuffer;
         m_ImageBuffer = nullptr;
         fits_close_file(fptr, &status);
@@ -173,11 +174,11 @@ void Image::CalcStats(void)
     stats.mean[0]=img.mean();
     stats.median[0]=img.median();
     stats.stddev[0]=sqrt(img.variance(1));
-    std::cout<<"IMG Min = " << stats.min[0];
-    std::cout<<"Max = " << stats.max[0];
-    std::cout<<"Avg = " << stats.mean[0];
-    std::cout<<"Med = " << stats.median[0];
-    std::cout<<"StdDev = " << stats.stddev[0];
+    std::cout<<"IMG Min = " << stats.min[0] << "\n";
+    std::cout<<"Max = " << stats.max[0] << "\n";
+    std::cout<<"Avg = " << stats.mean[0] << "\n";
+    std::cout<<"Med = " << stats.median[0] << "\n";
+    std::cout<<"StdDev = " << stats.stddev[0] << "\n";
 }
 
 void Image::SolveStars(void)
@@ -212,17 +213,17 @@ void Image::SolveStars(void)
     stellarSolver->setProperty("ExtractorType",EXTRACTOR_INTERNAL);
     stellarSolver->setProperty("SolverType",SOLVER_STELLARSOLVER);
     stellarSolver->start();
-    std::cout << "IMG stellarSolver Solve Start";
+    std::cout << "IMG stellarSolver Solve Start\n";
 }
 
 void Image::sslogOutput(QString text)
 {
-    std::cout<< "IMG Stellarsolver log : " << text.toUtf8().data();
+    std::cout<< "IMG Stellarsolver log : " << text.toUtf8().data() << "\n";
 }
 
 void Image::ssReadySolve(void)
 {
-    std::cout << "IMG stellarSolver ready";
+    std::cout << "IMG stellarSolver ready\n";
     FindStarsFinished = true;
     SolveStarsFinished = true;
     //emit successSolve();
