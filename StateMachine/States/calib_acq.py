@@ -35,7 +35,7 @@ def on_enter(event_data):
         next_msg_time = start_time + WAITING_MSG_INTERVAL
 
         while not all([event.is_set() for event in
-                       camera_events.values()]):
+                       calibration_over_events.values()]):
             # check for important message in mq
             model.check_messages()
             if model.interrupted:
@@ -67,8 +67,7 @@ def on_enter(event_data):
         model.logger.warning(msg)
         model.say(msg)
     except Exception as e:
-        model.logger.warning(f"Problem with calibration acquisition, {e}: "
-                             f"{traceback.format_exc()}")
+        msg = f"Problem with calibration acquisition, {e}: {traceback.format_exc()}"
         model.logger.warning(msg)
         model.say(f"Exception while acquiring calibration {e}")
     else:

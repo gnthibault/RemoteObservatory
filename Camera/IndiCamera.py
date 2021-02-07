@@ -253,11 +253,11 @@ class IndiCamera(IndiDevice):
         return self.get_number('CCD_INFO')['CCD_BITSPERPIXEL']['value']
 
     def get_maximum_dynamic(self):
-        return get_dynamic()
+        return self.get_dynamic()
 
     def get_sensor_size(self):
         prop_vect = self.get_number('CCD_INFO')
-        return {k:prop_vect[k]['value'] for k in ["CCD_MAX_X","CCD_MAX_Y"]}
+        return {k: prop_vect[k]['value'] for k in ["CCD_MAX_X", "CCD_MAX_Y"]}
 
     def get_pixel_size(self):
         prop_vect = self.get_number('CCD_INFO')

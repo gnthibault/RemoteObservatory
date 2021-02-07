@@ -52,7 +52,7 @@ def solve_field(fname, timeout=180, solve_opts=None, **kwargs):
             '--match', 'none',
             '--corr', 'none',
             '--wcs', 'none',
-            '--downsample', '4',
+            '--downsample', '1',
         ]
         #'-L', '1.55',
         #'-H', '1.7',
