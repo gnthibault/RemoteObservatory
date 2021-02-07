@@ -206,12 +206,6 @@ PYTHONPATH=. python3 ./apps/launch_arduino_capture.py
 * PHD2 is not closed properly / two instance might be launched which cause error
 * Transform the Manager.acquire_calibration into a generator, so that every acquisition is yielded toward the State, and it may issue messages in the meantime
 
-*        if (self.scheduler.has_valid_observations is False or
-                kwargs.get('reread_fields_file', False)):
-            self.scheduler.initialize_target_list()
-Manager l200, verifier que si on a une seule observation valide dans la liste des spectro on va quand meme pouvoir faire une calibration
-
-
 
 
 # Helper

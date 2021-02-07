@@ -90,25 +90,25 @@ class SpectralCalibration(Base):
 
     def take_dark(self, observed_list):
         dark_config_dict = {}
-        for seq_id, observation in observed_list.items():
+        for seq_time, observation in observed_list.items():
             conf = (
                 observation.time_per_exposure,
                 observation.configuration['gain'],
                 observation.configuration['temperature'])
             if conf in dark_config_dict:
-                dark_config_dict[conf].append(seq_id)
+                dark_config_dict[conf].append(seq_time)
             else:
-                dark_config_dict[conf] = [seq_id]
+                dark_config_dict[conf] = [seq_time]
 
         self.controller.close_optical_path_for_dark()
-        for (exp_time_sec, gain, temperature), seq_ids  in dark_config_dict.items():
+        for (exp_time_sec, gain, temperature), seq_times in dark_config_dict.items():
             for i in range(self.dark_nb):
                 event = self.camera.take_calibration(
                     temperature=temperature,
                     gain=gain,
                     exp_time=exp_time_sec,
                     calibration_name="dark",
-                    observations=[observed_list[i] for i in seq_ids])
+                    observations=[observed_list[seq_time] for seq_time in seq_times])
                 #yield event
                 event.wait()
         self.controller.open_optical_path()

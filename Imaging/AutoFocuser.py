@@ -435,7 +435,7 @@ class AutoFocuser(Base):
             fitter = fitting.LevMarLSQFitter()
 
             # Select data range for fitting. Tries to use points on both side of
-            # max, if in range.
+            # best, if in range.
             margin = max(3, np.int(np.ceil(n_positions/3)))
             fitting_indices = (max(ibest - margin, 0), min(ibest + margin, n_positions - 1))
 
@@ -496,8 +496,8 @@ class AutoFocuser(Base):
                 ax[1].plot(fs, fit(fs), 'b-', label='Polynomial fit')
 
             ax[1].set_xlim(focus_positions[0] - focus_step / 2, focus_positions[-1] + focus_step / 2)
-            u_limit = 1.10 * metric.max()
             l_limit = min(0.95 * metric.min(), 1.05 * metric.min())
+            u_limit = 1.10 * metric.max()
             ax[1].set_ylim(l_limit, u_limit)
             ax[1].vlines(initial_focus, l_limit, u_limit, colors='k', linestyles=':',
                          label='Initial focus')
