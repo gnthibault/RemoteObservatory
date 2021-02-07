@@ -18,19 +18,18 @@
 #include "image.h"
 
 
+//Image::Image() {
+//    ResetData();
+//}
 
-Image::Image() {
-    ResetData();
-}
+//Image::~Image() {
+//    ResetData();
+//}
 
-Image::~Image() {
-    ResetData();
-}
 void Image::ResetData(void) {
-
 }
 
-bool Image::LoadFromBlob(IBLOB *bp)
+bool Image::LoadFromFile(std::string& filepath)
 {
     ResetData();
     int status = 0, anynullptr = 0;
@@ -40,17 +39,15 @@ bool Image::LoadFromBlob(IBLOB *bp)
 
     // Use open diskfile as it does not use extended file names which has problems opening
     // files with [ ] or ( ) in their names.
-    std::string fileToProcess;
+    QString fileToProcess;
     fileToProcess = "/home/gnthibault/pointing00.fits";
-    if (fits_open_diskfile(&fptr,fileToProcess.toLatin1() , READONLY, &status))
+    if (fits_open_diskfile(&fptr, fileToProcess.toLatin1() , READONLY, &status))
     {
         std::cout<< "Unsupported type or read error loading FITS blob";
         return false;
     }
     else
-        struct stat stat_buf;
-    	int rc = stat(filename.c_str(), &stat_buf);
-        stats.size = stat_buf.st_size;
+        stats.size = QFile(fileToProcess).size();
 
     if (fits_movabs_hdu(fptr, 1, IMAGE_HDU, &status))
     {
@@ -111,7 +108,7 @@ bool Image::LoadFromBlob(IBLOB *bp)
             stats.bytesPerPixel = sizeof(double);
             break;
         default:
-            IDLog("IMG Bit depth %i is not supported.\n",fitsBitPix);
+            std::cout<<"IMG Bit depth "<< fitsBitPix <<" is not supported.\n";
             fits_close_file(fptr, &status);
             return false;
     }
@@ -186,12 +183,12 @@ void Image::CalcStats(void)
 void Image::SolveStars(void)
 {
     SolveStarsFinished = false;
-    HFRavg=99;
-    stellarSolver = new StellarSolver(stats, m_ImageBuffer,this);
-    //stellarSolver->moveToThread(this->thread());
-    //stellarSolver->setParent(this);
-    //connect(stellarSolver,&StellarSolver::logOutput,this,&Image::sslogOutput);
-    //connect(stellarSolver,&StellarSolver::ready,this,&Image::ssReadySolve);
+
+    stellarSolver = new StellarSolver(stats, m_ImageBuffer, this);
+    stellarSolver->moveToThread(this->thread());
+    stellarSolver->setParent(this);
+    connect(stellarSolver,&StellarSolver::logOutput,this,&Image::sslogOutput);
+    connect(stellarSolver,&StellarSolver::ready,this,&Image::ssReadySolve);
     stellarSolver->setLogLevel(LOG_ALL);
     stellarSolver->setSSLogLevel(LOG_VERBOSE);
     stellarSolver->m_LogToFile=true;
@@ -222,4 +219,13 @@ void Image::sslogOutput(QString text)
 {
     std::cout<< "IMG Stellarsolver log : " << text.toUtf8().data();
 }
+
+void Image::ssReadySolve(void)
+{
+    std::cout << "IMG stellarSolver ready";
+    FindStarsFinished = true;
+    SolveStarsFinished = true;
+    //emit successSolve();
+}
+
 
