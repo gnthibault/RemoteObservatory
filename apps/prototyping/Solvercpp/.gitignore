@@ -1,0 +1,9 @@
+.qmake.stash
+Makefile
+Solvercpp
+image.o
+moc_image.cpp
+moc_image.o
+moc_predefs.h
+test.o
+

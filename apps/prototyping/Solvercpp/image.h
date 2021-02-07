@@ -18,8 +18,9 @@ class Image : public QObject
 {
     Q_OBJECT
 public:
-    Image() {ResetData();};
-    virtual ~Image() {};
+    Image();
+
+    ~Image();
     // Stellasolver stuff
     QPointer<StellarSolver> stellarSolver;
     //std::unique_ptr<StellarSolver> stellarSolver =nullptr;

@@ -7,8 +7,9 @@
 
 int main(int argc, char* argv[])
 {
-    //
-    //LoadFromFile();
+    Image im;
+    std::string filepath = "/home/gnthibault/pointing00.fits";
+    im.LoadFromFile(filepath);
     std::cout << "It works";
     return EXIT_SUCCESS;
 }

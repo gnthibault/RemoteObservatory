@@ -18,13 +18,13 @@
 #include "image.h"
 
 
-//Image::Image() {
-//    ResetData();
-//}
+Image::Image() {
+    ResetData();
+}
 
-//Image::~Image() {
-//    ResetData();
-//}
+Image::~Image() {
+    ResetData();
+}
 
 void Image::ResetData(void) {
 }
@@ -40,7 +40,7 @@ bool Image::LoadFromFile(std::string& filepath)
     // Use open diskfile as it does not use extended file names which has problems opening
     // files with [ ] or ( ) in their names.
     QString fileToProcess;
-    fileToProcess = "/home/gnthibault/pointing00.fits";
+    fileToProcess = filepath.c_str();
     if (fits_open_diskfile(&fptr, fileToProcess.toLatin1() , READONLY, &status))
     {
         std::cout<< "Unsupported type or read error loading FITS blob";
