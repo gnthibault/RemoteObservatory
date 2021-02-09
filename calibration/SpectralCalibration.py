@@ -36,7 +36,7 @@ class SpectralCalibration(Base):
         self.flat_nb = config["flat"]["nb"]
         self.flat_gain = config["flat"]["gain"]
         self.flat_temperature = config["flat"]["temperature"]
-        self.dark_nb = config["dark_nb"]
+        self.dark_nb = config[["dark"]"dark_nb"]
  
         # If controller is specified in the config, load
         try:

@@ -200,7 +200,7 @@ class RemoteObservatoryFSM(StateMachine, Base):
             self._msg_publisher.send_message(channel, msg)
         else:
             # TODO TN this alternative is temporary only
-            self.logger.info('MESSAGE #{}: {}'.format(channel,msg))
+            self.logger.info('MESSAGE #{}: {}'.format(channel, msg))
 
     def check_messages(self):
         """ Check messages for the system

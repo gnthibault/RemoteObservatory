@@ -25,88 +25,89 @@ from Spectro.ReferenceStarFinder import best_references
 # Locally defined constraints
 from ObservationPlanner.LocalHorizonConstraint import LocalHorizonConstraint
 
+
 class SpectroScheduler(Scheduler):
 
     def __init__(self, ntpServ, obs, config=None, path='.'):
         """ Inherit from the `Base Scheduler` """
         super().__init__(ntpServ, obs, config=config, path=path)
 
-##########################################################################
-# Properties
-##########################################################################
+    ##########################################################################
+    # Properties
+    ##########################################################################
 
-##########################################################################
-# Methods
-##########################################################################
+    ##########################################################################
+    # Methods
+    ##########################################################################
     def define_target(self, target_name):
-        target=None
-        spinfo={}
+        target = None
+        spinfo = {}
         try:
             simbad = Simbad()
-            #standard name of the object type
+            # standard name of the object type
             simbad.add_votable_fields('otype')
-            #list of (secondary) object types for one object
+            # list of (secondary) object types for one object
             simbad.add_votable_fields('otypes')
-            #spectral type value
+            # spectral type value
             simbad.add_votable_fields('sp')
-            #spectral type nature ('s'pectroscopic, 'a'bsorbtion, 'e'mmission
+            # spectral type nature ('s'pectroscopic, 'a'bsorbtion, 'e'mmission
             simbad.add_votable_fields('sp_nature')
-            #spectral type quality (A: best, .., E: worst)
+            # spectral type quality (A: best, .., E: worst)
             simbad.add_votable_fields('sp_qual')
-            #all fields related with the spectral type
+            # all fields related with the spectral type
             simbad.add_votable_fields('sptype')
-            #all fields related with radial velocity and redshift
+            # all fields related with radial velocity and redshift
             simbad.add_votable_fields('velocity')
-            #all fields related with the proper motions
+            # all fields related with the proper motions
             simbad.add_votable_fields('propermotions')
             CDS = simbad.query_object(target_name)
         except:
             CDS = None
 
-        if CDS is not None: #Object found in SIMBAD, along with all info
+        if CDS is not None:  # Object found in SIMBAD, along with all info
             # overview of keywords with the previous votable fields
-            #CDS.colnames
-            #['MAIN_ID',
-            #'RA',
-            #'DEC',
-            #'RA_PREC',
-            #'DEC_PREC',
-            #'COO_ERR_MAJA',
-            #'COO_ERR_MINA',
-            #'COO_ERR_ANGLE',
-            #'COO_QUAL',
-            #'COO_WAVELENGTH',
-            #'COO_BIBCODE',
-            #'OTYPE',
-            #'OTYPES',
-            #'RVZ_TYPE',
-            #'RVZ_RADVEL',
-            #'RVZ_ERROR',
-            #'RVZ_QUAL',
-            #'RVZ_WAVELENGTH',
-            #'RVZ_BIBCODE',
-            #'SP_TYPE',
-            #'SP_QUAL',
-            #'SP_TYPE_2',
-            #'SP_QUAL_2',
-            #'SP_BIBCODE',
-            #'OTYPE_2',
-            #'PMRA',
-            #'PMDEC',
-            #'PMRA_PREC',
-            #'PMDEC_PREC',
-            #'PM_ERR_MAJA',
-            #'PM_ERR_MINA',
-            #'PM_ERR_ANGLE',
-            #'PM_QUAL',
-            #'PM_BIBCODE']
+            # CDS.colnames
+            # ['MAIN_ID',
+            # 'RA',
+            # 'DEC',
+            # 'RA_PREC',
+            # 'DEC_PREC',
+            # 'COO_ERR_MAJA',
+            # 'COO_ERR_MINA',
+            # 'COO_ERR_ANGLE',
+            # 'COO_QUAL',
+            # 'COO_WAVELENGTH',
+            # 'COO_BIBCODE',
+            # 'OTYPE',
+            # 'OTYPES',
+            # 'RVZ_TYPE',
+            # 'RVZ_RADVEL',
+            # 'RVZ_ERROR',
+            # 'RVZ_QUAL',
+            # 'RVZ_WAVELENGTH',
+            # 'RVZ_BIBCODE',
+            # 'SP_TYPE',
+            # 'SP_QUAL',
+            # 'SP_TYPE_2',
+            # 'SP_QUAL_2',
+            # 'SP_BIBCODE',
+            # 'OTYPE_2',
+            # 'PMRA',
+            # 'PMDEC',
+            # 'PMRA_PREC',
+            # 'PMDEC_PREC',
+            # 'PM_ERR_MAJA',
+            # 'PM_ERR_MINA',
+            # 'PM_ERR_ANGLE',
+            # 'PM_QUAL',
+            # 'PM_BIBCODE']
             # for sptypes, check 
             # http://simbad.u-strasbg.fr/simbad/sim-display?data=sptypes
             # eventually CDS["SP_TYPE"][0] returns 'B8.5Ib-II'
             ra_h_m_s = np.array([*map(np.float, CDS['RA'][0].split(" "))])
             dec_d_m_s = np.array([*map(np.float, CDS['DEC'][0].split(" "))])
             coord = SkyCoord(
-                ra=np.dot(ra_h_m_s, np.array([u.hourangle, u.hourangle/60, u.hourangle/3600])).to(u.degree),
+                ra=np.dot(ra_h_m_s, np.array([u.hourangle, u.hourangle / 60, u.hourangle / 3600])).to(u.degree),
                 dec=np.dot(dec_d_m_s, np.array([u.degree, u.arcminute, u.arcsecond])),
                 frame='icrs',
                 equinox='J2000.0')
@@ -126,7 +127,7 @@ class SpectroScheduler(Scheduler):
                                      coord=coord)
             except:
                 try:
-                    #"5h12m43.2s +31d12m43s" is perfectly valid
+                    # "5h12m43.2s +31d12m43s" is perfectly valid
                     coord = SkyCoord(target_name,
                                      frame='icrs',
                                      equinox='J2000.0')
@@ -139,7 +140,7 @@ class SpectroScheduler(Scheduler):
 
     def get_best_reference_target(self, observation):
         ob = observation.observing_block
-        maxseparation = 5*u.deg
+        maxseparation = 5 * u.deg
         maxebv = 1
         altaz_frame = AltAz(obstime=self.serv_time.get_astropy_time_from_utc(),
                             location=self.obs.getAstropyEarthLocation())
@@ -159,24 +160,24 @@ class SpectroScheduler(Scheduler):
         count = config["count"]
         temperature = config["temperature"]
         gain = config["gain"]
-        exp_time_sec = config["exp_time_sec"]*u.second
-        configuration={
+        exp_time_sec = config["exp_time_sec"] * u.second
+        configuration = {
             'temperature': temperature,
             'gain': gain,
-            'spinfo' : spinfo
+            'spinfo': spinfo
         }
         exp_set_size = count
-        #TODO TN readout time, get that info from camera
-        camera_time = 1*u.second
-        priority=1
+        # TODO TN readout time, get that info from camera
+        camera_time = 1 * u.second
+        priority = 1
         observing_block = ObservingBlock.from_exposures(
-                target,
-                priority,
-                exp_time_sec,
-                exp_set_size,
-                camera_time,
-                configuration=configuration,
-                constraints=self.constraints)
+            target,
+            priority,
+            exp_time_sec,
+            exp_set_size,
+            camera_time,
+            configuration=configuration,
+            constraints=self.constraints)
         reference_observation = SpectralObservation(
             observing_block,
             exp_set_size=exp_set_size,
@@ -194,39 +195,39 @@ class SpectroScheduler(Scheduler):
             self.logger.warning('Target list seems to be empty')
             return
 
-        #TODO TN readout time, get that info from camera
-        camera_time = 1*u.second
+        # TODO TN readout time, get that info from camera
+        camera_time = 1 * u.second
         for target_name, config in self.config['targets'].items():
             target, spinfo = self.define_target(target_name)
             count = config["count"]
             temperature = config["temperature"]
             gain = config["gain"]
-            exp_time_sec = config["exp_time_sec"]*u.second
-            configuration={
+            exp_time_sec = config["exp_time_sec"] * u.second
+            configuration = {
                 'temperature': temperature,
                 'gain': gain,
-                'spinfo' : spinfo
+                'spinfo': spinfo
             }
-            #TODO TN retrieve priority from the file ?
+            # TODO TN retrieve priority from the file ?
             priority = config["priority"]
-            while count>0:
+            while count > 0:
                 try:
                     # number of image per scheduled "round" of imaging
                     # min number of exposure must be an integer number of times
                     # this number
                     exp_set_size = max(1, min(count,
-                        self.MaximumSlotDurationSec//exp_time_sec))
-                    #to be fixed
-                    #min_nexp = (count+exp_set_size-1)//exp_set_size
-                    #min_nexp = min_nexp * exp_set_size
+                                              self.MaximumSlotDurationSec // exp_time_sec))
+                    # to be fixed
+                    # min_nexp = (count+exp_set_size-1)//exp_set_size
+                    # min_nexp = min_nexp * exp_set_size
                     b = ObservingBlock.from_exposures(
-                            target,
-                            priority,
-                            exp_time_sec,
-                            exp_set_size,
-                            camera_time,
-                            configuration=configuration,
-                            constraints=self.constraints)
+                        target,
+                        priority,
+                        exp_time_sec,
+                        exp_set_size,
+                        camera_time,
+                        configuration=configuration,
+                        constraints=self.constraints)
                     self.add_observation(b, is_reference_observation=False)
                     count -= exp_set_size
                 except AssertionError as e:
@@ -273,7 +274,7 @@ class SpectroScheduler(Scheduler):
         if self.current_observation is not None:
             # If observation does not feaures a reference yet
             if ((not self.current_observation.is_reference_observation) and
-                (self.current_observation.reference_observation_id is None)):
+                    (self.current_observation.reference_observation_id is None)):
                 self.current_observation = self.get_spectral_reference_observation(self.current_observation)
                 return
 
@@ -283,12 +284,12 @@ class SpectroScheduler(Scheduler):
             self.reread_config()
 
         if time is None:
-            time = self.serv_time.get_astropy_time_from_utc() #get_utc()
+            time = self.serv_time.get_astropy_time_from_utc()  # get_utc()
 
         # dictionary where key is obs key and value is priority (aka merit)
         valid_obs = {obs: 1.0 for obs in self.observations}
         best_obs = []
-        
+
         observer = self.obs.getAstroplanObserver()
 
         for constraint in self.constraints:
@@ -297,10 +298,10 @@ class SpectroScheduler(Scheduler):
                 if obs_key in valid_obs:
                     self.logger.debug(f"\tObservation: {obs_key}")
                     score = constraint.compute_constraint(time, observer,
-                        observation.target.coord)
+                                                          observation.target.coord)
                     # Check if the computed score is a boolean
                     if np.any([isinstance(score, ty) for ty in
-                              [bool, np.bool, np.bool_]]):
+                               [bool, np.bool, np.bool_]]):
                         self.logger.debug(f"\t\tVetoed if false: {score}")
                         # Log vetoed observations
                         if not score:
@@ -314,7 +315,7 @@ class SpectroScheduler(Scheduler):
         # Now add initial priority
         for obs_key, score in valid_obs.items():
             valid_obs[obs_key] = (score +
-                self.observations[obs_key].priority)
+                                  self.observations[obs_key].priority)
 
         # if there are actually valid observation remaining
         if len(valid_obs) > 0:
@@ -323,20 +324,19 @@ class SpectroScheduler(Scheduler):
 
             # Check new best against current_observation
             if (self.current_observation is not None and
-                best_obs[0].id!= self.current_observation.id):
-                #best_obs[0][0]!= self.current_observation.id):
+                    best_obs[0][0] != self.current_observation.id):
 
                 # Favor the current observation if still doable
                 end_of_next_set = time + self.current_observation.set_duration
                 if self.observation_available(
-                        self.current_observation, 
+                        self.current_observation,
                         Time([time, end_of_next_set])):
 
                     # If current is better or equal to top, add it to bestof
                     # but no need to update current_observation
                     if self.current_observation.merit >= best_obs[0][1]:
-                        best_obs.insert(0,(self.current_observation.id,
-                                           self.current_observation.merit))
+                        best_obs.insert(0, (self.current_observation.id,
+                                            self.current_observation.merit))
 
             self.current_observation = self.observations[best_obs[0][0]]
             self.current_observation.merit = best_obs[0][1]
@@ -350,7 +350,7 @@ class SpectroScheduler(Scheduler):
                                               Time([time, end_of_next_set])):
 
                     self.logger.debug("Reusing {}".format(
-                                      self.current_observation))
+                        self.current_observation))
                     best_obs = [(self.current_observation.id,
                                  self.current_observation.merit)]
                 else:
@@ -361,7 +361,6 @@ class SpectroScheduler(Scheduler):
             best_obs = best_obs[0]
 
         return best_obs
-
 
 ##########################################################################
 # Utility Methods

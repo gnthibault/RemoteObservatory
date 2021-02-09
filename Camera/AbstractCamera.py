@@ -153,7 +153,7 @@ class AbstractCamera(Base):
         )
 
         # check if it is a pointing image
-        is_pointing = ('POINTING' in headers) and (headers["POINTING"]=="True")
+        is_pointing = ('POINTING' in headers) and (headers["POINTING"] == "True")
 
         # get values
         exp_time = kwargs.get('exp_time', observation.time_per_exposure)
@@ -173,7 +173,7 @@ class AbstractCamera(Base):
             'is_primary': self.is_primary,
             'sequence_id': sequence_id,
             'start_time': start_time,
-            'exp_time': exp_time.to(u.second).value,
+            'exp_time': exp_time,
             'temperature_degC' : temperature
         }
         metadata.update(headers)
@@ -334,7 +334,7 @@ class AbstractCamera(Base):
 
         file_path = self._process_fits(file_path, info)
         try:
-            info['exp_time'] = info['exp_time'].value
+            info['exp_time'] = info['exp_time'].to(u.second).value
         except Exception as e:
             self.logger.error(f"Problem getting exp_time information: {e}")
 
@@ -371,17 +371,17 @@ class AbstractCamera(Base):
 
         image_id = info['image_id']
         seq_id = info['sequence_id']
-        title=info['target_name']
-        primary=info['is_primary']
-        observation_ids=info['observation_ids']
+        title = info['target_name']
+        primary = info['is_primary']
+        observation_ids = info['observation_ids']
         del info['observation_ids']
         self.logger.debug(f"Processing {image_id}")
 
         file_path = self._process_fits(file_path, info)
         try:
-            info['exp_time'] = info['exp_time'].value
-        except Exception:
-            pass
+            info['exp_time'] = info['exp_time'].to(u.second).value
+        except Exception as e:
+            self.logger.error(f"Problem getting exp_time information: {e}")
 
         if info['is_primary']:
             self.logger.debug("Adding current calibration to db: {}".format(
