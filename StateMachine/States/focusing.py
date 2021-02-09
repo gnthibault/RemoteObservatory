@@ -33,6 +33,7 @@ def on_enter(event_data):
         model.logger.debug(msg)
         model.say(msg)
         model.next_state = 'observing'
+        return
 
     # Try to pause guiding first
     if model.manager.guider is not None:
