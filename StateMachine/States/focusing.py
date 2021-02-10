@@ -27,7 +27,7 @@ def on_enter(event_data):
     # First thing: if we are not at our first exposure, then assume the focus is still ok
     # and directly go to next step:
     observation = model.manager.current_observation
-    if observation.current_exp > 0:
+    if observation.current_exp % observation.number_exposures != 0:
         msg = f"Focusing state, current exposure is {observation.current_exp}, "\
               f"no need to refocus, jumping to next state"
         model.logger.debug(msg)

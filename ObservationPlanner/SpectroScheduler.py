@@ -275,7 +275,9 @@ class SpectroScheduler(Scheduler):
             # If observation does not feaures a reference yet
             if ((not self.current_observation.is_reference_observation) and
                     (self.current_observation.reference_observation_id is None)):
+                current_observation = self.current_observation
                 self.current_observation = self.get_spectral_reference_observation(self.current_observation)
+                current_observation.reference_observation_id = self.current_observation
                 return
 
         # Favor the current observation if still available
