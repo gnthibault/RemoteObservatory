@@ -19,7 +19,7 @@ class Image : public QObject
     Q_OBJECT
 public:
     //Image();
-    Image(QObject *parent = 0) : QObject(parent) {}
+    Image(QObject *parent=nullptr, const std::string& fits_path = {""}): QObject(parent), m_fits_path(fits_path) {};
     ~Image();
     
     // Main point of this worker
@@ -29,6 +29,7 @@ public:
     QPointer<StellarSolver> stellarSolver;
 
     // Regular stuff
+    const std::string& m_fits_path;
     FITSImage::Statistic stats;
 
     std::vector<FITSImage::Star> stars;
@@ -39,7 +40,7 @@ public:
     CImg<uint16_t> img;
 
 
-    bool LoadFromFile(std::string& filepath);
+    bool LoadFromFile(const std::string& filepath);
     void ResetData(void);
     void CalcStats(void);
     void SolveStars(void);

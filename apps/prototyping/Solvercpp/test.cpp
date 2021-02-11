@@ -2,6 +2,9 @@
 
 #include <cstdlib>
 #include <iostream>
+#include <string>
+
+// Qt
 #include <QtCore>
 
 #include "image.h"
@@ -9,20 +12,16 @@
 
 int main(int argc, char* argv[])
 {
-    /*Image im;
-    std::string filepath = "/home/gnthibault/Documents/pointing00.fits";
-    im.LoadFromFile(filepath);
-
-    QThread workerThread;
-    im.moveToThread(&workerThread);
-    im.SolveStars();
-    im.thread()->wait();*/
-    
+    if (argc != 2) {
+        std::cout << "Please provide fits path" << std::endl;
+        return EXIT_SUCCESS;
+    }
     QCoreApplication a(argc, argv);
 
     // Task parented to the application so that it
     // will be deleted by the application.
-    Image *im = new Image(&a);
+    std::string fits_filepath = argv[1];
+    Image *im = new Image(&a, fits_filepath);
 
     // This will cause the application to exit when
     // the task signals finished.    
@@ -32,7 +31,4 @@ int main(int argc, char* argv[])
     QTimer::singleShot(0, im, &Image::run);
 
     return a.exec();
-
-
-    //return EXIT_SUCCESS;
 }

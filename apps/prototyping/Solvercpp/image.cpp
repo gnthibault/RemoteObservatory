@@ -18,8 +18,9 @@
 #include "image.h"
 
 
-//Image::Image() {
+//Image::Image(QObject *parent, std::string& fits_path) {
 //    ResetData();
+//    m_fits_path = fits_path
 //}
 
 Image::~Image() {
@@ -31,8 +32,7 @@ Image::~Image() {
 void Image::run()
 {
     // Do processing here
-    std::string filepath = "/home/gnthibault/Documents/pointing00.fits";
-    LoadFromFile(filepath);
+    LoadFromFile(m_fits_path);
     SolveStars();
 }
 
@@ -40,7 +40,7 @@ void Image::run()
 void Image::ResetData(void) {
 }
 
-bool Image::LoadFromFile(std::string& filepath)
+bool Image::LoadFromFile(const std::string& filepath)
 {
     ResetData();
     int status = 0, anynullptr = 0;
@@ -50,8 +50,7 @@ bool Image::LoadFromFile(std::string& filepath)
 
     // Use open diskfile as it does not use extended file names which has problems opening
     // files with [ ] or ( ) in their names.
-    QString fileToProcess;
-    fileToProcess = filepath.c_str();
+    QString fileToProcess(filepath.c_str());
     if (fits_open_diskfile(&fptr, fileToProcess.toLatin1() , READONLY, &status))
     {
     	std::string utf8_text = fileToProcess.toUtf8().constData();
@@ -203,7 +202,7 @@ void Image::SolveStars(void)
     stellarSolver->setLogLevel(LOG_ALL);
     stellarSolver->setSSLogLevel(LOG_VERBOSE);
     stellarSolver->m_LogToFile=true;
-    stellarSolver->m_LogFileName="/home/gnthibault/Documents/solver.log";
+    stellarSolver->m_LogFileName="/tmp/solver.log";
     stellarSolver->m_AstrometryLogLevel=LOG_ALL;
 
     /*typedef enum { EXTRACT,            //This just sextracts the sources
@@ -223,10 +222,11 @@ void Image::SolveStars(void)
     stellarSolver->setProperty("ExtractorType",EXTRACTOR_INTERNAL);
     stellarSolver->setProperty("SolverType",SOLVER_STELLARSOLVER);
     
-    stellarSolver->setSearchScale(0.01, 1,"degwidth");
+    //stellarSolver->setSearchScale(0.1, 1,"degwidth");
+    //stellarSolver->setSearchScale(1.2, 1.5,"arcsecperpix");
     //stellarSolver->setProperty("UseScale", false);
-    //stellarSolver->setSearchPositionRaDec(ui->ra->text().toDouble(), ui->dec->text().toDouble());
-    //stellarSolver->setProperty("UsePosition", false);
+    stellarSolver->setSearchPositionRaDec(74.25, 33.1647);
+    stellarSolver->setProperty("UsePosition", true);
     
     
     stellarSolver->start();
