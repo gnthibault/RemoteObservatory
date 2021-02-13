@@ -181,9 +181,10 @@ def get_solve_field(fname, replace=True, remove_extras=True, **kwargs):
                 if "config" in kwargs:
                     latest_path = f"{kwargs['config']['directories']['images']}/latest_pointing.png"
                     shutil.copyfile(annotated, latest_path)
-                    latest_path = f"{kwargs['config']['directories']['images']}/latest_pointing.fits"
-                    shutil.copyfile(fname, latest_path)
-                    #java -Xmx2g -jar AladinBeta.jar -hipsgen maxthread=20 in=/var/RemoteObservatory/images/latest_pointing.fits out=./test creator_did=HiPSID
+                    # Manage creation of the HIPS
+                    hips_dir = f"{kwargs['config']['directories']['images']}/HIPS"
+                    gen_hips(hips_dir=hips_dir, fits_path=fname)
+
             except Exception as e:
                 warn(f"Problem with extracting pretty pointing image: {e}")
 
@@ -372,6 +373,19 @@ def update_thumbnail(file_path, latest_path):
             io.imsave(latest_path, hdu.data.astype(np.uint8))
     except Exception as e:
         warn(f"Exception while trying to save thumbnail: {e}")
+
+def gen_hips(hips_dir, fits_path):
+    if os.path.exists(hips_dir):
+        shutil.rmtree(hips_dir)
+    os.makedirs(hips_dir)
+    cmd = ["java","-Xmx2g", "-jar", "scripts/AladinBeta.jar", "-hipsgen", "maxthread=20",
+           f"in={fits_path}", f"out={hips_dir}", "creator_did=HiPSID"]
+    try:
+        subprocess.run(cmd)
+    except Exception as e:
+        warn(f"Exception while trying to generate HIPS with command {cmd}: {e}")
+
+
 
 def update_headers(file_path, info):
     with fits.open(file_path, 'update') as f:
