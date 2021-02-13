@@ -197,6 +197,7 @@ class Image(Base):
             ra=self.header_pointing.ra.value,
             dec=self.header_pointing.dec.value,
             radius=5,
+            config=self.config,
             **kwargs)
         self.wcs_file = solve_info['solved_fits_file']
         self.get_wcs_pointing()

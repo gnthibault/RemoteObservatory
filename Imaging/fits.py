@@ -47,7 +47,6 @@ def solve_field(fname, timeout=180, solve_opts=None, **kwargs):
             '--guess-scale',
             '--cpulimit', str(timeout),
             '--no-verify',
-            '--no-plots',
             '--crpix-center',
             '--match', 'none',
             '--corr', 'none',
@@ -58,6 +57,7 @@ def solve_field(fname, timeout=180, solve_opts=None, **kwargs):
         #'-H', '1.7',
         #'-u', 'arcsecperpix'
         #]
+        #--no-plots
 
         if kwargs.get('overwrite', True):
             options.append('--overwrite')
@@ -159,6 +159,7 @@ def get_solve_field(fname, replace=True, remove_extras=True, **kwargs):
             rdls = fname.replace('.fits', '.rdls')
             axy = fname.replace('.fits', '.axy')
             xyls = fname.replace('.fits', '-indx.xyls')
+            annotated = fname.replace('.fits', '-ngc.png')
 
             if replace and os.path.exists(new):
                 # Remove converted fits
@@ -175,8 +176,19 @@ def get_solve_field(fname, replace=True, remove_extras=True, **kwargs):
                     if os.path.exists(f):
                         os.remove(f)
 
+            # Always save the solved fits and solved png at the root of the project
+            try:
+                if "config" in kwargs:
+                    latest_path = f"{kwargs['config']['directories']['images']}/latest_pointing.png"
+                    shutil.copyfile(annotated, latest_path)
+                    latest_path = f"{kwargs['config']['directories']['images']}/latest_pointing.fits"
+                    shutil.copyfile(fname, latest_path)
+                    #java -Xmx2g -jar AladinBeta.jar -hipsgen maxthread=20 in=/var/RemoteObservatory/images/latest_pointing.fits out=./test creator_did=HiPSID
+            except Exception as e:
+                warn(f"Problem with extracting pretty pointing image: {e}")
+
         except Exception as e:
-            warn('Cannot remove extra files: {}'.format(e))
+            warn(f"Cannot remove extra files: {e}")
 
     if errs is not None:
         warn("Error in solving: {}".format(errs))
@@ -354,9 +366,12 @@ def write_fits(data, header, filename, logger, exposure_event=None):
             exposure_event.set()
 
 def update_thumbnail(file_path, latest_path):
-    with fits.open(file_path, 'readonly') as f:
-        hdu = f[0]
-        io.imsave(latest_path, hdu.data.astype(np.uint8))
+    try:
+        with fits.open(file_path, 'readonly') as f:
+            hdu = f[0]
+            io.imsave(latest_path, hdu.data.astype(np.uint8))
+    except Exception as e:
+        warn(f"Exception while trying to save thumbnail: {e}")
 
 def update_headers(file_path, info):
     with fits.open(file_path, 'update') as f:

@@ -143,3 +143,6 @@ if __name__ == "__main__":
     main_loop = GuiLoop(gps_coord=gps_coord, observatory=obs,
                         serv_time=serv_time)
     main_loop.run()
+
+# Launch through web ? Doesn't work at the moment...
+# QT_QPA_PLATFORM=webgl:port=8998 PYTHONPATH=. python ./apps/prototyping/GUI/SkySimulator.py

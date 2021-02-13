@@ -1,4 +1,4 @@
-name: gnthibault remote observatory
+name: Remote observatory
 observatory:
     module: ShedObservatory
     investigator: gnthibault

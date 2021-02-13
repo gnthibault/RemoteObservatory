@@ -326,8 +326,7 @@ class AbstractCamera(Base):
         self.logger.debug(f"Processing {image_id}")
 
         try:
-            latest_path = '{}/latest.jpg'.format(
-                self.config['directories']['images'])
+            latest_path = f"{self.config['directories']['images']}/latest.jpg"
             fits_utils.update_thumbnail(file_path, latest_path)
         except Exception as e:
             self.logger.warning(f"Problem with extracting pretty image: {e}")

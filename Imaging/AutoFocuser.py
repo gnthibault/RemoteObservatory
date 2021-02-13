@@ -436,8 +436,9 @@ class AutoFocuser(Base):
 
             # Select data range for fitting. Tries to use points on both side of
             # best, if in range.
-            margin = max(3, np.int(np.ceil(n_positions/3)))
-            fitting_indices = (max(ibest - margin, 0), min(ibest + margin, n_positions - 1))
+            #margin = max(3, np.int(np.ceil(n_positions/3)))
+            #fitting_indices = (max(ibest - margin, 0), min(ibest + margin, n_positions - 1))
+            fitting_indices = (0, n_positions - 1)
 
             # Fit models to data
             fit = fitter(reparameterised_polynomial,
