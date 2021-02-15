@@ -38,7 +38,7 @@ def on_enter(event_data):
                pointing_error.magnitude > max_pointing_error.magnitude):
 
             # Eventually adjust by slewing again to the target
-            if ( img_num > 0 and 
+            if (img_num > 0 and
                  pointing_error.magnitude > max_pointing_error.magnitude):
                 model.manager.mount.slew_to_target()
 
@@ -116,6 +116,8 @@ def on_enter(event_data):
                                 f"{img_num} iterations, pointing error stack was: "
                                 f"{pointing_error_stack}")
 
+        # Inform that we have changed field
+        model.send_message({"name": model.manager.current_observation.name}, channel='FIELD')
         model.next_state = 'tracking'
 
     except Exception as e:

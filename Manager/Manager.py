@@ -34,6 +34,7 @@ from utils import error
 from utils.config import load_config
 #from pocs.utils import images as img_utils
 from utils import load_module
+from utils.messaging import PanMessaging
 
 class Manager(Base):
 
@@ -127,6 +128,9 @@ class Manager(Base):
 ##########################################################################
 # Methods
 ##########################################################################
+
+    def send_message(self, data, channel='PANCHAT'):
+        self.messaging.send_message(channel, {"data": data})
 
     def initialize(self):
         """Initialize the observatory and connected hardware """
@@ -559,9 +563,13 @@ class Manager(Base):
         try:
             self._setup_time_service()
             self._setup_weather_service()
+            self._setup_messaging()
             #self.serv_astrometry = NovaAstrometryService(configFileName='local')
         except Exception:
             raise RuntimeError('Problem setting up services')
+
+    def _setup_messaging(self):
+        self.messaging = PanMessaging.create_publisher(self.config["messaging"]["msg_port"])
 
     def _setup_weather_service(self):
         """
