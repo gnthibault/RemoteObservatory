@@ -17,6 +17,7 @@ This project either uses, or is directly inspired by:
 * notebooks from ivandga for amateur spectroscopy: https://github.com/ivandga/ArasSpectraNotebooks
 * SpectroStars from Serge Golovanow: https://github.com/serge-golovanow/SpectroStars
 * Astroalign: https://github.com/toros-astro/astroalign
+* Aladin-lite (mostly for PAWS actually): https://github.com/cds-astro/aladin-lite
 
 # Install
 

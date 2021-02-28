@@ -129,11 +129,11 @@ acquisition_camera:
             min : 30000
             max : 50000
         autofocus_step :
-            fine : 500
+            fine : 750
             coarse : 2500
         autofocus_range :
-            fine : 7500
-            coarse : 20000
+            fine : 15000
+            coarse : 30000
         indi_client :
             indi_host : localhost
             indi_port : 7624
