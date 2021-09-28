@@ -70,9 +70,9 @@ class FitsWriter(Base):
                 hdr['GAIN'] = (str(self.camera.getGain()), 'NC')
             if self.observatory is not None:
                 hdr['OBSERVER'] = (self.observatory.getOwnerName(), 'NC')
-                hdr['GPSCOORD'] = (str(self.observatory.getGpsCoordinates()),
+                hdr['GPSCOORD'] = (str(self.observatory.get_gps_coordinates()),
                                    'NC')
-                hdr['ALTITUDEMETER'] = (str(self.observatory.getAltitudeMeter()
+                hdr['ALTITUDEMETER'] = (str(self.observatory.get_altitude_meter()
                                         ), 'NC')
             if self.servWeather is not None:
                 hdr['TEMPERATUREC'] = (str(self.servWeather.getTemp_c()), 'NC')

@@ -1,14 +1,7 @@
 # Generic stuff
 import sys
 
-# PyQt stuff
-from PyQt5.QtGui import QColor, QVector3D
-from PyQt5.QtCore import QObject, pyqtSlot
-from PyQt5.Qt3DExtras import Qt3DWindow, QOrbitCameraController
-from PyQt5.Qt3DCore import QEntity
-
-# Local stuff: 3d 
-from ScopeSimulator.CameraController import CameraController
+# Local stuff: 3d
 from ScopeSimulator.Model3D import Model3D
 from ScopeSimulator.World3D import World3D
 

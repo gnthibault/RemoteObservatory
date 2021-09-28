@@ -49,16 +49,16 @@ class ShedObservatory(Base):
             )
 
         # Get info from config
-        self.gpsCoordinates = dict(latitude = config['latitude'],
+        self.gps_coordinates = dict(latitude = config['latitude'],
                                    longitude = config['longitude'])
-        self.altitudeMeter = config['elevation']
+        self.altitude_meter = config['elevation']
         self.horizon = config['horizon']
         self.investigator = config['investigator']
         
         # Now find the timezone from the gps coordinate
         tzw = tzwhere.tzwhere()
-        timezone_str = tzw.tzNameAt(self.gpsCoordinates['latitude'],
-                                    self.gpsCoordinates['longitude'])
+        timezone_str = tzw.tzNameAt(self.gps_coordinates['latitude'],
+                                    self.gps_coordinates['longitude'])
         self.timezone = pytz.timezone(timezone_str)
         self.logger.debug('Found timezone for observatory: {}'.format(
                           self.timezone.zone))
@@ -111,14 +111,14 @@ class ShedObservatory(Base):
             self.scope_controller.deinitialize()
         self.logger.debug("Successfully deinitialized observatory")
 
-    def getGpsCoordinates(self):
-        return self.gpsCoordinates
+    def get_gps_coordinates(self):
+        return self.gps_coordinates
 
     def get_time_zone(self):
         return self.timezone
 
-    def getAltitudeMeter(self):
-        return self.altitudeMeter
+    def get_altitude_meter(self):
+        return self.altitude_meter
 
     def get_horizon(self):
         return self.horizon
@@ -188,9 +188,9 @@ class ShedObservatory(Base):
             self.logger.debug('ShedObservatory: Flat pannel switched off')
 
     def getAstropyEarthLocation(self):
-        return EarthLocation(lat=self.gpsCoordinates['latitude']*u.deg,
-                             lon=self.gpsCoordinates['longitude']*u.deg,
-                             height=self.altitudeMeter*u.m)
+        return EarthLocation(lat=self.gps_coordinates['latitude']*u.deg,
+                             lon=self.gps_coordinates['longitude']*u.deg,
+                             height=self.altitude_meter*u.m)
 
     def getAstroplanObserver(self):
         location = self.getAstropyEarthLocation()
@@ -214,8 +214,8 @@ class ShedObservatory(Base):
 
     def status(self):
         status = {'owner': self.investigator,
-                  'location': self.gpsCoordinates,
-                  'altitude': self.altitudeMeter,
+                  'location': self.gps_coordinates,
+                  'altitude': self.altitude_meter,
                   'timezone': str(self.timezone) # not directly serializable
                  }
         if self.has_dome and self.dome_controller.is_initialized:

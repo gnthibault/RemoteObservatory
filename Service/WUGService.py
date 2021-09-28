@@ -19,7 +19,7 @@ class WUGService(Base):
 
     def __init__(self, configFileName=None):
         Base.__init__(self)
-        self.gpsCoordinates = {'latitude': '0.0', 'longitude': '0.0'}
+        self.gps_coordinates = {'latitude': '0.0', 'longitude': '0.0'}
 
         requests_cache.install_cache('wug_cache', backend='sqlite',\
         expire_after=self.defaultCacheTimeSec) 
@@ -44,14 +44,14 @@ class WUGService(Base):
         # Finished configuring
         self.logger.debug('Configured WUG service successfully')
 
-    def setGpsCoordinates(self,gpsCoordinates):
-        self.gpsCoordinates = gpsCoordinates
+    def setgps_coordinates(self,gps_coordinates):
+        self.gps_coordinates = gps_coordinates
 
     def sendRequest(self,APIFuncLink):
         try:
             # Forging the URL
             url = self.defaultBaseAPIURL+'/'+self.key+'/'+APIFuncLink+'/'+\
-            self.gpsCoordinates['latitude']+','+self.gpsCoordinates['longitude']+\
+            self.gps_coordinates['latitude']+','+self.gps_coordinates['longitude']+\
             '.json'
             # Sending request
             self.logger.debug("WUGService about to send request: %s",url)

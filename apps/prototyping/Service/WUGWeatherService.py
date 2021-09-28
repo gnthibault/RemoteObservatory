@@ -13,7 +13,7 @@ if __name__ == '__main__':
 
     # weather service
     s = WUGWeatherService()
-    s.setGpsCoordinates({"latitude": "50.0", "longitude": "0.1"})
+    s.setgps_coordinates({"latitude": "50.0", "longitude": "0.1"})
  
     # Print everything (I am a lazy person)
     s.printEverything()

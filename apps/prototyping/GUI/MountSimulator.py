@@ -196,7 +196,7 @@ if __name__ == "__main__":
     # Build the Mount
     mount = IndiMount(indi_client=indiCli,
                       config={"mount_name":"Telescope Simulator"}, connect_on_create=True)
-    gps_coord = obs.getGpsCoordinates()
+    gps_coord = obs.get_gps_coordinates()
 
     main_loop = GuiLoop(gps_coord, mount, obs, serv_time)
     main_loop.run()

@@ -243,7 +243,7 @@ if __name__ == "__main__":
     # Build the Mount
     mount = IndiMount(indi_client=indi_client,
                       configFileName=None, connect_on_create=True)
-    gps_coord = obs.getGpsCoordinates()
+    gps_coord = obs.get_gps_coordinates()
 
     main_loop = GuiLoop(gps_coord, mount, obs, serv_time, indi_client)
     main_loop.run()

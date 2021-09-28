@@ -215,7 +215,7 @@ if __name__ == "__main__":
         serv_time=serv_time,
         config=config['mount'])
 
-    gps_coord = obs.getGpsCoordinates()
+    gps_coord = obs.get_gps_coordinates()
 
     main_loop = GuiLoop(serv_time, gps_coord, mount)
     main_loop.run()

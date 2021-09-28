@@ -59,7 +59,7 @@ if __name__ == '__main__':
 
     # test Weather service
     servWeather = WUGWeatherService(logger=logger)
-    servWeather.setGpsCoordinates(obs.getGpsCoordinates())
+    servWeather.setgps_coordinates(obs.get_gps_coordinates())
     #servWeather.printEverything()
     #print('Temperature is ',str(servWeather.getTemp_c()))
     #print('relative humidity is ',str(servWeather.getRelative_humidity()))
