@@ -122,7 +122,7 @@ class IndiMount(IndiDevice):
             Can be either:
             SLEW: Slew to a coordinate and stop upon receiving coordinates.
             TRACK: Slew to a coordinate and track upon receiving coordinates.
-            SYNC: Accept current coordinate as correct upon recving coordinates
+            SYNC: Accept current coordinate as correct upon receiving coordinates
         """
         self.logger.debug('Setting ON_COORD_SET behaviour: {}'.format(
                           what_to_do))
