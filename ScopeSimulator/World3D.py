@@ -26,6 +26,29 @@ class World3D():
     pointing East
     Celestial frame: x axis pointing North, y axis pointing Zenith, Z axis
     pointing East
+
+    From: https://github.com/rdeits/meshcat-python/blob/3460c7fbb8b90f2b577ab9dd29a319dcf879c39a/src/meshcat/geometry.py
+    How is a material defined
+    class GenericMaterial(Material):
+    def __init__(self, color=0xffffff, reflectivity=0.5, map=None,
+                 side = 2, transparent = None, opacity = 1.0,
+                 linewidth = 1.0,
+                 wireframe = False,
+                 wireframeLinewidth = 1.0,
+                 vertexColors=False,
+                 **kwargs):
+        super(GenericMaterial, self).__init__()
+        self.color = color
+        self.reflectivity = reflectivity
+        self.map = map
+        self.side = side
+        self.transparent = transparent
+        self.opacity = opacity
+        self.linewidth = linewidth
+        self.wireframe = wireframe
+        self.wireframeLinewidth = wireframeLinewidth
+        self.vertexColors = vertexColors
+        self.properties = kwargs
     """
     # sky is considered as a sphere centered on origin (assuming topocentric)
     sky_radius = 50.0        #50m
