@@ -388,12 +388,10 @@ Les coordonnées du point vernal sont l'ascension droite (α) = 0 h (étant situ
            - zenith cardinal is +90deg Dec
            - nadir cardinal is -90 deg Dec
         """
-        self.view3D["sky_jnow"]
-
         # Loads star catalog and render on the sky parent object
         stars = load_bright_star_5('ScopeSimulator/data/bsc5.dat.gz', True)
         stars = self.j2k_to_jnow(stars)
-        radius_mag = [200, 150, 75, 50, 40, 30, 20]
+        radius_mag = [2, 1.5, .75, .5, .4, .3, .2]
         mag_to_radius = scipy.interpolate.interp1d(
             range(1, 8),
             radius_mag,
@@ -403,6 +401,20 @@ Les coordonnées du point vernal sont l'ascension droite (α) = 0 h (étant situ
             bounds_error=False,
             assume_sorted=False)
         for star in stars:
+            star_id = str(hash(star["nom"]))
+            self.view3D["sky_jnow"][star_id].set_object(
+                g.Sphere(float(mag_to_radius(float(star['mag'])))),
+                g.MeshLambertMaterial(
+                    color=0xfafbd7,
+                    reflectivity=0.8))
+            #We first apply rotation to expected position
+            tr = tf.rotation_matrix(star['ra'], [0, 0, 1])
+            tr = tr.dot(tf.rotation_matrix(star['de'] / 2, [0, 1, 0]))
+            # Then we compose with translation on sky sphere
+            tr = tr.dot(tf.translation_matrix([self.sky_radius*0.9, 0, 0]))
+            # Now we apply transform
+            self.view3D["sky_jnow"][star_id].set_transform(tr)
+
         #     e = QEntity()
         #     e_star = QSphereMesh()
         #     e_radius = mag_to_radius(float(star['mag']))
