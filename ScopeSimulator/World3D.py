@@ -205,7 +205,7 @@ class World3D():
            Displacement to the given latitude coordinate is considered as a
            rotation around z axis: (0,0,1) in the Qt3D frame
         """   
-        # self.latitude = latitude
+        self.latitude = latitude
         # if self.latitude < 0.0:
         #     angle = 90.0 - abs(self.latitude)
         # else:
@@ -263,23 +263,6 @@ Les coordonnées du point vernal sont l'ascension droite (α) = 0 h (étant situ
         """
         self.view3D["/Background"].set_property("top_color", [0, 1, 0])
         self.view3D['/Grid'].set_property("visible", True)
-        # self.horizontal_plane = QEntity()
-        # self.horizontal_mesh = QPlaneMesh()
-        # self.horizontal_mesh.setWidth(2 * World3D._sky_radius)
-        # self.horizontal_mesh.setHeight(2 * World3D._sky_radius)
-        # self.horizontal_mesh.setMeshResolution(QSize(50, 50))
-        # #self.horizontal_mesh.setMirrored(True)
-        # #self.horizontalTransform = QTransform()
-        # #self.horizontalTransform.setMatrix(QTransform.rotateAround(
-        # #    QVector3D(0,0,0), 90.0, QVector3D(1.0, 0.0, 0.0)))
-        # #self.horizontalTransform.setTranslation(QVector3D(0.0, -10.0, 0.0))
-        # self.horizontal_mat = QDiffuseSpecularMaterial()
-        # self.horizontal_mat.setAmbient(QColor(0, 128, 0))
-        # #self.horizontal_plane.addComponent(self.horizontalTransform)
-        # self.horizontal_plane.addComponent(self.horizontal_mat)
-        # self.horizontal_plane.addComponent(self.horizontal_mesh)
-        # self.horizontal_plane.setParent(self.root_entity)
-        pass
 
     def make_equatorial_grid(self):
         """
@@ -476,7 +459,7 @@ Les coordonnées du point vernal sont l'ascension droite (α) = 0 h (étant situ
         # Loads star catalog and render on the sky parent object
         stars = load_bright_star_5('ScopeSimulator/data/bsc5.dat.gz', True)
         stars = self.j2k_to_jnow(stars)
-        radius_mag = [2, 1.5, .75, .5, .4, .3, .2]
+        radius_mag = [.2, .15, .10, .03, .022, .016, .01]
         mag_to_radius = scipy.interpolate.interp1d(
             range(1, 8),
             radius_mag,
