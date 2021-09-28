@@ -136,7 +136,8 @@ class World3D():
             g.MeshLambertMaterial(
                 color=0x020458,
                 reflectivity=0.01))
-        self.sky_transform = tf.rotation_matrix(0, [0, 1, 0])
+        self.latitude_transform = tf.rotation_matrix(0, [0, 0, 1])
+        self.celestial_time_transform = tf.rotation_matrix(0, [0, 0, 1])
 
         # attach ground frame related elements to root entity
         self.make_horizontal_plane()
@@ -146,7 +147,7 @@ class World3D():
 
         # Attach sky frame related elements to sky entity
         self.make_equatorial_grid()
-        self.make_stars()
+        #self.make_stars()
 
         # Helps define sky frame relative to ground frame (root entity)
         #self.time=QQuaternion()
@@ -167,45 +168,52 @@ class World3D():
         :return:
         """
         return self.serv_time.get_astropy_celestial_time(
-            longitude=self.longitude)
+            longitude=self.longitude_deg)
 
     def update_sky_transform(self):
         """
            transform the sky entity from reference frame (ground) to celestial
-           We recall how is the sky entity frame defined
+           We recall how is the sky frame should be as follow (after transform)
             - x axis: should be center to vernal point
             - y axis: should be center to 90deg east
             - z axis: should be center to north celestial pole
              RA coordinates, seen from north
              hemisphere, go from vernal (00:00) to east (6:00), ...
 
-           We also recall the main frame definition:
-            - x axis pointing North
-            - y axis pointing Zenith/pole
-            - z axis pointing East
-
-           qlatitude is a quaternion that define rotation around
+           Recall base frame:
+             -index 0 : x axis : red    : pointing North,
+             -index 1 : z axis : green   : pointing zenith
+             -index 2 : y axis : blue  : pointing zenith
         """
-        #self.sky_transform.setRotation(self.qlatitude * self.qtime)
-        pass
+        tr = self.latitude_transform
+        tr = tr.dot(self.celestial_time_transform)
 
-    def set_latitude(self, latitude):
+        self.view3D["sky_jnow"].set_transform(tr)
+
+    def set_latitude(self, latitude_deg):
         """
-           Recall frame:
-           Qt3D frame: x axis pointing North, y axis pointing Zenith/pole, z axis
-           pointing East
-           Celestial frame: x axis pointing South, y axis pointing East, Z axis
-           pointing Zenith/pole
+           Recall base frame:
+             -index 0 : x axis : red    : pointing North,
+             -index 1 : z axis : green   : pointing zenith
+             -index 2 : y axis : blue  : pointing zenith
+
            Recall latitude:
            We recall that input latitude is 90deg at north pole and -90 at
-           south pole, in this context, we are using a 3D spherical coordinate
-           system where angle is 0 at south pole, grow up to 90 at equateur
-           and then jump directly at -90 (wtf) in northern hemisphere, and
-           decays again to reach 0 again at north pole.
-           Displacement to the given latitude coordinate is considered as a
-           rotation around z axis: (0,0,1) in the Qt3D frame
+           south pole
+
+           Sky transformation:
+           when sky is initialized:
+             -dec 90 is a zenith
+             -ra 0 is towards north
+
+            if someone is at +70deg latitude (north), then it means that the
+            celestial north pole is at 70 degrees instead of 90. i.e it undergoes
+            a rotation of 90-70 around y axis oriented toward west
         """   
-        self.latitude = latitude
+        self.latitude = np.deg2rad(latitude_deg)
+        self.latitude_transform = tf.rotation_matrix(
+            (np.pi/2)-self.latitude,
+            [0, 1, 0])
         # if self.latitude < 0.0:
         #     angle = 90.0 - abs(self.latitude)
         # else:
@@ -213,47 +221,59 @@ class World3D():
         # self.qlatitude = QQuaternion.fromAxisAndAngle(
         #     QVector3D(0.0, 0.0, 1.0),
         #     angle)
-        # self.update_sky_transform()
-        pass
+        self.update_sky_transform()
 
-    def set_longitude(self, longitude):
+    def set_longitude(self, longitude_deg):
         """
-           Recall frame:
-           Qt3D frame: x axis pointing North, y axis pointing Zenith/pole, z axis
-           pointing East
-           Celestial frame: x axis pointing South, y axis pointing East, Z axis
-           pointing Zenith/pole
-           Recall latitude:
-           We recall that input latitude is 0 at greenwich (UK) and start to
+           Recall base frame:
+             -index 0 : x axis : red    : pointing North,
+             -index 1 : z axis : green   : pointing zenith
+             -index 2 : y axis : blue  : pointing zenith
+
+           Recall longitude:
+           We recall that input longitude is 0 at greenwich (UK) and start to
            grow from there, going east (around 3-6 in France) up to +360
            Equivalently one can start from 0, and decrease in negative number
            up to -180 going west.
-           In this context, we use the converse definition locally: longitude is 
-           defined as rotation around y axis: (0,1,0) of -latitude axis in the
-           Qt3D frame
-        """   
-        self.longitude = longitude
+
+          Sky transformation:
+           when sky is initialized:
+             -dec 90 is a zenith
+             -ra 0 is towards north
+
+          If you live at 15 deg longitude, it means that someone at 0 deg longitude will have
+          the same star at zenith approx 1 hour after you.
+          For instance when it is 23:00 in Paris, it is 22:00 in london
+          It means that, for you, the sky is rotated by 15 degrees towards west (if you leave nort hemisphere)
+
+        """
+        self.longitude_deg = longitude_deg
         self.update_sky_transform()
 
     def set_celestial_time(self, celestial_time):
         """
-        We recall that celestial time is
-        passant de l'hémisphère Sud à l'hémisphère Nord, c'est le nœud ascendant. Ce dernier est le point vernal (noté γ, parfois g), parfois noté point de l'équinoxe vernal ou point de l'équinoxe de printemps, ou encore point gamma.
+        We recall what vernal point is:
+        vernal point is a location somewhere in aquarius constellation. It stands for the exact position in the sky
+        of the sun, at the very moment of the march equinox.
 
-Les références du système de coordonnées équatoriales sont d'une part le méridien passant par le point vernal, il définit le méridien zéro pour la mesure des ascensions droites, et d'autre part l'équateur céleste à partir duquel la déclinaison est mesurée (positivement au-dessus de l'équateur, négativement en dessous).
+        Viewed from the same location, a star seen at one position in the sky will be seen at the same position on
+        another night at the same sidereal time.
 
-Les coordonnées du point vernal sont l'ascension droite (α) = 0 h (étant situé sur le méridien zéro) et sa déclinaison (δ) est nulle (étant situé sur l'équateur céleste).
+        More exactly, sidereal time is the angle, measured along the celestial equator, from the observer's meridian to
+         the great circle that passes through the March equinox and both celestial poles, and is usually expressed in
+         hours, minutes, and seconds.[2] Common time on a typical clock measures a slightly longer cycle, accounting
+         not only for Earth's axial rotation but also for Earth's orbit around the Sun.
 
+         Example: if sidereal time is 1:00:00, then the vernal point (March equinox) was above your head approximately
+         one hour ago. (approximately, because earth make a full turn in ~23h56:15)
 
-        :param celestial_time:  astropy.coordinates.angles.Longitude to be
-        simulated
+        :param celestial_time:  astropy.coordinates.angles.Longitude to be simulated
         :return:
         """
-        # self.celestial_time = celestial_time
-        # angle = float(self.celestial_time.to(u.degree).value)
-        # self.qtime = QQuaternion.fromAxisAndAngle(QVector3D(0.0, 1.0, 0.0),
-        #                                           angle)
-        # self.update_sky_transform()
+        self.celestial_time = celestial_time
+        angle = float(self.celestial_time.to(u.rad).value)
+        self.celestial_time_transform = tf.rotation_matrix(angle, [1, 0, 0])
+        self.update_sky_transform()
         pass
 
     def make_horizontal_plane(self):
@@ -353,37 +373,6 @@ Les coordonnées du point vernal sont l'ascension droite (α) = 0 h (étant situ
            Handles the texture loading and setting the texture's properties.
 
         """
-        # # self.svgRenderer = QSvgRenderer()
-        # # self.svgRenderer.load('compass.svg')
-        # # self.compass = QImage(self.svgRenderer.defaultSize(), QImage.Format_ARGB32)
-        # # self.compass_texture = QTexture2D()
-        # # self.compass_texture.addTextureImage(self.compass)
-        # self.compass_texture = QTextureLoader()
-        # self.compass_texture.setMirrored(False)
-        # self.compass_texture.setSource(
-        #     QUrl.fromLocalFile('ScopeSimulator/data/compass.svg.png'))
-        # self.basement_grid = QEntity()
-        # # self.basement_mesh = QCylinderMesh()
-        # # self.basement_mesh.setRadius(1500.0)
-        # # self.basement_mesh.setLength(10.0)
-        # # self.basement_mesh.setSlices(360)
-        # self.basement_mesh = QPlaneMesh()
-        # self.basement_mesh.setWidth(1500.0) #1500mm = 1.5m
-        # self.basement_mesh.setHeight(1500.0) #1500mm = 1.5m
-        # self.basement_mesh.setMeshResolution(QSize(2, 2))
-        # self.basement_transform = QTransform()
-        # # move texture just 5mm above ground towards zenith for visibility
-        # self.basement_transform.setTranslation(QVector3D(0,20.0,0))
-        # self.basement_transform.setRotationY(-90.0)
-        # self.basement_mat_back = QDiffuseSpecularMaterial()
-        # self.basement_mat_back.setAmbient(QColor(200,200,228))
-        # self.basement_mat = QTextureMaterial()
-        # self.basement_mat.setTexture(self.compass_texture)
-        # self.basement_grid.addComponent(self.basement_transform)
-        # self.basement_grid.addComponent(self.basement_mat_back)
-        # self.basement_grid.addComponent(self.basement_mat)
-        # self.basement_grid.addComponent(self.basement_mesh)
-        # self.basement_grid.setParent(self.root_entity)
         pass
 
     def make_cardinals(self):
@@ -459,7 +448,7 @@ Les coordonnées du point vernal sont l'ascension droite (α) = 0 h (étant situ
         # Loads star catalog and render on the sky parent object
         stars = load_bright_star_5('ScopeSimulator/data/bsc5.dat.gz', True)
         stars = self.j2k_to_jnow(stars)
-        radius_mag = [.2, .15, .10, .03, .022, .016, .01]
+        radius_mag = [.2, .15, .12, .08, .05, .03, .02]
         mag_to_radius = scipy.interpolate.interp1d(
             range(1, 8),
             radius_mag,
@@ -482,79 +471,6 @@ Les coordonnées du point vernal sont l'ascension droite (α) = 0 h (étant situ
             tr = tr.dot(tf.translation_matrix([self.sky_radius*0.9, 0, 0]))
             # Now we apply transform
             self.view3D["sky_jnow"][star_id].set_transform(tr)
-
-        #     e = QEntity()
-        #     e_star = QSphereMesh()
-        #     e_radius = mag_to_radius(float(star['mag']))
-        #     e_star.setRadius(e_radius)
-        #     e_transform = QTransform()
-        #     # project celestial coordinates in radians on 3d cartesian
-        #     # coordinates in sky2000 frame, assuming:
-        #     # x axis: should be center to vernal point
-        #     # y axis: should be center to 90deg east
-        #     # z axis: should be center to north celestial pole
-        #     # RA coordinates, seen from north
-        #     # hemisphere, go from vernal (00:00) to east (6:00), ...
-        #     # which is the contrary of radians
-        #     ex = ((World3D._sky_radius - 150.0) * np.cos(star['ra']) *
-        #           np.cos(star['de']))
-        #     ey = ((World3D._sky_radius -150.0) * np.sin(star['ra']) *
-        #           np.cos(star['de']))
-        #     ez = ((World3D._sky_radius - 150.0) * np.sin(star['de']))
-        #     e_transform.setTranslation(QVector3D(ex, ez, ey))
-        #     e.addComponent(star_mat)
-        #     e.addComponent(e_transform)
-        #     e.addComponent(e_star)
-        #     e.setParent(self.skyJ2000)
-
-
-        # define a QObject to attach the stars to
-        # self.skyJ2000 = QEntity()
-        #
-        # # Define star material for nice rendering
-        # star_mat = QDiffuseSpecularMaterial()
-        # star_mat.setAmbient(QColor(255,255,224))
-        # star_mat.setDiffuse(QColor(255,255,224))
-        #
-        # # Loads star catalog and render on the sky parent object
-        # stars = load_bright_star_5('ScopeSimulator/data/bsc5.dat.gz', True)
-        # stars = self.j2k_to_jnow(stars)
-        # radius_mag = [200, 150, 75, 50, 40, 30, 20]
-        # mag_to_radius = scipy.interpolate.interp1d(
-        #     range(1,8),
-        #     radius_mag,
-        #     axis=0,
-        #     kind='quadratic',
-        #     fill_value=(max(radius_mag), min(radius_mag)),
-        #     bounds_error=False,
-        #     assume_sorted=False)
-        # for star in stars:
-        #     e = QEntity()
-        #     e_star = QSphereMesh()
-        #     e_radius = mag_to_radius(float(star['mag']))
-        #     e_star.setRadius(e_radius)
-        #     e_transform = QTransform()
-        #     # project celestial coordinates in radians on 3d cartesian
-        #     # coordinates in sky2000 frame, assuming:
-        #     # x axis: should be center to vernal point
-        #     # y axis: should be center to 90deg east
-        #     # z axis: should be center to north celestial pole
-        #     # RA coordinates, seen from north
-        #     # hemisphere, go from vernal (00:00) to east (6:00), ...
-        #     # which is the contrary of radians
-        #     ex = ((World3D._sky_radius - 150.0) * np.cos(star['ra']) *
-        #           np.cos(star['de']))
-        #     ey = ((World3D._sky_radius -150.0) * np.sin(star['ra']) *
-        #           np.cos(star['de']))
-        #     ez = ((World3D._sky_radius - 150.0) * np.sin(star['de']))
-        #     e_transform.setTranslation(QVector3D(ex, ez, ey))
-        #     e.addComponent(star_mat)
-        #     e.addComponent(e_transform)
-        #     e.addComponent(e_star)
-        #     e.setParent(self.skyJ2000)
-        #
-        # self.skyJ2000.setParent(self.sky_entity)
-        pass
 
     def j2k_to_jnow(self, coords):
         now = self.serv_time.get_astropy_time_from_utc()
