@@ -17,7 +17,6 @@ import meshcat.geometry as g
 from meshcat.geometry import Geometry
 from meshcat.geometry import SceneElement
 from meshcat.geometry import Sphere
-
 import meshcat.transformations as tf
 
 # Local stuff
@@ -161,8 +160,8 @@ class World3D():
     celestial_grid_color = 0xff0000
 
     # Cardinal points
-    cardinals_diameter = 0.25 #0.5m
-    cardinals_height = 2     #2m
+    cardinals_diameter = 0.25
+    cardinals_height = 2
     color_cardinals = {"east": 0xffffff,
                        "west": 0xffffff,
                        "north": 0xff0000,

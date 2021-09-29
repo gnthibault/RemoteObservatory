@@ -1,14 +1,7 @@
 # Generic stuff
 
-# Numerical stuff
-import numpy as np
-
 # Meshcat stuff
 import meshcat
-
-# Astropy stuff
-from astropy import units as u
-from astropy.coordinates import SkyCoord
 
 # Local stuff: rendering tools
 from ScopeSimulator.World3D import World3D
