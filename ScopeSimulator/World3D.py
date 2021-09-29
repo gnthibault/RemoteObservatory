@@ -14,15 +14,64 @@ from astropy.coordinates import SkyCoord
 # meshcat stuff
 import meshcat
 import meshcat.geometry as g
-from meshcat.geometry import SceneElement, OrthographicCamera
+from meshcat.geometry import Geometry
+from meshcat.geometry import SceneElement
+from meshcat.geometry import Sphere
 
 import meshcat.transformations as tf
 
 # Local stuff
 from ScopeSimulator.Catalogs import load_bright_star_5
 
+class Circle(Geometry):
+    """
+    from https://threejs.org/docs/#api/en/geometries/RingGeometry
+    """
+    def __init__(self, radius, nb_segment=20):
+        """
+        innerRadius — Default is 0.5.
+        outerRadius — Default is 1.
+        thetaSegments — Number of segments. A higher number means the ring will be more round. Minimum is 3. Default is 8.
+        phiSegments — Minimum is 1. Default is 1.
+        thetaStart — Starting angle. Default is 0.
+        thetaLength — Central angle. Default is Math.PI * 2.
+        """
+        Geometry.__init__(self)
+        self.innerRadius = radius
+        self.outerRadius = radius
+        self.thetaSegments = nb_segment
+        self.phiSegments = 1
+        self.thetaStart = 0
+        self.thetaLength = 2*np.pi
 
-class PerspectiveCamera(SceneElement): #OrthographicCamera):
+    def lower(self, object_data):
+        return {
+            u"uuid": self.uuid,
+            u"type": u"RingGeometry",
+            u"innerRadius": self.innerRadius,
+            u"outerRadius": self.outerRadius,
+            u"thetaSegments": self.thetaSegments,
+            u"phiSegments": self.phiSegments,
+            u"thetaStart": self.thetaStart,
+            u"thetaLength": self.thetaLength
+        }
+
+class SmoothSphere(Sphere):
+    def __init__(self, radius, nb_segment=20):
+        Geometry.__init__(self)
+        self.radius = radius
+        self.nb_segment = nb_segment
+
+    def lower(self, object_data):
+        return {
+            u"uuid": self.uuid,
+            u"type": u"SphereGeometry",
+            u"radius": self.radius,
+            u"widthSegments": self.nb_segment,
+            u"heightSegments": self.nb_segment
+        }
+
+class PerspectiveCamera(SceneElement):
     """
     Checkout https://threejs.org/docs/#api/en/cameras/PerspectiveCamera
     """
@@ -101,6 +150,17 @@ class World3D():
     """
     # sky is considered as a sphere centered on origin (assuming topocentric)
     sky_radius = 50.0        #50m
+    sky_nb_segment = 1000
+
+    # altaz grid
+    altaz_grid_lw = 0.2
+    altaz_grid_color = 0xffffff
+
+    # celestial grid
+    celestial_grid_lw = 0.2
+    celestial_grid_color = 0xff0000
+
+    # Cardinal points
     cardinals_diameter = 0.25 #0.5m
     cardinals_height = 2     #2m
     color_cardinals = {"east": 0xffffff,
@@ -132,7 +192,7 @@ class World3D():
 
         # Sky will be a rotating frame different from the ground
         self.view3D["sky_jnow"].set_object(
-            g.Sphere(self.sky_radius),
+            SmoothSphere(self.sky_radius, self.sky_nb_segment),
             g.MeshLambertMaterial(
                 color=0x020458,
                 reflectivity=0.01))
@@ -147,7 +207,7 @@ class World3D():
 
         # Attach sky frame related elements to sky entity
         self.make_equatorial_grid()
-        #self.make_stars()
+        self.make_stars()
 
         # Helps define sky frame relative to ground frame (root entity)
         #self.time=QQuaternion()
@@ -248,7 +308,7 @@ class World3D():
 
         """
         self.longitude_deg = longitude_deg
-        self.update_sky_transform()
+        self.set_celestial_time(self.get_celestial_time())
 
     def set_celestial_time(self, celestial_time):
         """
@@ -272,9 +332,8 @@ class World3D():
         """
         self.celestial_time = celestial_time
         angle = float(self.celestial_time.to(u.rad).value)
-        self.celestial_time_transform = tf.rotation_matrix(angle, [1, 0, 0])
+        self.celestial_time_transform = tf.rotation_matrix(angle, [0, 0, 1])
         self.update_sky_transform()
-        pass
 
     def make_horizontal_plane(self):
         """
@@ -310,21 +369,41 @@ class World3D():
            Inherits from QGeometryRenderer whose doc is there:
            https://doc.qt.io/qt-5/qt3drender-qgeometryrenderer.html
         """
-        # self.equatorial_grid = QEntity()
-        # self.equatorial_mesh = QSphereMesh()
-        # self.equatorial_mesh.setRadius(World3D._sky_radius)
-        # self.equatorial_mesh.setRings(18)
-        # self.equatorial_mesh.setSlices(24)
-        # self.equatorial_mesh.setPrimitiveType(QGeometryRenderer.Lines)
-        # self.equatorial_transform = QTransform()
-        # #self.equatorial_transform.setRotationZ(-(90 - 49.29))
-        # self.equatorial_mat = QDiffuseSpecularMaterial()
-        # self.equatorial_mat.setAmbient(QColor(200,0,0))
-        # self.equatorial_grid.addComponent(self.equatorial_transform)
-        # self.equatorial_grid.addComponent(self.equatorial_mat)
-        # self.equatorial_grid.addComponent(self.equatorial_mesh)
-        # self.equatorial_grid.setParent(self.sky_entity)
-        pass
+        # First: we make the declinaison grid
+        for dec_deg in np.linspace(-80, 80, 17):
+            dec_rad = np.deg2rad(dec_deg)
+            radius = np.cos(dec_rad)*self.sky_radius
+            height_position = np.sin(dec_rad)*self.sky_radius
+            self.view3D["sky_jnow"]["celestial_grid"]["dec"][str(dec_deg)].set_object(
+                Circle(radius, nb_segment=self.sky_nb_segment),
+                g.MeshLambertMaterial(
+                    color=self.celestial_grid_color,
+                    transparent=False,
+                    opacity=1.0,
+                    linewidth=0.,
+                    wireframe=True,
+                    wireframeLinewidth=self.celestial_grid_lw,
+                    vertexColors=False))
+            # By default, circle is z aligned, we move to the right position
+            self.view3D["sky_jnow"]["celestial_grid"]["dec"][str(dec_deg)].set_transform(
+                tf.translation_matrix([0, 0, height_position]))
+        # Now right ascension grid
+        for ra_deg in np.linspace(0, 165, 12):
+            ra_rad = np.deg2rad(ra_deg)
+            radius = self.sky_radius
+            self.view3D["sky_jnow"]["celestial_grid"]["ra"][str(ra_deg)].set_object(
+                Circle(radius, nb_segment=self.sky_nb_segment),
+                g.MeshLambertMaterial(
+                    color=self.celestial_grid_color,
+                    transparent=False,
+                    opacity=1.0,
+                    linewidth=0.,
+                    wireframe=True,
+                    wireframeLinewidth=self.celestial_grid_lw,
+                    vertexColors=False))
+            tr = tf.rotation_matrix(ra_rad, [0, 0, 1])
+            tr = tr.dot(tf.rotation_matrix(np.pi/2, [1, 0, 0]))
+            self.view3D["sky_jnow"]["celestial_grid"]["ra"][str(ra_deg)].set_transform(tr)
 
     def make_altaz_grid(self):
         """
@@ -332,7 +411,7 @@ class World3D():
             main axis is colinear to the normal to earth sphere at observer
             position
             We choose:
-              -18 rings: 1 tick every 10 degrees for the 180 degrees of altitude
+              -17 rings: 1 tick every 10 degrees for altitude, from -80 to 80.
                90 standing for zenith and -90 for the nadir
               -36 slices: 1 tick every 10 degrees for the 360 degrees of azimuth
                0 being oriented towards north, and 90 degrees towards east
@@ -340,21 +419,48 @@ class World3D():
            One should notice that this altaz grid is attached to the root
            entity
         """
-        # self.horizontalGrid = QEntity()
-        # self.horizontal_mesh = QSphereMesh()
-        # self.horizontal_mesh.setRadius(World3D._sky_radius)
-        # self.horizontal_mesh.setRings(18)
-        # self.horizontal_mesh.setSlices(36)
-        # self.horizontal_mesh.setPrimitiveType(QGeometryRenderer.Lines)
-        # self.horizontalTransform = QTransform()
-        # self.horizontalTransform.setRotationX(0.0)
-        # self.horizontal_mat = QDiffuseSpecularMaterial()
-        # self.horizontal_mat.setAmbient(QColor(0,0,200))
-        # self.horizontalGrid.addComponent(self.horizontalTransform)
-        # self.horizontalGrid.addComponent(self.horizontal_mat)
-        # self.horizontalGrid.addComponent(self.horizontal_mesh)
-        # self.horizontalGrid.setParent(self.root_entity)
-        pass
+        # First: we make the altitude grid
+        for altitude_deg in np.linspace(-80, 80, 17):
+            altitude_rad = np.deg2rad(altitude_deg)
+            radius = np.cos(altitude_rad)*self.sky_radius
+            height_position = np.sin(altitude_rad)*self.sky_radius
+            self.view3D["altaz_grid"]["alt"][str(altitude_deg)].set_object(
+                Circle(radius, nb_segment=self.sky_nb_segment),
+                g.MeshLambertMaterial(
+                    color=self.altaz_grid_color,
+                    transparent=False,
+                    opacity=1.0,
+                    linewidth=0.,
+                    wireframe=True,
+                    wireframeLinewidth=self.altaz_grid_lw,
+                    vertexColors=False))
+            # By default, circle is z aligned, we move to the right position
+            self.view3D["altaz_grid"]["alt"][str(altitude_deg)].set_transform(
+                tf.translation_matrix([0, 0, height_position]))
+        # Now azimut grid
+        for azimut_deg in np.linspace(0, 165, 12):
+            azimut_rad = np.deg2rad(azimut_deg)
+            radius = self.sky_radius
+            self.view3D["altaz_grid"]["az"][str(azimut_deg)].set_object(
+                Circle(radius, nb_segment=self.sky_nb_segment),
+                g.MeshLambertMaterial(
+                    color=self.altaz_grid_color,
+                    transparent=False,
+                    opacity=1.0,
+                    linewidth=0.,
+                    wireframe=True,
+                    wireframeLinewidth=self.altaz_grid_lw,
+                    vertexColors=False))
+            tr = tf.rotation_matrix(azimut_rad, [0, 0, 1])
+            tr = tr.dot(tf.rotation_matrix(np.pi/2, [1, 0, 0]))
+            self.view3D["altaz_grid"]["az"][str(azimut_deg)].set_transform(tr)
+
+    # color = 0xffffff, reflectivity = 0.5, map = None,
+    # side = 2, transparent = None, opacity = 1.0,
+    # linewidth = 1.0,
+    # wireframe = False,
+    # wireframeLinewidth = 1.0,
+    # vertexColors = False,
 
     def make_mount_basement(self):
         """
@@ -448,7 +554,7 @@ class World3D():
         # Loads star catalog and render on the sky parent object
         stars = load_bright_star_5('ScopeSimulator/data/bsc5.dat.gz', True)
         stars = self.j2k_to_jnow(stars)
-        radius_mag = [.2, .15, .12, .08, .05, .03, .02]
+        radius_mag = [.2, .14, .10, .08, .05, .03, .02]
         mag_to_radius = scipy.interpolate.interp1d(
             range(1, 8),
             radius_mag,
@@ -466,9 +572,9 @@ class World3D():
                     reflectivity=0.8))
             #We first apply rotation to expected position
             tr = tf.rotation_matrix(star['ra'], [0, 0, 1])
-            tr = tr.dot(tf.rotation_matrix(star['de'] / 2, [0, 1, 0]))
+            tr = tr.dot(tf.rotation_matrix(star['de'], [0, 1, 0]))
             # Then we compose with translation on sky sphere
-            tr = tr.dot(tf.translation_matrix([self.sky_radius*0.9, 0, 0]))
+            tr = tr.dot(tf.translation_matrix([self.sky_radius*0.99, 0, 0]))
             # Now we apply transform
             self.view3D["sky_jnow"][star_id].set_transform(tr)
 
