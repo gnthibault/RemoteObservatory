@@ -572,7 +572,7 @@ class World3D():
                     reflectivity=0.8))
             #We first apply rotation to expected position
             tr = tf.rotation_matrix(star['ra'], [0, 0, 1])
-            tr = tr.dot(tf.rotation_matrix(star['de'], [0, 1, 0]))
+            tr = tr.dot(tf.rotation_matrix(star['de'], [0, -1, 0]))
             # Then we compose with translation on sky sphere
             tr = tr.dot(tf.translation_matrix([self.sky_radius*0.99, 0, 0]))
             # Now we apply transform
