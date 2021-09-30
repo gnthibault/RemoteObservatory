@@ -201,8 +201,8 @@ class IndiDevice(Base):
     def set_switch(self, name, on_switches=[], off_switches=[],
                    sync=True, timeout=None):
         pv = self.get_prop(name, 'switch')
-        is_exclusive = pv.r == PyIndi.ISR_ATMOST1 or pv.r == PyIndi.ISR_1OFMANY
-        if is_exclusive :
+        is_exclusive = pv.getRule() == PyIndi.ISR_ATMOST1 or pv.getRule() == PyIndi.ISR_1OFMANY
+        if is_exclusive:
             on_switches = on_switches[0:1]
             off_switches = [s.name for s in pv if s.name not in on_switches]
         for index in range(0, len(pv)):

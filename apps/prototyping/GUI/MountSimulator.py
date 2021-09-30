@@ -29,50 +29,9 @@ from Observatory.ShedObservatory import ShedObservatory
 from Service.NTPTimeService import NTPTimeService
 
 
-class GuiLoop():
-
-    def __init__(self, gps_coord, mount, observatory, serv_time):
-        self.gps_coord = gps_coord
-        self.mount = mount
-        self.observatory = observatory
-        self.serv_time = serv_time
-
-    def run(self):
-        app = QApplication([])
-
-        # Initialize various widgets/views
-        view3D = View3D.View3D(serv_time=self.serv_time)
-
-        # Now initialize main window
-        self.main_window = MainWindow(view3D=view3D)
-
-        # We make sure that upon reception of new number from indiserver, the
-        # actual virtual mount position gets updated
-        indiCli.register_number_callback(
-            device_name = self.mount.device_name,
-            vec_name = 'EQUATORIAL_EOD_COORD',
-            callback = self.update_coord)
-
-        self.main_window.view3D.set_coord(self.gps_coord)
-        self.main_window.view3D.initialise_camera()
-        self.main_window.view3D.window.show()
-
-        thread = ObservationRun(self.mount)
-        thread.start()
-        
-        # Everything ends when program is over
-        status = app.exec_()
-        thread.wait()
-        sys.exit(status)
-
-    # callback for updating model
-    def update_coord(self, coord):
-        self.main_window.view3D.model.setHA(coord['RA'])
-        self.main_window.view3D.model.setDEC(coord['DEC'])
-
 class WholeSceneVizualizer():
-    def __init__(self, mount, gps_coord, observatory, serv_time):
-        self.mount = mount
+    def __init__(self, indi_client, gps_coord, observatory, serv_time):
+        self.indi_client = indi_client
         self.gps_coord = gps_coord
         self.observatory = observatory
         self.serv_time = serv_time
@@ -90,24 +49,30 @@ class WholeSceneVizualizer():
         ''' Keep in min that backend thread should not do anything because
             every action should be launched asynchronously from the gui
         '''
-        # Now start to do stuff
-        self.mount.set_slew_rate('SLEW_FIND')
 
-        # Unpark if you want something useful to actually happen
-        self.mount.unpark()
+        # We make sure that upon reception of new number from indiserver, the
+        # actual virtual mount position gets updated
+        self.indi_client.register_number_callback(
+            device_name=self.mount.device_name,
+            vec_name='EQUATORIAL_EOD_COORD',
+            callback=self.update_coord)
 
-        #Do a slew and stop
-        c = SkyCoord(ra=10*u.hour, dec=60*u.degree, frame='icrs')
-        self.mount.slew_to_coord_and_stop(c)
+        self.view3D.open()
 
-        # Park before standby
-        self.mount.park()
+    # callback for updating model
+    def update_coord(self, coord):
+        self.main_window.view3D.model.setHA(coord['RA'])
+        self.main_window.view3D.model.setDEC(coord['DEC'])
 
 if __name__ == "__main__":
 
     # build+connect indi client
-    indiCli = Indi3DSimulatorClient()
-    indiCli.connect()
+    indi_config = {
+        "indi_host":"localhost",
+        "indi_port":"7624"
+    }
+    indi_cli = Indi3DSimulatorClient(indi_config)
+    indi_cli.connect()
 
     # build utilities
     obs = ShedObservatory()
@@ -115,12 +80,28 @@ if __name__ == "__main__":
     serv_time = NTPTimeService()
 
     # Build the Mount
-    mount = IndiMount(indi_client=indiCli,
-                      config={"mount_name":"Telescope Simulator"},
+    mount_config = {
+        "mount_name": "Telescope Simulator",
+        "indi_client": indi_config
+    }
+    mount = IndiMount(config=mount_config,
                       connect_on_create=True)
     main_loop = WholeSceneVizualizer(
-        mount=mount,
+        indi_client=indi_cli,
         gps_coord=gps_coord,
         observatory=obs,
         serv_time=serv_time)
     main_loop.run()
+
+    # Now start to do stuff
+    mount.set_slew_rate('SLEW_FIND')
+
+    # Unpark if you want something useful to actually happen
+    mount.unpark()
+
+    # Do a slew and stop
+    c = SkyCoord(ra=10 * u.hour, dec=60 * u.degree, frame='icrs')
+    mount.slew_to_coord_and_stop(c)
+
+    # Park before standby
+    mount.park()

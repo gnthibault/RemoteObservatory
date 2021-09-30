@@ -51,8 +51,7 @@ class IndiMount(IndiDevice):
         assert (config is not None) and (type(config)==dict), ("Please provide "
             "config as dictionary, with mount_name")
         device_name = config['mount_name']
-        logger.debug('Indi Mount, mount name is: {}'.format(
-            device_name))
+        logger.debug(f"Indi Mount, mount name is: {device_name}")
         # device related intialization
         IndiDevice.__init__(self, logger=logger, device_name=device_name,
             indi_client_config=config["indi_client"])

@@ -9,31 +9,32 @@ import meshcat
 import meshcat.geometry as g
 import meshcat.transformations as tf
 
+
 class Model3D():
     stl_path = 'ScopeSimulator/stl'
     model_file_mat = [
-        (stl_path+'/leg.stl', 'st', None),
-        (stl_path+'/leg.stl', 'st', {'rotationZ': 120.0}),
-        (stl_path+'/leg.stl', 'st', {'rotationZ': 240.0}),
-        (stl_path+'/basetripod.stl', 'mg70', None),
+        (stl_path + '/leg.stl', 'st', None),
+        (stl_path + '/leg.stl', 'st', {'rotationZ': 120.0}),
+        (stl_path + '/leg.stl', 'st', {'rotationZ': 240.0}),
+        (stl_path + '/basetripod.stl', 'mg70', None),
         [
-            (stl_path+'/baseholder.stl', 'mg50', None),
+            (stl_path + '/baseholder.stl', 'mg50', None),
             [
-                (stl_path+'/rahousing.stl', 'mg50', None),
+                (stl_path + '/rahousing.stl', 'mg50', None),
                 [
-                    (stl_path+'/raaxis.stl', 'mg50', None),
-                    (stl_path+'/dehousing.stl', 'mg50', None),
+                    (stl_path + '/raaxis.stl', 'mg50', None),
+                    (stl_path + '/dehousing.stl', 'mg50', None),
                     [
-                        (stl_path+'/deaxis.stl', 'mg50', None),
-                        (stl_path+'/cwbar.stl', 'st', None),
-                        (stl_path+'/dovetail.stl', 'mg70', None),
-                        (stl_path+'/refractor.stl', 'wh', None),
-                        (stl_path+'/lens.stl', 'glass', None),
-                        (stl_path+'/crayford-spacer.stl', 'mg70', None),
+                        (stl_path + '/deaxis.stl', 'mg50', None),
+                        (stl_path + '/cwbar.stl', 'st', None),
+                        (stl_path + '/dovetail.stl', 'mg70', None),
+                        (stl_path + '/refractor.stl', 'wh', None),
+                        (stl_path + '/lens.stl', 'glass', None),
+                        (stl_path + '/crayford-spacer.stl', 'mg70', None),
                         [
-                            (stl_path+'/crayford-cylinder.stl', 'mg70', None),
+                            (stl_path + '/crayford-cylinder.stl', 'mg70', None),
                             [
-                                (stl_path+'/crayford-tube.stl', 'st', None),
+                                (stl_path + '/crayford-tube.stl', 'st', None),
                             ]
                         ]
                     ]
@@ -86,12 +87,12 @@ class Model3D():
             "crayford",
             "crayford_tube"]]
         self.load_models(Model3D.model_file_mat, self.view3D["mount"])
-        #self.azimuthtransform.setMatrix(QTransform.rotateAround(
+        # self.azimuthtransform.setMatrix(QTransform.rotateAround(
         #    Model3D._model_centers[0], self.azimuth, QVector3D(0,0,1)))
-        #self.latitude.setMatrix(QTransform.rotateAround(
+        # self.latitude.setMatrix(QTransform.rotateAround(
         #    Model3D._model_centers[1], self.latitude,
         #    QVector3D(0.0, 1.0, 0.0)))
-        #self.ra.setMatrix(QTransform.rotateAround(
+        # self.ra.setMatrix(QTransform.rotateAround(
         #    Model3D._model_centers[2], -self.ra + 90, QVector3D(1,0,0)))
         # self.dec.setMatrix(QTransform.rotateAround(
         #    Model3D._model_centers[3], -self.dec + 90, QVector3D(0,0,1)))
@@ -100,11 +101,11 @@ class Model3D():
         self.set_ra(self.ra)
         self.set_dec(self.dec)
         self.transforms["crayford"] = tf.rotation_matrix(0, [0, 0, 1])
-        #.setMatrix(QTransform.rotateAround(
-        #Model3D.model_centers["crayford"], self.crayford_angle, QVector3D(1,0,0)))
+        # .setMatrix(QTransform.rotateAround(
+        # Model3D.model_centers["crayford"], self.crayford_angle, QVector3D(1,0,0)))
         self.transforms["crayford_tube"] = tf.translation_matrix([0, 0, 0])
-        #.setTranslation(QVector3D(
-        #self.crayford_position, 0.0, 0.0))
+        # .setTranslation(QVector3D(
+        # self.crayford_position, 0.0, 0.0))
 
     def makeMaterials(self):
         self.metalgray50 = g.MeshLambertMaterial(
@@ -113,7 +114,7 @@ class Model3D():
             opacity=1.0)
         self.mat['mg50'] = self.metalgray50
         self.metalgray70 = g.MeshLambertMaterial(
-            color=int(0.7*255) << 16 + int(0.7*255) << 8 + int(0.7*255),
+            color=int(0.7 * 255) << 16 + int(0.7 * 255) << 8 + int(0.7 * 255),
             transparent=False,
             opacity=1.0)
         self.mat['mg70'] = self.metalgray70
@@ -126,7 +127,7 @@ class Model3D():
             color=228 << 16 + 228 << 8 + 228,
             transparent=False,
             opacity=1.0)
-        self.mat['wh'] = self. whitepaint
+        self.mat['wh'] = self.whitepaint
         self.glass = g.MeshLambertMaterial(
             color=0x000066,
             transparent=False,
@@ -183,7 +184,7 @@ class Model3D():
     def set_ra(self, ra):
         self.ra = ra
         self.transforms["ra"] = tf.rotation_matrix(0, [0, 0, 1])
-        #self.ra.setMatrix(QTransform.rotateAround(
+        # self.ra.setMatrix(QTransform.rotateAround(
         #    Model3D.model_centers["ra_axis"], self.ra, QVector3D(1,0,0)))
 
     def setHA(self, hour):
@@ -194,7 +195,7 @@ class Model3D():
     def set_dec(self, dec):
         self.dec = 90.0 - dec
         self.transforms["dec"] = tf.rotation_matrix(0, [0, 0, 1])
-        #self.dec.setMatrix(QTransform.rotateAround(
+        # self.dec.setMatrix(QTransform.rotateAround(
         #    Model3D.model_centers["dec_axis"], self.dec, QVector3D(0,0,1)))
 
     def rangeHA(self, ha):
@@ -231,25 +232,23 @@ class Model3D():
         return decdegrees
 
     def set_coord(self, skypoint, pier_side='PIER_EAST'):
-        self.celestialra = skypoint.ra().Hours()
-        self.celestialdec = skypoint.dec().Degrees()
-        self.celestialaz = skypoint.az().Degrees()
-        self.celestialalt = skypoint.alt().Degrees()
-        if self.world:
-            lst = self.world.get_gast()
-        else:
-            lst = self.serv_time.get_gast()
-        ha = self.rangeHA(self.celestialra - lst)
-        target_ra = self.celestialra
-        target_dec = self.celestialdec
+        celestial_ra = skypoint.ra().Hours()
+        celestial_dec = skypoint.dec().Degrees()
+        # In case one wants to implement altaz later on
+        # celestial_az = skypoint.az().Degrees()
+        # celestial_alt = skypoint.alt().Degrees()
+        lst = self.serv_time.get_gast()
+        ha = self.rangeHA(celestial_ra - lst)
+        target_ra = celestial_ra
+        target_dec = celestial_dec
         if ha < 0.0:
             if (self.hemisphere == 'N' and pier_side == 'PIER_WEST') or (
-                self.hemisphere == 'S' and pier_side == 'PIER_EAST'):
-                target_ra=self.range24(self.celestialra - 12.0)
+                    self.hemisphere == 'S' and pier_side == 'PIER_EAST'):
+                target_ra = self.range24(celestial_ra - 12.0)
         else:
             if (self.hemisphere == 'N' and pier_side == 'PIER_WEST') or (
-                self.hemisphere == 'S' and pier_side == 'PIER_EAST'):
-                target_ra=self.range24(self.celestialra - 12.0)
+                    self.hemisphere == 'S' and pier_side == 'PIER_EAST'):
+                target_ra = self.range24(celestial_ra - 12.0)
         ha = self.rangeHA(target_ra - lst)
         self.setHA(ha)
         if pier_side == 'PIER_WEST':
@@ -259,5 +258,5 @@ class Model3D():
         if target_dec > 180.0 and pier_side == 'PIER_EAST':
             target_dec = -target_dec
         self.set_dec(target_dec)
-        #print('model ', lst, pier_side, ha, target_ra, target_dec,
-        #    self.celestialra, self.celestialdec)
+        # print('model ', lst, pier_side, ha, target_ra, target_dec,
+        #    celestial_ra, celestial_dec)
