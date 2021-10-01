@@ -26,3 +26,7 @@ Sphinx==1.8.1
 transitions==0.7.1
 tzwhere==3.0.3
 watchdog==0.8.3
+
+
+#git clone https://github.com/MMTObservatory/indiclient.git
+#pip install --upgrade setuptools_scm

@@ -8,7 +8,7 @@ import queue
 import threading
 
 # Indi stuff
-import PyIndi
+from indiclient.indiclient import indiclient
 
 # Imaging and Fits stuff
 from astropy.io import fits
@@ -74,7 +74,7 @@ class SingletonIndiClientHolder:
         return cls._instances[key]
 
 # First inheritance is SingletonIndiClientHolder to ensure call of __new__
-class IndiClient(SingletonIndiClientHolder, PyIndi.BaseClient, Base):
+class IndiClient(SingletonIndiClientHolder, indiclient, Base):
     '''
         This Indi Client class can be used as a singleton, so that it can be
         used to interact with multiple devices, instead of declaring one client
@@ -85,59 +85,39 @@ class IndiClient(SingletonIndiClientHolder, PyIndi.BaseClient, Base):
     '''
 
     def __init__(self, config):
-      # Init "our" Base class
-      Base.__init__(self)
+        # Init "our" Base class
+        Base.__init__(self)
 
-      # Call indi client base classe ctor
-      PyIndi.BaseClient.__init__(self)
-
-      if config is None:
+        if config is None:
             config = dict(indi_host="localhost",
                           indi_port=7624)
-      self.remoteHost = config['indi_host']
-      self.remotePort = int(config['indi_port'])
-      self.setServer(self.remoteHost, self.remotePort)
-      self.logger.debug(f"Indi Client, remote host is: {self.getHost()}:"
-                        f"{self.getPort()}")
 
-      # Blov related attirubtes
-      self.blob_event = threading.Event()
-      self.__listeners = []
-      self.queue_size = config.get('queue_size', 5)
+        # Call indi client base classe ctor
+        indiclient.__init__(
+            self,
+            host=config["indi_host"],
+            port=config["indi_port"])
 
-      # Finished configuring
-      self.logger.debug('Configured Indi Client successfully')
+        self.logger.debug(f"Indi Client, remote host is: {self.host}:{self.port}")
+
+        # Blov related attirubtes
+        self.enable_blob()
+        self.blob_event = threading.Event()
+        self.__listeners = []
+        self.queue_size = config.get('queue_size', 5)
+
+        # Finished configuring
+        self.logger.debug('Configured Indi Client successfully')
 
     def connect(self):
-      if self.isServerConnected():
-          self.logger.warning('Already connected to server')
-      else:
-          self.logger.info(f"Connecting to server at {self.getHost()}:"
-                           f"{self.getPort()}")
 
-          if not self.connectServer():
-              self.logger.error(f"No indiserver running on {self.getHost()}:"
-                  f"{self.getPort()} - Try to run indiserver "
-                  f"indi_simulator_telescope indi_simulator_ccd")
-          else:
-              self.logger.info(f"Successfully connected to server at "
-                               f"{self.getHost()}:{self.getPort()}")
+        self.reset_connection()
+        self.logger.info(f"Successfully connected to server at "
+                       f"{self.host}:{self.port}")
 
     '''
     Indi related stuff (implementing BaseClient methods)
     '''
-    def device_names(self):
-        return [d.getDeviceName() for d in self.getDevices()]
-
-    def newDevice(self, d):
-        pass
-
-    def newProperty(self, p):
-        pass
-
-    def removeProperty(self, p):
-        pass
-
     def newBLOB(self, bp):
         # this threading.Event is used for sync purpose in other part of the code
         self.logger.debug(f"new BLOB received: {bp.name}")
@@ -158,29 +138,8 @@ class IndiClient(SingletonIndiClientHolder, PyIndi.BaseClient, Base):
         finally:
             self.__listeners = [x for x in self.__listeners if x is not listener]
 
-    def newSwitch(self, svp):
-        pass
-
-    def newNumber(self, nvp):
-        pass
-
-    def newText(self, tvp):
-        pass
-
-    def newLight(self, lvp):
-        pass
-
-    def newMessage(self, d, m):
-        pass
-
-    def serverConnected(self):
-        self.logger.debug('Server connected')
-
-    def serverDisconnected(self, code):
-        self.logger.debug('Server disconnected')
-
     def __str__(self):
-        return f"INDI client connected to {self.remoteHost}:{self.remotePort}"
+        return f"INDI client connected to {self.host}:{self.port}"
 
     def __repr__(self):
-        return f"INDI client connected to {self.remoteHost}:{self.remotePort}"
+        return f"INDI client connected to {self.host}:{self.port}"

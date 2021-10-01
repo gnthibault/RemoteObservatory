@@ -37,7 +37,7 @@ class IndiDevice(Base):
         PyIndi.INDI_BLOB: 'blob',
         PyIndi.INDI_UNKNOWN: 'unknown'}
 
-    def __init__(self, logger, device_name, indi_client_config):
+    def __init__(self, device_name, indi_client_config, debug=False):
         Base.__init__(self)
     
         self.device_name = device_name
@@ -45,6 +45,29 @@ class IndiDevice(Base):
         self.timeout = IndiDevice.defaultTimeout
         self.device = None
         self.interfaces = None
+        self.debug = debug
+
+    def connect(self):
+        """
+        Enable device connection
+        """
+        vec = self.indi_client.set_and_send_switchvector_by_elementlabel(
+            self.indi_client.driver, "CONNECTION", "Connect")
+        if self.debug and vec is not None:
+            vec.tell()
+        self.process_events()
+        return vec
+
+    def disconnect(self):
+        """
+        Disable device connection
+        """
+        vec = self.indi_client.set_and_send_switchvector_by_elementlabel(
+            self.indi_client.driver, "CONNECTION", "Disconnect")
+        if self.debug:
+            vec.tell()
+        return vec
+
 
     @property
     def is_connected(self):
@@ -164,9 +187,7 @@ class IndiDevice(Base):
                         self.get_prop(ctl_name, ctl_type)))
 
     def get_switch(self, name, ctl=None):
-        return self.get_prop_dict(name, 'switch',
-                                  lambda c: {'value': c.s == PyIndi.ISS_ON},
-                                  ctl)
+        return self.indi_client.get_vector(self.device_name, name)
 
     def get_text(self, name, ctl=None):
         return self.get_prop_dict(name, 'text',

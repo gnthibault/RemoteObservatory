@@ -68,8 +68,8 @@ if __name__ == "__main__":
 
     # build+connect indi client
     indi_config = {
-        "indi_host":"localhost",
-        "indi_port":"7624"
+        "indi_host": "localhost",
+        "indi_port": "7624"
     }
     indi_cli = Indi3DSimulatorClient(indi_config)
     indi_cli.connect()

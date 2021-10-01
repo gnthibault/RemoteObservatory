@@ -44,16 +44,14 @@ class IndiMount(IndiDevice):
             PIER_EAST : Mount on the East side of pier (Pointing West).
             PIER_WEST : Mount on the West side of pier (Pointing East).
     """
-    def __init__(self, connect_on_create=True, logger=None,
-                 config=None):
-        logger = logger or logging.getLogger(__name__)
-        
+    def __init__(self, config=None, connect_on_create=True):
+
         assert (config is not None) and (type(config)==dict), ("Please provide "
             "config as dictionary, with mount_name")
         device_name = config['mount_name']
-        logger.debug(f"Indi Mount, mount name is: {device_name}")
+        logging.debug(f"Indi Mount, mount name is: {device_name}")
         # device related intialization
-        IndiDevice.__init__(self, logger=logger, device_name=device_name,
+        IndiDevice.__init__(self, device_name=device_name,
             indi_client_config=config["indi_client"])
         try:
             #try to get timezone from config file
