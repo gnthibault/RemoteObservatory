@@ -4,7 +4,6 @@ import json
 import logging
 
 # Indi stuff
-import PyIndi
 from helper.IndiDevice import IndiDevice
 
 # Astropy stuff
@@ -50,9 +49,11 @@ class IndiMount(IndiDevice):
             "config as dictionary, with mount_name")
         device_name = config['mount_name']
         logging.debug(f"Indi Mount, mount name is: {device_name}")
+
         # device related intialization
         IndiDevice.__init__(self, device_name=device_name,
             indi_client_config=config["indi_client"])
+
         try:
             #try to get timezone from config file
             self.gps = dict(latitude = self.config['observatory']['latitude'],

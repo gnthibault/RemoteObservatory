@@ -28,5 +28,6 @@ tzwhere==3.0.3
 watchdog==0.8.3
 
 
-#git clone https://github.com/MMTObservatory/indiclient.git
+#git clone https://github.com/MMTObservatory/pyINDI.git
 #pip install --upgrade setuptools_scm
+#python ../pyINDI/setup.py install

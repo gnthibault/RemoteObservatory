@@ -8,7 +8,7 @@ import queue
 import threading
 
 # Indi stuff
-from indiclient.indiclient import indiclient
+from helper.client import INDIClient
 
 # Imaging and Fits stuff
 from astropy.io import fits
@@ -74,7 +74,7 @@ class SingletonIndiClientHolder:
         return cls._instances[key]
 
 # First inheritance is SingletonIndiClientHolder to ensure call of __new__
-class IndiClient(SingletonIndiClientHolder, indiclient, Base):
+class IndiClient(SingletonIndiClientHolder, INDIClient, Base):
     '''
         This Indi Client class can be used as a singleton, so that it can be
         used to interact with multiple devices, instead of declaring one client
@@ -93,27 +93,20 @@ class IndiClient(SingletonIndiClientHolder, indiclient, Base):
                           indi_port=7624)
 
         # Call indi client base classe ctor
-        indiclient.__init__(
-            self,
+        INDIClient.__init__(self)
+        self.start(
             host=config["indi_host"],
             port=config["indi_port"])
 
         self.logger.debug(f"Indi Client, remote host is: {self.host}:{self.port}")
 
-        # Blov related attirubtes
-        self.enable_blob()
+        # Blob related attirubtes
         self.blob_event = threading.Event()
         self.__listeners = []
         self.queue_size = config.get('queue_size', 5)
 
         # Finished configuring
         self.logger.debug('Configured Indi Client successfully')
-
-    def connect(self):
-
-        self.reset_connection()
-        self.logger.info(f"Successfully connected to server at "
-                       f"{self.host}:{self.port}")
 
     '''
     Indi related stuff (implementing BaseClient methods)

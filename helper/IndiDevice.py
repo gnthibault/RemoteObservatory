@@ -4,13 +4,45 @@ import logging
 import time
 
 # Indi stuff
-import PyIndi
+from helper.device import device
 
 #Local
 from helper.IndiClient import IndiClient
 from Base.Base import Base
-  
-class IndiDevice(Base):
+
+class PyIndi():
+    """
+    Checkout indiapi.h and indibasetypes.h
+    """
+    # ISState
+    ISS_OFF = 0
+    ISS_ON = 0
+
+    # IPState
+    IPS_IDLE = 0
+    IPS_OK = 1
+    IPS_BUSY = 2
+    IPS_ALERT = 3
+
+    #ISRule
+    ISR_1OFMANY = 0
+    ISR_ATMOST1 = 1
+    ISR_NOFMANY = 2
+
+    #IPerm
+    IP_RO = 0
+    IP_WO = 1
+    IP_RW = 2
+
+    #INDI_PROPERTY_TYPE
+    INDI_NUMBER = 0
+    INDI_SWITCH = 1
+    INDI_TEXT = 2
+    INDI_LIGHT = 3
+    INDI_BLOB = 4
+    INDI_UNKNOWN = 5
+
+class IndiDevice(Base, device):
     defaultTimeout = 30
     __prop_getter = {
         'blob': 'getBLOB',
@@ -39,11 +71,11 @@ class IndiDevice(Base):
 
     def __init__(self, device_name, indi_client_config, debug=False):
         Base.__init__(self)
+        device.__init__(self, name=device_name)
     
         self.device_name = device_name
         self.indi_client_config = indi_client_config
         self.timeout = IndiDevice.defaultTimeout
-        self.device = None
         self.interfaces = None
         self.debug = debug
 
@@ -68,6 +100,12 @@ class IndiDevice(Base):
             vec.tell()
         return vec
 
+    async def xml_from_indiserver(self, data):
+        """
+        Called by parent class.
+        """
+
+        print(f"Async call from Indidevice: received {data}")
 
     @property
     def is_connected(self):
@@ -77,23 +115,23 @@ class IndiDevice(Base):
     def name(self):
         return self.device_name
 
-    def _setup_device(self):
-        self.logger.debug(f"IndiDevice: asking indi_client to look for device "
-                          f"{self.device_name}")
-        if self.device is None:
-            started = time.time()
-            while not self.device:
-                self.device = self.indi_client.getDevice(self.device_name)
-                if 0 < self.timeout < time.time() - started:
-                    self.logger.error(f"IndiDevice: Timeout while waiting for "
-                                      f"device {self.device_name}")
-                    raise RuntimeError(f"IndiDevice Timeout while waiting for "
-                                       f"device {self.device_name}")
-                time.sleep(0.01)
-            self.logger.debug(f"Indi Device: indi_client has found device "
-                              f"{self.device_name}")
-        else:
-            self.logger.warning(f"Device {self.device_name} already found")
+    # def _setup_device(self):
+    #     self.logger.debug(f"IndiDevice: asking indi_client to look for device "
+    #                       f"{self.device_name}")
+    #     if self.device is None:
+    #         started = time.time()
+    #         while not self.device:
+    #             self.device = self.indi_client.getDevice(self.device_name)
+    #             if 0 < self.timeout < time.time() - started:
+    #                 self.logger.error(f"IndiDevice: Timeout while waiting for "
+    #                                   f"device {self.device_name}")
+    #                 raise RuntimeError(f"IndiDevice Timeout while waiting for "
+    #                                    f"device {self.device_name}")
+    #             time.sleep(0.01)
+    #         self.logger.debug(f"Indi Device: indi_client has found device "
+    #                           f"{self.device_name}")
+    #     else:
+    #         self.logger.warning(f"Device {self.device_name} already found")
 
     def _setup_interfaces(self):
         """
@@ -142,35 +180,38 @@ class IndiDevice(Base):
     def connect_client(self):
         """
         connect to indi server
+        TODO TN URGENT: check if we can setup a timeout or
+        run_until_complete ?
         """
-        self.indi_client.connect()
+        self.mainloop.create_task(self.indi_client.connect())
 
-    def connect_driver(self):
-        # Try first to ask server to give us the device handle, through client
-        self._setup_device()
+    # def connect_driver(self):
+    #     # Try first to ask server to give us the device handle, through client
+    #     self._setup_device()
 
     def connect_device(self):
         """
 
         """
         # Now connect
-        if self.device.isConnected():
-            self.logger.warning(f"already connected to device "
-                                f"{self.device_name}")
-            return
-        self.logger.info(f"Connecting to device {self.device_name}")
-        # setup available list of interfaces
-        self._setup_interfaces()
+        # if self.device.isConnected():
+        #     self.logger.warning(f"already connected to device "
+        #                         f"{self.device_name}")
+        #     return
+        # self.logger.info(f"Connecting to device {self.device_name}")
+        # # setup available list of interfaces
+        # self._setup_interfaces()
+        self.start()
         # set the corresponding switch to on
         self.set_switch('CONNECTION', ['CONNECT'])
 
     def connect(self):
         # setup indi client
         self._setup_indi_client()
-        # Connect indj client to server
+        # Connect indi client to server
         self.connect_client()
         # Ask server to give us the device handle, through client
-        self.connect_driver()
+        #self.connect_driver()
         # now enable actual communication between driver and device
         self.connect_device()
 
