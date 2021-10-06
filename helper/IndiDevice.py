@@ -74,7 +74,6 @@ class IndiDevice(Base, device):
         Base.__init__(self)
         device.__init__(self, name=device_name)
     
-        self.device_name = device_name
         self.indi_client_config = indi_client_config
         self.timeout = IndiDevice.defaultTimeout
         self.interfaces = None

@@ -1,17 +1,13 @@
 # Generic imports
 from abc import ABC
-import base64
 import asyncio
-import datetime
-from enum import Enum
+import base64
 import functools
 import logging
 from lxml import etree
 import os
-import sys
-from pathlib import Path
+import time
 import traceback
-from typing import Union, Callable
 
 """
 The Base classes for the pyINDI device. Definitions
@@ -23,818 +19,1400 @@ Naming convention are based on the indilib c++ version:
 http://www.indilib.org/api/index.html
 """
 
-# now = datetime.datetime.now()
-# timestr = now.strftime("%H%M%S-%a")
-# if Path("/src").exists():
-#     """
-#     TODO: The logging path should be a
-#     configureable or an environment variable.
-#     """
-#     logging.basicConfig(format="%(asctime)-15s %(message)s",
-#                         filename=f'/src/{timestr}.log',
-#                         level=logging.DEBUG)
-# else:
-#     logging.basicConfig(format="%(asctime)-15s %(message)s",
-#                         filename=f'{timestr}.log',
-#                         level=logging.DEBUG)
-#
-
-class INDIEnumMember(int):
+class _indinameconventions:
     """
-    ## INDIEnumMember
-    This sublcasses the int class to match
-    the standard enum int type but adds
-    a string in the assignment to allow
-    for comparison with the raw xml
-    attribute.
+    The INDI naming scheme.
+    @ivar basenames : The possible "Basenames" of an L{indiobject} ["Text","Switch","Number","BLOB","Light"]
+    @type basenames : list of StringType
     """
 
-    def __new__(cls, value: int, string: str):
+    def __init__(self):
+        self.basenames = ["Text", "Switch", "Number", "BLOB", "Light"]
+
+    def _get_defelementtag(self, basename):
         """
-        Overload the assignment method to add the
-        string.
+        @param basename : The basename of the tag see (L{basenames})
+        @type basename : StringType
+        @return:  xml tag of an element that is send by the server when an C{IDDef*} function is called
+        on vector which contains the element (like C{defText}).
+        @rtype: StringType
         """
-        obj = int.__new__(cls, value)
-        obj.string = string
-        return obj
+        return "def" + basename
 
-    def __eq__(self, other):
-        if isinstance(other, str):
-            return self.string == other
-        elif isinstance(other, Enum):
-            return self.value == other.value
-        return False
+    def _get_defvectortag(self, basename):
+        """
+        @param basename : The basename of the tag see (L{basenames})
+        @type basename : StringType
+        @return:  xml tag of a vector that is send by the server when an C{IDDef*} function is called(like C{defTextVector}).
+        @rtype: StringType
+        """
+        return "def" + basename + "Vector"
 
-    def __repr__(self):
-        return f"<{self.__name__}: {self.string}>"
+    def _get_setelementtag(self, basename):
+        """
+        @param basename : The basename of the tag see (L{basenames})
+        @type basename : StringType
+        @return:		xml tag of an element that is send by the server when an C{IDSet*} function is called
+        on vector which contains the element (like C{oneText}).
+        @rtype: StringType
+        """
+        return "one" + basename
+
+    def _get_setvectortag(self, basename):
+        """
+        @param basename : The basename of the tag see (L{basenames})
+        @type basename : StringType
+        @return:  xml tag of a vector that is send by the server when am C{IDSet*} function is called (like C{setTextVector}).
+        @rtype: StringType
+        """
+        return "set" + basename + "Vector"
+
+    def _get_newelementtag(self, basename):
+        """
+        @param basename : The basename of the tag see (L{basenames})
+        @type basename : StringType
+        @return:  xml tag of an element that is send by the client (like C{oneText}).
+        @rtype: StringType
+        """
+        return "one" + basename
+
+    def _get_newvectortag(self, basename):
+        """
+        @param basename : The basename of the tag see (L{basenames})
+        @type basename : StringType
+        @return:  xml tag of a vector that is send by the client (like C{newTextVector}).
+        @rtype: StringType
+        """
+        return "new" + basename + "Vector"
+
+    def _get_message_tag(self):
+        """
+        @return:  xml tag of an INDI message.
+        @rtype: StringType
+        """
+        return "message"
+
+    def _get_vector_repr(self, basename):
+        """
+        @param basename : The basename of the tag see (L{basenames})
+        @type basename : StringType
+        @return:  printable representation of the type of the vector .
+        @rtype: StringType
+        """
+        return basename + "Vector"
+
+    def _get_element_repr(self, basename):
+        """
+        @param basename : The basename of the tag see (L{basenames})
+        @type basename : StringType
+        @return:  printable representation of the type of the element .
+        @rtype: StringType
+        """
+        return basename
 
 
-class INDIEnum(INDIEnumMember, Enum):
+class _inditagfactory(_indinameconventions):
     """
-    ## INDIEnum
-    There are many INDI attributes in the XML protocol that
-    require the attribute value to be one of a small set of
-    strings. An example is the INDI state attribute. The
-    state can be one of  Idle|Ok|Busy|Alert .
-
-    I would like to compare the string value of the attribute
-    with the Enum type associated with it. This way
-    we can have simple looking code like:
-
-    ```
-    ivp.state = IPState.IDLE
-    ivp.state == "Idle"  returns True
-    ivp.state == IPState.IDLE # returns True
-    ```
-
-    To make this happen I had to get clever with the
-    python Enum and subclass the int type for enum
-    members. See INDIEnumMember above.
+    A Class to create an L{indixmltag} from its XML representation
+    @ivar dict : a dictionary mapping XML representations to the corresponding L{indixmltag} objects
+    @type dict : DictType
     """
-    def __new__(cls, value: int, string: str):
-        obj = INDIEnumMember.__new__(cls, value, string)
-        obj._value_ = value
 
-        return obj
+    def __init__(self):
+        """
+        Constructor
+        """
+        _indinameconventions.__init__(self)
+        self.dict = {}
+        for i, basename in enumerate(self.basenames):
+            inditag = indixmltag(True, False, False, i, inditransfertypes.idef)
+            stringtag = self._get_defvectortag(basename)
+            self.dict.update({stringtag: inditag})
+            inditag = indixmltag(False, True, False, i, inditransfertypes.idef)
+            stringtag = self._get_defelementtag(basename)
+            self.dict.update({stringtag: inditag})
 
-    def __str__(self):
-        return self.string
+            inditag = indixmltag(True, False, False, i, inditransfertypes.iset)
+            stringtag = self._get_setvectortag(basename)
+            self.dict.update({stringtag: inditag})
+            inditag = indixmltag(False, True, False, i, inditransfertypes.iset)
+            stringtag = self._get_setelementtag(basename)
+            self.dict.update({stringtag: inditag})
 
-    def __repr__(self):
-        return f"<{self.__class__.__name__}: {self.string}>"
+            inditag = indixmltag(True, False, False, i, inditransfertypes.inew)
+            stringtag = self._get_newvectortag(basename)
+            self.dict.update({stringtag: inditag})
+            inditag = indixmltag(False, True, False, i, inditransfertypes.inew)
+            stringtag = self._get_newelementtag(basename)
+            self.dict.update({stringtag: inditag})
 
+        inditag = indixmltag(False, False, True, None, inditransfertypes.inew)
+        self.dict.update({"message": inditag})
 
-class IPState(INDIEnum):
-    """
-    INDI state property.
-    This is an attribute of all
-    vector properties--Number,
-    Text, Light and Switch.
-    """
-    IDLE = (0, "Idle")
-    OK = (1, "Ok")
-    BUSY = (2, "Busy")
-    ALERT = (3, "Alert")
-
-class IPerm(INDIEnum):
-    """
-    INDI permissions
-    """
-    RO = (0, "ro")
-    WO = (1, "wo")
-    RW = (2, "rw")
-
-class ISRule(INDIEnum):
-    """
-    INDI switch rule
-    """
-    ONEOFMANY = (0, "OneOfMany")
-    ATMOST1 = (1, "AtMostOne")
-    NOFMANY = (2, "AnyOfMany")
-
-class ISState(INDIEnum):
-    """
-    INDI Switch State
-    """
-    OFF = (0, "Off")
-    ON = (1, "On")
-
-    @staticmethod
-    def fromstring(string):
-        if "Off" in string:
-            return ISState.OFF
-        elif "On" in string:
-            return ISState.ON
-        raise ValueError(f"ISState must be either Off or On not {string}")
-
-
-class IVectorProperty(ABC):
-    """
-    INDI Vector asbstractions
-    TODO: Any member of any subclass of this class should
-    be handled by setter and getter decorators.
-    """
-    dtd = etree.DTD(
-        (Path(__file__).parent / "data/indi.dtd").open())
-    def __init__(self,
-                 device: str, name: str, state: IPState,
-                 label: str = None, group: str = None):
-        self.device = device
-        self.name = name
-        if label is None:
-            label = name
-        self.label = label
-        self.group = group
-        self._state = state
-        if hasattr(self, "np"):
-            self.iprops = self.np
-        elif hasattr(self, "tp"):
-            self.iprops = self.tp
-        elif hasattr(self, "lp"):
-            self.iprops = self.lp
-        elif hasattr(self, "sp"):
-            self.iprops = self.sp
-        elif hasattr(self, "bp"):
-            self.iprops = self.bp
+    def create_tag(self, tag):
+        """
+        @param tag : the XML tag denoting the vector
+        @type tag : StringType
+        @return: An L{indixmltag} created according to the information given in  L{tag}
+        @rtype: L{indixmltag}
+        """
+        if tag in self.dict:
+            inditag = self.dict[tag]
+            return inditag
         else:
-            raise AttributeError("Must have np, tp, lp, sp, bp attribute")
+            return None
 
-    @property
-    def state(self):
-        return self._state
 
-    @state.setter
-    def state(self, val):
-        if val not in list(IPState):
-            raise ValueError("{val} is not one of {list(IPState)}")
-        for st in IPState:
-            if st == val:
-                self._state = st
+class inditransfertype:
+    """
+    This is object is used to denote whether the an object was sent from the client to the server or vice versa and
+    whether the object is just being defined or if it  was defined earlier.
+    """
+    None
 
-    def Def(self, msg=None):
+
+class inditransfertypes(inditransfertype):
+    """
+    A Class containing the different transfer types
+    """
+    class inew(inditransfertype):
+        """The object is send from the client to the server"""
+        None
+
+    class idef(inditransfertype):
         """
-        This will put together the defXXX xml element
-        for any vector property. It uses the dtd files
-        to map the xml attributes members of this class.
+        The object is send from to the server to the client and the client is not expected to know about it already.
+        Thus the server is just defining the object to the client. This corresponds to an C{def*} tag in the XML representation.
+        Or  a client calling the C{IDDef*} function.
         """
-        tagname = "def" + self.tagcontext
-        dtd_elements = {tag.name: tag for tag in self.dtd.iterelements()}
-        if tagname not in dtd_elements:
-            raise AttributeError(
-                "{tagname} not defined in \
-                                 Document Type Definition")
-        ele_definition = dtd_elements[tagname]
-        ele = etree.Element(ele_definition.name)
-        for attribute in ele_definition.iterattributes():
-            if hasattr(self, attribute.name):
-                ele.set(attribute.name, str(getattr(self, attribute.name)))
-        for prop in self.iprops:
-            ele.append(prop.Def())
-        if msg is not None:
-            ele.set("message", msg)
+        None
 
-        return ele
-
-    def __str__(self):
-        return f"<I{self.tagcontext} name={self.name}, device={self.device}>"
-
-    def __repr__(self):
-        return self.__str__()
-
-    def Set(self, msg=None):
+    class iset(inditransfertype):
         """
-        This will put together the setXXX xml element
-        for any vector property. It uses the dtd file(s)
-        to map xml attribute to members of this class.
+        The object is send from to the server to the client and the client is expected to know about it already.
+        Thus the server is just setting new value for an existing object to the client. This corresponds to an C{set*} tag
+        in the XML representation. Or  a client calling the C{IDSet*}
         """
-        tagname = "set" + self.tagcontext
-        dtd_elements = {tag.name: tag for tag in self.dtd.iterelements()}
-        if tagname not in dtd_elements:
-            raise AttributeError(
-                f"{tagname} not defined in \
-                                 Document Type Definition")
-        ele_definition = dtd_elements[tagname]
-        ele = etree.Element(ele_definition.name)
-        for attribute in ele_definition.iterattributes():
-            if hasattr(self, attribute.name):
-                ele.set(attribute.name, str(getattr(self, attribute.name)))
-        for prop in self.iprops:
-            ele.append(prop.Set())
-        if msg is not None:
-            ele.set("message", msg)
-        return ele
+        None
 
-    @property
-    def elements(self):
-        if isinstance(self, INumberVector):
-            return self.np
-        elif isinstance(self, ITextVector):
-            return self.tp
-        elif isinstance(self, ILightVector):
-            return self.lp
-        elif isinstance(self, ISwitchVector):
-            return self.sp
-        elif isinstance(self, IBLOBVector):
-            return self.bp
 
-    def __getitem__(self, name: str):
+class indixmltag(_indinameconventions):
+    """
+    Classifys a received INDI object by its tag. Provides functions to generate different versions of the tag for different
+    ways of sending it (see L{inditransfertype}).
+    @ivar _is_vector : C{True} if the tag denotes an L{indivector}, C{False} otherwise
+    @type _is_vector : BooleanType
+    @ivar _is_element : C{True} if the tag denotes an L{indielement}, C{False} otherwise
+    @type _is_element : BooleanType
+    @ivar _is_message : C{True} if the tag denotes an L{indimessage}, C{False} otherwise
+    @type _is_message : BooleanType
+    @ivar _transfertype : the way the object has been transferred (see L{inditransfertype}).
+    @type _transfertype : L{inditransfertype}
+    @ivar _index : The index of the basename of the object, in the L{basenames} list
+    @type _index : IntType
+    """
+
+    def __init__(self, is_vector, is_element, is_message, index, transfertype):
         """
-        retrieve the IProperty
+        @param is_vector : C{True} if the tag shall denote an L{indivector}, C{False} otherwise
+        @type is_vector : BooleanType
+        @param is_element : C{True} if the tag shall denote an L{indielement}, C{False} otherwise
+        @type is_element : BooleanType
+        @param is_message : C{True} if the tag shall denote an L{indimessage}, C{False} otherwise
+        @type is_message : BooleanType
+        @param transfertype : the way the object has been transferred (see L{inditransfertype}).
+        @type transfertype : L{inditransfertype}
+        @param index : The index of the basename of the object, in the L{basenames} list
+        @type index : IntType
         """
-        for ele in self.elements:
-            if ele.name == name:
-                return ele
-        raise KeyError(f"{name} not in {self.__str__()}")
-
-    def __setitem__(self, name, val):
-        for ele in self.elements:
-            if ele.name == name:
-                ele.value = val
-                return
-        raise KeyError(f"{name} not in {self.__str__()}")
-
-    def __iter__(self):
-        for ele in self.elements:
-            yield ele
-
-
-class IProperty:
-    dtd = etree.DTD(
-        (Path(__file__).parent / "data/indi.dtd").open())
-    def __init__(self, name: str, label: str = None):
-        if label is None:
-            label = name
-        self.label = label
-        self.name = name
-
-    def __str__(self):
-        return f"<I{self.tagcontext} name={self.name} {self.value}>"
-
-    def __repr__(self):
-        return self.__str__()
-
-    def Def(self):
-        tagname = "def" + self.tagcontext
-        dtd_elements = {tag.name: tag for tag in self.dtd.iterelements()}
-        if tagname not in dtd_elements:
-            raise AttributeError(
-                f"{tagname} not defined in \
-                                 Document Type Definition")
-        ele_definition = dtd_elements[tagname]
-        ele = etree.Element(ele_definition.name)
-        for attribute in ele_definition.iterattributes():
-            if hasattr(self, attribute.name):
-                ele.set(attribute.name, str(getattr(self, attribute.name)))
-        # Blob definitions have empty data.
-        if not isinstance(self, IBLOB):
-            ele.text = str(self.value)
-        return ele
-
-    def Set(self):
-        tagname = "one" + self.tagcontext
-        dtd_elements = {tag.name: tag for tag in self.dtd.iterelements()}
-        if tagname not in dtd_elements:
-            raise AttributeError(
-                f"{tagname} not defined in \
-                                 Document Type Definition")
-        ele_definition = dtd_elements[tagname]
-        ele = etree.Element(ele_definition.name)
-        for attribute in ele_definition.iterattributes():
-            if hasattr(self, attribute.name):
-                ele.set(attribute.name, str(getattr(self, attribute.name)))
-        ele.text = str(self.value)
-        return ele
-
-    @property
-    def value(self):
-        if isinstance(self, INumber):
-            return self._value
-        elif isinstance(self, IText):
-            return self.text
-        elif isinstance(self, ILight):
-            return self._state
-        elif isinstance(self, ISwitch):
-            return self._state
-        elif isinstance(self, IBLOB):
-            return self.data
-        raise TypeError(f"""value method must be called with INumber,
-        IText, ILight, ISwitch or IBLOB not {type(self)}
-        {isinstance(self, INumber)}
-        """)
-
-    @value.setter
-    def value(self, val):
-        # TODO: We could do some type checking.
-        if isinstance(self, INumber):
-            self._value = self._value
-        elif isinstance(self, IText):
-            self.text = val
-        elif isinstance(self, ILight):
-            self.state = val
-        elif isinstance(self, ISwitch):
-            self.state = val
-        elif isinstance(self, IBlob):
-            self.data = val
+        _indinameconventions.__init__(self)
+        self._is_vector = is_vector
+        self._is_element = is_element
+        self._is_message = is_message
+        self._transfertype = transfertype
+        self._index = index
+        if index is not None:
+            self._basename = self.basenames[index]
+        if self.is_message():
+            self._initial_tag = self._get_message_tag()
         else:
-            raise TypeError(f"""
-        value method must be called with INumber, IText,
-        ILight, ISwitch or IBLOB not {type(self)} {self}
-        {isinstance(self, INumber)} {self.tagcontext}
-        {type(self) == INumber}
-        {self.tagcontext == "Switch"}
-        {self.__class__ == ISwitch}
-        """)
+            self._initial_tag = self.get_xml(self.get_transfertype())
 
-
-class INumberVector(IVectorProperty):
-    tagcontext = "NumberVector"
-    def __init__(self,
-                 np: list,
-                 device: str,
-                 name: str,
-                 state: IPState,
-                 perm: IPerm = IPerm.RW,
-                 timeout: float = 0,
-                 timestamp: str = None,
-                 label: str = None,
-                 group: str = None):
+    def get_transfertype(self):
         """
-         ## Arguments:
-         * np: List of INumber properties in the INumberVector
-         * device: Name of indi device
-         * name: Name of INumberVector
-         * state: State
-
+        @return:  The way the object has been transferred
+        @rtype: L{inditransfertype}
         """
-        self.np = np
+        return self._transfertype
+
+    def get_index(self):
+        """
+        @return: The index of the basename of the object, in the L{basenames} list
+        @rtype: IntType
+        """
+        return self._index
+
+    def is_vector(self):
+        """
+        @return:  C{True}, if it denotes vector, C{False} otherwise
+        @rtype: BooleanType
+        """
+        return self._is_vector
+
+    def is_element(self):
+        """
+        @return:  C{True}, if it denotes an element, C{False} otherwise
+        @rtype: BooleanType
+        """
+        return self._is_element
+
+    def is_message(self):
+        """
+        @return:  C{True}, if it denotes a message, C{False} otherwise
+        @rtype: BooleanType
+        """
+        return self._is_message
+
+    def get_initial_tag(self):
+        """
+        @return:  A sting representing the tag specified by the parameters given to the initialiser
+        @rtype: StringType
+        """
+        return self._initial_tag
+
+    def get_xml(self, transfertype):
+        """
+        Returns the string the be used in the tags in the XML representation of the object
+        (like C{defTextVector} or C{oneSwitch} or C{newLightVector}).
+        @param transfertype : An object describing the way the generated XML data is going to be sent (see L{inditransfertype}).
+        @type transfertype : L{inditransfertype}
+        @return: An XML representation of the object
+        @rtype: StringType
+        """
+        if transfertype == inditransfertypes.inew:
+            if self._is_vector:
+                return self._get_newvectortag(self._basename)
+            if self._is_element:
+                return self._get_newelementtag(self._basename)
+        if transfertype == inditransfertypes.iset:
+            if self._is_vector:
+                return self._get_setvectortag(self._basename)
+            if self._is_element:
+                return self._get_setelementtag(self._basename)
+        if transfertype == inditransfertypes.idef:
+            if self._is_vector:
+                return self._get_defvectortag(self._basename)
+            if self._is_element:
+                return self._get_defelementtag(self._basename)
+        if self._is_message:
+            return self._get_message_tag()
+
+    def get_type(self):
+        """
+        Returns a string representing the type of the object denoted by this tag (like C{TextVector} or C{Number}).
+        @return: a string representing the type of the object denoted by this tag (like C{TextVector} or C{Number}).
+        @rtype: StringType
+        """
+        if self._is_vector:
+            return self._get_vector_repr(self._basename)
+        if self._is_element:
+            return self._get_element_repr(self._basename)
+        if self._is_message:
+            return self._get_message_tag()
+
+
+class _indiobjectfactory(_indinameconventions):
+    """
+    A Class to create L{indiobject}s from their XML attributes
+    @ivar elementclasses : a list of classes derived from L{indielement} the index has to be synchronous with L{basenames}
+    @type elementclasses : a list of L{indielement}
+    @ivar vectorclasses : a list of classes derived from L{indielement} the index has to be synchronous with L{basenames}
+    @type vectorclasses : a list of L{indivector}
+    """
+
+    def __init__(self):
+        """
+        Constructor
+        """
+        _indinameconventions.__init__(self)
+        self.tagfactory = _inditagfactory()
+        self.elementclasses = [inditext, indiswitch, indinumber, indiblob, indilight]
+        self.vectorclasses = [inditextvector, indiswitchvector, indinumbervector, indiblobvector, indilightvector]
+
+    def create(self, tag, attrs):
+        """
+        @param tag : the XML tag denoting the vector
+        @type tag : StringType
+        @param attrs : The XML attributes of the vector
+        @type attrs : DictType
+        @return: An indiobject created according to the information given in  L{tag}  and L{attrs}
+        @rtype: L{indiobject}
+        """
+        inditag = self.tagfactory.create_tag(tag)
+        if inditag is None:
+            return None
+        if tag == self._get_message_tag():
+            return indimessage(attrs)
+        i = inditag.get_index()
+        if inditag.is_element():
+            vec = self.elementclasses[i](attrs, inditag)
+            return vec
+
+        if inditag.is_vector():
+            return self.vectorclasses[i](attrs, inditag)
+
+
+class indipermissions:
+    """
+    The indi read/write permissions.
+    @ivar perm : The users read/write permissions for the  vector possible values are:
+            - C{ro} (Read Only )
+            - C{wo} (Write Only)
+            - C{rw} (Read/Write)
+    @type perm : StringType
+    """
+
+    def __init__(self, perm):
+        """
+        @param perm : The users read/write permissions for the  vector possible values are:
+                - C{ro} (Read Only )
+                - C{wo} (Write Only)
+                - C{rw} (Read/Write)
+        @type perm : StringType
+        """
         self.perm = perm
-        self.timeout = timeout
-        self.timestamp = datetime.datetime.strptime(timestamp, "%Y-%m-%dT%H:%M:%S")
-        super().__init__(device, name, state, label, group)
 
-class INumber(IProperty):
-    tagcontext = "Number"
-    def __init__(self,
-                 name: str,
-                 format: str,
-                 min: float,
-                 max: float,
-                 step: float,
-                 value: str,
-                 label: str = None):
-        super().__init__(name, label)
-        self.format = format
-        self.min = min
-        self.max = max
-        self.step = step
-        self._value = None
-        self.value = value
+    def is_readable(self):
+        """
+        @return: C{True} is the object is readable, C{False} otherwise
+        @rtype: BooleanType
+        """
+        if (self.perm == "ro" or self.perm == "rw"):
+            return True
+        else:
+            return False
 
-    @property
-    def value(self):
+    def is_writeable(self):
+        """
+        @return: C{True} is the object is writable, C{False} otherwise
+        @rtype: BooleanType
+        """
+        if (self.perm == "wo" or self.perm == "rw"):
+            return True
+        else:
+            return False
+
+    def get_text(self):
+        """
+        @return: a string representing the permissions described by this object
+        @rtype: StringType
+        """
+        if self.perm == "wo":
+            return "write only"
+        if self.perm == "rw":
+            return "read and write"
+        if self.perm == "ro":
+            return "read only"
+
+
+class indiobject:
+    """ The Base Class for INDI objects (so anything that INDI can send or receive )
+    @ivar tag: The XML tag of the INDI object (see L{indixmltag}).
+    @type tag: L{indixmltag}
+    """
+
+    def __init__(self, attrs, tag):
+        """
+        @param tag: The XML tag of the vector (see L{indixmltag}).
+        @type tag: L{indixmltag}
+        @param attrs: The attributes of the XML version of the INDI object.
+        @type attrs: DictType
+        """
+        self.tag = tag
+
+    def is_valid(self):
+        """
+        Checks whether the object is valid.
+        @return:  C{True} if the object is valid, C{False} otherwise.
+        @rtype: BooleanType
+        """
+        return True
+
+    def get_xml(self, transfertype):
+        """
+        Returns an XML representation of the object
+        @param transfertype : The L{inditransfertype} for which the XML code  shall be generated
+        @type transfertype : {inditransfertype}
+        @return:  an XML representation of the object
+        @rtype: StringType
+        """
+        None
+
+    def _check_writeable(self):
+        """
+        Raises an exception if the object is not writable
+        @return: B{None}
+        @rtype: NoneType
+        """
+        return True
+
+    def update(self, attrs, tag):
+        """
+        Update this element with data received form the XML Parser.
+        @param attrs: The attributes of the XML version of the INDI object.
+        @type attrs: DictType
+        @param tag: The XML tag of the object (see L{indixmltag}).
+        @type tag: L{indixmltag}
+        @return: B{None}
+        @rtype: NoneType
+        """
+        self.tag = tag
+
+
+class indinamedobject(indiobject):
+    """
+    An indiobject that has got a name as well as a label
+    @ivar name : name of the INDI object as given in the "name" XML attribute
+    @type name : StringType
+    @ivar label : label of the INDI object as given in the "label" XML attribute
+    @type label : StringType
+    """
+
+    def __init__(self, attrs, tag):
+        """
+        @param tag: The XML tag of the object (see L{indixmltag}).
+        @type tag: L{indixmltag}
+        @param attrs: The attributes of the XML version of the INDI object.
+        @type attrs: DictType
+        """
+        indiobject.__init__(self, attrs, tag)
+        name = attrs.get('name', "").strip()
+        label = attrs.get('label', "").strip()
+        self.name = name
+        if label == "":
+            self.label = name
+        else:
+            self.label = label
+
+    def getName(self):
+        return self.name
+
+
+class indielement(indinamedobject):
+    """ The Base Class of any element of an INDI Vector \n
+    @ivar _value : The value of the INDI object. Meaning character contained between the end of the
+            I{StartElement} and the beginning of the I{EndElement} in XML version. This may be coded in another format
+            or compressed  and thus require some manipulation before it can be used.
+    @type _value : StringType
+    @ivar _old_value : The old value of the object, the value it had when L{_get_changed} was called last time.
+    @type _old_value : StringType
+    """
+
+    def __init__(self, attrs, tag):
+        indinamedobject.__init__(self, attrs, tag)
+        self._set_value('')
+        self._old_value = self._value
+
+    def _get_changed(self):
+        """
+        @return: C{True} if the objects XML data was changed since the last L{_get_changed} was called,
+        C{False} otherwise.
+        @rtype: BooleanType
+        """
+        if self._old_value == self._value:
+            return False
+        else:
+            self._old_value = self._value
+            return True
+
+    def set_float(self, num):
+        """
+        @param num: The new value to be set.
+        @type num: FloatType
+        @return: B{None}
+        @rtype: NoneType
+        """
+        self._set_value(str(num))
+
+    def _set_value(self, value):
+        """
+        Sets the value variable of this object.
+        @param value: A string to be copied into the L{_value}.
+        @type value: DictType
+        @return: B{None}
+        @rtype: NoneType
+        """
+        self._check_writeable()
+        self._value = value
+
+    def tell(self):
+        """
+        Logs all parameters of the object
+        @return: B{None}
+        @rtype: NoneType
+        """
+        logging.info("INDIElement: %s %s %s %s" % (self.name, self.label, self.tag.get_type(), self._value))
+
+    def get_text(self):
+        """
+        @return: a string representation of it value
+        @rtype: StringType
+        """
         return self._value
 
-    @value.setter
-    def value(self, val):
+    def set_text(self, text):
+        """
+        @param text: A string representation of the data to be written into the object.
+        @type text: StringType
+        @return: B{None}
+        @rtype: NoneType
+        """
+        self._check_writeable()
+        self._set_value(str(text))
+
+    def get_xml(self, transfertype):
+        tag = self.tag.get_xml(transfertype)
+        data = "<" + tag + ' name="' + self.name + '"> ' + self._value + "</" + tag + "> "
+        return data
+
+    def updateByElement(self, element):
+        self._set_value(element._value)
+
+
+class indinumber(indielement):
+    """
+    A floating point number with a defined format \n
+    @ivar format : A format string describing the way the number is displayed
+    @type format : StringType
+    @ivar _min : The minimum value of the number
+    @type _min : StringType
+    @ivar _max : The maximum value of the number
+    @type _max : StringType
+    @ivar _step : The step increment of the number
+    @type _step : StringType
+    """
+
+    def __init__(self, attrs, tag):
+        self._value = ""
+        indielement.__init__(self, attrs, tag)
+        self.format = attrs.get('format', "").strip()
+        self._min = attrs.get('min', "").strip()
+        self._max = attrs.get('max', "").strip()
+        self._step = attrs.get('step', "").strip()
+
+    def get_min(self):
+        """
+        @return: The smallest possible value for this object
+        @rtype: FloatType
+        """
+        return float(self._min)
+
+    def get_max(self):
+        """
+        @return: The highest possible value for this object
+        @rtype: FloatType
+        """
+        return float(self._max)
+
+    def get_step(self):
+        """
+        @return: The stepsize
+        @rtype: FloatType
+        """
+        return float(self._step)
+
+    def is_range(self):
+        """
+        @return: C{True} if (L{get_step}>0) B{and} (L{get_range}>0)  , C{False} otherwise.
+        @rtype: FloatType
+        """
+        if self.get_step() <= 0 or (self.get_range()) <= 0:
+            return False
+        return True
+
+    def get_range(self):
+        """
+        @return: L{get_max}-L{get_min}
+        @rtype: FloatType
+        """
+        return self.get_max() - self.get_min()
+
+    def get_number_of_steps(self):
+        """
+        @return: The number of steps between min and max, 0 if L{is_range}==False
+        @rtype: IntType
+        """
+        if self.is_range():
+            return int(np.floor(self.get_range() / self.get_step()))
+        else:
+            return 0
+
+    def _set_value(self, value):
         try:
-            self._value = float(val)
-        except Exception as err:
-            raise ValueError(f"""INumber value must be a number not {val}""")
+            float(value)
+        except Exception:
+            return
+        indielement._set_value(self, value)
 
-class ITextVector(IVectorProperty):
-    tagcontext = "TextVector"
-    def __init__(self,
-                 tp: list,  # List of IText properties
-                 device: str,
-                 name: str,
-                 state: IPState,
-                 perm: IPerm,
-                 timeout: float = 0,
-                 timestamp: str = None,
-                 label: str = None,
-                 group: str = None):
+    def get_float(self):
         """
-         ## Arguments:
-         * np: List of INumber properties in the ITextVector
-         * device: Name of indi device
-         * name: Name of ITextVector
-         * state: State
-
+        @return: a float representation of it value
+        @rtype: FloatType
         """
-        self.tp = tp
-        self.perm = perm
-        self.timeout = timeout
-        self.timestamp = datetime.datetime.strptime(timestamp, "%Y-%m-%dT%H:%M:%S")
-        super().__init__(device, name, state, label, group)
+        success = False
+        while success is False:
+            success = True
+            try:
+                x = float(self._value)
+            except Exception as e:
+                success = False
+                time.sleep(1)
+                logging.warning(f"INDI Warning: invalid float {self._value} ({e})")
+        return x
 
-class IText(IProperty):
-    tagcontext = "Text"
-    def __init__(self,
-                 name: str,
-                 value: str,
-                 label: str = None):
-        super().__init__(name, label)
-        self._value = None
-        self.value = value
+    def get_digits_after_point(self):
+        """
+        @return: The number of digits after the decimal point in the string representation of the number.
+        @rtype: IntType
+        """
+        text = self.get_text()
+        i = len(text) - 1
+        while i >= 0:
+            if text[i] == ".":
+                return (len(text) - i - 1)
+            i = i - 1
+        return 0
 
-    @property
-    def value(self):
+    def get_int(self):
+        """
+        @return: an integer representation of it value
+        @rtype: IntType
+        """
+        return int(round(self.get_float()))
+
+    def set_float(self, num):
+        """
+        @param num: The new value to be set.
+        @type num: FloatType
+        @return: B{None}
+        @rtype: NoneType
+        """
+        if self.is_sexagesimal:
+            self._set_value(str(num))
+        else:
+            self._set_value(self.format % num)
+
+    def is_sexagesimal(self):
+        """
+        @return: C{True} if the format property requires sexagesimal display
+        @rtype: BooleanType
+        """
+        return (not (-1 == self.format.find("m")))
+
+    def get_text(self):
+        """
+        @return: a formated string representation of it value
+        @rtype:  StringType
+        """
+        if (-1 == self.format.find("m")):
+            return self.format % self.get_float()
+        else:
+            return _sexagesimal(self.format, self.get_float())
+
+    def set_text(self, text):
+        """
+        @param text: A string representing the the new value to be set.
+                Sexagesimal format is also supported
+        @type text: StringType
+        @return: B{None}
+        @rtype: NoneType
+        """
+        sex = []
+        sex.append("")
+        sex.append("")
+        sex.append("")
+        nsex = 0
+        for i in range(len(text)):
+            if text[i] == ":":
+                nsex = nsex + 1
+            else:
+                sex[nsex] = sex[nsex] + text[i]
+        val = 0
+        error = False
+        if nsex > 2:
+            error = True
+        for i in range(nsex + 1):
+            factor = 1.0 / pow(60, i)
+            try:
+                val = val + float(sex[i]) * factor
+            except Exception as e:
+                logging.warning(f"Problem setting indinumber text: {e}")
+                error = True
+        if not error:
+            self.set_float(val)
+
+
+class inditext(indielement):
+    """a (nearly) arbitrary text"""
+
+
+class indilight(indielement):
+    """
+    a status light
+    @ivar _value : The overall operating state of the device. possible values are:
+            - C{Idle} (device is currently not connected or unreachable)
+            - C{Ok} (device is ready to do something)
+            - C{Busy} (device is currently busy doing something, and not ready to do anything else)
+            - C{Alert} (device is responding, but at least one function does not work at the moment)
+    @type _value : StringType
+    """
+
+    def __init__(self, attrs, tag):
+        self._value = ""
+        indielement.__init__(self, attrs, tag)
+        if self.tag.is_vector():
+            self._set_value("Alert")
+            self._set_value(attrs.get('state', "").strip())
+            indielement.__init__(self, attrs, tag)
+        if self.tag.is_element():
+            indielement.__init__(self, attrs, tag)
+
+    def is_ok(self):
+        """
+        @return: C{True} if the light indicates the C{Ok} state (device is ready to do something), C{False} otherwise
+        @rtype:  BooleanType
+        """
+        if self._value == "Ok":
+            return True
+        else:
+            return False
+
+    def is_busy(self):
+        """
+        @return: C{True} if the light indicates the C{Busy} state (device is currently busy doing something,
+        and not ready to do anything else) , C{False} otherwise
+        @rtype:  BooleanType
+        """
+        if self._value == "Busy":
+            return True
+        else:
+            return False
+
+    def is_idle(self):
+        """
+        @return: C{True} if the light indicates the C{Idle} state (device is currently not connected or unreachable)
+        , C{False} otherwise
+        @rtype:  BooleanType
+        """
+        if self._value == "Idle":
+            return True
+        else:
+            return False
+
+    def is_alert(self):
+        """
+        @return: C{True} if the light indicates the C{Alert}state (device is responding, but at least
+        one function does not work at the moment) C{False} otherwise
+        @rtype:  BooleanType
+        """
+        if self._value == "Alert":
+            return True
+        else:
+            return False
+
+    def _set_value(self, value):
+        for state in ["Idle", "Ok", "Busy", "Alert"]:
+            if value == state:
+                indielement._set_value(self, value)
+
+    def set_text(self, text):
+        raise Exception("INDILigths are read only")
+        # self._set_value(str(text))
+
+    def update(self, attrs, tag):
+        if self.tag.is_vectortag(tag):
+            self._set_value("Alert")
+            self._set_value(attrs.get('state', "").strip())
+            indielement.update(self, attrs, tag)
+        if self.tag.is_elmenttag(tag):
+            indielement.update(self, attrs, tag)
+
+
+class indiswitch(indielement):
+    """a switch that can be either C{On} or C{Off}"""
+
+    def get_active(self):
+        """
+        @return: a Boolean representing the state of the switch:
+                - True (I{Python}) = C{"On"} (I{INDI})
+                - False (I{Python}) = C{"Off"} (I{INDI})
+        @rtype: BooleanType
+        """
+        if self._value == "On":
+            return True
+        else:
+            return False
+
+    def set_active(self, bool):
+        """
+        @param bool: The boolean representation of the new state of the switch.
+                - True (I{Python}) = C{"On"} (I{INDI})
+                - False (I{Python}) = C{"Off"} (I{INDI})
+        @type bool: BooleanType:
+        @return: B{None}
+        @rtype: NoneType
+        """
+        if bool:
+            self._set_value("On")
+        else:
+            self._set_value("Off")
+
+
+class indiblob(indielement):
+    """
+    @ivar format : A string describing the file-format/-extension (e.g C{.fits})
+    @type format : StringType
+    """
+
+    def __init__(self, attrs, tag):
+        indielement.__init__(self, attrs, tag)
+        self.format = attrs.get('format', "").strip()
+
+    def _get_decoded_value(self):
+        """
+        Decodes the value of the BLOB it does the base64 decoding as well as zlib decompression.
+        zlib decompression is done only if the current L{format} string ends with C{.z}.
+        base64 decoding is always done.
+        @return: the decoded version of value
+        @rtype: StringType
+        """
+        value = self._value.encode("utf8")
+        if len(self.format) >= 2:
+            if self.format[len(self.format) - 2] + self.format[len(self.format) - 1] == ".z":
+                return zlib.decompress(base64.decodestring(value))
+            else:
+                return base64.decodestring(value)
+        else:
+            return base64.decodestring(value)
+
+    def _encode_and_set_value(self, value, format):
+        """
+        Encodes the value to be written into the BLOB it does the base64 encoding as well as
+        zlib compression. Zlib compression is done only if the current L{format} string ends with C{.z}.
+        base64 encoding is always done.
+        @param value:  The value to be set, plain binary version.
+        @type value: StringType
+        @param format:  The format of the value to be set.
+        @type format: StringType
+        @return: B{None}
+        @rtype: NoneType
+        """
+        self.format = format
+        if len(self.format) >= 2:
+            if self.format[len(self.format) - 2] + self.format[len(self.format) - 1] == ".z":
+                self._set_value(base64.encodestring(zlib.compress(value)))
+            else:
+                self._set_value(base64.encodestring(value))
+        else:
+            self._set_value(base64.encodestring(value))
+
+    def get_plain_format(self):
+        """
+        @return: The format of the BLOB, possible extensions due to compression like C{.z} are removed
+        @rtype: StringType
+        """
+        if len(self.format) >= 2:
+            if self.format[len(self.format) - 2] + self.format[len(self.format) - 1] == ".z":
+                return self.format.rstrip(".z")
+            else:
+                return self.format
+        else:
+            return self.format
+
+    def get_data(self):
+        """
+        @return: the plain binary version of its data
+        @rtype: StringType
+        """
+        return self._get_decoded_value()
+
+    def get_text(self):
+        """
+        @return: the plain binary version of its data
+        @rtype: StringType
+        """
+        return self._get_decoded_value()
+
+    def set_from_file(self, filename):
+        """
+        Loads a BLOB with data from a file.
+        The extension of the file is used as C{format} attribute of the BLOB
+        @param filename:  The name of the file to be loaded.
+        @type filename: StringType
+        @return: B{None}
+        @rtype: NoneType
+        """
+        in_file = open(filename, "r")
+        text = in_file.read()
+        in_file.close()
+        (root, ext) = os.path.splitext(filename)
+        self._encode_and_set_value(text, ext)
+
+    def set_text(self, text):
+        self._encode_and_set_value(text, ".text")
+
+    def get_size(self):
+        """
+        @return: size of the xml representation of the data. This is usually not equal to the size of the
+        string object returned by L{get_data}. Because blobs are base64 encoded and can be compressed.
+        @rtype: StringType
+        """
+        return len(self._value)
+
+    def set_from_string(self, text, format):
+        """
+        Loads a BLOB with data from a string.
+        @param text:  The string to be loaded into the BLOB.
+        @type text: StringType
+        @param format:  A string to be used as the format attribute of the BLOB
+        @type format: 	StringType
+        @return: B{None}
+        @rtype: NoneType
+        """
+        self._encode_and_set_value(text, format)
+
+    def update(self, attrs, tag):
+        self._check_writeable()
+        indielement.update(self, attrs, tag)
+        self.format = attrs.get('format', "").strip()
+
+    def get_xml(self, transfertype):
+        tag = self.tag.get_xml(transfertype)
+        data = "<" + tag + ' name="' + self.name + '" size="' + str(self.get_size()) + '" format="' + self.format + '"> '
+        data = data + self._value + "</" + tag + "> "
+        return data
+
+    def updateByElement(self, element):
+        self._set_value(element._value)
+        self.format = element.format
+
+
+class indivector(indinamedobject):
+    """
+    The base class of all INDI vectors \n
+    @ivar host : The hostname of the server that send the vector
+    @type host : StringType
+    @ivar port : The port on which the server send the vector
+    @type port : IntType
+    @ivar elements  : The list of L{indielement} objects contained in the vector
+    @type elements  : list of L{indielement}
+    @ivar _perm : The users read/write permissions for the  vector
+    @type _perm : L{indipermissions}
+    @ivar group : The INDI group the vector belongs to
+    @type group : StringType
+    @ivar _light : The StatusLED of the vector
+    @type _light : L{indilight}
+    @ivar timeout  : The timeout value. According to the indi white paper it is defined as follows:
+    Each Property has a timeout value that specifies the worst-case time it might
+    take to change the value to something else The Device may report changes to the timeout
+    value depending on current device status. Timeout values give Clients a simple
+    ability to detect dysfunctional Devices or broken communication and also gives them
+    a way to predict the duration of an action for scheduling purposes as discussed later
+    @type timeout  : StringType
+    @ivar timestamp : The time when the vector was send out by the INDI server.
+    @type timestamp : StringType
+    @ivar device  : The INDI device the vector belongs to
+    @type device  : StringType
+    @ivar _message  : The L{indimessage} associated with the vector or B{None} if not present
+    @type _message  : L{indimessage}
+    """
+
+    def __init__(self, attrs, tag):
+        """
+        @param attrs: The attributes of the XML version of the INDI vector.
+        @type attrs: DictType
+        @param tag: The XML tag of the vector (see L{indixmltag}).
+        @type tag: L{indixmltag}
+        """
+        indinamedobject.__init__(self, attrs, tag)
+        self.device = attrs.get('device', "").strip()
+        self.timestamp = attrs.get('timestamp', "").strip()
+        self.timeout = attrs.get('timeout', "").strip()
+        self._light = indilight(attrs, tag)
+        self.group = attrs.get('group', "").strip()
+        self._perm = indipermissions(attrs.get('perm', "").strip())
+        if 'message' in attrs:
+            self._message = indimessage(attrs)
+        else:
+            self._message = None
+        self.elements = []
+        self.port = None
+        self.host = None
+
+    def get_message(self):
+        """
+        @return: The L{indimessage} associated with the vector, if there is any, B{None} otherwise
+        @rtype: L{indimessage}
+        """
+        return self._message
+
+    def _get_changed(self):
+        """
+        @return: C{True} if the objects XML data was changed since the last L{_get_changed} was called,
+        C{False} otherwise.
+        @rtype: BooleanType
+        """
+        changed = False
+        for element in self.elements:
+            if element._get_changed():
+                changed = True
+        return changed
+
+    def tell(self):
+        """"
+        Logs the most important parameters of the vector and its elements.
+        @return: B{None}
+        @rtype: NoneType
+        """
+        logging.info("INDIVector: %s %s %s %s %s" % (self.device, self.name, self.label, self.tag.get_type(), self._perm.get_text()))
+        for element in self.elements:
+            element.tell()
+
+    def get_light(self):
+        """
+        Returns the L{indilight} of the vector
+        @return: L{indilight} of the vector
+        @rtype: L{indilight}
+        """
+        return self._light
+
+    def get_permissions(self):
+        """
+        Returns the read/write permission of the vector
+        @return: the read/write permission of the vector
+        @rtype: L{indipermissions}
+        """
+        return self._perm
+
+    def get_element(self, elementname):
+        """
+        Returns an element on this vector matching a given name.
+        @param elementname: The name of the element requested
+        @type elementname: 	StringType
+        @return: The element requested
+        @rtype: L{indielement}
+        """
+        for element in self.elements:
+            if elementname == element.name:
+                return element
+
+    def get_first_element(self):
+        """
+        Returns the first element on this vector.
+        @return: The first element
+        @rtype: L{indielement}
+        """
+        return self.elements[0]
+
+    def _wait_for_ok_general(self, checkinterval, timeout):
+        """
+        Wait until its state is C{Ok}. Usually this means to wait until the server has
+        finished the operation requested by sending this vector.
+        @param timeout: An exception will be raised if the no C{Ok} was received for longer than timeout
+        since this method was called.
+        @type timeout: FloatType
+        @param checkinterval: The interval in which this method will check if the state is {Ok}
+        @type checkinterval: FloatType
+        @return: B{None}
+        @rtype: NoneType
+        """
+        t = time.time()
+        while not(self._light.is_ok()):
+            time.sleep(checkinterval)
+            if (time.time() - t) > timeout:
+                raise Exception("timeout waiting for state to turn Ok " +
+                                "devicename=" + self.device + " vectorname= " + self.name +
+                                " " + str(timeout) + " " + str(time.time() - t))
+
+    def wait_for_ok_timeout(self, timeout):
+        """
+        @param timeout: The time after which the L{_light} property of the object has to turn ok .
+        @type timeout: FloatType
+        @return: B{None}
+        @rtype:  NoneType
+        """
+        checkinterval = 0.1
+        if timeout < checkinterval:
+            checkinterval = timeout
+        self._wait_for_ok_general(checkinterval, timeout)
+
+    def wait_for_ok(self):
+        """
+        Wait until its state is C{Ok}. Usually this means to wait until the server has
+        finished the operation requested by sending this vector.
+        @return: B{None}
+        @rtype: NoneType
+        """
+        if float(self.timeout) == 0.0:
+            timeout = 0.1
+        else:
+            timeout = float(self.timeout)
+        checkinterval = 0.1
+        if timeout < checkinterval:
+            checkinterval = timeout
+        self._wait_for_ok_general(checkinterval, timeout)
+
+    def update(self, attrs, tag):
+        indinamedobject.update(self, attrs, tag)
+        self._check_writeable()
+        self.timestamp = attrs.get('timestamp', "").strip()
+        self.timeout = attrs.get('timeout', "").strip()
+        self._light = indilight(attrs, tag)
+
+    def get_xml(self, transfertype):
+        tag = self.tag.get_xml(transfertype)
+        data = "<" + tag + ' device="' + self.device + '" name="' + self.name + '"> '
+        for element in self.elements:
+            data = data + element.get_xml(transfertype)
+        data = data + "</" + tag + "> "
+        return data
+
+    def updateByVector(self, vector):
+        self.timestamp = vector.timestamp
+        self.timeout = vector.timeout
+        self._light = vector._light
+        for oe in vector.elements:
+            for e in self.elements:
+                if e.name == oe.name:
+                    e.updateByElement(oe)
+
+    def getDevice(self):
+        return self.device
+
+
+class indiswitchvector(indivector):
+    """
+    a vector of switches \n
+    @ivar rule: A rule defining which states of switches of the vector are allowed. possible values are:
+            - C{OneOfMany} Exactly one of the switches in the vector has to be C{On} all others have to be C{Off}
+            - C{AtMostOne}  At most one of the switches in the vector can to be C{On} all others have to be C{Off}
+            - C{AnyOfMany} Any switch in the vector may have any state
+    @type rule: StringType
+    """
+
+    def __init__(self, attrs, tag):
+        indivector.__init__(self, attrs, tag)
+        self.rule = attrs.get('rule', "").strip()
+
+    def tell(self):
+        logging.info("INDISwitchVector: %s %s %s %s %s" % (self.device, self.name, self.label, self.tag.get_type(), self.rule))
+        for element in self.elements:
+            element.tell()
+
+    def set_by_elementlabel(self, elementlabel):
+        """
+        Sets all L{indiswitch} elements of this vector to C{Off}. And sets the one who's label property matches L{elementlabel}
+        to C{On} . If no matching one is found or at least two matching ones are found, nothing is done.
+        @param elementlabel: The INDI Label of the Switch to be set to C{On}
+        @type elementlabel: StringType
+        @return: B{None}
+        @rtype: NoneType
+        """
+        found = False
+        for element in self.elements:
+            if element.label == elementlabel:
+                if found:
+                    return
+                found = True
+        if not found:
+            return
+        for element in self.elements:
+            element.set_active(False)
+            if element.label == elementlabel:
+                element.set_active(True)
+
+    def set_by_elementname(self, elementname):
+        """
+        Sets all L{indiswitch} elements of this vector to C{Off}. And sets the one who's label property matches L{elementname}
+        to C{On}. If no matching one is found or at least two matching ones are found, nothing is done.
+        @param elementname: The INDI Name of the Switch to be set to C{On}
+        @type elementname: StringType
+        @return: B{None}
+        @rtype: NoneType
+        """
+        found = False
+        for element in self.elements:
+            if element.name == elementname:
+                if found:
+                    return
+                found = True
+        if not found:
+            return
+        for element in self.elements:
+            element.set_active(False)
+            if element.name == elementname:
+                element.set_active(True)
+
+    def get_active_element(self):
+        """
+        @return: The first active (C{On}) element, B{None} if there is none
+        @rtype: L{indiswitch}
+        """
+        for element in self.elements:
+            if element.get_active():
+                return element
+        return None
+
+    def set_active_index(self, index):
+        """
+        Turns the switch with index L{index} to C{On} and all other switches of this vector to C{Off}.
+        @param index: the index of the switch to turned C{On} exclusively
+        @type index: IntType
+        @return: B{None}
+        @rtype: NoneType
+        """
+        for i, element in enumerate(self.elements):
+            if i == index:
+                element.set_active(True)
+            else:
+                element.set_active(False)
+
+    def get_active_index(self):
+        """
+        @return:  the index of the first switch in the Vector that is C{On}
+        @rtype: IntType
+        """
+        for i, element in enumerate(self.elements):
+            if element.get_active():
+                return i
+        return None
+
+
+class indinumbervector(indivector):
+    """A vector of numbers """
+
+
+class indiblobvector(indivector):
+    """A vector of BLOBs """
+
+
+class inditextvector(indivector):
+    """A vector of texts"""
+
+
+class indilightvector(indivector):
+    """A vector of lights """
+
+    def __init__(self, attrs, tag):
+        self.tag = tag
+        newattrs = attrs.copy()
+        newattrs.update({"perm": 'ro'})
+        indivector.__init__(self, newattrs, self.tag)
+
+    def update(self, attrs):
+        newattrs = attrs.copy()
+        newattrs.update({"perm": "ro"})
+        indivector.update(self, newattrs, self.tag)
+
+
+class indimessage(indiobject):
+    """
+    a text message.
+    @ivar device:  The INDI device the message belongs to.
+    @type device: StringType
+    @ivar timestamp: The time when the message was send out by the INDI server
+    @type timestamp: StringType
+    @ivar _value: The INDI message send by the server
+    @type _value: StringType
+    """
+
+    def __init__(self, attrs):
+        """
+        @param attrs: The attributes of the XML version of the INDI message.
+        @type attrs: DictType
+        """
+        tag = indixmltag(False, False, True, None, inditransfertypes.inew)
+        indiobject.__init__(self, attrs, tag)
+        self.device = attrs.get('device', "").strip()
+        self.timestamp = attrs.get('timestamp', "").strip()
+        self._value = attrs.get('message', "").strip()
+
+    def tell(self):
+        """
+        Log the message to the screen
+        @return: B{None}
+        @rtype: NoneType
+        """
+        logging.info("INDImessage: %s %s" % (self.device, self.get_text()))
+
+    def get_text(self):
+        """
+        @return: A text representing the message received
+        @rtype: StringType
+        """
         return self._value
 
-    @value.setter
-    def value(self, val):
-        try:
-            self._value = str(val)
-        except Exception as err:
-            raise ValueError(f"""IText value must be str not {val}""")
-
-class ILightVector(IVectorProperty):
-    tagcontext = "LightVector"
-    def __init__(self,
-                 lp: list,  # List of IText properties
-                 device: str,
-                 name: str,
-                 state: IPState,
-                 timeout: float = 0,
-                 timestamp: str = None,
-                 label: str = None,
-                 group: str = None):
+    def is_valid(self):
         """
-         ## Arguments:
-         * np: List of INumber properties in the ILightVector
-         * device: Name of indi device
-         * name: Name of ILightVector
-         * state: State
-
+        @return: C{True} if the message is valid.
+        @rtype: StringType
         """
-        self.lp = lp
-        self.timeout = timeout
-        self.timestamp = datetime.datetime.strptime(timestamp, "%Y-%m-%dT%H:%M:%S")
-        super().__init__(device, name, state, label, group)
-
-class ILight(IProperty):
-    tagcontext = "Light"
-    def __init__(self,
-                 name: str,
-                 value: str,
-                 label: str = None):
-        super().__init__(name, label)
-        self._state = None
-        self.state = value
-
-    @property
-    def value(self):
-        return self._state
-
-    @value.setter
-    def value(self, val):
-        if val in list(IPState):
-            self._state = val
-        else:
-            raise ValueError(f"""ILight value must be in {list(IPState)}""")
-
-class ISwitchVector(IVectorProperty):
-    tagcontext = "SwitchVector"
-    def __init__(self,
-                 sp: list,  # List of ISwitch properties
-                 device: str,
-                 name: str,
-                 state: IPState,
-                 rule: ISRule,
-                 perm: IPerm,
-                 timeout: float = 0,
-                 timestamp: str = None,
-                 label: str = None,
-                 group: str = None):
-        """
-         ## Arguments:
-         * np: List of ISwitch properties in the ISwitchVector
-         * device: Name of indi device
-         * name: Name of ISwitchVector
-         * state: State
-        """
-        self.sp = sp
-        self.rule = rule
-        self.perm = perm
-        self.timeout = timeout
-        self.timestamp = datetime.datetime.strptime(timestamp, "%Y-%m-%dT%H:%M:%S")
-        super().__init__(device, name, state, label, group)
-
-    def __setitem__(self, name, value):
-        if value not in list(ISState):
-            raise ValueError(
-                "ISwitch value must be in 'On' or 'Off' not {value}")
-        # If its one of many we need to set the
-        # other items.
-        if self.rule == "OneOfMany" and value == 'On':
-            exists = False
-            for sw in self.elements:
-                if sw.name == name:
-                    exists = True
-                    sw.value = 'On'
-                else:
-                    sw.value = 'Off'
-            if not exists:
-                raise KeyError(f"Switch {name} not in {self.name}.")
-        else:
-            super().__setitem__(name, value)
-
-
-class ISwitch(IProperty):
-    tagcontext = "Switch"
-    def __init__(self,
-                 name: str,
-                 state: str,
-                 label: str = None):
-
-        super().__init__(name, label)
-        self._state = None
-        self.state = state
-
-    @property
-    def value(self):
-        return self._state
-
-    @value.setter
-    def value(self, val):
-        val = str(val)
-        if val in list(ISState):
-            self._state = val
-        else:
-            raise ValueError(
-                f"""ISwitch value must be either 'Off' or 'On' not {val}""")
-
-    @property
-    def state(self):
-        return self._state
-
-class IBLOBVector(IVectorProperty):
-    tagcontext = "BLOBVector"
-    def __init__(self,
-                 bp: list,  # List of IText properties
-                 device: str,
-                 name: str,
-                 state: IPState,
-                 perm: IPerm,
-                 label: str = None,
-                 timeout: float = 0,
-                 timestamp: str = None,
-                 group: str = None):
-        """
-         ## Arguments:
-         * np: List of INumber properties in the IBLOBVector
-         * device: Name of indi device
-         * name: Name of IBLOBVector
-         * state: State
-
-        """
-        self.bp = bp
-        self.perm = perm
-        self.timeout = timeout
-        self.timestamp = datetime.datetime.strptime(timestamp, "%Y-%m-%dT%H:%M:%S")
-        super().__init__(device, name, state, label, group)
-
-class IBLOB(IProperty):
-    tagcontext = "BLOB"
-    valuename = "data"
-    def __init__(self,
-                 name: str,
-                 value: bytes = None,
-                 format: str = None,
-                 label: str = None):
-        super().__init__(name, label)
-        self.format = format
-        self.data = None
-        self.value = value
-
-    @property
-    def value(self):
-        return base64.b64encode(self.data).decode()
-
-    @value.setter
-    def value(self, val):
-        if type(val) != bytes:
-            raise ValueError(f"""IBLOB value must by bytes type""")
-
-        self.size = len(val)
-        self.data = val
+        return self._value != ""
 
 class device(ABC):
     """
-    Handle the stdin/stdout xml.
-    
-
-    Thoughts on Concurrency:
-    Concurrency in this class is handled via asyncio.
-    Its individual methods are NOT threadsafe and each
-    call should be executed in the same thread. If your 
-    device requires lots of IO bound calls, as most 
-    devices will, it is recommended that you also use
-    asyncio to handle concurrency. If your device 
-    hase CPU bound activities it is recommended that you
-    use a multi processing paradigm.
-
-    Either way you should use the mainloop member
-    of this class to utilize concurrency. With IO 
-    bound calls, use the many available futures/task
-    methods. With CPU bound you should use 
-    self.mainloop.run_in_executor to run tasks 
-    in a process pool. 
-    
-    
+    Horrible mix of various MMTO classes        
     """
 
-    _registrants = []
-
-    def __init__(self, loop=None, config=None, name=None):
-
+    def __init__(self, name, config=None):
         """
         Arguments:
         loop: the asyncio event loop
         config: the configurable info from ConfigParser
         name: Name of the device defaulting to name of the class
         """
+        self.device_name = name
 
-        if loop is None:
-            self.mainloop = asyncio.get_event_loop()
-        else:
-            self.mainloop = loop
-
-        if name is None:
-            self._devname = self.__class__.__name__
-        else:
-            self._devname = name
+        # Factory that will turn received xml into proper python objects
+        self._factory = _indiobjectfactory()
 
         # Dicitonary of Property vector for the current device, each having multiple properties
-        self.props = {}
+        self.property_vectors = {}
         self.config = config
         self.timer_queue = asyncio.Queue()
 
-        self._once = True
-
-        # Not sure why but the default exception handler
-        # halts the loops and never shows the traceback.
-        # So overwrite the default.
-        self.mainloop.set_exception_handler(self.exception)
-
-    def exception(self, loop, context):
-
-        raise context['exception']
+        # Various handlers, as in the initial client
+        self.blob_def_handler = None
+        self.number_def_handler = None
+        self.switch_def_handler = None
+        self.text_def_handler = None
+        self.blob_def_handler = None
+        self.light_def_handler = None
 
     def __getitem__(self, name: str):
         """
         Retrieve IVectorProperty that has been
         registered with the device.Set method.
         """
-
         return self.IUFind(name)
 
     def name(self):
-        return self._devname
+        return self.device_name
 
     @property
     def device(self):
-        return self._devname
+        return self.device_name
 
     def __repr__(self):
         return f"<{self.name()}>"
 
-    def start(self):
+    def process_vector(self, vector):
         """
-        Start up the mainloop, grab the stdio and run the xml reader.
-        This method can hide the asynchronicity from subclasses. Simply
-        instantiate the subclass and call this method in the same thread
-        and you never have to know that this is asyncio. 
         """
-        self.running = True
-        future = asyncio.gather(
-            self.run(),
-            self.toindiserver(),
-            #self.idle()
-        )
-        #print(type(future))
-        self.mainloop.run_until_complete(future)
-
-    async def toindiserver(self):
-
-        while self.running:
-            output = await self.outq.get()
-            self.writer.write(output)
-            await self.writer.drain()
-
-    async def run(self):
-        """
-        Read stdin and try to parse as xml
-
-        TODO: Create a real condition for the
-        while loop. IT would be nice to be able
-        to shutdown gracefully. 
-        """
-        inp = ""
-        while self.running:
-            inp += (await self.reader.readline()).decode()
-            try:
-                # TODO: This should be done with a feed parser
-                xml = etree.fromstring(inp)
-                inp = ""
-            except etree.XMLSyntaxError as error:
-                # This is not the best way to check
-                # for completed xml. 
-                logging.debug(f"Could not parse xml {error} {inp}")
-                continue
-            logging.debug(etree.tostring(xml, pretty_print=True))
-            if xml.tag == "getProperties":
-                if "device" in xml.attrib:
-                    self.ISGetProperties(xml.attrib['device'])
-                else:
-                    self.ISGetProperties()
-                self.initProperties()
-                if self._once:
-                    # This is where the `repeat` decorated
-                    # functions are called the first time
-                    for reg in self._registrants:
-                        func = getattr(self, reg.__name__)
-                        func()
-                    self._once = False
-            elif xml.tag == "newNumberVector":
-                try:
-                    names = [el.attrib["name"] for el in xml]
-                    values = [float(ele.text.strip()) for ele in xml]
-                    self.ISNewNumber(
-                        xml.attrib["device"],
-                        xml.attrib["name"], values, names)
-                except Exception as error:
-                    logging.debug(f"{error}")
-                    logging.debug(etree.tostring(xml))
-                    raise
-            elif xml.tag == "newTextVector":
-                try:
-                    names = [el.attrib["name"] for el in xml]
-                    values = [str(el.text) for el in xml]
-                    self.ISNewText(
-                        xml.attrib["device"],
-                        xml.attrib["name"], values, names)
-                except Exception as error:
-                    logging.debug(f"{error}")
-                    logging.debug(etree.tostring(xml))
-                    raise
-            elif xml.tag == "newSwitchVector":
-                try:
-                    names = [el.attrib["name"] for el in xml]
-                    #values = [ISState.fromstring(el.text) for el in xml]
-                    values = [str(el.text).strip() for el in xml]
-                    self.ISNewSwitch(
-                        xml.attrib["device"],
-                        xml.attrib["name"], values, names)
-                except Exception as error:
-                    logging.debug(f"{error}")
-                    logging.debug(etree.tostring(xml))
-                    raise
-
-    def initProperties(self):
-        """"""
-        pass
-
-
-    def IEAddTimer(self, millisecs: int, funct_or_coroutine: Callable, *args):
-        """
-        create a callback to be executed after a delay.
-
-        If you want to call a method at a regular interval
-        use the device.repeat decorator.
-        """
-
-        hdl = self.mainloop.call_soon(
-            self.mainloop.call_later,
-            millisecs / 1000.0,
-            funct_or_coroutine,
-            *args)
-
-        self.handles.append(hdl)
-
-    async def _debug(self):
-        while 1:
-            await asyncio.sleep(1.0)
+        try:
+            self.property_vectors[vector.name].updateByVector(vector)
+        except KeyError:
+            self.property_vectors[vector.name] = vector
 
     async def parse_xml_str(self, xml_str):
         """
@@ -844,134 +1422,25 @@ class device(ABC):
             file.
         """
         xml = etree.fromstring(xml_str.decode())
-        properties = []
-        for prop in xml.getchildren():
-            att = prop.attrib
-            att.update({'value': prop.text.strip()})
-            properties.append(att)
-        self.IDDef(self.vectorFactory(xml.tag, xml.attrib, properties))
-        await asyncio.sleep(0)
-
-
-    def ISNewNumber(self, dev: str, name: str, values: list, names: list):
-        raise NotImplementedError(
-            "Device driver must \
-                                  overload ISNewNumber method.")
-
-    def IUFind(self, name, device=None, group=None):
-        """
-        Find and return the vector property by name. 
-
-        Modeled after the IUFindXXX set of equations
-        [see here](http://www.indilib.org/api/group__\
-                dutilFunctions.html#gac8609374933e4aaea5a16cbafcc51ce2)
-        """
-        if device is None:
-            device = self._devname
-
-        for vector in self.props:
-            if vector.name == name and vector.device == device:
-                if group is not None:
-                    if vector.group == group:
-                        return vector
-                else:
-                    return vector
-
-        # We could let this return None but not finding a
-        # property seems to be a pretty important issue.
-        raise ValueError(f"Could not find {device}, {name} in {self.props}")
-
-    def IUUpdate(self, device, name, values, names, Set=False):
-        """
-        Update the indi vector property. It looks up 
-        the indi vector by device name and property name. 
-        Args:
-            device -> name of the device
-            name -> name of the vector property
-            values -> list of new values
-            names -> list of names of the property to be updated
-        """
-        vp = self.IUFind(name=name, device=device)
-        for nm, val in zip(names, values):
-            self.IDMessage(f"setting property {nm} to {val}")
-            vp[nm] = val
-        if Set:
-            self.IDSet(vp)
-        return vp
-
-    def ISGetProperties(self, device):
-        raise NotImplementedError(
-            f"Subclass of {self.__name__} must \
-                                  implement ISGetProperties")
-
-    def IDMessage(self, msg: str,
-                  timestamp: Union[str, datetime.datetime, None] = None):
-
-        if type(timestamp) == datetime.datetime:
-            timestamp = timestamp.isoformat()
-
-        elif timestamp is None:
-            timestamp = datetime.datetime.now().isoformat()
-
-        xml = f'<message message="{msg}" '
-        xml += f'timestamp="{timestamp}" '
-        xml += f'device="{self.name()}"> '
-        xml += '\n\n</message>'
-        self.outq.put_nowait(xml.encode())
-        # self.writer.write(xml.encode())
-
-    def IDSetNumber(self, n: INumberVector, msg=None):
-        self.IDSet(n, msg)
-
-    def IDSetText(self, t: ITextVector, msg=None):
-        self.IDSet(t, msg)
-
-    def IDSetLight(self, l: ILightVector, msg=None):
-        self.IDSet(l, msg)
-
-    def IDSetSwitch(self, s: ISwitchVector, msg=None):
-        self.IDSet(s, msg)
-
-    def IDSet(self, vector: IVectorProperty, msg=None):
-        if isinstance(vector, IBLOB) or isinstance(vector, IBLOBVector):
-            raise ("Must use IDSetBLOB to send BLOB to client.")
-        #self.outq.put_nowait(etree.tostring(vector.Set(msg), pretty_print=True))
-        # self.writer.write(etree.tostring(vector.Set(msg), pretty_print=True))
-
-    def IDSetBLOB(self, blob):
-        pass
-        #self.outq.put_nowait(etree.tostring(blob.Set()))
-        # self.writer.write(etree.tostring(blob.Set()))
-
-    def IDDef(self, prop, msg=None):
-        # register the property internally
-        if prop.device != self._devname:
+        vector = self._factory.create(xml.tag, xml.attrib)
+        if vector is None:
             return
-            #raise ValueError(f"INDI prop {prop.name} device does not match this device.")
-        self.props[prop.name] = prop
-        # Send it to the indiserver
-        #self.outq.put_nowait((etree.tostring(prop.Def(msg), pretty_print=True)))
-        # self.writer.write((etree.tostring(prop.Def(msg), pretty_print=True)))
-
-    @staticmethod
-    def vectorFactory(vector_type, attribs, properties):
-        """vectorFactory"""
-        if 'Number' in vector_type:
-            vec = INumberVector([INumber(**prop) for prop in properties], **attribs)
-        elif 'Light' in vector_type:
-            vec = ILightVector([ILight(**prop) for prop in properties], **attribs)
-        elif 'Switch' in vector_type:
-            vec = ISwitchVector([ISwitch(**prop) for prop in properties], **attribs)
-        elif 'BLOB' in vector_type:
-            vec = IBLOBVector([IBLOB(**prop) for prop in properties], **attribs)
-        elif 'Text' in vector_type:
-            vec = ITextVector([IText(**prop) for prop in properties], **attribs)
-        else:
-            message = f"vector_type argument must be a string containing \
-            Light, Number, Switch, Text or BLOB not {vector_type}"
-            raise ValueError(message)
-        return vec
-
+        if 'message' in xml.attrib:
+            logging.warning(f"Legacy type of message received from indi: {xml_str.decode()}")
+        if vector.tag.is_vector():
+            if vector.tag.get_transfertype() in (inditransfertypes.idef, inditransfertypes.iset):
+                self.process_vector(vector)
+        # if self.currentVector is not None:
+        #     if obj.tag.is_element():
+        #         if self.currentVector.tag.get_transfertype() in (inditransfertypes.idef, inditransfertypes.iset):
+        #             self.currentElement = obj
+        # properties = []
+        # for prop in xml.getchildren():
+        #     att = prop.attrib
+        #     att.update({'value': prop.text.strip()})
+        #     properties.append(att)
+        # self.process_vector(xml.tag, xml.attrib, properties)
+        await asyncio.sleep(0)
 
     def send_vector(self, vector):
         """
@@ -984,5 +1453,197 @@ class device(ABC):
         if not vector.tag.is_vector():
             return
         data = vector.get_xml(inditransfertypes.inew)
-        self.socket.send(data.encode("utf8"))
+        self.indi_client.xml_to_indiserver(data)
         vector._light._set_value("Busy")
+
+    def _get_vector(self, vectorname):
+        try:
+            return self.property_vectors[vectorname]
+        except KeyError:
+            return None
+
+    def get_vector(self, vectorname, timeout=None):
+        """
+        Returns an L{indivector} matching the given L{devicename} and L{vectorname}
+        This method will wait until it has been received. In case the vector doesn't exists this
+        routine will never return.
+        @param devicename:  The name of the device
+        @type devicename: StringType
+        @param vectorname:  The name of the vector
+        @type vectorname: StringType
+        @return: The L{indivector} found
+        @rtype: L{indivector}
+        """
+        started = time.time()
+        if timeout is None:
+            timeout = self.timeout
+        while True:
+            vector = self._get_vector(vectorname)
+            if 0 < timeout < time.time() - started:
+                self.logger.debug(f"device: Timeout while waiting for "
+                                  f"property status {vectorname} for device "
+                                  f"{self.device_name}")
+                raise RuntimeError(f"Timeout error while waiting for property "
+                                   f"{vectorname}")
+            time.sleep(0.01)
+        return vector
+
+    def get_element(self, vectorname, elementname):
+        """
+        Returns an L{indielement} matching the given L{devicename} and L{vectorname}
+        This method will wait until it has been received. In case the vector doesn't exists this
+        routine will never return.
+        @param devicename:  The name of the device
+        @type devicename: StringType
+        @param vectorname:  The name of the vector
+        @type vectorname: StringType
+        @param elementname:  The name of the element
+        @type elementname: StringType
+        @return: The element found
+        @rtype: L{indielement}
+        """
+        vector = self.get_vector(vectorname)
+        for i, element in enumerate(vector.elements):
+            if elementname == element.name:
+                return element
+
+    def set_and_send_text(self, vectorname, elementname, text):
+        """
+        Sets the value of an element by a text, and sends it to the server
+        @param devicename:  The name of the device
+        @type devicename: StringType
+        @param vectorname:  The name of the vector
+        @type vectorname: StringType
+        @param elementname:  The name of the element
+        @type elementname: StringType
+        @param text:  The value to be set.
+        @type text: StringType
+        @return: The vector containing the element that was just sent.
+        @rtype: L{indivector}
+        """
+        vector = self.get_vector(vectorname)
+        if vector is not None:
+            vector.get_element(elementname).set_text(text)
+            self.send_vector(vector)
+        return vector
+
+    def set_and_send_bool(self, vectorname, elementname, state):
+        """
+        Sets the value of of an indi element by a boolean, and sends it to the server
+        @param devicename:  The name of the device
+        @type devicename: StringType
+        @param vectorname:  The name of the vector
+        @type vectorname: StringType
+        @param elementname:  The name of the element
+        @type elementname: StringType
+        @param state:  The state to be set.
+        @type state: BooleanType
+        @return: The vector containing the element that was just sent.
+        @rtype: L{indivector}
+        """
+        vector = self.get_vector(vectorname)
+        if vector is not None:
+            vector.get_element(elementname).set_active(state)
+            self.send_vector(vector)
+        return vector
+
+    def set_and_send_float(self, vectorname, elementname, number):
+        """
+        Sets the value of an indi element by a floating point number, and sends it to the server
+        @param devicename:  The name of the device
+        @type devicename: StringType
+        @param vectorname:  The name of the vector
+        @type vectorname: StringType
+        @param elementname:  The name of the element
+        @type elementname: StringType
+        @param number: The number to be set.
+        @type number: FloatType
+        @return: The vector containing the element that was just sent.
+        @rtype: L{indivector}
+        """
+        vector = self.get_vector(vectorname)
+        if vector is not None:
+            vector.get_element(elementname).set_float(number)
+            self.send_vector(vector)
+        return vector
+
+    def set_and_send_switchvector_by_elementlabel(self, vectorname, elementlabel):
+        """
+        Sets all L{indiswitch} elements in this vector to C{Off}. And sets the one matching the given L{elementlabel}
+        to C{On}
+        @param devicename:  The name of the device
+        @type devicename: StringType
+        @param vectorname:  The name of the vector
+        @type vectorname: StringType
+        @param elementlabel: The INDI Label of the Switch to be set to C{On}
+        @type elementlabel: StringType
+        @return: The vector that that was just sent.
+        @rtype: L{indivector}
+        """
+        vector = self.get_vector(vectorname)
+        if vector is not None:
+            vector.set_by_elementlabel(elementlabel)
+            self.send_vector(vector)
+        return vector
+
+    def get_float(self, vectorname, elementname):
+        """
+        Returns a floating point number representing the value of the element requested.
+        The element must be an L{indinumber}.
+        @param devicename:  The name of the device
+        @type devicename: StringType
+        @param vectorname:  The name of the vector
+        @type vectorname: StringType
+        @param elementname:  The name of the element
+        @type elementname: StringType
+        @return: the value of the element
+        @rtype: FloatType
+        """
+        vector = self.get_vector(vectorname)
+        try:
+            num = vector.get_element(elementname).get_float()
+        except Exception as e:
+            logging.error("Can't get float from bogus vector: %s" % e)
+            num = None
+        return num
+
+    def get_text(self, vectorname, elementname):
+        """
+        Returns a text representing the value of the element requested.
+        @param devicename:  The name of the device
+        @type devicename: StringType
+        @param vectorname:  The name of the vector
+        @type vectorname: StringType
+        @param elementname:  The name of the element
+        @type elementname: StringType
+        @return: the value of the element
+        @rtype: StringType
+        """
+        vector = self.get_vector(vectorname)
+        try:
+            text = vector.get_element(elementname).get_text()
+        except Exception as e:
+            logging.error("Can't get text from bogus vector: %s" % e)
+            text = None
+        return text
+
+    def get_bool(self, vectorname, elementname):
+        """
+        Returns Boolean representing the value of the element requested.
+        The element must be an L{indiswitch}
+        @param devicename:  The name of the device
+        @type devicename: StringType
+        @param vectorname:  The name of the vector
+        @type vectorname: StringType
+        @param elementname:  The name of the element
+        @type elementname: StringType
+        @return: the value of the element
+        @rtype: BooleanType
+        """
+        vector = self.get_vector(vectorname)
+        try:
+            bol = vector.get_element(elementname).get_active()
+        except Exception as e:
+            logging.error("Can't get bool from bogus vector: %s" % e)
+            bol = None
+        return bol

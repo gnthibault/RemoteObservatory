@@ -109,23 +109,6 @@ class INDIClient:
                 await self.xml_from_indiserver(data)
         logging.warning(f"Finishing read_from_indiserver task")
 
-    def xml_to_indiserver(self, xml):
-        """
-        put the xml argument in the
-        to_indiQ.
-        """
-        #oop.call_soon_threadsafe(queue.put_nowait, time.time())
-        self.to_indiQ.put_nowait(xml)
-        # try:
-        #     self.writer.write(xml.encode())
-        #     await self.writer.drain()
-        #     logging.debug(f"Added message to to_indiQ: {xml}")
-        # except Exception as err:
-        #     logging.debug(f"Could not write to INDI server {err}")
-        #     self.running = 0
-        #     raise
-        #await self.to_indiQ.put(xml)
-
     async def write_to_indiserver(self, timeout):
         """Collect INDI data from the from the to_indiQ.
         and send it on its way to the indiserver. 

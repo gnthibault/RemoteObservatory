@@ -103,6 +103,8 @@ class IndiClient(SingletonIndiClientHolder, INDIClient, Base):
         # Start the main ioloop that will serve all async task in another (single) thread
         self.device_subscriptions = [] # list of coroutines
         self.ioloop = asyncio.new_event_loop()
+        # Not sure why but the default exception handler halts the loops and never shows the traceback.
+        self.ioloop.set_exception_handler(self.exception)
         self.thread = threading.Thread(target=self.ioloop.run_forever)
         self.thread.start()
 
@@ -113,6 +115,9 @@ class IndiClient(SingletonIndiClientHolder, INDIClient, Base):
 
         # Finished configuring
         self.logger.debug('Configured Indi Client successfully')
+
+    def exception(self, loop, context):
+        raise context['exception']
 
     async def wait_running(self):
         while not self.running:
@@ -135,6 +140,14 @@ class IndiClient(SingletonIndiClientHolder, INDIClient, Base):
             except Exception as exc:
                 self.logger.error(f"Error while trying to connect client: {exc!r}")
                 raise RuntimeError
+
+    def xml_to_indiserver(self, xml):
+        """
+        put the xml argument in the
+        to_indiQ.
+        """
+        asyncio.run_coroutine_threadsafe(self.to_indiQ.put(xml.encode()), self.ioloop)
+        #self.ioloop.call_soon_threadsafe(self.to_indiQ.put_nowait, xml.encode())
 
     async def xml_from_indiserver(self, data):
         self.logger.debug(f"IndiClient just received data {data}")
