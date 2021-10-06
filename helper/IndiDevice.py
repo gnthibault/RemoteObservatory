@@ -1,4 +1,5 @@
 # Basic stuff
+import asyncio
 import ctypes
 import logging
 import time
@@ -104,7 +105,6 @@ class IndiDevice(Base, device):
         """
         Called by parent class.
         """
-
         print(f"Async call from Indidevice: received {data}")
 
     @property
@@ -115,9 +115,12 @@ class IndiDevice(Base, device):
     def name(self):
         return self.device_name
 
+    def register_device_to_client(self):
     # def _setup_device(self):
-    #     self.logger.debug(f"IndiDevice: asking indi_client to look for device "
-    #                       f"{self.device_name}")
+        self.logger.debug(f"IndiDevice: asking indi_client to look for device "
+            f"{self.device_name}")
+        self.indi_client.device_subscriptions.append(self.parse_xml_str)
+        #self.indi_client.register_device
     #     if self.device is None:
     #         started = time.time()
     #         while not self.device:
@@ -179,11 +182,9 @@ class IndiDevice(Base, device):
 
     def connect_client(self):
         """
-        connect to indi server
-        TODO TN URGENT: check if we can setup a timeout or
-        run_until_complete ?
+        connect client to indi server
         """
-        self.mainloop.create_task(self.indi_client.connect())
+        self.indi_client.connect_to_server(timeout=self.defaultTimeout, sync=True)
 
     # def connect_driver(self):
     #     # Try first to ask server to give us the device handle, through client
@@ -201,7 +202,7 @@ class IndiDevice(Base, device):
         # self.logger.info(f"Connecting to device {self.device_name}")
         # # setup available list of interfaces
         # self._setup_interfaces()
-        self.start()
+        #self.start()
         # set the corresponding switch to on
         self.set_switch('CONNECTION', ['CONNECT'])
 
@@ -212,6 +213,7 @@ class IndiDevice(Base, device):
         self.connect_client()
         # Ask server to give us the device handle, through client
         #self.connect_driver()
+        self.register_device_to_client()
         # now enable actual communication between driver and device
         self.connect_device()
 
@@ -262,25 +264,35 @@ class IndiDevice(Base, device):
 
     def set_switch(self, name, on_switches=[], off_switches=[],
                    sync=True, timeout=None):
-        pv = self.get_prop(name, 'switch')
-        is_exclusive = pv.getRule() == PyIndi.ISR_ATMOST1 or pv.getRule() == PyIndi.ISR_1OFMANY
-        if is_exclusive:
-            on_switches = on_switches[0:1]
-            off_switches = [s.name for s in pv if s.name not in on_switches]
-        for index in range(0, len(pv)):
-            current_state = pv[index].s
-            new_state = current_state
-            if pv[index].name in on_switches:
-                new_state = PyIndi.ISS_ON
-            elif is_exclusive or pv[index].name in off_switches:
-                new_state = PyIndi.ISS_OFF
-            pv[index].s = new_state
-        self.indi_client.sendNewSwitch(pv)
-        if sync:
-            self.__wait_prop_status(pv, statuses=[PyIndi.IPS_IDLE,
-                                                  PyIndi.IPS_OK],
-                                    timeout=timeout)
-        return pv
+        # from helper.device import ISwitchVector
+        # sv = ISwitchVector()
+        # self.IDSetSwitch()
+        # self.indi_client.xml_to_indiserver(xml)
+        import time
+        i=0
+        while i<3600:
+            time.sleep(1)
+            i+=1
+
+        # pv = self.get_prop(name, 'switch')
+        # is_exclusive = pv.getRule() == PyIndi.ISR_ATMOST1 or pv.getRule() == PyIndi.ISR_1OFMANY
+        # if is_exclusive:
+        #     on_switches = on_switches[0:1]
+        #     off_switches = [s.name for s in pv if s.name not in on_switches]
+        # for index in range(0, len(pv)):
+        #     current_state = pv[index].s
+        #     new_state = current_state
+        #     if pv[index].name in on_switches:
+        #         new_state = PyIndi.ISS_ON
+        #     elif is_exclusive or pv[index].name in off_switches:
+        #         new_state = PyIndi.ISS_OFF
+        #     pv[index].s = new_state
+        # self.indi_client.sendNewSwitch(pv)
+        # if sync:
+        #     self.__wait_prop_status(pv, statuses=[PyIndi.IPS_IDLE,
+        #                                           PyIndi.IPS_OK],
+        #                             timeout=timeout)
+        # return pv
         
     def set_number(self, number_name, value_vector, sync=True, timeout=None):
         pv = self.get_prop(number_name, 'number', timeout)

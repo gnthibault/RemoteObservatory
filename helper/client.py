@@ -1,13 +1,6 @@
 import time
 import asyncio
-from lxml import etree
-from tornado.queues import Queue
-from collections import namedtuple
-import json
-from pathlib import Path
 import logging
-
-
 
 """
     INDIClient runs two tasks that are infinite loops and run 
@@ -47,181 +40,114 @@ class INDIClient:
     tcp/ip socket. See the above diagram for help understanding
     its data flow.  """
 
-    to_indiQ = Queue()
 
-
-    def start(self, host="localhost", port=7624, read_width=30000):
+    def __init__(self, host="localhost", port=7624, read_width=30000):
+        self.running = False
+        self.reader = None
+        self.writer = False
+        self.to_indiQ = asyncio.Queue() # Not threadsafe, use janus or aioprocessing if you want to use it directly
         self.port = port
         self.host = host
-        self.read_width=read_width
+        self.read_width = read_width
         self.lastblob = None
 
-
-    async def xml_from_indiserver(self, data):
-
-        raise NotImplemented("This method should be implemented by the subclass")
-
-    async def read_from_indiserver(self):
-
-        """Read data from self.reader and then call
-        xml_from_indiserver with this data as an arg."""
-
-        while self.running:
-            try:
-                if self.reader.at_eof():
-                    raise Exception("INDI server closed")
-
-                # Read data from indiserver
-                data = await self.reader.read(self.read_width)
-                await self.xml_from_indiserver(data)
-
-
-            except Exception as err:
-                self.running = 0
-                logging.warning(f"Could not read from INDI server {err}")
-                raise
-
-        self.writer.close()
-        await self.writer.wait_closed()
-        logging.warning(f"Finishing read_from_indiserver task")
-
-    async def connect(self):
+    async def connect(self, timeout):
         """Attempt to connect to the indiserver in a loop.
         """
         while 1:
             task = None
             try:
-                asyncio.sleep(1)
-                print("RRRRRRRRRRRRRRRRRRRRRRRRRRRRR")
                 logging.debug(f"Attempting to connect to indiserver "
                               f"{self.host}:{self.port}")
-                self.reader, self.writer = await asyncio.open_connection(
-                        self.host, self.port)
+                task = asyncio.open_connection(self.host, self.port)
+                self.reader, self.writer = await asyncio.wait_for(task, timeout=timeout)
                 logging.debug(f"Connected to indiserver {self.host}:{self.port}")
+                # Send first "Introductory message" in non blocking fashion
+                self.xml_to_indiserver("<getProperties version='1.7'/>")
+                # Now run main two asynchronous task: consume send queue, and receive
                 self.running = True
+                # self.task = asyncio.gather(
+                #     self.write_to_indiserver(timeout=timeout),
+                #     self.read_from_indiserver())
+                # await self.task
+                task_write = asyncio.create_task(self.write_to_indiserver(timeout=timeout))
+                task_read = asyncio.create_task(self.read_from_indiserver())
+                await asyncio.wait([task_read, task_write], return_when=asyncio.FIRST_COMPLETED)
 
-                self.task = asyncio.gather(self.read_from_indiserver())
-                #self.task = asyncio.gather(self.read_from_indiserver(),
-                        #self.write_to_indiserver() )
-                await self.task
                 logging.debug("INDI client tasks finished. indiserver crash?")
                 logging.debug("Attempting to connect again")
-                
             except ConnectionRefusedError:
                 self.running = False
                 logging.debug("Can not connect to INDI server\n")
-
             except asyncio.TimeoutError:
                 logging.debug("Lost connection to INDI server\n")
-
             finally:
                 if task is not None:
                     task.cancel()
-
             await asyncio.sleep(2.0)
 
-    
-    async def xml_to_indiserver(self, xml):
-        """
-        put the xml argument in the 
-        to_indiQ. 
-        """
-        try:
-            self.writer.write(xml.encode())
-            await self.writer.drain()
-            logging.debug(f"Added message to to_indiQ: {xml}")
-        except Exception as err:
-            logging.debug(f"Could not write to INDI server {err}")
-            self.running = 0
-            raise
-        #await self.to_indiQ.put(xml)
-        
-        
+    async def xml_from_indiserver(self, data):
+        raise NotImplemented("This method should be implemented by the subclass")
 
-    async def write_to_indiserver(self):
+    async def read_from_indiserver(self):
+        """Read data from self.reader and then call
+        xml_from_indiserver with this data as an arg."""
+        while self.running:
+            try:
+                if self.reader.at_eof():
+                    raise Exception("INDI server closed")
+                # Read data from indiserver with a timeout, so that we don't block loop
+                data = await asyncio.wait_for(self.reader.read(self.read_width), timeout=0.1)
+            except asyncio.TimeoutError:
+                continue
+            except Exception as err:
+                self.running = False
+                logging.warning(f"Could not read from INDI server {err}")
+                raise
+            else:
+                # Makes the data available for the application, and wait for it to be consumed
+                await self.xml_from_indiserver(data)
+        logging.warning(f"Finishing read_from_indiserver task")
+
+    def xml_to_indiserver(self, xml):
+        """
+        put the xml argument in the
+        to_indiQ.
+        """
+        #oop.call_soon_threadsafe(queue.put_nowait, time.time())
+        self.to_indiQ.put_nowait(xml)
+        # try:
+        #     self.writer.write(xml.encode())
+        #     await self.writer.drain()
+        #     logging.debug(f"Added message to to_indiQ: {xml}")
+        # except Exception as err:
+        #     logging.debug(f"Could not write to INDI server {err}")
+        #     self.running = 0
+        #     raise
+        #await self.to_indiQ.put(xml)
+
+    async def write_to_indiserver(self, timeout):
         """Collect INDI data from the from the to_indiQ.
         and send it on its way to the indiserver. 
         """
-
         while self.running:
             try:
-                #to_indi = await asyncio.wait_for( self.to_indiQ.get(), 10 )
-                to_indi = await self.to_indiQ.get()
+                # Read from queue with a timeout, so that we don't block loop
+                #to_indi = await asyncio.wait_for(self.to_indiQ.get(), timeout=0.1) #This was preventing subsequent call ?
+                to_indi = self.to_indiQ.get_nowait()
                 logging.debug(f"writing this to indi {to_indi}")
-            except asyncio.TimeoutError as error:
-                # This allows us to check the self.running state
-                # if there is no data in the to_indiQ
+            # except asyncio.TimeoutError:
+            #     continue
+            except asyncio.queues.QueueEmpty:
+                await asyncio.sleep(0)
                 continue
             try:
-                #logging.debug(f"writing this to indi {to_indi}")
+                logging.debug(f"Writing this to indi {to_indi}")
                 self.writer.write(to_indi.encode())
-                await self.writer.drain()
+                await asyncio.wait_for(self.writer.drain(), timeout=timeout)
             except Exception as err:
-                self.running = 0
-                logging.debug(f"Could not write to INDI server {err}")
-
+                self.running = False
+                logging.error(f"Could not write to INDI server {err}")
+        self.writer.close()
+        await self.writer.wait_closed()
         logging.debug("Finishing write_to_indiserver task")
-
-
-    
-class INDIClientSingleton(INDIClient):
-    """
-    INDIClient as a singleton. This works well
-    if you only want one client and you want 
-    to be able to easily access that client
-    by simple instantiation. 
-    """
-
-    _instance = None
-
-    def __new__(cls, *args, **kwargs):
-        """
-        Make it a singleton
-        """
-        if cls._instance is None:
-            cls._instance = super().__new__(cls)
-        return cls._instance
-
-
-
-class INDIClientContainer:
-
-    def __new__(cls, *args, **kwargs):
-        """
-        Make it a singleton
-        """
-        if cls._instance is None:
-            cls._instance = super().__new__(cls)
-            cls._instance._clients = []
-
-        return cls._instance
-            
-
-    def create_client(self, *args, **kwargs):
-        
-        if "client_class" in kwargs:
-            if issubclass(kwargs["client_class"], INDIClient):
-                client_class = kwargs["client_class"]
-                del kwargs["client_class"]
-            else:
-                raise TypeError(f"client_class must be subclass of INDIClient.")
-        else:
-            client_class = INDIClient
-
-        client = client_class()
-        client.start(*args, **kwargs)
-        
-        self._clients.append(client)
-
-        return client
-
-    def new_client(self, client=INDIClient):
-
-        self._clients.append(client)
-     
-   
-    def __getitem__(self, key):
-
-        return self._clients[key]
-        
-

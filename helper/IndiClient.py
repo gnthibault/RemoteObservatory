@@ -1,4 +1,6 @@
 # Basic stuff
+import asyncio
+import concurrent
 from contextlib import contextmanager
 import io
 import json
@@ -93,12 +95,16 @@ class IndiClient(SingletonIndiClientHolder, INDIClient, Base):
                           indi_port=7624)
 
         # Call indi client base classe ctor
-        INDIClient.__init__(self)
-        self.start(
+        INDIClient.__init__(self,
             host=config["indi_host"],
             port=config["indi_port"])
-
         self.logger.debug(f"Indi Client, remote host is: {self.host}:{self.port}")
+
+        # Start the main ioloop that will serve all async task in another (single) thread
+        self.device_subscriptions = [] # list of coroutines
+        self.ioloop = asyncio.new_event_loop()
+        self.thread = threading.Thread(target=self.ioloop.run_forever)
+        self.thread.start()
 
         # Blob related attirubtes
         self.blob_event = threading.Event()
@@ -107,6 +113,36 @@ class IndiClient(SingletonIndiClientHolder, INDIClient, Base):
 
         # Finished configuring
         self.logger.debug('Configured Indi Client successfully')
+
+    async def wait_running(self):
+        while not self.running:
+            await asyncio.sleep(0)
+        return True
+
+    def connect_to_server(self, timeout=30, sync=True):
+        """
+        Will launch the main listen-read/write async function in loop executed by self.thread
+        """
+        asyncio.run_coroutine_threadsafe(self.connect(timeout=timeout), self.ioloop)
+        if sync:
+            future = asyncio.run_coroutine_threadsafe(self.wait_running(), self.ioloop)
+            try:
+                assert (future.result(timeout) == True)
+            except concurrent.futures.TimeoutError:
+                self.logger.error("Setting up running state took too long...")
+                future.cancel()
+                raise RuntimeError
+            except Exception as exc:
+                self.logger.error(f"Error while trying to connect client: {exc!r}")
+                raise RuntimeError
+
+    async def xml_from_indiserver(self, data):
+        self.logger.debug(f"IndiClient just received data {data}")
+        for sub in self.device_subscriptions:
+            asyncio.run_coroutine_threadsafe(sub(data), self.ioloop)
+
+    #def set_switch
+    #self.xml_to_indiserver(self, xml)
 
     '''
     Indi related stuff (implementing BaseClient methods)

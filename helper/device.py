@@ -1,20 +1,17 @@
-#!/usr/bin/env python
-
-
-from lxml import etree
+# Generic imports
+from abc import ABC
+import base64
 import asyncio
-import sys
-import logging
 import datetime
 from enum import Enum
-from typing import Union, Callable
-import os
-import base64
-
-from abc import ABC
-from pathlib import Path
 import functools
+import logging
+from lxml import etree
+import os
+import sys
+from pathlib import Path
 import traceback
+from typing import Union, Callable
 
 """
 The Base classes for the pyINDI device. Definitions
@@ -26,90 +23,21 @@ Naming convention are based on the indilib c++ version:
 http://www.indilib.org/api/index.html
 """
 
-now = datetime.datetime.now()
-timestr = now.strftime("%H%M%S-%a")
-
-if Path("/src").exists():
-    """
-    TODO: The logging path should be a
-    configureable or an environment variable.
-    """
-    logging.basicConfig(format="%(asctime)-15s %(message)s",
-                        filename=f'/src/{timestr}.log',
-                        level=logging.DEBUG)
-else:
-    logging.basicConfig(format="%(asctime)-15s %(message)s",
-                        filename=f'{timestr}.log',
-                        level=logging.DEBUG)
-
-
-async def stdio(limit=asyncio.streams._DEFAULT_LIMIT, loop=None):
-    """
-    Collect the stdio as async streams. This is a shameless
-    ctrl-c ctrl-v of this stackoverflow:
-    https://stackoverflow.com/questions/52089869/how-to-\
-            create-asyncio-stream-reader-writer-for-stdin-stdout
-    """
-
-    if loop is None:
-        loop = asyncio.get_event_loop()
-
-    if sys.platform == 'win32':
-        # Windows does not support async stdio operations
-        reader = WinIO(loop)
-        writer = WinIO(loop)
-    else:
-        reader = asyncio.StreamReader(limit=limit, loop=loop)
-        await loop.connect_read_pipe(
-            lambda: asyncio.StreamReaderProtocol(reader, loop=loop),
-            sys.stdin)
-
-        writer_transport, writer_protocol = await loop.connect_write_pipe(
-            lambda: asyncio.streams.FlowControlMixin(loop=loop),
-            os.fdopen(sys.stdout.fileno(), 'wb'))
-        writer = asyncio.streams.StreamWriter(
-            writer_transport, writer_protocol, None, loop)
-    return reader, writer
-
-
-def printa(msg: Union[str, bytes]):
-    """
-    This was the old way of writing to stdout
-    We use the stdio fxn now. 
-    """
-
-    if type(msg) == bytes:
-        msg = msg.decode()
-    sys.stdout.write(msg)
-    sys.stdout.flush()
-    return
-
-
-class WinIO:
-    """Windows does not support asynchronous stdio
-       operations. Instead, this object handles
-       those operations in a separate thread."""
-
-    def __init__(self, loop):
-        self.loop = loop
-
-    async def readline(self):
-        msg = await self.loop.run_in_executor(None, sys.stdin.readline)
-        return msg.encode()
-
-    async def read(self, nbytes):
-        msg = await self.loop.run_in_executor(
-            None,
-            functools.partial(sys.stdin.read, nbytes))
-        return msg.encode()
-
-    async def write(self, msg):
-        print(msg)
-
-    async def drain(self):
-        # This does nothing
-        await asyncio.sleep(0)
-
+# now = datetime.datetime.now()
+# timestr = now.strftime("%H%M%S-%a")
+# if Path("/src").exists():
+#     """
+#     TODO: The logging path should be a
+#     configureable or an environment variable.
+#     """
+#     logging.basicConfig(format="%(asctime)-15s %(message)s",
+#                         filename=f'/src/{timestr}.log',
+#                         level=logging.DEBUG)
+# else:
+#     logging.basicConfig(format="%(asctime)-15s %(message)s",
+#                         filename=f'{timestr}.log',
+#                         level=logging.DEBUG)
+#
 
 class INDIEnumMember(int):
     """
@@ -126,16 +54,13 @@ class INDIEnumMember(int):
         Overload the assignment method to add the
         string.
         """
-
         obj = int.__new__(cls, value)
         obj.string = string
         return obj
 
     def __eq__(self, other):
-
         if isinstance(other, str):
             return self.string == other
-
         elif isinstance(other, Enum):
             return self.value == other.value
         return False
@@ -166,7 +91,6 @@ class INDIEnum(INDIEnumMember, Enum):
     python Enum and subclass the int type for enum
     members. See INDIEnumMember above.
     """
-
     def __new__(cls, value: int, string: str):
         obj = INDIEnumMember.__new__(cls, value, string)
         obj._value_ = value
@@ -192,7 +116,6 @@ class IPState(INDIEnum):
     BUSY = (2, "Busy")
     ALERT = (3, "Alert")
 
-
 class IPerm(INDIEnum):
     """
     INDI permissions
@@ -201,16 +124,13 @@ class IPerm(INDIEnum):
     WO = (1, "wo")
     RW = (2, "rw")
 
-
 class ISRule(INDIEnum):
     """
     INDI switch rule
     """
-
     ONEOFMANY = (0, "OneOfMany")
     ATMOST1 = (1, "AtMostOne")
     NOFMANY = (2, "AnyOfMany")
-
 
 class ISState(INDIEnum):
     """
@@ -223,40 +143,29 @@ class ISState(INDIEnum):
     def fromstring(string):
         if "Off" in string:
             return ISState.OFF
-
         elif "On" in string:
             return ISState.ON
-
         raise ValueError(f"ISState must be either Off or On not {string}")
 
 
 class IVectorProperty(ABC):
     """
     INDI Vector asbstractions
-
     TODO: Any member of any subclass of this class should
-    be handled by setter and getter decorators. 
-    
+    be handled by setter and getter decorators.
     """
     dtd = etree.DTD(
         (Path(__file__).parent / "data/indi.dtd").open())
-
     def __init__(self,
                  device: str, name: str, state: IPState,
                  label: str = None, group: str = None):
-
-
         self.device = device
         self.name = name
-
         if label is None:
             label = name
-
         self.label = label
         self.group = group
-
         self._state = state
-
         if hasattr(self, "np"):
             self.iprops = self.np
         elif hasattr(self, "tp"):
@@ -288,24 +197,19 @@ class IVectorProperty(ABC):
         for any vector property. It uses the dtd files
         to map the xml attributes members of this class.
         """
-
         tagname = "def" + self.tagcontext
         dtd_elements = {tag.name: tag for tag in self.dtd.iterelements()}
         if tagname not in dtd_elements:
             raise AttributeError(
                 "{tagname} not defined in \
                                  Document Type Definition")
-
         ele_definition = dtd_elements[tagname]
         ele = etree.Element(ele_definition.name)
-
         for attribute in ele_definition.iterattributes():
             if hasattr(self, attribute.name):
                 ele.set(attribute.name, str(getattr(self, attribute.name)))
-
         for prop in self.iprops:
             ele.append(prop.Def())
-
         if msg is not None:
             ele.set("message", msg)
 
@@ -329,7 +233,6 @@ class IVectorProperty(ABC):
             raise AttributeError(
                 f"{tagname} not defined in \
                                  Document Type Definition")
-
         ele_definition = dtd_elements[tagname]
         ele = etree.Element(ele_definition.name)
         for attribute in ele_definition.iterattributes():
@@ -337,10 +240,8 @@ class IVectorProperty(ABC):
                 ele.set(attribute.name, str(getattr(self, attribute.name)))
         for prop in self.iprops:
             ele.append(prop.Set())
-
         if msg is not None:
             ele.set("message", msg)
-
         return ele
 
     @property
@@ -363,16 +264,13 @@ class IVectorProperty(ABC):
         for ele in self.elements:
             if ele.name == name:
                 return ele
-
         raise KeyError(f"{name} not in {self.__str__()}")
 
     def __setitem__(self, name, val):
-
         for ele in self.elements:
             if ele.name == name:
                 ele.value = val
                 return
-
         raise KeyError(f"{name} not in {self.__str__()}")
 
     def __iter__(self):
@@ -383,12 +281,9 @@ class IVectorProperty(ABC):
 class IProperty:
     dtd = etree.DTD(
         (Path(__file__).parent / "data/indi.dtd").open())
-
     def __init__(self, name: str, label: str = None):
-
         if label is None:
             label = name
-
         self.label = label
         self.name = name
 
@@ -401,41 +296,33 @@ class IProperty:
     def Def(self):
         tagname = "def" + self.tagcontext
         dtd_elements = {tag.name: tag for tag in self.dtd.iterelements()}
-
         if tagname not in dtd_elements:
             raise AttributeError(
                 f"{tagname} not defined in \
                                  Document Type Definition")
-
         ele_definition = dtd_elements[tagname]
         ele = etree.Element(ele_definition.name)
         for attribute in ele_definition.iterattributes():
             if hasattr(self, attribute.name):
                 ele.set(attribute.name, str(getattr(self, attribute.name)))
-
         # Blob definitions have empty data.
         if not isinstance(self, IBLOB):
             ele.text = str(self.value)
-
         return ele
 
     def Set(self):
         tagname = "one" + self.tagcontext
         dtd_elements = {tag.name: tag for tag in self.dtd.iterelements()}
-
         if tagname not in dtd_elements:
             raise AttributeError(
                 f"{tagname} not defined in \
                                  Document Type Definition")
-
         ele_definition = dtd_elements[tagname]
         ele = etree.Element(ele_definition.name)
         for attribute in ele_definition.iterattributes():
             if hasattr(self, attribute.name):
                 ele.set(attribute.name, str(getattr(self, attribute.name)))
-
         ele.text = str(self.value)
-
         return ele
 
     @property
@@ -450,7 +337,6 @@ class IProperty:
             return self._state
         elif isinstance(self, IBLOB):
             return self.data
-
         raise TypeError(f"""value method must be called with INumber,
         IText, ILight, ISwitch or IBLOB not {type(self)}
         {isinstance(self, INumber)}
@@ -458,7 +344,6 @@ class IProperty:
 
     @value.setter
     def value(self, val):
-
         # TODO: We could do some type checking.
         if isinstance(self, INumber):
             self._value = self._value
@@ -483,15 +368,14 @@ class IProperty:
 
 class INumberVector(IVectorProperty):
     tagcontext = "NumberVector"
-
     def __init__(self,
                  np: list,
                  device: str,
                  name: str,
                  state: IPState,
-                 perm: IPerm,
+                 perm: IPerm = IPerm.RW,
                  timeout: float = 0,
-                 timestamp: datetime.datetime = None,
+                 timestamp: str = None,
                  label: str = None,
                  group: str = None):
         """
@@ -502,32 +386,29 @@ class INumberVector(IVectorProperty):
          * state: State
 
         """
-
-        self.perm = perm
         self.np = np
+        self.perm = perm
+        self.timeout = timeout
+        self.timestamp = datetime.datetime.strptime(timestamp, "%Y-%m-%dT%H:%M:%S")
         super().__init__(device, name, state, label, group)
-
 
 class INumber(IProperty):
     tagcontext = "Number"
-    valuename = "value"
-
     def __init__(self,
                  name: str,
                  format: str,
                  min: float,
                  max: float,
                  step: float,
-                 value: float,
+                 value: str,
                  label: str = None):
-
         super().__init__(name, label)
-
         self.format = format
         self.min = min
         self.max = max
         self.step = step
-        self._value = value
+        self._value = None
+        self.value = value
 
     @property
     def value(self):
@@ -540,10 +421,8 @@ class INumber(IProperty):
         except Exception as err:
             raise ValueError(f"""INumber value must be a number not {val}""")
 
-
 class ITextVector(IVectorProperty):
     tagcontext = "TextVector"
-
     def __init__(self,
                  tp: list,  # List of IText properties
                  device: str,
@@ -551,84 +430,77 @@ class ITextVector(IVectorProperty):
                  state: IPState,
                  perm: IPerm,
                  timeout: float = 0,
-                 timestamp: datetime.datetime = None,
+                 timestamp: str = None,
                  label: str = None,
                  group: str = None):
         """
          ## Arguments:
-         * np: List of INumber properties in the INumberVector
+         * np: List of INumber properties in the ITextVector
          * device: Name of indi device
-         * name: Name of INumberVector
+         * name: Name of ITextVector
          * state: State
 
         """
-
-        self.perm = perm
         self.tp = tp
+        self.perm = perm
+        self.timeout = timeout
+        self.timestamp = datetime.datetime.strptime(timestamp, "%Y-%m-%dT%H:%M:%S")
         super().__init__(device, name, state, label, group)
-
 
 class IText(IProperty):
     tagcontext = "Text"
-    valuename = "text"
-
     def __init__(self,
                  name: str,
-                 text: str,
+                 value: str,
                  label: str = None):
-
         super().__init__(name, label)
-        self.text = text
+        self._value = None
+        self.value = value
 
     @property
     def value(self):
-        return self.text
+        return self._value
 
     @value.setter
     def value(self, val):
         try:
-            self.text = str(val)
+            self._value = str(val)
         except Exception as err:
             raise ValueError(f"""IText value must be str not {val}""")
 
-
 class ILightVector(IVectorProperty):
     tagcontext = "LightVector"
-
     def __init__(self,
                  lp: list,  # List of IText properties
                  device: str,
                  name: str,
                  state: IPState,
                  timeout: float = 0,
-                 timestamp: datetime.datetime = None,
+                 timestamp: str = None,
                  label: str = None,
                  group: str = None):
         """
          ## Arguments:
-         * np: List of INumber properties in the INumberVector
+         * np: List of INumber properties in the ILightVector
          * device: Name of indi device
-         * name: Name of INumberVector
+         * name: Name of ILightVector
          * state: State
 
         """
-
         self.lp = lp
+        self.timeout = timeout
+        self.timestamp = datetime.datetime.strptime(timestamp, "%Y-%m-%dT%H:%M:%S")
         super().__init__(device, name, state, label, group)
-
 
 class ILight(IProperty):
     tagcontext = "Light"
-    valuename = "state"
-
     def __init__(self,
                  name: str,
-                 state: IPState,
+                 value: str,
                  label: str = None):
-
         super().__init__(name, label)
-
-        self._state = state
+        self._state = None
+        self.state = value
 
     @property
     def value(self):
@@ -636,16 +508,13 @@ class ILight(IProperty):
 
     @value.setter
     def value(self, val):
-
         if val in list(IPState):
             self._state = val
         else:
             raise ValueError(f"""ILight value must be in {list(IPState)}""")
 
-
 class ISwitchVector(IVectorProperty):
     tagcontext = "SwitchVector"
-
     def __init__(self,
                  sp: list,  # List of ISwitch properties
                  device: str,
@@ -654,60 +523,53 @@ class ISwitchVector(IVectorProperty):
                  rule: ISRule,
                  perm: IPerm,
                  timeout: float = 0,
+                 timestamp: str = None,
                  label: str = None,
                  group: str = None):
         """
          ## Arguments:
-         * np: List of INumber properties in the INumberVector
+         * np: List of ISwitch properties in the ISwitchVector
          * device: Name of indi device
-         * name: Name of INumberVector
+         * name: Name of ISwitchVector
          * state: State
-
         """
-
-        self.perm = perm
-
         self.sp = sp
         self.rule = rule
+        self.perm = perm
+        self.timeout = timeout
+        self.timestamp = datetime.datetime.strptime(timestamp, "%Y-%m-%dT%H:%M:%S")
         super().__init__(device, name, state, label, group)
 
     def __setitem__(self, name, value):
-
         if value not in list(ISState):
             raise ValueError(
                 "ISwitch value must be in 'On' or 'Off' not {value}")
-
         # If its one of many we need to set the
         # other items.
         if self.rule == "OneOfMany" and value == 'On':
             exists = False
             for sw in self.elements:
-
                 if sw.name == name:
                     exists = True
                     sw.value = 'On'
                 else:
                     sw.value = 'Off'
-
             if not exists:
                 raise KeyError(f"Switch {name} not in {self.name}.")
-
         else:
             super().__setitem__(name, value)
 
 
 class ISwitch(IProperty):
     tagcontext = "Switch"
-    valuename = "state"
-
     def __init__(self,
                  name: str,
-                 state: ISState,
+                 state: str,
                  label: str = None):
 
         super().__init__(name, label)
-        print(f"{name} = {state}")
-        self._state = state
+        self._state = None
+        self.state = state
 
     @property
     def value(self):
@@ -715,9 +577,7 @@ class ISwitch(IProperty):
 
     @value.setter
     def value(self, val):
-
         val = str(val)
-
         if val in list(ISState):
             self._state = val
         else:
@@ -728,10 +588,8 @@ class ISwitch(IProperty):
     def state(self):
         return self._state
 
-
 class IBLOBVector(IVectorProperty):
     tagcontext = "BLOBVector"
-
     def __init__(self,
                  bp: list,  # List of IText properties
                  device: str,
@@ -739,33 +597,35 @@ class IBLOBVector(IVectorProperty):
                  state: IPState,
                  perm: IPerm,
                  label: str = None,
-                 timeout: str = None,
+                 timeout: float = 0,
+                 timestamp: str = None,
                  group: str = None):
         """
          ## Arguments:
-         * np: List of INumber properties in the INumberVector
+         * np: List of INumber properties in the IBLOBVector
          * device: Name of indi device
-         * name: Name of INumberVector
+         * name: Name of IBLOBVector
          * state: State
 
         """
-
-        self.perm = perm
         self.bp = bp
+        self.perm = perm
+        self.timeout = timeout
+        self.timestamp = datetime.datetime.strptime(timestamp, "%Y-%m-%dT%H:%M:%S")
         super().__init__(device, name, state, label, group)
-
 
 class IBLOB(IProperty):
     tagcontext = "BLOB"
     valuename = "data"
-
     def __init__(self,
                  name: str,
+                 value: bytes = None,
                  format: str = None,
                  label: str = None):
         super().__init__(name, label)
         self.format = format
         self.data = None
+        self.value = value
 
     @property
     def value(self):
@@ -778,7 +638,6 @@ class IBLOB(IProperty):
 
         self.size = len(val)
         self.data = val
-
 
 class device(ABC):
     """
@@ -826,15 +685,10 @@ class device(ABC):
         else:
             self._devname = name
 
-        self.props = []
+        # Dicitonary of Property vector for the current device, each having multiple properties
+        self.props = {}
         self.config = config
         self.timer_queue = asyncio.Queue()
-
-        self.reader, self.writer = \
-            self.mainloop.run_until_complete(stdio(loop=self.mainloop))
-
-        self.outq = asyncio.Queue()
-        self.handles = []
 
         self._once = True
 
@@ -885,7 +739,6 @@ class device(ABC):
 
         while self.running:
             output = await self.outq.get()
-
             self.writer.write(output)
             await self.writer.drain()
 
@@ -897,33 +750,25 @@ class device(ABC):
         while loop. IT would be nice to be able
         to shutdown gracefully. 
         """
-
         inp = ""
         while self.running:
-
             inp += (await self.reader.readline()).decode()
             try:
                 # TODO: This should be done with a feed parser
                 xml = etree.fromstring(inp)
                 inp = ""
-
             except etree.XMLSyntaxError as error:
                 # This is not the best way to check
                 # for completed xml. 
                 logging.debug(f"Could not parse xml {error} {inp}")
                 continue
-
             logging.debug(etree.tostring(xml, pretty_print=True))
             if xml.tag == "getProperties":
-
                 if "device" in xml.attrib:
                     self.ISGetProperties(xml.attrib['device'])
-
                 else:
                     self.ISGetProperties()
-
                 self.initProperties()
-
                 if self._once:
                     # This is where the `repeat` decorated
                     # functions are called the first time
@@ -931,26 +776,21 @@ class device(ABC):
                         func = getattr(self, reg.__name__)
                         func()
                     self._once = False
-
-
             elif xml.tag == "newNumberVector":
-
                 try:
-                    names = [ele.attrib["name"] for ele in xml]
+                    names = [el.attrib["name"] for el in xml]
                     values = [float(ele.text.strip()) for ele in xml]
                     self.ISNewNumber(
                         xml.attrib["device"],
                         xml.attrib["name"], values, names)
-
                 except Exception as error:
                     logging.debug(f"{error}")
                     logging.debug(etree.tostring(xml))
                     raise
-
             elif xml.tag == "newTextVector":
                 try:
-                    names = [ele.attrib["name"] for ele in xml]
-                    values = [str(ele.text) for ele in xml]
+                    names = [el.attrib["name"] for el in xml]
+                    values = [str(el.text) for el in xml]
                     self.ISNewText(
                         xml.attrib["device"],
                         xml.attrib["name"], values, names)
@@ -958,12 +798,11 @@ class device(ABC):
                     logging.debug(f"{error}")
                     logging.debug(etree.tostring(xml))
                     raise
-
             elif xml.tag == "newSwitchVector":
                 try:
-                    names = [ele.attrib["name"] for ele in xml]
-                    #values = [ISState.fromstring(ele.text) for ele in xml]
-                    values = [str(ele.text).strip() for ele in xml]
+                    names = [el.attrib["name"] for el in xml]
+                    #values = [ISState.fromstring(el.text) for el in xml]
+                    values = [str(el.text).strip() for el in xml]
                     self.ISNewSwitch(
                         xml.attrib["device"],
                         xml.attrib["name"], values, names)
@@ -997,26 +836,21 @@ class device(ABC):
         while 1:
             await asyncio.sleep(1.0)
 
-    def buildSkeleton(self, skelfile):
+    async def parse_xml_str(self, xml_str):
         """
         Build properties from a skeleton File.. 
         args:
             skelfile: string path to skeleton
             file.
         """
-
-        with open(skelfile) as skfd:
-            xmlstr = skfd.read()
-            xml = etree.fromstring(xmlstr)
-
-        for ivec in xml.getchildren():
-            properties = []
-            for prop in ivec.getchildren():
-                att = prop.attrib
-                att.update({'value': prop.text.strip()})
-                properties.append(att)
-
-            self.IDDef(self.vectorFactory(ivec.tag, ivec.attrib, properties))
+        xml = etree.fromstring(xml_str.decode())
+        properties = []
+        for prop in xml.getchildren():
+            att = prop.attrib
+            att.update({'value': prop.text.strip()})
+            properties.append(att)
+        self.IDDef(self.vectorFactory(xml.tag, xml.attrib, properties))
+        await asyncio.sleep(0)
 
 
     def ISNewNumber(self, dev: str, name: str, values: list, names: list):
@@ -1035,13 +869,13 @@ class device(ABC):
         if device is None:
             device = self._devname
 
-        for p in self.props:
-            if p.name == name and p.device == device:
+        for vector in self.props:
+            if vector.name == name and vector.device == device:
                 if group is not None:
-                    if p.group == group:
-                        return p
+                    if vector.group == group:
+                        return vector
                 else:
-                    return p
+                    return vector
 
         # We could let this return None but not finding a
         # property seems to be a pretty important issue.
@@ -1057,17 +891,12 @@ class device(ABC):
             values -> list of new values
             names -> list of names of the property to be updated
         """
-
         vp = self.IUFind(name=name, device=device)
-
         for nm, val in zip(names, values):
-            self.IDMessage(f"setting {nm} to {val}")
+            self.IDMessage(f"setting property {nm} to {val}")
             vp[nm] = val
-
         if Set:
-            # LEt clients know
             self.IDSet(vp)
-
         return vp
 
     def ISGetProperties(self, device):
@@ -1106,151 +935,54 @@ class device(ABC):
     def IDSet(self, vector: IVectorProperty, msg=None):
         if isinstance(vector, IBLOB) or isinstance(vector, IBLOBVector):
             raise ("Must use IDSetBLOB to send BLOB to client.")
-        self.outq.put_nowait(etree.tostring(vector.Set(msg), pretty_print=True))
+        #self.outq.put_nowait(etree.tostring(vector.Set(msg), pretty_print=True))
         # self.writer.write(etree.tostring(vector.Set(msg), pretty_print=True))
 
     def IDSetBLOB(self, blob):
-        self.outq.put_nowait(etree.tostring(blob.Set()))
+        pass
+        #self.outq.put_nowait(etree.tostring(blob.Set()))
         # self.writer.write(etree.tostring(blob.Set()))
 
     def IDDef(self, prop, msg=None):
-
         # register the property internally
-
-
         if prop.device != self._devname:
-            raise ValueError(f"INDI prop {prop.name} device does not match this device.")
-
-        self.props.append(prop)
+            return
+            #raise ValueError(f"INDI prop {prop.name} device does not match this device.")
+        self.props[prop.name] = prop
         # Send it to the indiserver
-        self.outq.put_nowait((etree.tostring(prop.Def(msg), pretty_print=True)))
-
+        #self.outq.put_nowait((etree.tostring(prop.Def(msg), pretty_print=True)))
         # self.writer.write((etree.tostring(prop.Def(msg), pretty_print=True)))
-
-    @classmethod
-    def repeat(cls, millis: int):
-        """This monstrosity is a decorator
-        for methods that are to be called
-        after the first ISGetProperties is called
-        and then repeated every millis [ms]"""
-
-        def get_function(func: Callable):
-            """"Called during class definition.
-            Nested functions hereafter are called
-            when func is called.
-            """
-            # Register the function with
-            # the class so we know to call
-            # it when in ISGetProperties
-            # is called
-            cls.register(func)
-
-            def get_instance(instance: device):
-                """
-                Set the funct to be called with call_later
-                asyncio procedure.
-
-                Called after ISGetProperties is called
-                in device.run
-                """
-
-                @functools.wraps(func)
-                def call_with_error_handling():
-                    """Call the function but make sure
-                    we have error handling with the traceback"""
-                    try:
-                        func(instance)
-                    except Exception as error:
-                        sys.stderr.write(
-                            f"There was an exception the \
-                            later decorated fxn {func}:")
-                        sys.stderr.write(f"{error}")
-                        sys.stderr.write("See traceback below.")
-                        traceback.print_exc(file=sys.stderr)
-
-                    # do it again in millis
-                    cl = instance.mainloop.call_later(
-                        millis / 1000.0,
-                        call_with_error_handling)
-                    instance.handles.append(cl)
-                    return cl
-
-                cl = instance.mainloop.call_later(
-                    millis / 1000.0,
-                    call_with_error_handling)
-
-                instance.handles.append(cl)
-                return cl
-
-            return get_instance
-
-        return get_function
-
-    @classmethod
-    def register(cls, registrant: Callable):
-        """Register the function """
-        cls._registrants.append(registrant)
 
     @staticmethod
     def vectorFactory(vector_type, attribs, properties):
         """vectorFactory"""
-
         if 'Number' in vector_type:
-            vec = INumberVector([], **attribs)
-
-            for prop in properties:
-                iprop = INumber(**prop)
-                vec.np.append(iprop)
-
+            vec = INumberVector([INumber(**prop) for prop in properties], **attribs)
         elif 'Light' in vector_type:
-
-            vec = ILightVector([], **attribs)
-
-            for prop in properties:
-
-                if 'value' in prop:
-                    prop['state'] = prop['value']
-                    del prop['value']
-
-                iprop = ILight(**prop)
-                vec.lp.append(iprop)
-
+            vec = ILightVector([ILight(**prop) for prop in properties], **attribs)
         elif 'Switch' in vector_type:
-
-            vec = ISwitchVector([], **attribs)
-
-            for prop in properties:
-                if 'value' in prop:
-                    prop['state'] = prop['value']
-                    del prop['value']
-
-                iprop = ISwitch(**prop)
-                vec.sp.append(iprop)
-
+            vec = ISwitchVector([ISwitch(**prop) for prop in properties], **attribs)
         elif 'BLOB' in vector_type:
-            vec = IBLOBVector([], **attribs)
-
-            for prop in properties:
-                if 'value' in prop:
-                    del prop['value']
-
-                iprop = IBLOB(**prop)
-                vec.bp.append(iprop)
-
+            vec = IBLOBVector([IBLOB(**prop) for prop in properties], **attribs)
         elif 'Text' in vector_type:
-            vec = ITextVector([], **attribs)
-
-            for prop in properties:
-                if 'value' in prop:
-                    prop['text'] = prop['value']
-                    del prop['value']
-
-                iprop = IText(**prop)
-                vec.tp.append(iprop)
-
+            vec = ITextVector([IText(**prop) for prop in properties], **attribs)
         else:
             message = f"vector_type argument must be a string containing \
             Light, Number, Switch, Text or BLOB not {vector_type}"
             raise ValueError(message)
-
         return vec
+
+
+    def send_vector(self, vector):
+        """
+        Sends an INDI vector to the INDI server.
+        @param vector:  The INDI vector to be send
+        @type vector: indivector
+        @return: B{None}
+        @rtype: NoneType
+        """
+        if not vector.tag.is_vector():
+            return
+        data = vector.get_xml(inditransfertypes.inew)
+        self.socket.send(data.encode("utf8"))
+        vector._light._set_value("Busy")
