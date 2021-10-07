@@ -4,10 +4,12 @@ import asyncio
 import base64
 import functools
 import logging
+import lxml
 from lxml import etree
 import os
 import time
 import traceback
+import xml.parsers.expat
 
 """
 The Base classes for the pyINDI device. Definitions
@@ -1376,6 +1378,28 @@ class device(ABC):
         # Factory that will turn received xml into proper python objects
         self._factory = _indiobjectfactory()
 
+        # parsing tools
+        self.expat = xml.parsers.expat.ParserCreate()
+        self.expat.StartElementHandler = self._start_element
+        self.expat.EndElementHandler = self._end_element
+        self.expat.CharacterDataHandler = self._char_data
+        self.expat.Parse('<?xml version="1.5" encoding="UTF-8"?> <doc>', 0)
+        self.current_vector = None
+        self.current_element = None
+        self.current_xml_str = ''
+
+        # vector/property handlers
+        self.custom_element_handler_list = []
+        self.custom_vector_handler_list = []
+        self.blob_def_handler = self._default_def_handler
+        self.number_def_handler = self._default_def_handler
+        self.switch_def_handler = self._default_def_handler
+        self.text_def_handler = self._default_def_handler
+        self.blob_def_handler = self._default_def_handler
+        self.light_def_handler = self._default_def_handler
+        self.message_handler = self._default_message_handler
+        self.timeout_handler = self._default_timeout_handler
+
         # Dicitonary of Property vector for the current device, each having multiple properties
         self.property_vectors = {}
         self.config = config
@@ -1406,13 +1430,174 @@ class device(ABC):
     def __repr__(self):
         return f"<{self.name()}>"
 
+    def add_custom_vector_handler(self, handler):
+        """
+        Adds a custom handler function for an L{indivector}, the handler will be called each time the vector is received.
+        Furthermore this method will call the hander once. If the vector has not been received yet, this function will wait
+        until the vector is received before calling the handler function. If the vector does not exist this method will
+        B{not} return.
+        @param handler:  The handler to be called.
+        @type handler: L{indi_custom_vector_handler}
+        @return: The handler given in the parameter L{handler}
+        @rtype: L{indi_custom_vector_handler}
+        """
+        handler.indi = self
+        self.custom_vector_handler_list.append(handler)
+        vector = self.get_vector(handler.devicename, handler.vectorname)
+        handler.configure(vector)
+        handler.indi_object_change_notify(vector)
+        return handler
+
+    def _default_def_handler(self, vector, indi):
+        """
+        Called whenever an indivector was received with an C{def*vector} tag. This
+        means that the INDI driver has called an C{IDDef*} function and thus defined a INDI vector.
+        It will be called only once for each element, even if more than C{def*vector}
+        signals are received. May be replaced by a custom one see L{set_def_handlers}
+        @param vector: The vector received.
+        @type vector: L{indivector}
+        @param indi : The L{indiclient} instance that received the L{indivector} from the server
+        @type indi : L{indiclient}
+        @return: B{None}
+        @rtype: NoneType
+        """
+        pass
+
+    def _default_timeout_handler(self, devicename, vectorname, indi):
+        """
+        Called whenever an indielement has been requested but was not received for a time longer than
+        C{timeout} since the request was issued. May be replaced by a custom handler see L{set_timeout_handler}
+        @param devicename:  The name of the device
+        @type devicename: StringType
+        @param vectorname: The name of the Indivector
+        @type vectorname: StringType
+        @param indi : This parameter will be equal to self. It still make sense as external timeout handlers might need it.
+        @type indi : indiclient
+        @return: B{None}
+        @rtype: NoneType
+        """
+        logging.warning(f"Timeout: {devicename} {vectorname}")
+
+
+    def _vector_received(self, vector):
+        """ Called during the L{process_events} method each time an indivector element has been received
+        @param vector: The vector that has been received
+        @type vector: indivector
+        @return: B{None}
+        @rtype: NoneType
+        """
+        for handler in self.custom_vector_handler_list:
+            if ((handler.vectorname == vector.name) and (handler.devicename == vector.device)):
+                handler.indi_object_change_notify(vector)
+
     def process_vector(self, vector):
         """
         """
         try:
-            self.property_vectors[vector.name].updateByVector(vector)
-        except KeyError:
-            self.property_vectors[vector.name] = vector
+            if not vector.tag.is_message():
+                vector = self.get_vector(vector.device, vector.name)
+            if vector.is_valid:
+                if vector.tag.is_message():
+                    # vector is in fact an indimessage (historical reasons, marked for change)
+                    self.message_handler(vector, self)
+                if vector.tag.is_vector():
+                    self._vector_received(vector)
+                    for element in vector.elements:
+                        self._element_received(vector, element)
+                if vector.tag.get_transfertype() == inditransfertypes.idef:
+                    for vec in self.defvectorlist:
+                        if (vec.name == vector.name) and (
+                                vec.device == vector.device):
+                            return
+                    if vector.tag.get_type() == "BLOBVector":
+                        self.blob_def_handler(vector, self)
+                    if vector.tag.get_type() == "TextVector":
+                        self.text_def_handler(vector, self)
+                    if vector.tag.get_type() == "NumberVector":
+                        self.number_def_handler(vector, self)
+                    if vector.tag.get_type() == "SwitchVector":
+                        self.switch_def_handler(vector, self)
+                    if vector.tag.get_type() == "LightVector":
+                        self.light_def_handler(vector, self)
+                    try:
+                        self.property_vectors[vector.name].updateByVector(
+                            vector)
+                    except KeyError:
+                        self.property_vectors[vector.name] = vector
+            else:
+                logging.warning("Received bogus INDIVector")
+                try:
+                    vector.tell()
+                    raise Exception
+                    vector.tell()
+                except Exception as e:
+                    logging.error(f"Error logging bogus INDIVector: {e}")
+                    raise Exception
+        except Exception as e:
+            raise RuntimeError(f"Error while trying to process vector from indiserver")
+        
+    def _char_data(self, data):
+        """Char data handler for expat parser. For details (see
+        U{http://www.python.org/doc/current/lib/expat-example.html})
+        @param data: The data contained in the INDI element
+        @type data: StringType
+        @return: B{None}
+        @rtype: NoneType
+        """
+        if self.current_element is None:
+            return None
+        if self.current_vector is None:
+            return None
+        self.current_xml_str += data
+
+    def _end_element(self, name):
+        """End of XML element handler for expat parser. For details (see
+        U{http://www.python.org/doc/current/lib/expat-example.html})
+        @param name : The name of the XML object
+        @type name : StringType
+        @return: B{None}
+        @rtype: NoneType
+        """
+        if self.current_vector is None:
+            return None
+        self.current_vector.host = self.host
+        self.current_vector.port = self.port
+        if self.current_element is not None:
+            if self.current_element.tag.get_initial_tag() == name:
+                string_currentData = "".join(self.current_xml_str).replace('\\n', '').strip()
+                self.current_element._set_value(string_currentData)
+                self.current_vector.elements.append(self.current_element)
+                self.current_element = None
+                self.current_xml_str = None
+        if self.current_vector.tag.get_initial_tag() == name:
+            self.process_vector(self.current_vector)
+            self.current_vector = None
+
+    def _start_element(self, name, attrs):
+        """
+        Start XML element handler for expat parser. For details (see
+        U{http://www.python.org/doc/current/lib/expat-example.html})
+        @param name : The name of the XML object
+        @type name : StringType
+        @param attrs : The attributes of the XML object
+        @type attrs : DictType
+        @return: B{None}
+        @rtype: NoneType
+        """
+        obj = self._factory.create(name, attrs)
+        if obj is None:
+            return
+        if 'message' in attrs:
+            logging.warning(
+                f"Legacy type of message received from indi: {name, attrs}")
+        if obj.tag.is_vector():
+            if obj.tag.get_transfertype() in (inditransfertypes.idef, inditransfertypes.iset):
+                self.current_vector = obj
+        if self.current_vector is not None:
+            if obj.tag.is_element():
+                if self.current_vector.tag.get_transfertype() in (inditransfertypes.idef, inditransfertypes.iset):
+                    self.current_element = obj
+        self.current_xml_str = []
 
     async def parse_xml_str(self, xml_str):
         """
@@ -1421,25 +1606,35 @@ class device(ABC):
             skelfile: string path to skeleton
             file.
         """
-        xml = etree.fromstring(xml_str.decode())
-        vector = self._factory.create(xml.tag, xml.attrib)
-        if vector is None:
-            return
-        if 'message' in xml.attrib:
-            logging.warning(f"Legacy type of message received from indi: {xml_str.decode()}")
-        if vector.tag.is_vector():
-            if vector.tag.get_transfertype() in (inditransfertypes.idef, inditransfertypes.iset):
-                self.process_vector(vector)
-        # if self.currentVector is not None:
-        #     if obj.tag.is_element():
-        #         if self.currentVector.tag.get_transfertype() in (inditransfertypes.idef, inditransfertypes.iset):
-        #             self.currentElement = obj
-        # properties = []
-        # for prop in xml.getchildren():
-        #     att = prop.attrib
-        #     att.update({'value': prop.text.strip()})
-        #     properties.append(att)
-        # self.process_vector(xml.tag, xml.attrib, properties)
+        self.expat.Parse(xml_str.decode(), 0)
+        # self.current_xml_str += xml_str.decode()
+        # try:
+        #     xml = etree.fromstring(self.current_xml_str)
+        # except lxml.etree.XMLSyntaxError as e:
+        #     logging.error(f"Current xml is {self.current_xml_str}")
+        #     return #string has not been fully received
+        # # reset current xml
+        # self.current_xml_str = ''
+        # vector = self._factory.create(xml.tag, xml.attrib)
+        # if vector is None:
+        #     return
+        # if 'message' in xml.attrib:
+        #     logging.warning(f"Legacy type of message received from indi: {xml_str.decode()}")
+        # if vector.tag.is_vector():
+        #     if vector.device != self.device_name:
+        #         return
+        #     if vector.tag.get_transfertype() in (inditransfertypes.idef, inditransfertypes.iset):
+        #         self.process_vector(vector)
+        # # if self.current_vector is not None:
+        # #     if obj.tag.is_element():
+        # #         if self.current_vector.tag.get_transfertype() in (inditransfertypes.idef, inditransfertypes.iset):
+        # #             self.current_element = obj
+        # # properties = []
+        # # for prop in xml.getchildren():
+        # #     att = prop.attrib
+        # #     att.update({'value': prop.text.strip()})
+        # #     properties.append(att)
+        # # self.process_vector(xml.tag, xml.attrib, properties)
         await asyncio.sleep(0)
 
     def send_vector(self, vector):

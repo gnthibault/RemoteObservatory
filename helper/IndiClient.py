@@ -141,16 +141,19 @@ class IndiClient(SingletonIndiClientHolder, INDIClient, Base):
                 self.logger.error(f"Error while trying to connect client: {exc!r}")
                 raise RuntimeError
 
+    def trigger_get_properties(self):
+        self.xml_to_indiserver("<getProperties version='1.7'/>")
+
     def xml_to_indiserver(self, xml):
         """
         put the xml argument in the
         to_indiQ.
         """
-        asyncio.run_coroutine_threadsafe(self.to_indiQ.put(xml.encode()), self.ioloop)
+        asyncio.run_coroutine_threadsafe(self.to_indiQ.put(xml), self.ioloop)
         #self.ioloop.call_soon_threadsafe(self.to_indiQ.put_nowait, xml.encode())
 
     async def xml_from_indiserver(self, data):
-        self.logger.debug(f"IndiClient just received data {data}")
+        self.logger.error(f"IndiClient just received data {data}")
         for sub in self.device_subscriptions:
             asyncio.run_coroutine_threadsafe(sub(data), self.ioloop)
 

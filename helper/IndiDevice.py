@@ -118,7 +118,9 @@ class IndiDevice(Base, device):
     # def _setup_device(self):
         self.logger.debug(f"IndiDevice: asking indi_client to look for device "
             f"{self.device_name}")
-        self.indi_client.device_subscriptions.append(self.parse_xml_str)
+        self.indi_client.ioloop.call_soon_threadsafe(
+            lambda x: self.indi_client.device_subscriptions.append(x),
+            self.parse_xml_str)
         #self.indi_client.register_device
     #     if self.device is None:
     #         started = time.time()
@@ -202,6 +204,10 @@ class IndiDevice(Base, device):
         # # setup available list of interfaces
         # self._setup_interfaces()
         #self.start()
+
+        # First thing to do is to force the server to re-send all informations
+        # related to devices, so that we can populate the current device pv
+        self.indi_client.trigger_get_properties()
         # set the corresponding switch to on
         self.set_switch('CONNECTION', ['CONNECT'])
 

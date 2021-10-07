@@ -63,7 +63,7 @@ class INDIClient:
                 self.reader, self.writer = await asyncio.wait_for(task, timeout=timeout)
                 logging.debug(f"Connected to indiserver {self.host}:{self.port}")
                 # Send first "Introductory message" in non blocking fashion
-                self.xml_to_indiserver("<getProperties version='1.7'/>")
+                await self.to_indiQ.put("<getProperties version='1.7'/>")
                 # Now run main two asynchronous task: consume send queue, and receive
                 self.running = True
                 # self.task = asyncio.gather(
@@ -71,7 +71,7 @@ class INDIClient:
                 #     self.read_from_indiserver())
                 # await self.task
                 task_write = asyncio.create_task(self.write_to_indiserver(timeout=timeout))
-                task_read = asyncio.create_task(self.read_from_indiserver())
+                task_read = asyncio.create_task(self.read_from_indiserver(timeout=timeout))
                 await asyncio.wait([task_read, task_write], return_when=asyncio.FIRST_COMPLETED)
 
                 logging.debug("INDI client tasks finished. indiserver crash?")
@@ -89,7 +89,7 @@ class INDIClient:
     async def xml_from_indiserver(self, data):
         raise NotImplemented("This method should be implemented by the subclass")
 
-    async def read_from_indiserver(self):
+    async def read_from_indiserver(self, timeout):
         """Read data from self.reader and then call
         xml_from_indiserver with this data as an arg."""
         while self.running:
@@ -97,7 +97,8 @@ class INDIClient:
                 if self.reader.at_eof():
                     raise Exception("INDI server closed")
                 # Read data from indiserver with a timeout, so that we don't block loop
-                data = await asyncio.wait_for(self.reader.read(self.read_width), timeout=0.1)
+                data = await asyncio.wait_for(self.reader.read(self.read_width),
+                                              timeout=timeout)
             except asyncio.TimeoutError:
                 continue
             except Exception as err:
@@ -122,7 +123,7 @@ class INDIClient:
             # except asyncio.TimeoutError:
             #     continue
             except asyncio.queues.QueueEmpty:
-                await asyncio.sleep(0)
+                await asyncio.sleep(0.1)
                 continue
             try:
                 logging.debug(f"Writing this to indi {to_indi}")
