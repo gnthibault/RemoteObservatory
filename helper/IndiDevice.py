@@ -269,15 +269,11 @@ class IndiDevice(Base, device):
 
     def set_switch(self, name, on_switches=[], off_switches=[],
                    sync=True, timeout=None):
-        # from helper.device import ISwitchVector
-        # sv = ISwitchVector()
-        # self.IDSetSwitch()
+
+        for on_switch in on_switches:
+            self.set_and_send_switchvector_by_elementlabel(name, on_switch)
         # self.indi_client.xml_to_indiserver(xml)
-        import time
-        i=0
-        while i<3600:
-            time.sleep(1)
-            i+=1
+
 
         # pv = self.get_prop(name, 'switch')
         # is_exclusive = pv.getRule() == PyIndi.ISR_ATMOST1 or pv.getRule() == PyIndi.ISR_1OFMANY

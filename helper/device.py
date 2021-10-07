@@ -9,6 +9,7 @@ from lxml import etree
 import os
 import time
 import traceback
+import threading
 import xml.parsers.expat
 
 """
@@ -1211,18 +1212,18 @@ class indiswitchvector(indivector):
         for element in self.elements:
             element.tell()
 
-    def set_by_elementlabel(self, elementlabel):
+    def set_by_element_name(self, on_switches=[], off_switches=[]):
         """
-        Sets all L{indiswitch} elements of this vector to C{Off}. And sets the one who's label property matches L{elementlabel}
+        Sets all L{indiswitch} elements of this vector to C{Off}. And sets the one who's label property matches L{element_name}
         to C{On} . If no matching one is found or at least two matching ones are found, nothing is done.
-        @param elementlabel: The INDI Label of the Switch to be set to C{On}
-        @type elementlabel: StringType
+        @param element_name: The INDI Label of the Switch to be set to C{On}
+        @type element_name: StringType
         @return: B{None}
         @rtype: NoneType
         """
         found = False
         for element in self.elements:
-            if element.label == elementlabel:
+            if element.name == element_name:
                 if found:
                     return
                 found = True
@@ -1230,7 +1231,7 @@ class indiswitchvector(indivector):
             return
         for element in self.elements:
             element.set_active(False)
-            if element.label == elementlabel:
+            if element.name == element_name:
                 element.set_active(True)
 
     def set_by_elementname(self, elementname):
@@ -1386,7 +1387,7 @@ class device(ABC):
         self.expat.Parse('<?xml version="1.5" encoding="UTF-8"?> <doc>', 0)
         self.current_vector = None
         self.current_element = None
-        self.current_xml_str = ''
+        self.current_xml_str = []
 
         # vector/property handlers
         self.custom_element_handler_list = []
@@ -1402,16 +1403,9 @@ class device(ABC):
 
         # Dicitonary of Property vector for the current device, each having multiple properties
         self.property_vectors = {}
+        self.property_vectors_lock = threading.Lock()
         self.config = config
         self.timer_queue = asyncio.Queue()
-
-        # Various handlers, as in the initial client
-        self.blob_def_handler = None
-        self.number_def_handler = None
-        self.switch_def_handler = None
-        self.text_def_handler = None
-        self.blob_def_handler = None
-        self.light_def_handler = None
 
     def __getitem__(self, name: str):
         """
@@ -1448,6 +1442,21 @@ class device(ABC):
         handler.indi_object_change_notify(vector)
         return handler
 
+    def _default_message_handler(self, message, indi):
+        """
+        Called whenever an INDI message has been received from the server.
+        C{timeout} since the request was issued. May be replaced by a custom one see L{set_message_handler}
+        @param message: The indimessage received
+        @type message: L{indimessage}
+        @param indi : This parameter will be equal to self. It still make sense as external timeout handlers might need it.
+        @type indi : L{indiclient}
+        @return: B{None}
+        @rtype: NoneType
+        """
+        logging.info(f"Got message by host: {indi.host} :")
+        message.tell()
+
+
     def _default_def_handler(self, vector, indi):
         """
         Called whenever an indivector was received with an C{def*vector} tag. This
@@ -1478,6 +1487,19 @@ class device(ABC):
         """
         logging.warning(f"Timeout: {devicename} {vectorname}")
 
+    def _element_received(self, vector, element):
+        """ Called during the L{process_events} method each time an INDI element has been received
+        @param vector: The vector containing the element that has been received
+        @type vector: indivector
+        @param element:  The element that has been received
+        @type element: indielement
+        @return: B{None}
+        @rtype: NoneType
+        """
+        for handler in self.custom_element_handler_list:
+            if ((handler.vectorname == vector.name) and (handler.elementname == element.name) and
+                    (handler.devicename == vector.device)):
+                handler.indi_object_change_notify(vector, element)
 
     def _vector_received(self, vector):
         """ Called during the L{process_events} method each time an indivector element has been received
@@ -1494,9 +1516,9 @@ class device(ABC):
         """
         """
         try:
-            if not vector.tag.is_message():
-                vector = self.get_vector(vector.device, vector.name)
             if vector.is_valid:
+                if vector.device!=self.device_name:
+                    return
                 if vector.tag.is_message():
                     # vector is in fact an indimessage (historical reasons, marked for change)
                     self.message_handler(vector, self)
@@ -1505,10 +1527,14 @@ class device(ABC):
                     for element in vector.elements:
                         self._element_received(vector, element)
                 if vector.tag.get_transfertype() == inditransfertypes.idef:
-                    for vec in self.defvectorlist:
-                        if (vec.name == vector.name) and (
-                                vec.device == vector.device):
-                            return
+                    # In that case, we are not supposed to know the vector !
+                    # TODO TN not clear, I would rather force replacing vector
+                    with self.property_vectors_lock:
+                        for vec_name, vec in self.property_vectors.items():
+                            if (vec.name == vector.name) and (
+                                    vec.device == vector.device):
+                                #self.property_vectors[vec_name] = vector
+                                return
                     if vector.tag.get_type() == "BLOBVector":
                         self.blob_def_handler(vector, self)
                     if vector.tag.get_type() == "TextVector":
@@ -1520,10 +1546,12 @@ class device(ABC):
                     if vector.tag.get_type() == "LightVector":
                         self.light_def_handler(vector, self)
                     try:
-                        self.property_vectors[vector.name].updateByVector(
-                            vector)
+                        with self.property_vectors_lock:
+                            self.property_vectors[vector.name].updateByVector(
+                                vector)
                     except KeyError:
-                        self.property_vectors[vector.name] = vector
+                        with self.property_vectors_lock:
+                            self.property_vectors[vector.name] = vector
             else:
                 logging.warning("Received bogus INDIVector")
                 try:
@@ -1534,8 +1562,8 @@ class device(ABC):
                     logging.error(f"Error logging bogus INDIVector: {e}")
                     raise Exception
         except Exception as e:
-            raise RuntimeError(f"Error while trying to process vector from indiserver")
-        
+            raise RuntimeError(f"Error while trying to process vector from indiserver: {e}")
+
     def _char_data(self, data):
         """Char data handler for expat parser. For details (see
         U{http://www.python.org/doc/current/lib/expat-example.html})
@@ -1560,8 +1588,8 @@ class device(ABC):
         """
         if self.current_vector is None:
             return None
-        self.current_vector.host = self.host
-        self.current_vector.port = self.port
+        self.current_vector.host = self.indi_client.host
+        self.current_vector.port = self.indi_client.port
         if self.current_element is not None:
             if self.current_element.tag.get_initial_tag() == name:
                 string_currentData = "".join(self.current_xml_str).replace('\\n', '').strip()
@@ -1606,7 +1634,9 @@ class device(ABC):
             skelfile: string path to skeleton
             file.
         """
-        self.expat.Parse(xml_str.decode(), 0)
+        if len(xml_str)>0:
+            self.expat.Parse(xml_str, 0)
+        await asyncio.sleep(0)
         # self.current_xml_str += xml_str.decode()
         # try:
         #     xml = etree.fromstring(self.current_xml_str)
@@ -1653,7 +1683,8 @@ class device(ABC):
 
     def _get_vector(self, vectorname):
         try:
-            return self.property_vectors[vectorname]
+            with self.property_vectors_lock:
+                return self.property_vectors[vectorname]
         except KeyError:
             return None
 
@@ -1672,7 +1703,8 @@ class device(ABC):
         started = time.time()
         if timeout is None:
             timeout = self.timeout
-        while True:
+        vector = None
+        while vector is None:
             vector = self._get_vector(vectorname)
             if 0 < timeout < time.time() - started:
                 self.logger.debug(f"device: Timeout while waiting for "
@@ -1762,22 +1794,22 @@ class device(ABC):
             self.send_vector(vector)
         return vector
 
-    def set_and_send_switchvector_by_elementlabel(self, vectorname, elementlabel):
+    def set_and_send_switchvector_by_element_name(self, vectorname, element_name):
         """
-        Sets all L{indiswitch} elements in this vector to C{Off}. And sets the one matching the given L{elementlabel}
+        Sets all L{indiswitch} elements in this vector to C{Off}. And sets the one matching the given L{element_name}
         to C{On}
         @param devicename:  The name of the device
         @type devicename: StringType
         @param vectorname:  The name of the vector
         @type vectorname: StringType
-        @param elementlabel: The INDI Label of the Switch to be set to C{On}
-        @type elementlabel: StringType
+        @param element_name: The INDI Label of the Switch to be set to C{On}
+        @type element_name: StringType
         @return: The vector that that was just sent.
         @rtype: L{indivector}
         """
         vector = self.get_vector(vectorname)
         if vector is not None:
-            vector.set_by_elementlabel(elementlabel)
+            vector.set_by_element_name(element_name)
             self.send_vector(vector)
         return vector
 
