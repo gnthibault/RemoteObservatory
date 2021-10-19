@@ -1071,6 +1071,9 @@ class indivector(indinamedobject):
                 changed = True
         return changed
 
+    def to_dict(self):
+        return {e.name: e._value for e in self.elements}
+
     def tell(self):
         """"
         Logs the most important parameters of the vector and its elements.
@@ -1735,7 +1738,7 @@ class device(ABC):
         @rtype: NoneType
         """
         if not vector.tag.is_vector():
-            return
+            raise RuntimeError(f"Attempt to set vector with wrong tag: {vector.tag}")
         data = vector.get_xml(inditransfertypes.inew)
         self.indi_client.xml_to_indiserver(data)
         vector._light._set_value("Busy")
@@ -1744,6 +1747,13 @@ class device(ABC):
         try:
             with self.property_vectors_lock:
                 return self.property_vectors[vectorname]
+        except KeyError:
+            return None
+
+    def _get_vector_dict(self, vectorname):
+        try:
+            with self.property_vectors_lock:
+                return self.property_vectors[vectorname].to_dict()
         except KeyError:
             return None
 
@@ -1773,6 +1783,33 @@ class device(ABC):
                                    f"{vectorname}")
             time.sleep(0.01)
         return vector
+
+    def get_vector_dict(self, vectorname, timeout=None):
+        """
+        Returns an L{indivector} matching the given L{devicename} and L{vectorname}
+        This method will wait until it has been received. In case the vector doesn't exists this
+        routine will never return.
+        @param devicename:  The name of the device
+        @type devicename: StringType
+        @param vectorname:  The name of the vector
+        @type vectorname: StringType
+        @return: The L{indivector} found
+        @rtype: L{indivector}
+        """
+        started = time.time()
+        if timeout is None:
+            timeout = self.timeout
+        vector_dict = None
+        while vector_dict is None:
+            vector_dict = self._get_vector_dict(vectorname)
+            if 0 < timeout < time.time() - started:
+                self.logger.debug(f"device: Timeout while waiting for "
+                                  f"property status {vectorname} for device "
+                                  f"{self.device_name}")
+                raise RuntimeError(f"Timeout error while waiting for property "
+                                   f"{vectorname}")
+            time.sleep(0.01)
+        return vector_dict
 
     def get_element(self, vectorname, elementname):
         """

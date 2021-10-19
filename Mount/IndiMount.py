@@ -216,11 +216,10 @@ class IndiMount(IndiDevice):
         ''' GEM Pier Side
             PIER_EAST Mount on the East side of pier (Pointing West).
             PIER_WEST Mount on the West side of pier (Pointing East).
-            WARNING: does not work with simulator
         '''
         pier_side = self.get_switch('TELESCOPE_PIER_SIDE')
         self.logger.debug(f"Got mount pier side: {pier_side}")
-        return ret
+        return pier_side
 
     def get_track_mode(self):
         ''' Track mode switch looks like this
@@ -262,10 +261,9 @@ class IndiMount(IndiDevice):
 
     @property
     def is_parked(self):
-        ret = None
         status = self.get_switch('TELESCOPE_PARK')
         self.logger.debug('Got TELESCOPE_PARK status: {}'.format(status))
-        if status['PARK']['value']:
+        if status['PARK'] == 'On':
             ret = True
         else:
             ret = False

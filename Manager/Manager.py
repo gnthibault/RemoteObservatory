@@ -342,7 +342,7 @@ class Manager(Base):
 
     def slew(self):
         """Slew to current target"""
-        self.mount.set_slew_rate()
+        self.mount.set_slew_rate("3x")
         self.mount.slew_to_target()
 
 

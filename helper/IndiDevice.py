@@ -235,7 +235,7 @@ class IndiDevice(Base, device):
                         self.get_prop(ctl_name, ctl_type)))
 
     def get_switch(self, name, ctl=None):
-        return self.indi_client.get_vector(self.device_name, name)
+        return self.get_vector_dict(name)
 
     def get_text(self, name, ctl=None):
         return self.get_prop_dict(name, 'text',
