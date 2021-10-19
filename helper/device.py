@@ -1212,10 +1212,46 @@ class indiswitchvector(indivector):
         for element in self.elements:
             element.tell()
 
-    def set_by_element_name(self, on_switches=[], off_switches=[]):
+    def set_by_element_name(self, element_name, is_active):
+        if self.rule == "OneOfMany":
+            assert(is_active)
+            self.set_one_of_many_by_element_name(element_name)
+        else:
+            self.set_single_element_by_name(element_name, is_active)
+
+    def set_by_element_label(self, element_label, is_active):
+        if self.rule == "OneOfMany":
+            assert(is_active)
+            self.set_one_of_many_by_element_label(element_label)
+        else:
+            self.set_single_element_by_label(element_label, is_active)
+
+
+
+    def set_single_element_by_name(self, element_name, is_active=True):
         """
-        Sets all L{indiswitch} elements of this vector to C{Off}. And sets the one who's label property matches L{element_name}
-        to C{On} . If no matching one is found or at least two matching ones are found, nothing is done.
+        Sets a single L{indiswitch} elements of this vector to desired value.
+        If no matching one is found, an error is thrown
+        @param element_name: The INDI name of the Switch to be set to C{On}
+        @type element_name: StringType
+        @return: B{None}
+        @rtype: NoneType
+        """
+        found = False
+        for element in self.elements:
+            if element.name == element_name:
+                if found:
+                    raise RuntimeError(
+                        f"Element with name {element_name} is present more than once")
+                element.set_active(is_active)
+                found = True
+        if not found:
+            raise RuntimeError(f"There is no element with name {element_name} in indiswitch")
+
+    def set_one_of_many_by_element_name(self, element_name):
+        """
+        Sets all L{indiswitch} elements of this vector to C{Off}. And sets the one who's name property matches L{element_name}
+        to C{On} . If no matching one is found, an error is thrown
         @param element_name: The INDI Label of the Switch to be set to C{On}
         @type element_name: StringType
         @return: B{None}
@@ -1225,35 +1261,58 @@ class indiswitchvector(indivector):
         for element in self.elements:
             if element.name == element_name:
                 if found:
-                    return
+                    raise RuntimeError(
+                        f"Element with name {element_name} is present more than once")
                 found = True
         if not found:
-            return
+            raise RuntimeError(f"Cannot set indiswitch element by name {element_name}")
         for element in self.elements:
             element.set_active(False)
             if element.name == element_name:
                 element.set_active(True)
 
-    def set_by_elementname(self, elementname):
+    def set_single_element_by_label(self, element_label, is_active=True):
         """
-        Sets all L{indiswitch} elements of this vector to C{Off}. And sets the one who's label property matches L{elementname}
-        to C{On}. If no matching one is found or at least two matching ones are found, nothing is done.
-        @param elementname: The INDI Name of the Switch to be set to C{On}
-        @type elementname: StringType
+        Sets a single L{indiswitch} elements of this vector to desired value.
+        If no matching one is found, an error is thrown
+        @param element_name: The INDI name of the Switch to be set to C{On}
+        @type element_name: StringType
         @return: B{None}
         @rtype: NoneType
         """
         found = False
         for element in self.elements:
-            if element.name == elementname:
+            if element.label == element_label:
                 if found:
-                    return
+                    raise RuntimeError(
+                        f"Element with label {element_label} is present more than once")
+                element.set_active(is_active)
                 found = True
         if not found:
-            return
+            raise RuntimeError(f"There is no element with label {element_label} in indiswitch")
+
+
+    def set_one_of_many_by_element_label(self, element_label):
+        """
+        Sets all L{indiswitch} elements of this vector to C{Off}. And sets the one who's label property matches L{element_name}
+        to C{On} . If no matching one is found, an error is thrown
+        @param element_name: The INDI Label of the Switch to be set to C{On}
+        @type element_name: StringType
+        @return: B{None}
+        @rtype: NoneType
+        """
+        found = False
+        for element in self.elements:
+            if element.label == element_label:
+                if found:
+                    raise RuntimeError(
+                        f"Element with label {element_label} is present more than once")
+                found = True
+        if not found:
+            raise RuntimeError(f"Cannot set indiswitch element by label {element_label}")
         for element in self.elements:
             element.set_active(False)
-            if element.name == elementname:
+            if element.label == element_label:
                 element.set_active(True)
 
     def get_active_element(self):
@@ -1794,7 +1853,7 @@ class device(ABC):
             self.send_vector(vector)
         return vector
 
-    def set_and_send_switchvector_by_element_name(self, vectorname, element_name):
+    def set_and_send_switchvector_by_element_name(self, vectorname, element_name, is_active=True):
         """
         Sets all L{indiswitch} elements in this vector to C{Off}. And sets the one matching the given L{element_name}
         to C{On}
@@ -1809,8 +1868,10 @@ class device(ABC):
         """
         vector = self.get_vector(vectorname)
         if vector is not None:
-            vector.set_by_element_name(element_name)
+            vector.set_by_element_name(element_name, is_active)
             self.send_vector(vector)
+        else:
+            raise RuntimeError(f"Indi switchvector {vectorname} does not exist")
         return vector
 
     def get_float(self, vectorname, elementname):

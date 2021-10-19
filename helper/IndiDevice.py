@@ -271,7 +271,9 @@ class IndiDevice(Base, device):
                    sync=True, timeout=None):
 
         for on_switch in on_switches:
-            self.set_and_send_switchvector_by_elementlabel(name, on_switch)
+            self.set_and_send_switchvector_by_element_name(name, on_switch, True)
+        for on_switch in off_switches:
+            self.set_and_send_switchvector_by_element_name(name, on_switch, False)
         # self.indi_client.xml_to_indiserver(xml)
 
 
