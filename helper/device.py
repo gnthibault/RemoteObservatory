@@ -2,10 +2,9 @@
 from abc import ABC
 import asyncio
 import base64
+import copy
 import functools
 import logging
-import lxml
-from lxml import etree
 import os
 import time
 import traceback
@@ -1432,7 +1431,6 @@ class device(ABC):
     def __init__(self, name, config=None):
         """
         Arguments:
-        loop: the asyncio event loop
         config: the configurable info from ConfigParser
         name: Name of the device defaulting to name of the class
         """
@@ -1579,7 +1577,7 @@ class device(ABC):
         """
         try:
             if vector.is_valid:
-                if vector.device!=self.device_name:
+                if vector.device != self.device_name:
                     return
                 if vector.tag.is_message():
                     # vector is in fact an indimessage (historical reasons, marked for change)
@@ -1588,15 +1586,16 @@ class device(ABC):
                     self._vector_received(vector)
                     for element in vector.elements:
                         self._element_received(vector, element)
-                if vector.tag.get_transfertype() == inditransfertypes.idef:
+                if vector.tag.get_transfertype() in [inditransfertypes.idef, inditransfertypes.iset]:
                     # In that case, we are not supposed to know the vector !
                     # TODO TN not clear, I would rather force replacing vector
-                    with self.property_vectors_lock:
-                        for vec_name, vec in self.property_vectors.items():
-                            if (vec.name == vector.name) and (
-                                    vec.device == vector.device):
-                                #self.property_vectors[vec_name] = vector
-                                return
+                    # with self.property_vectors_lock:
+                    #     for vec_name, vec in self.property_vectors.items():
+                    #         if (vec.name == vector.name) and (
+                    #                 vec.device == vector.device):
+                    #             self.property_vectors[vector.name] = vector
+                    #             self.property_vectors[vector.name].updateByVector(vector)
+                    #             return
                     if vector.tag.get_type() == "BLOBVector":
                         self.blob_def_handler(vector, self)
                     if vector.tag.get_type() == "TextVector":
@@ -1607,10 +1606,10 @@ class device(ABC):
                         self.switch_def_handler(vector, self)
                     if vector.tag.get_type() == "LightVector":
                         self.light_def_handler(vector, self)
+                    # Now update or create the local vector "storage"
                     try:
                         with self.property_vectors_lock:
-                            self.property_vectors[vector.name].updateByVector(
-                                vector)
+                            self.property_vectors[vector.name].updateByVector(vector)
                     except KeyError:
                         with self.property_vectors_lock:
                             self.property_vectors[vector.name] = vector
@@ -1619,7 +1618,6 @@ class device(ABC):
                 try:
                     vector.tell()
                     raise Exception
-                    vector.tell()
                 except Exception as e:
                     logging.error(f"Error logging bogus INDIVector: {e}")
                     raise Exception
@@ -1696,37 +1694,9 @@ class device(ABC):
             skelfile: string path to skeleton
             file.
         """
-        if len(xml_str)>0:
+        if len(xml_str) > 0:
+            logging.debug(f"Device {self.device_name} just received following str {xml_str}")
             self.expat.Parse(xml_str, 0)
-        await asyncio.sleep(0)
-        # self.current_xml_str += xml_str.decode()
-        # try:
-        #     xml = etree.fromstring(self.current_xml_str)
-        # except lxml.etree.XMLSyntaxError as e:
-        #     logging.error(f"Current xml is {self.current_xml_str}")
-        #     return #string has not been fully received
-        # # reset current xml
-        # self.current_xml_str = ''
-        # vector = self._factory.create(xml.tag, xml.attrib)
-        # if vector is None:
-        #     return
-        # if 'message' in xml.attrib:
-        #     logging.warning(f"Legacy type of message received from indi: {xml_str.decode()}")
-        # if vector.tag.is_vector():
-        #     if vector.device != self.device_name:
-        #         return
-        #     if vector.tag.get_transfertype() in (inditransfertypes.idef, inditransfertypes.iset):
-        #         self.process_vector(vector)
-        # # if self.current_vector is not None:
-        # #     if obj.tag.is_element():
-        # #         if self.current_vector.tag.get_transfertype() in (inditransfertypes.idef, inditransfertypes.iset):
-        # #             self.current_element = obj
-        # # properties = []
-        # # for prop in xml.getchildren():
-        # #     att = prop.attrib
-        # #     att.update({'value': prop.text.strip()})
-        # #     properties.append(att)
-        # # self.process_vector(xml.tag, xml.attrib, properties)
         await asyncio.sleep(0)
 
     def send_vector(self, vector):
@@ -1739,14 +1709,26 @@ class device(ABC):
         """
         if not vector.tag.is_vector():
             raise RuntimeError(f"Attempt to set vector with wrong tag: {vector.tag}")
+        # Now update or create the local vector "storage"
+        # Notice that timestamp is not modified, ie, we can still check for the date of latest server update
+        # CHECK TIMESTAMP PLEASE
+        vector._light._set_value("Busy")
+        try:
+            with self.property_vectors_lock:
+                self.property_vectors[vector.name].updateByVector(
+                    vector)
+        except KeyError:
+            with self.property_vectors_lock:
+                self.property_vectors[vector.name] = vector
         data = vector.get_xml(inditransfertypes.inew)
         self.indi_client.xml_to_indiserver(data)
-        vector._light._set_value("Busy")
+        #with self.property_vectors_lock:
+        #    vector._light._set_value("Busy")
 
     def _get_vector(self, vectorname):
         try:
             with self.property_vectors_lock:
-                return self.property_vectors[vectorname]
+                return copy.deepcopy(self.property_vectors[vectorname])
         except KeyError:
             return None
 
@@ -1754,6 +1736,16 @@ class device(ABC):
         try:
             with self.property_vectors_lock:
                 return self.property_vectors[vectorname].to_dict()
+        except KeyError:
+            return None
+
+    def check_vector_light(self, vector_name):
+        """
+        """
+        try:
+            with self.property_vectors_lock:
+                return (self.property_vectors[vector_name]._light.is_ok() or
+                        self.property_vectors[vector_name]._light.is_idle())
         except KeyError:
             return None
 

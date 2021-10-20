@@ -1,5 +1,6 @@
 # Basic stuff
 import logging
+import random
 import sys
 
 # Local stuff
@@ -35,23 +36,28 @@ if __name__ == '__main__':
 
     # Unpark if you want something useful to actually happen
     mount.unpark()
+    print(f"Status of the mount for parking is {mount.is_parked}")
 
     # Do a slew and track
     #JNow: 15h 20m 40s  71° 46' 13"
     #J2000:  15h 20m 43s  71° 50' 02"
     #AzAlt:   332° 12' 25"  61° 48' 28"
-    c = SkyCoord(ra=15.333*u.hour,
-                 dec=71.75*u.degree, frame='icrs')
+    ra = random.randint(0, 12)
+    dec = random.randint(-90, 90)
+    c = SkyCoord(ra=ra*u.hourangle, dec=dec*u.degree, frame='icrs')
     print("BEFORE SLEWING --------------------------")
     mount.slew_to_coord_and_track(c)
     print("After SLEWING --------------------------")
 
     # Check coordinates
-    c = mount.get_current_coordinates()
-    print('Coordinates are now: {}'.format(c))
+    c_true = mount.get_current_coordinates()
+    print(f"Coordinates are now: ra:{c_true.ra.to(u.hourangle)}, dec:{c_true.dec.to(u.degree)}")
+    print(f"Should be: ra:{c.ra.to(u.hourangle)}, dec:{c.dec.to(u.degree)}")
 
     # Sync
-    c = SkyCoord(ra=11.53*u.hour, dec=79*u.degree, frame='icrs')
+    ra = random.randint(0, 12)
+    dec = random.randint(-90, 90)
+    c = SkyCoord(ra=ra*u.hour, dec=dec*u.degree, frame='icrs')
     mount.sync_to_coord(c)
 
     #Do a slew and stop

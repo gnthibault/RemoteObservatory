@@ -124,6 +124,32 @@ class IndiClient(SingletonIndiClientHolder, INDIClient, Base):
             await asyncio.sleep(0)
         return True
 
+    async def wait_for_light(self, light_checker):
+        is_ok = False
+        while is_ok is False:
+            is_ok = light_checker()
+            await asyncio.sleep(0)
+        return True
+
+    def sync_with_light(self, light_checker, timeout=30):
+        """
+        Will launch the waiting mechanism
+        light_checker is a callable that will return immediatly:
+        * True is light is ok
+        * False otherwise (busy or something else)
+        """
+        assert(timeout is not None)
+        future = asyncio.run_coroutine_threadsafe(self.wait_for_light(light_checker), self.ioloop)
+        try:
+            assert (future.result(timeout) is True)
+        except concurrent.futures.TimeoutError:
+            self.logger.error("Waiting for light took too long...")
+            future.cancel()
+            raise RuntimeError
+        except Exception as exc:
+            self.logger.error(f"Error while trying to wait for light: {exc!r}")
+            raise RuntimeError
+
     def connect_to_server(self, timeout=30, sync=True):
         """
         Will launch the main listen-read/write async function in loop executed by self.thread
@@ -132,7 +158,7 @@ class IndiClient(SingletonIndiClientHolder, INDIClient, Base):
         if sync:
             future = asyncio.run_coroutine_threadsafe(self.wait_running(), self.ioloop)
             try:
-                assert (future.result(timeout) == True)
+                assert (future.result(timeout) is True)
             except concurrent.futures.TimeoutError:
                 self.logger.error("Setting up running state took too long...")
                 future.cancel()

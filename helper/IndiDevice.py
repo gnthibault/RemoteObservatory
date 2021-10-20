@@ -115,27 +115,11 @@ class IndiDevice(Base, device):
         return self.device_name
 
     def register_device_to_client(self):
-    # def _setup_device(self):
         self.logger.debug(f"IndiDevice: asking indi_client to look for device "
             f"{self.device_name}")
         self.indi_client.ioloop.call_soon_threadsafe(
             lambda x: self.indi_client.device_subscriptions.append(x),
             self.parse_xml_str)
-        #self.indi_client.register_device
-    #     if self.device is None:
-    #         started = time.time()
-    #         while not self.device:
-    #             self.device = self.indi_client.getDevice(self.device_name)
-    #             if 0 < self.timeout < time.time() - started:
-    #                 self.logger.error(f"IndiDevice: Timeout while waiting for "
-    #                                   f"device {self.device_name}")
-    #                 raise RuntimeError(f"IndiDevice Timeout while waiting for "
-    #                                    f"device {self.device_name}")
-    #             time.sleep(0.01)
-    #         self.logger.debug(f"Indi Device: indi_client has found device "
-    #                           f"{self.device_name}")
-    #     else:
-    #         self.logger.warning(f"Device {self.device_name} already found")
 
     def _setup_interfaces(self):
         """
@@ -199,7 +183,7 @@ class IndiDevice(Base, device):
         # related to devices, so that we can populate the current device pv
         self.indi_client.trigger_get_properties()
         # set the corresponding switch to on
-        self.set_switch('CONNECTION', ['CONNECT'])
+        self.set_switch('CONNECTION', ['CONNECT'], sync=True, timeout=5)
 
     def connect(self):
         # setup indi client
@@ -231,45 +215,28 @@ class IndiDevice(Base, device):
         number_dict.update({k: float(v) for k, v in number_dict.items()})
         return number_dict
 
-    def get_light(self, name):
-        return self.get_vector_dict(name)
-
-    def set_switch(self, name, on_switches=[], off_switches=[],
+    def set_switch(self, switch_name, on_switches=[], off_switches=[],
                    sync=True, timeout=None):
         for on_switch in on_switches:
-            self.set_and_send_switchvector_by_element_name(name, on_switch, True)
+            self.set_and_send_switchvector_by_element_name(switch_name, on_switch, True)
         for on_switch in off_switches:
-            self.set_and_send_switchvector_by_element_name(name, on_switch, False)
+            self.set_and_send_switchvector_by_element_name(switch_name, on_switch, False)
+        if sync:
+            self.wait_for_vector_light(switch_name, timeout=timeout)
 
     def set_number(self, number_name, value_vector, sync=True, timeout=None):
         for element_name, number in value_vector.items():
             self.set_and_send_float(vector_name=number_name, element_name=element_name, number=number)
-        # if sync:
-        #     ret = self.__wait_prop_status(pv, statuses=[PyIndi.IPS_ALERT,
-        #                                                 PyIndi.IPS_OK],
-        #                                   timeout=timeout)
-        #     if ret == PyIndi.IPS_ALERT:
-        #         raise RuntimeError(f"Indi alert upon set_number, {number_name} "
-        #                            f": {value_vector}")
-        # return pv
+        if sync:
+            self.wait_for_vector_light(number_name, timeout=timeout)
 
     def set_text(self, text_name, value_vector, sync=True, timeout=None):
         for element_name, text in value_vector.items():
             self.set_and_send_text(vector_name=text_name, element_name=element_name, text=text)
+        if sync:
+            self.wait_for_vector_light(text_name, timeout=timeout)
 
-    def __wait_prop_status(self, prop, statuses=[PyIndi.IPS_OK,PyIndi.IPS_IDLE],
-                           timeout=None):
-        """Wait for the specified property to take one of the status in param"""
-
-        started = time.time()
-        if timeout is None:
-            timeout = self.timeout
-        while prop.s not in statuses:
-            if 0 < timeout < time.time() - started:
-                self.logger.debug(f"IndiDevice: Timeout while waiting for "
-                                  f"property status {prop.name} for device "
-                                  f"{self.device_name}")
-                raise RuntimeError(f"Timeout error while changing property "
-                                   f"{prop.name}")
-            time.sleep(0.01)
-        return prop.s
+    def wait_for_vector_light(self, vector_name, timeout=None):
+        light_checker = lambda: self.check_vector_light(vector_name)
+        self.indi_client.sync_with_light(light_checker, timeout=timeout)
+        return
