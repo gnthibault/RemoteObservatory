@@ -1529,9 +1529,10 @@ class device(ABC):
         place where blobvector are manipulated
         """
         blob = blob_vector.get_first_element()
-        self.blob_queue.put(io.BytesIO(blob.get_data()))
-        self.blob_event.set()
-        #self.blob_event.clear()
+        if blob.get_plain_format() == ".fits":
+            self.blob_queue.put(io.BytesIO(blob.get_data()))
+            self.blob_event.set()
+            #self.blob_event.clear()
 
     def _default_def_handler(self, vector, indi):
         """

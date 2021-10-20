@@ -77,3 +77,5 @@ if __name__ == '__main__':
 
     # Show image
     fig, ax = plt.subplots(1, figsize=(16, 9))
+    ax.imshow(fits[0].data)
+    plt.show()
