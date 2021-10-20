@@ -45,35 +45,12 @@ class PyIndi():
 
 class IndiDevice(Base, device):
     defaultTimeout = 30
-    __prop_getter = {
-        'blob': 'getBLOB',
-        'light': 'getLight',
-        'number': 'getNumber',
-        'switch': 'getSwitch',
-        'text': 'getText'
-    }
-    # Set of useful dictionaries (put as class att to override behaviour ?)
-    __state_str = {
-        PyIndi.IPS_IDLE: 'IDLE',
-        PyIndi.IPS_OK: 'OK',
-        PyIndi.IPS_BUSY: 'BUSY',
-        PyIndi.IPS_ALERT: 'ALERT'}
-    __switch_types = {
-        PyIndi.ISR_1OFMANY: 'ONE_OF_MANY',
-        PyIndi.ISR_ATMOST1: 'AT_MOST_ONE',
-        PyIndi.ISR_NOFMANY: 'ANY'}
-    __type_str = {
-        PyIndi.INDI_NUMBER: 'number',
-        PyIndi.INDI_SWITCH: 'switch',
-        PyIndi.INDI_TEXT: 'text',
-        PyIndi.INDI_LIGHT: 'light',
-        PyIndi.INDI_BLOB: 'blob',
-        PyIndi.INDI_UNKNOWN: 'unknown'}
 
     def __init__(self, device_name, indi_client_config, debug=False):
         Base.__init__(self)
         device.__init__(self, name=device_name)
-    
+
+        self.is_connected = False
         self.indi_client_config = indi_client_config
         self.timeout = IndiDevice.defaultTimeout
         self.interfaces = None
@@ -83,22 +60,17 @@ class IndiDevice(Base, device):
         """
         Enable device connection
         """
-        vec = self.indi_client.set_and_send_switchvector_by_elementlabel(
-            self.indi_client.driver, "CONNECTION", "Connect")
-        if self.debug and vec is not None:
-            vec.tell()
-        self.process_events()
-        return vec
+        self.set_switch("CONNECTION", ["CONNECT"])
+        self.is_connected = True
+        return
 
     def disconnect(self):
         """
         Disable device connection
         """
-        vec = self.indi_client.set_and_send_switchvector_by_elementlabel(
-            self.indi_client.driver, "CONNECTION", "Disconnect")
-        if self.debug:
-            vec.tell()
-        return vec
+        self.set_switch("CONNECTION", ["DISCONNECT"])
+        self.is_connected = False
+        return
 
     async def xml_from_indiserver(self, data):
         """
@@ -107,16 +79,11 @@ class IndiDevice(Base, device):
         print(f"Async call from Indidevice: received {data}")
 
     @property
-    def is_connected(self):
-        return self.device.isConnected()
-
-    @property
     def name(self):
         return self.device_name
 
     def register_device_to_client(self):
-        self.logger.debug(f"IndiDevice: asking indi_client to look for device "
-            f"{self.device_name}")
+        self.logger.debug(f"IndiDevice: asking indi_client to listen for device {self.device_name}")
         self.indi_client.ioloop.call_soon_threadsafe(
             lambda x: self.indi_client.device_subscriptions.append(x),
             self.parse_xml_str)
@@ -238,5 +205,11 @@ class IndiDevice(Base, device):
 
     def wait_for_vector_light(self, vector_name, timeout=None):
         light_checker = lambda: self.check_vector_light(vector_name)
-        self.indi_client.sync_with_light(light_checker, timeout=timeout)
+        self.indi_client.sync_with_predicate(light_checker, timeout=timeout)
         return
+
+    def wait_for_incoming_blob_vector(self, blob_vector_name=None, timeout=None):
+        blob_checker = lambda: self.check_blob_vector(blob_vector_name)
+        self.indi_client.sync_with_predicate(blob_checker, timeout=timeout)
+        return
+

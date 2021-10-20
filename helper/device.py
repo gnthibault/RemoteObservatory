@@ -1,11 +1,14 @@
 # Generic imports
+import queue
 from abc import ABC
 import asyncio
 import base64
 import copy
 import functools
+import io
 import logging
 import os
+import queue
 import time
 import traceback
 import threading
@@ -1449,19 +1452,22 @@ class device(ABC):
         self.current_element = None
         self.current_xml_str = []
 
+        # Specific events that might be manipulated by handlers
+        self.blob_event = threading.Event()
+        self.blob_queue = queue.Queue(maxsize=64)
+
         # vector/property handlers
         self.custom_element_handler_list = []
         self.custom_vector_handler_list = []
-        self.blob_def_handler = self._default_def_handler
+        self.blob_def_handler = self._default_blob_handler
         self.number_def_handler = self._default_def_handler
         self.switch_def_handler = self._default_def_handler
         self.text_def_handler = self._default_def_handler
-        self.blob_def_handler = self._default_def_handler
         self.light_def_handler = self._default_def_handler
         self.message_handler = self._default_message_handler
         self.timeout_handler = self._default_timeout_handler
 
-        # Dicitonary of Property vector for the current device, each having multiple properties
+        # Dictonary of Property vector for the current device, each having multiple properties
         self.property_vectors = {}
         self.property_vectors_lock = threading.Lock()
         self.config = config
@@ -1516,6 +1522,16 @@ class device(ABC):
         logging.info(f"Got message by host: {indi.host} :")
         message.tell()
 
+    def _default_blob_handler(self, blob_vector, indi):
+        """
+        Why is it safe to manipulate the blob vector outside of property_vector_lock ?
+        because this call is blocking inside the main ioloop, an it is the only single
+        place where blobvector are manipulated
+        """
+        blob = blob_vector.get_first_element()
+        self.blob_queue.put(io.BytesIO(blob.get_data()))
+        self.blob_event.set()
+        #self.blob_event.clear()
 
     def _default_def_handler(self, vector, indi):
         """
@@ -1598,6 +1614,8 @@ class device(ABC):
                     #             return
                     if vector.tag.get_type() == "BLOBVector":
                         self.blob_def_handler(vector, self)
+                        # blob will never make it to property_vector
+                        return
                     if vector.tag.get_type() == "TextVector":
                         self.text_def_handler(vector, self)
                     if vector.tag.get_type() == "NumberVector":
@@ -1739,6 +1757,21 @@ class device(ABC):
         except KeyError:
             return None
 
+    def check_blob_vector(self, blob_vector_name):
+        """
+        Non blocking call that is supposed to be called many time in client ioloop (the later works in asyncio mode)
+        """
+        try:
+            is_set = self.blob_event.is_set()
+            #self.blob_event.wait()
+            if is_set:
+                self.blob_event.clear()
+            # with self.property_vectors_lock:
+                #bv = self.property_vectors[blob_vector_name]
+            return is_set
+        except KeyError:
+            return False
+
     def check_vector_light(self, vector_name):
         """
         """
@@ -1747,7 +1780,7 @@ class device(ABC):
                 return (self.property_vectors[vector_name]._light.is_ok() or
                         self.property_vectors[vector_name]._light.is_idle())
         except KeyError:
-            return None
+            return False
 
     def get_vector(self, vectorname, timeout=None):
         """

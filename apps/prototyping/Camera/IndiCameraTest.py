@@ -1,11 +1,7 @@
 # Basic stuff
-import logging
-import logging.config
-import threading
 
-# Miscellaneous
-import io
-from astropy.io import fits
+# Viz stuff
+import matplotlib.pyplot as plt
 
 # Local stuff : IndiClient
 from helper.IndiClient import IndiClient
@@ -78,3 +74,6 @@ if __name__ == '__main__':
     cam.shoot_async()
     cam.synchronize_with_image_reception()
     fits = cam.get_received_image()
+
+    # Show image
+    fig, ax = plt.subplots(1, figsize=(16, 9))

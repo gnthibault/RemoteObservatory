@@ -19,49 +19,6 @@ from astropy.io import fits
 from Base.Base import Base
 from utils.error import BLOBError
 
-class BLOB:
-    def __init__(self, bp):
-        self.name = bp.name
-        self.label = bp.label
-        self.format = bp.format
-        self.blob_len = bp.bloblen
-        self.size = bp.size
-        self.data = bp.getblobdata()
-
-    def get_fits(self):
-        return fits.open(io.BytesIO(self.data))
-
-    def save(self, filename):
-        with open(filename, 'wb') as file:
-            file.write(self.data)
-
-class BLOBListener(Base):
-    def __init__(self, device_name, queue_size=0):
-        # Init "our" Base class
-        Base.__init__(self)
-        self.device_name = device_name
-        self.queue = multiprocessing.Queue(maxsize=queue_size)
-
-    def get(self, timeout=300):
-        try:
-            self.logger.debug(f"BLOBListener[{self.device_name}]: waiting for "
-                              f"blob, timeout={timeout}")
-            blob = self.queue.get(True, timeout)
-            self.logger.debug(f"BLOBListener[{self.device_name}]: blob received"
-                f" name={blob.name}, label={blob.label}, size={blob.size}, "
-                f" queue size: {self.queue.qsize()} "
-                f"(isEmpty: {self.queue.empty()}")
-            return blob
-        except queue.Empty:
-            raise BLOBError(f"Timeout while waiting for BLOB on "
-                            f"{self.device.name}")
-
-    def __str__(self):
-        return f"BLOBListener(device={self.device_name}"
-
-    def __repr__(self):
-        return self.__str__()
-
 class SingletonIndiClientHolder:
     _instances = {}
 
@@ -108,11 +65,6 @@ class IndiClient(SingletonIndiClientHolder, INDIClient, Base):
         self.thread = threading.Thread(target=self.ioloop.run_forever)
         self.thread.start()
 
-        # Blob related attirubtes
-        self.blob_event = threading.Event()
-        self.__listeners = []
-        self.queue_size = config.get('queue_size', 5)
-
         # Finished configuring
         self.logger.debug('Configured Indi Client successfully')
 
@@ -124,14 +76,14 @@ class IndiClient(SingletonIndiClientHolder, INDIClient, Base):
             await asyncio.sleep(0)
         return True
 
-    async def wait_for_light(self, light_checker):
+    async def wait_for_predicate(self, predicate_checker):
         is_ok = False
         while is_ok is False:
-            is_ok = light_checker()
+            is_ok = predicate_checker()
             await asyncio.sleep(0)
         return True
 
-    def sync_with_light(self, light_checker, timeout=30):
+    def sync_with_predicate(self, predicate_checker, timeout=30):
         """
         Will launch the waiting mechanism
         light_checker is a callable that will return immediatly:
@@ -139,15 +91,15 @@ class IndiClient(SingletonIndiClientHolder, INDIClient, Base):
         * False otherwise (busy or something else)
         """
         assert(timeout is not None)
-        future = asyncio.run_coroutine_threadsafe(self.wait_for_light(light_checker), self.ioloop)
+        future = asyncio.run_coroutine_threadsafe(self.wait_for_predicate(predicate_checker), self.ioloop)
         try:
             assert (future.result(timeout) is True)
         except concurrent.futures.TimeoutError:
-            self.logger.error("Waiting for light took too long...")
+            self.logger.error("Waiting for predicate took too long...")
             future.cancel()
             raise RuntimeError
         except Exception as exc:
-            self.logger.error(f"Error while trying to wait for light: {exc!r}")
+            self.logger.error(f"Error while trying to wait for predicate: {exc!r}")
             raise RuntimeError
 
     def connect_to_server(self, timeout=30, sync=True):
@@ -170,6 +122,16 @@ class IndiClient(SingletonIndiClientHolder, INDIClient, Base):
     def trigger_get_properties(self):
         self.xml_to_indiserver("<getProperties version='1.7'/>")
 
+    def enable_blob(self):
+        """
+        Sends a signal to the server that tells it, that this client wants to receive L{indiblob} objects.
+        If this method is not called, the server will not send any L{indiblob}. The DCD clients calls it each time
+        an L{indiblob} is defined.
+        @return: B{None}
+        @rtype: NoneType
+        """
+        self.xml_to_indiserver("<enableBLOB>Also</enableBLOB>")
+
     def xml_to_indiserver(self, xml):
         """
         put the xml argument in the
@@ -182,29 +144,6 @@ class IndiClient(SingletonIndiClientHolder, INDIClient, Base):
         self.logger.debug(f"IndiClient just received data {data}")
         for sub in self.device_subscriptions:
             asyncio.run_coroutine_threadsafe(sub(data), self.ioloop)
-
-    '''
-    Indi related stuff (implementing BaseClient methods)
-    '''
-    def newBLOB(self, bp):
-        # this threading.Event is used for sync purpose in other part of the code
-        self.logger.debug(f"new BLOB received: {bp.name}")
-        #self.blob_event.set()
-        for listener in self.__listeners:
-            if bp.bvp.device == listener.device_name:
-                self.logger.debug(f"Copying blob {bp.name} to listener "
-                f"{listener}")
-                listener.queue.put(BLOB(bp))
-        del bp
-
-    @contextmanager
-    def listener(self, device_name):
-        try:
-            listener = BLOBListener(device_name, self.queue_size)
-            self.__listeners.append(listener)
-            yield(listener)
-        finally:
-            self.__listeners = [x for x in self.__listeners if x is not listener]
 
     def __str__(self):
         return f"INDI client connected to {self.host}:{self.port}"
