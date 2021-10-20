@@ -70,13 +70,13 @@ class Base:
         """ Checks the config file for mandatory items """
 
         if 'directories' not in temp_config:
-            sys.exit('directories must be specified in config')
+            raise RuntimeError("Base class: directories must be specified in config")
 
         if 'mount' not in temp_config:
-            sys.exit('Mount must be specified in config')
+            raise RuntimeError("Base class: Mount must be specified in config")
 
         if 'state_machine' not in temp_config:
-            sys.exit('State Table must be specified in config')
+            raise RuntimeError("Base class: State Table must be specified in config")
 
     def __getstate__(self):  # pragma: no cover
         """ Returns a copy of the internal dictionary without

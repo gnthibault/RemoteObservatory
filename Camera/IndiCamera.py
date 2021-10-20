@@ -60,13 +60,14 @@ class IndiCamera(IndiDevice):
             self.focuser = getattr(focuser, focuser_name)(
                 logger=None, config=cfg, connect_on_create=connect_on_create)
         except Exception as e:
-            logger.warning("Cannot load focuser module: {}".format(e))
+            logger.warning(f"Cannot load focuser module: {e}")
             self.focuser = None
 
         logger.debug('Indi camera, camera name is: {}'.format(device_name))
       
         # device related intialization
-        IndiDevice.__init__(self, logger=logger, device_name=device_name,
+        IndiDevice.__init__(self,
+                            device_name=device_name,
                             indi_client_config=config["indi_client"])
         if connect_on_create:
             self.connect()
@@ -76,8 +77,8 @@ class IndiCamera(IndiDevice):
         self.last_blob = None
 
         # Default exposureTime, gain
-        self.exp_time_sec=5
-        self.gain=400
+        self.exp_time_sec = 5
+        self.gain = 400
 
         # Now check if there is a focuser attached
         #try:
@@ -211,22 +212,21 @@ class IndiCamera(IndiDevice):
 
 
     def abort_shoot(self, sync=True):
-        self.set_number('CCD_ABORT_EXPOSURE', {'ABORT': 1}, sync=sync)
+        self.set_number('CCD_ABORT_EXPOSURE', {'ABORT': 1}, sync=sync, timeout=5)
 
     def launch_streaming(self):
-        self.set_switch('VIDEO_STREAM',['ON'])
+        self.set_switch('VIDEO_STREAM', ['ON'])
 
     def set_upload_path(self, path, prefix = 'IMAGE_XXX'):
-        self.set_text('UPLOAD_SETTINGS', {'UPLOAD_DIR': path,\
-        'UPLOAD_PREFIX': prefix})
+        self.set_text('UPLOAD_SETTINGS', {'UPLOAD_DIR': path, 'UPLOAD_PREFIX': prefix})
 
     def get_binning(self):
-        return self.getPropertyValueVector('CCD_BINNING', 'number')
+        return self.get_number('CCD_BINNING')
 
     def set_binning(self, hbin, vbin = None):
         if vbin == None:
             vbin = hbin
-        self.set_number('CCD_BINNING', {'HOR_BIN': hbin, 'VER_BIN': vbin })
+        self.set_number('CCD_BINNING', {'HOR_BIN': hbin, 'VER_BIN': vbin})
 
     def get_roi(self):
         """"
@@ -236,8 +236,8 @@ class IndiCamera(IndiDevice):
             HEIGHT: Frame width in pixels
             ex: {'X':256, 'Y':480, 'WIDTH':512, 'HEIGHT':640}
         """
-        prop_vect = self.get_number('CCD_FRAME')
-        return {k:prop_vect[k]['value'] for k in ["X","Y","WIDTH","HEIGHT"]}
+        number_vector = self.get_number('CCD_FRAME')
+        return {k: number_vector[k] for k in ["X", "Y", "WIDTH", "HEIGHT"]}
 
     def set_roi(self, roi):
         """"
@@ -247,25 +247,24 @@ class IndiCamera(IndiDevice):
             HEIGHT: Frame width in pixels
             ex: cam.set_roi({'X':256, 'Y':480, 'WIDTH':512, 'HEIGHT':640})
         """
-        self.set_number('CCD_FRAME', roi, sync=True)
+        self.set_number('CCD_FRAME', roi, sync=True, timeout=5)
 
     def get_dynamic(self):
-        return self.get_number('CCD_INFO')['CCD_BITSPERPIXEL']['value']
+        return self.get_number('CCD_INFO')['CCD_BITSPERPIXEL']
 
     def get_maximum_dynamic(self):
         return self.get_dynamic()
 
     def get_sensor_size(self):
-        prop_vect = self.get_number('CCD_INFO')
-        return {k: prop_vect[k]['value'] for k in ["CCD_MAX_X", "CCD_MAX_Y"]}
+        number_vector = self.get_number('CCD_INFO')
+        return {k: number_vector[k] for k in ["CCD_MAX_X", "CCD_MAX_Y"]}
 
     def get_pixel_size(self):
-        prop_vect = self.get_number('CCD_INFO')
-        return {k: prop_vect[k]['value'] for k in ["CCD_PIXEL_SIZE_X", "CCD_PIXEL_SIZE_Y"]}
+        number_vector = self.get_number('CCD_INFO')
+        return {k: number_vector[k] for k in ["CCD_PIXEL_SIZE_X", "CCD_PIXEL_SIZE_Y"]}
 
     def get_temperature(self):
-        return self.get_number(
-            'CCD_TEMPERATURE')['CCD_TEMPERATURE_VALUE']['value']
+        return self.get_number('CCD_TEMPERATURE')['CCD_TEMPERATURE_VALUE']
 
     def set_temperature(self, temperature):
         """ It may take time to lower the temperature of a ccd """
@@ -273,25 +272,24 @@ class IndiCamera(IndiDevice):
             temperature = temperature.to(u.deg_C).value
         if np.isfinite(temperature):
             self.set_number('CCD_TEMPERATURE',
-                           { 'CCD_TEMPERATURE_VALUE' : temperature },
+                           {'CCD_TEMPERATURE_VALUE': temperature},
                            sync=True, timeout=1200)
 
     def set_cooling_on(self):
-        self.set_switch('CCD_COOLER',['COOLER_ON'])
+        self.set_switch('CCD_COOLER', ['COOLER_ON'], sync=True, timeout=5)
 
     def set_cooling_off(self):
-        self.set_switch('CCD_COOLER',['COOLER_OFF'])
+        self.set_switch('CCD_COOLER', ['COOLER_OFF'], sync=True, timeout=5)
 
     def set_gain(self, value):
-        self.set_number('CCD_GAIN', {'Gain': value})
+        self.set_number('CCD_GAIN', {'GAIN': value}, sync=True, timeout=5)
 
     def get_gain(self):
         gain = self.get_number('CCD_GAIN')
-        print(f"returned Gain is {gain}")
-        return gain
+        return gain["GAIN"]
 
     def get_frame_type(self):
-        return self.get_prop('CCD_FRAME_TYPE','switch')
+        return self.get_prop('CCD_FRAME_TYPE', 'switch')
 
     def set_frame_type(self, frame_type):
         """
@@ -300,17 +298,17 @@ class IndiCamera(IndiDevice):
         FRAME_DARK Take a dark frame exposure
         FRAME_FLAT Take a flat field frame exposure
         """
-        self.set_switch('CCD_FRAME_TYPE', [frame_type])
+        self.set_switch('CCD_FRAME_TYPE', [frame_type], sync=True, timeout=5)
 
-    def setUploadTo(self, uploadTo = 'local'):
+    def setUploadTo(self, upload_to='local'):
         uploadTo = IndiCamera.UploadModeDict[upload_to]
-        self.set_switch('UPLOAD_MODE', [uploadTo] )
+        self.set_switch('UPLOAD_MODE', [uploadTo], sync=True, timeout=5)
 
-    def getExposureRange(self):
-        pv = self.getCCDControls('CCD_EXPOSURE', 'number')[0]
-        return { 'minimum': pv.min,
-          'maximum': pv.max,
-          'step': pv.step }
+    # def getExposureRange(self):
+    #     pv = self.getCCDControls('CCD_EXPOSURE', 'number')[0]
+    #     return {'minimum': pv.min,
+    #             'maximum': pv.max,
+    #             'step': pv.step }
 
     def sanitize_exp_time(self, exp_time_sec):
         if isinstance(exp_time_sec, u.Quantity):
@@ -321,7 +319,7 @@ class IndiCamera(IndiDevice):
             except Exception as e:
                 float_exp_time_sec = self.DEFAULT_EXP_TIME_SEC
         elif exp_time_sec < 0:
-            float_exp_time_sec = abs(float_exp_time_sec)
+            float_exp_time_sec = abs(exp_time_sec)
         elif exp_time_sec == 0:
             float_exp_time_sec = self.DEFAULT_EXP_TIME_SEC
         elif exp_time_sec > self.MAXIMUM_EXP_TIME_SEC:

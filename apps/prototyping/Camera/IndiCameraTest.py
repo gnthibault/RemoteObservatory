@@ -15,19 +15,24 @@ from Camera.IndiCamera import IndiCamera
 
 
 if __name__ == '__main__':
-
-    # load the logging configuration
-    logging.config.fileConfig('logging.ini')
-
     # test indi client
+    # config = dict(
+    # camera_name='Altair AA183MPRO',
+    # autofocus_seconds=5,
+    # pointing_seconds=30,
+    # autofocus_size=500,
+    # indi_client=dict(
+    #     indi_host="192.168.0.33",
+    #     indi_port="7624"
+    # ))
     config = dict(
-    camera_name='Altair AA183MPRO',
-    autofocus_seconds=5,
-    pointing_seconds=30,
-    autofocus_size=500,
-    indi_client=dict(
-        indi_host="192.168.0.33",
-        indi_port="7624"
+        camera_name='CCD Simulator',
+        autofocus_seconds=5,
+        pointing_seconds=30,
+        autofocus_size=500,
+        indi_client=dict(
+            indi_host="localhost",
+            indi_port=7624
     ))
 
     # test indi virtual camera class
@@ -36,39 +41,40 @@ if __name__ == '__main__':
     cam.connect()
 
     # Play with camera configuration
-    #cam.setRoi({'X':256, 'Y':480, 'WIDTH':512, 'HEIGHT':640})
-    # getRoi Not implemented, TODO TN
-    #print('Current camera ROI is: {}'.format(cam.getRoi()))
-    #cam.setRoi({'X':0, 'Y':0, 'WIDTH':1280, 'HEIGHT':1024})
-    # getRoi Not implemented, TODO TN
-    #print('Current camera ROI is: {}'.format(cam.getRoi()))
+    cam.set_roi({'X': 256, 'Y': 480, 'WIDTH': 512, 'HEIGHT': 640})
+    # get_roi
+    print(f"Current camera ROI is: {cam.get_roi()}")
+    cam.set_roi({'X': 0, 'Y': 0, 'WIDTH': 1280, 'HEIGHT': 1024})
+    # get_roi
+    print(f"Current camera ROI is: {cam.get_roi()}")
 
     #print('Setting cooling on')
-    #cam.set_cooling_on() that just never work
-    print('Current camera temperature is: {}'.format(cam.get_temperature()))
-    target_temp = 15
-    #print('Now, setting temperature to: {}'.format(target_temp))
-    #cam.set_temperature(target_temp)
-    print('Current camera temperature is: {}'.format(cam.get_temperature()))
-    #target_temp = 17.5
-    #print('Now, setting temperature to: {}'.format(target_temp))
-    #cam.set_temperature(target_temp)
-    #print('Current camera temperature is: {}'.format(cam.get_temperature()))
-    #cam.set_cooling_off() that just never work
+    #cam.set_cooling_on() THIS VECTOR IS EXPECTED TO BE IN BUSY STATE, NOT IDLE NOR OK, THAT's WHY THERE IS TIMEOUT
+    print(f"Current camera temperature is: {cam.get_temperature()}")
+    target_temp = 8
+    print(f"Now, setting temperature to: {target_temp}")
+    cam.set_temperature(target_temp)
+    print(f"Current camera temperature is: {cam.get_temperature()}")
+    target_temp = 5
+    print(f"Now, setting temperature to: {target_temp}")
+    cam.set_temperature(target_temp)
+    print(f"Current camera temperature is: {cam.get_temperature()}")
+    #cam.set_cooling_off()
 
     # set frame type (mostly for simulation purpose
-    #cam.set_frame_type('FRAME_LIGHT')
-    #cam.set_frame_type('FRAME_DARK')
-    #cam.set_frame_type('FRAME_FLAT')
-    #cam.set_frame_type('FRAME_BIAS')
+    cam.set_frame_type('FRAME_LIGHT')
+    cam.set_frame_type('FRAME_DARK')
+    cam.set_frame_type('FRAME_FLAT')
+    cam.set_frame_type('FRAME_BIAS')
 
     # set gain
     print(f"gain is {cam.get_gain()}")
-    #cam.set_gain(100)
+    cam.set_gain(100)
+    print(f"gain is {cam.get_gain()}")
 
     # Acquire data
-    #cam.prepare_shoot()
-    #cam.setExpTimeSec(10)
-    #cam.shoot_async()
-    #cam.synchronize_with_image_reception()
-    #fits = cam.get_received_image()
+    cam.prepare_shoot()
+    cam.setExpTimeSec(10)
+    cam.shoot_async()
+    cam.synchronize_with_image_reception()
+    fits = cam.get_received_image()

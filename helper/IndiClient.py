@@ -183,9 +183,6 @@ class IndiClient(SingletonIndiClientHolder, INDIClient, Base):
         for sub in self.device_subscriptions:
             asyncio.run_coroutine_threadsafe(sub(data), self.ioloop)
 
-    #def set_switch
-    #self.xml_to_indiserver(self, xml)
-
     '''
     Indi related stuff (implementing BaseClient methods)
     '''
