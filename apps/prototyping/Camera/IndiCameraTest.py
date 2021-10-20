@@ -58,10 +58,10 @@ if __name__ == '__main__':
     #cam.set_cooling_off()
 
     # set frame type (mostly for simulation purpose
-    cam.set_frame_type('FRAME_LIGHT')
     cam.set_frame_type('FRAME_DARK')
     cam.set_frame_type('FRAME_FLAT')
     cam.set_frame_type('FRAME_BIAS')
+    cam.set_frame_type('FRAME_LIGHT')
 
     # set gain
     print(f"gain is {cam.get_gain()}")
