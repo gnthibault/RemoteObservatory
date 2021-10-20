@@ -1830,7 +1830,7 @@ class device(ABC):
             if elementname == element.name:
                 return element
 
-    def set_and_send_text(self, vectorname, elementname, text):
+    def set_and_send_text(self, vector_name, element_name, text):
         """
         Sets the value of an element by a text, and sends it to the server
         @param devicename:  The name of the device
@@ -1844,9 +1844,9 @@ class device(ABC):
         @return: The vector containing the element that was just sent.
         @rtype: L{indivector}
         """
-        vector = self.get_vector(vectorname)
+        vector = self.get_vector(vector_name)
         if vector is not None:
-            vector.get_element(elementname).set_text(text)
+            vector.get_element(element_name).set_text(text)
             self.send_vector(vector)
         return vector
 
@@ -1870,7 +1870,7 @@ class device(ABC):
             self.send_vector(vector)
         return vector
 
-    def set_and_send_float(self, vectorname, elementname, number):
+    def set_and_send_float(self, vector_name, element_name, number):
         """
         Sets the value of an indi element by a floating point number, and sends it to the server
         @param devicename:  The name of the device
@@ -1884,9 +1884,9 @@ class device(ABC):
         @return: The vector containing the element that was just sent.
         @rtype: L{indivector}
         """
-        vector = self.get_vector(vectorname)
+        vector = self.get_vector(vector_name)
         if vector is not None:
-            vector.get_element(elementname).set_float(number)
+            vector.get_element(element_name).set_float(number)
             self.send_vector(vector)
         return vector
 

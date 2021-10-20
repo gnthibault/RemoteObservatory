@@ -195,16 +195,6 @@ class IndiDevice(Base, device):
         """
 
         """
-        # Now connect
-        # if self.device.isConnected():
-        #     self.logger.warning(f"already connected to device "
-        #                         f"{self.device_name}")
-        #     return
-        # self.logger.info(f"Connecting to device {self.device_name}")
-        # # setup available list of interfaces
-        # self._setup_interfaces()
-        #self.start()
-
         # First thing to do is to force the server to re-send all informations
         # related to devices, so that we can populate the current device pv
         self.indi_client.trigger_get_properties()
@@ -230,100 +220,42 @@ class IndiDevice(Base, device):
         # set the corresponding switch to off
         self.set_switch('CONNECTION', on_switches=['DISCONNECT'])
 
-    def get_values(self, ctl_name, ctl_type):
-        return dict(map(lambda c: (c.name, c.value),
-                        self.get_prop(ctl_name, ctl_type)))
-
-    def get_switch(self, name, ctl=None):
+    def get_switch(self, name):
         return self.get_vector_dict(name)
 
-    def get_text(self, name, ctl=None):
-        return self.get_prop_dict(name, 'text',
-                                  lambda c: {"value": c.text},
-                                  ctl)
+    def get_text(self, name):
+        return self.get_vector_dict(name)
 
-    def get_number(self, name, ctl=None):
-        return self.get_prop_dict(name, 'number',
-                                  lambda c: {'value': c.value, 'min': c.min,
-                                             'max': c.max, 'step': c.step,
-                                             'format': c.format},
-                                  ctl)
+    def get_number(self, name):
+        number_dict = self.get_vector_dict(name)
+        number_dict.update({k: float(v) for k, v in number_dict.items()})
+        return number_dict
 
-    def get_light(self, name, ctl=None):
-        return self.get_prop_dict(name, 'light',
-                                  lambda c: {'value':
-                                             IndiDevice.__state_str[c.s]},
-                                  ctl)
-
-    def get_prop_dict(self, prop_name, prop_type, transform,
-                      prop=None, timeout=None):
-        def get_dict(element):
-            dest = {'name': element.name, 'label': element.label}
-            dest.update(transform(element))
-            return dest
-
-        prop = prop if prop else self.get_prop(prop_name, prop_type, timeout)
-        d = dict((c.name, get_dict(c)) for c in prop)
-        d["state"] = IndiDevice.__state_str[prop.s]
-        return d
+    def get_light(self, name):
+        return self.get_vector_dict(name)
 
     def set_switch(self, name, on_switches=[], off_switches=[],
                    sync=True, timeout=None):
-
         for on_switch in on_switches:
             self.set_and_send_switchvector_by_element_name(name, on_switch, True)
         for on_switch in off_switches:
             self.set_and_send_switchvector_by_element_name(name, on_switch, False)
-        # self.indi_client.xml_to_indiserver(xml)
 
-
-        # pv = self.get_prop(name, 'switch')
-        # is_exclusive = pv.getRule() == PyIndi.ISR_ATMOST1 or pv.getRule() == PyIndi.ISR_1OFMANY
-        # if is_exclusive:
-        #     on_switches = on_switches[0:1]
-        #     off_switches = [s.name for s in pv if s.name not in on_switches]
-        # for index in range(0, len(pv)):
-        #     current_state = pv[index].s
-        #     new_state = current_state
-        #     if pv[index].name in on_switches:
-        #         new_state = PyIndi.ISS_ON
-        #     elif is_exclusive or pv[index].name in off_switches:
-        #         new_state = PyIndi.ISS_OFF
-        #     pv[index].s = new_state
-        # self.indi_client.sendNewSwitch(pv)
-        # if sync:
-        #     self.__wait_prop_status(pv, statuses=[PyIndi.IPS_IDLE,
-        #                                           PyIndi.IPS_OK],
-        #                             timeout=timeout)
-        # return pv
-        
     def set_number(self, number_name, value_vector, sync=True, timeout=None):
-        pv = self.get_prop(number_name, 'number', timeout)
-        for property_name, index in self.__get_prop_vect_indices_having_values(
-                                   pv, value_vector.keys()).items():
-            pv[index].value = value_vector[property_name]
-        self.indi_client.sendNewNumber(pv)
-        if sync:
-            ret = self.__wait_prop_status(pv, statuses=[PyIndi.IPS_ALERT,
-                                                        PyIndi.IPS_OK],
-                                          timeout=timeout)
-            if ret == PyIndi.IPS_ALERT:
-                raise RuntimeError(f"Indi alert upon set_number, {number_name} "
-                                   f": {value_vector}")
-        return pv
+        for element_name, number in value_vector.items():
+            self.set_and_send_float(vector_name=number_name, element_name=element_name, number=number)
+        # if sync:
+        #     ret = self.__wait_prop_status(pv, statuses=[PyIndi.IPS_ALERT,
+        #                                                 PyIndi.IPS_OK],
+        #                                   timeout=timeout)
+        #     if ret == PyIndi.IPS_ALERT:
+        #         raise RuntimeError(f"Indi alert upon set_number, {number_name} "
+        #                            f": {value_vector}")
+        # return pv
 
     def set_text(self, text_name, value_vector, sync=True, timeout=None):
-        pv = self.get_prop(text_name, 'text')
-        for property_name, index in self.__get_prop_vect_indices_having_values(
-                                   pv, value_vector.keys()).items():
-            pv[index].text = value_vector[property_name]
-        self.indi_client.sendNewText(pv)
-        if sync:
-            ret = self.__wait_prop_status(pv, timeout=timeout)
-            if ret == PyIndi.IPS_ALERT:
-                raise RuntimeError(f"Indi alert upon set_text, {text_name} "
-                                   f": {value_vector}")
-        return pv
+        for element_name, text in value_vector.items():
+            self.set_and_send_text(vector_name=text_name, element_name=element_name, text=text)
 
     def __wait_prop_status(self, prop, statuses=[PyIndi.IPS_OK,PyIndi.IPS_IDLE],
                            timeout=None):
@@ -341,48 +273,3 @@ class IndiDevice(Base, device):
                                    f"{prop.name}")
             time.sleep(0.01)
         return prop.s
-
-    def __get_prop_vect_indices_having_values(self, property_vector, values):
-      """ return dict of name-index of prop that are in values"""
-      result = {}
-      for i, p in enumerate(property_vector):
-        if p.name in values:
-          result[p.name] = i
-      return result
-
-    def get_prop(self, propName, propType, timeout=None):
-        """ Return the value corresponding to the given propName
-            A prop often has the following attributes:
-            prop.device   : 'OpenWeatherMap'
-            prop.group    : 'Parameters', equiv to UI panel
-            prop.label    : 'Parameters', equiv to UI subtable name
-            prop.name     : 'WEATHER_PARAMETERS'
-            prop.nnp      : 9
-            prop.np       : Swig_stuff
-            prop.p        : 0
-            prop.s        : 1 , equiv to status: PyIndi.IPS_OK, PyIndi.IPS_ALERT
-            prop.timeout  : 60.0
-            prop.timestamp: ''
-        """
-        prop = None
-        attr = IndiDevice.__prop_getter[propType]
-        if timeout is None:
-            timeout = self.timeout
-        started = time.time()
-        while not(prop):
-            prop = getattr(self.device, attr)(propName)
-            if not prop and 0 < timeout < time.time() - started:
-                self.logger.debug(f"Timeout while waiting for property "
-                                  f"{propName} of type {propType}  for device "
-                                  f"{self.device_name}")
-                raise RuntimeError(f"Timeout finding property {propName}")
-            time.sleep(0.01)
-        return prop
-
-    def has_property(self, propName, propType):
-        try:
-            self.get_prop(propName, propType, timeout=1)
-            return True
-        except:
-            return False
- 

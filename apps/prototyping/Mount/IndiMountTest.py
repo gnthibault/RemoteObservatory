@@ -28,6 +28,7 @@ if __name__ == '__main__':
     mount = IndiMount(config=mount_config)
     # Set slew ret to be used afterwards
     mount.set_slew_rate('3x')
+    slew_rate = mount.get_slew_rate()
 
     # Get Pier side, not supported by simulator
     ps = mount.get_pier_side()

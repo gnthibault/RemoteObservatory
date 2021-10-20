@@ -186,11 +186,8 @@ class IndiMount(IndiDevice):
         """
         slew_dict = self.get_switch('TELESCOPE_SLEW_RATE')
         self.logger.debug(f"Got mount slewing rate dict: {slew_dict}")
-        slew_rate = [v for k,v in slew_dict.items() if
-                         ('value' in v and v['value'])]
-        self.logger.debug(f"Got mount slewing rate: {slew_rate}")
-        if len(slew_rate) == 1:
-            return slew_rate[0]
+        if len(slew_dict) > 0:
+            return slew_dict
         else:
             return {'name': None, 'label': None, 'value': None}
 
@@ -231,14 +228,10 @@ class IndiMount(IndiDevice):
         '''
         track_dict = self.get_switch('TELESCOPE_TRACK_MODE')
         self.logger.debug(f"Got mount tracking rate dict: {track_dict}")
-        track_mode = [v for k,v in track_dict.items() if
-                         ('value' in v and v['value'])]
-        self.logger.debug(f"Got mount tracking mode: {track_mode}")
-        if len(track_mode) == 1:
-            return track_mode[0]
+        if len(track_dict) > 0:
+            return track_dict
         else:
             return {'name': None, 'label': None, 'value': None}
-
 
     # This does not work with simulator
     def set_track_mode(self, track_mode='TRACK_SIDEREAL'):
@@ -274,8 +267,8 @@ class IndiMount(IndiDevice):
             self.device_name)) 
         rahour_decdeg = self.get_number('EQUATORIAL_EOD_COORD')
         self.logger.debug(f"Received current JNOW coordinates {rahour_decdeg}")
-        ret = SkyCoord(ra=rahour_decdeg['RA']['value']*u.hourangle,
-                       dec=rahour_decdeg['DEC']['value']*u.degree,
+        ret = SkyCoord(ra=rahour_decdeg['RA']*u.hourangle,
+                       dec=rahour_decdeg['DEC']*u.degree,
                        frame='cirs',
                        obstime=Time.now())
         self.logger.debug(f"Received coordinates in JNOw/CIRS from mount: "

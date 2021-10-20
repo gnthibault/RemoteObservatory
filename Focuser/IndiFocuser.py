@@ -71,9 +71,8 @@ class IndiFocuser(IndiDevice):
 
     def get_position(self):
         """ Current encoder position of the focuser """
-        #ret = self.get_number("REL_FOCUS_POSITION")["FOCUS_RELATIVE_POSITION"][
-        ret = self.get_number("ABS_FOCUS_POSITION")["FOCUS_ABSOLUTE_POSITION"][
-            "value"]
+        #ret = self.get_number("REL_FOCUS_POSITION")["FOCUS_RELATIVE_POSITION"]
+        ret = self.get_number("ABS_FOCUS_POSITION")["FOCUS_ABSOLUTE_POSITION"]
         self.logger.debug(f"{self} : current position is {ret}")
         return ret
 
