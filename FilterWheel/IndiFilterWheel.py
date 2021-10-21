@@ -35,7 +35,7 @@ class IndiFilterWheel(IndiDevice, Base):
                      device_name))
       
         # device related intialization
-        IndiDevice.__init__(self, logger=logger, device_name=device_name,
+        IndiDevice.__init__(self, , device_name=device_name,
                             indi_client_config=config["indi_client"])
         if connect_on_create:
             self.connect()

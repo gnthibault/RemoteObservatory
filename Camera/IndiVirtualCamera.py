@@ -4,7 +4,6 @@ import json
 import io
 
 #Indi stuff
-import PyIndi
 from Camera.IndiCamera import IndiCamera
 
 class IndiVirtualCamera(IndiCamera):
@@ -17,7 +16,7 @@ class IndiVirtualCamera(IndiCamera):
         logger.debug('Configuring Indi Virtual Camera')
 
         # device related intialization
-        IndiCamera.__init__(self, indi_client, logger=logger,
+        IndiCamera.__init__(self, indi_client,
             configFileName=configFileName, connect_on_create=connect_on_create)
 
         # Finished configuring

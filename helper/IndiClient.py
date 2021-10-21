@@ -1,13 +1,9 @@
 # Basic stuff
 import asyncio
 import concurrent
-from contextlib import contextmanager
-import io
-import json
 import logging
-import multiprocessing
-import queue
 import threading
+#from transitions.extensions import LockedMachine
 
 # Indi stuff
 from helper.client import INDIClient
@@ -43,9 +39,27 @@ class IndiClient(SingletonIndiClientHolder, INDIClient, Base):
         external C++ thread, and not by the python main thread, so be careful.
     '''
 
+    # states = ['NotConnected', 'Connecting', 'Connected', 'Disconnecting']
+    # transitions = [
+    #     {'trigger': 'connect_to_server', 'source': 'NotConnected', 'dest': 'Connecting', 'before': 'make_hissing_noises', 'after':''},
+    #     {'trigger': 'disconnection_trig', 'source': 'Connecting', 'dest': 'NotConnected'},
+    #     {'trigger': 'GuideStep', 'source': 'SteadyGuiding', 'dest': 'SteadyGuiding'},
+    # ]
+
     def __init__(self, config):
+
+        # If the class has already been initialized, skip
+        if hasattr(self, 'ioloop'):
+            return
+
         # Init "our" Base class
         Base.__init__(self)
+
+        # Initialize the state machine
+        # self.machine = LockedMachine(model=self,
+        #                              states=IndiClient.states,
+        #                              transitions=IndiClient.transitions,
+        #                              initial=IndiClient.states[0])
 
         if config is None:
             config = dict(indi_host="localhost",
@@ -53,8 +67,8 @@ class IndiClient(SingletonIndiClientHolder, INDIClient, Base):
 
         # Call indi client base classe ctor
         INDIClient.__init__(self,
-            host=config["indi_host"],
-            port=config["indi_port"])
+                            host=config["indi_host"],
+                            port=config["indi_port"])
         self.logger.debug(f"Indi Client, remote host is: {self.host}:{self.port}")
 
         # Start the main ioloop that will serve all async task in another (single) thread
@@ -73,14 +87,14 @@ class IndiClient(SingletonIndiClientHolder, INDIClient, Base):
 
     async def wait_running(self):
         while not self.running:
-            await asyncio.sleep(0)
+            await asyncio.sleep(0.01)
         return True
 
     async def wait_for_predicate(self, predicate_checker):
         is_ok = False
         while is_ok is False:
             is_ok = predicate_checker()
-            await asyncio.sleep(0)
+            await asyncio.sleep(0.01)
         return True
 
     def sync_with_predicate(self, predicate_checker, timeout=30):
@@ -102,11 +116,15 @@ class IndiClient(SingletonIndiClientHolder, INDIClient, Base):
             self.logger.error(f"Error while trying to wait for predicate: {exc!r}")
             raise RuntimeError
 
-    def connect_to_server(self, timeout=30, sync=True):
+    def connect_to_server(self, sync=True, timeout=30):
         """
         Will launch the main listen-read/write async function in loop executed by self.thread
         """
-        asyncio.run_coroutine_threadsafe(self.connect(timeout=timeout), self.ioloop)
+        #self.running can be update from another thread, but read/right are atomic
+        if (not self.client_connecting) and (not self.running):
+            self.client_connecting = True
+            asyncio.run_coroutine_threadsafe(self.connect(timeout=timeout), self.ioloop)
+
         if sync:
             future = asyncio.run_coroutine_threadsafe(self.wait_running(), self.ioloop)
             try:
@@ -144,6 +162,7 @@ class IndiClient(SingletonIndiClientHolder, INDIClient, Base):
         self.logger.debug(f"IndiClient just received data {data}")
         for sub in self.device_subscriptions:
             asyncio.run_coroutine_threadsafe(sub(data), self.ioloop)
+        await asyncio.sleep(0.01)
 
     def __str__(self):
         return f"INDI client connected to {self.host}:{self.port}"

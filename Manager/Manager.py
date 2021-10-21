@@ -579,7 +579,7 @@ class Manager(Base):
             weather_name = self.config['weather_service']['module']
             weather_module = load_module('Service.'+weather_name)
             self.serv_weather = getattr(weather_module, weather_name)(
-                config = self.config['weather_service'],
+                config=self.config['weather_service'],
                 serv_time=self.serv_time,
                 connect_on_create=True,
                 loop_on_create=True)
@@ -618,12 +618,12 @@ class Manager(Base):
             mount_name = self.config['mount']['module']
             mount_module = load_module('Mount.'+mount_name)
             self.mount = getattr(mount_module, mount_name)(
-                location = self.earth_location,
-                serv_time = self.serv_time,
-                config = self.config['mount'])
+                location=self.earth_location,
+                serv_time=self.serv_time,
+                config=self.config['mount'])
         except Exception as e:
-            self.logger.warning("Cannot load mount module: {}".format(e))
-            raise error.MountNotFound('Problem setting up mount')
+            self.logger.error(f"Cannot load mount module: {e}")
+            raise error.MountNotFound(f"Problem setting up mount")
 
     def _setup_cameras(self, **kwargs):
         """

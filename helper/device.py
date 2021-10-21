@@ -671,7 +671,7 @@ class indinumber(indielement):
                 x = float(self._value)
             except Exception as e:
                 success = False
-                time.sleep(1)
+                time.sleep(0.1)
                 logging.warning(f"INDI Warning: invalid float {self._value} ({e})")
         return x
 
@@ -1716,7 +1716,7 @@ class device(ABC):
         if len(xml_str) > 0:
             logging.debug(f"Device {self.device_name} just received following str {xml_str}")
             self.expat.Parse(xml_str, 0)
-        await asyncio.sleep(0)
+        await asyncio.sleep(0.1)
 
     def send_vector(self, vector):
         """

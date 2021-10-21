@@ -52,13 +52,13 @@ class IndiMount(IndiDevice):
 
         # device related intialization
         IndiDevice.__init__(self, device_name=device_name,
-            indi_client_config=config["indi_client"])
+                            indi_client_config=config["indi_client"])
 
         try:
             #try to get timezone from config file
-            self.gps = dict(latitude = self.config['observatory']['latitude'],
-                            longitude = self.config['observatory']['longitude'],
-                            elevation = self.config['observatory']['elevation'])
+            self.gps = dict(latitude=self.config['observatory']['latitude'],
+                            longitude=self.config['observatory']['longitude'],
+                            elevation=self.config['observatory']['elevation'])
         except:
             self.gps = None
 
@@ -124,11 +124,11 @@ class IndiMount(IndiDevice):
         """
         self.logger.debug('Setting ON_COORD_SET behaviour: {}'.format(
                           what_to_do))
-        self.set_switch('ON_COORD_SET', [what_to_do], sync=True, timeout=5)
+        self.set_switch('ON_COORD_SET', [what_to_do], sync=True, timeout=self.defaultTimeout)
 
     def abort_motion(self):
         self.logger.debug('Abort Motion')
-        self.set_switch('TELESCOPE_ABORT_MOTION', ['ABORT_MOTION'], sync=True, timeout=5)
+        self.set_switch('TELESCOPE_ABORT_MOTION', ['ABORT_MOTION'], sync=True, timeout=self.defaultTimeout)
 
     def park(self):
         self.logger.debug('Slewing to Park')
@@ -136,7 +136,7 @@ class IndiMount(IndiDevice):
 
     def unpark(self):
         self.logger.debug('unpark')
-        self.set_switch('TELESCOPE_PARK', ['UNPARK'], sync=True, timeout=5)
+        self.set_switch('TELESCOPE_PARK', ['UNPARK'], sync=True, timeout=self.defaultTimeout)
 
     def get_guide_rate(self):
         """
@@ -203,7 +203,7 @@ class IndiMount(IndiDevice):
         self.logger.debug(f"Setting mount slewing rate: {slew_rate} while "
                           f"dictionary is {slew_dict}")
         if slew_rate in slew_dict:
-            self.set_switch('TELESCOPE_SLEW_RATE', [slew_rate], sync=True, timeout=5)
+            self.set_switch('TELESCOPE_SLEW_RATE', [slew_rate], sync=True, timeout=self.defaultTimeout)
         else:
             msg = f"Trying to set mount slewing rate: {slew_rate} while "\
                   f"dictionary is {slew_dict}"

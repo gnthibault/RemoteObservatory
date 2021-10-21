@@ -7,7 +7,6 @@ import logging
 import numpy as np
 
 # Indi stuff
-import PyIndi
 from helper.IndiDevice import IndiDevice
 #from helper.IndiClient import IndiClientGlobalBlobEvent
 
@@ -57,8 +56,10 @@ class IndiCamera(IndiDevice):
             cfg = config['focuser']
             focuser_name = cfg['module']
             focuser = load_module('Focuser.'+focuser_name)
+            #TODO TN, we need to better handle optional connection of focuser
             self.focuser = getattr(focuser, focuser_name)(
-                logger=None, config=cfg, connect_on_create=connect_on_create)
+                logger=None, config=cfg, connect_on_create=True)
+            #    logger=None, config=cfg, connect_on_create=connect_on_create)
         except Exception as e:
             logger.warning(f"Cannot load focuser module: {e}")
             self.focuser = None
@@ -182,7 +183,7 @@ class IndiCamera(IndiDevice):
 
 
     def abort_shoot(self, sync=True):
-        self.set_number('CCD_ABORT_EXPOSURE', {'ABORT': 1}, sync=sync, timeout=5)
+        self.set_number('CCD_ABORT_EXPOSURE', {'ABORT': 1}, sync=sync, timeout=self.defaultTimeout)
 
     def launch_streaming(self):
         self.set_switch('VIDEO_STREAM', ['ON'])
@@ -217,7 +218,7 @@ class IndiCamera(IndiDevice):
             HEIGHT: Frame width in pixels
             ex: cam.set_roi({'X':256, 'Y':480, 'WIDTH':512, 'HEIGHT':640})
         """
-        self.set_number('CCD_FRAME', roi, sync=True, timeout=5)
+        self.set_number('CCD_FRAME', roi, sync=True, timeout=self.defaultTimeout)
 
     def get_dynamic(self):
         return self.get_number('CCD_INFO')['CCD_BITSPERPIXEL']
@@ -246,13 +247,13 @@ class IndiCamera(IndiDevice):
                            sync=True, timeout=1200)
 
     def set_cooling_on(self):
-        self.set_switch('CCD_COOLER', ['COOLER_ON'], sync=True, timeout=5)
+        self.set_switch('CCD_COOLER', ['COOLER_ON'], sync=True, timeout=self.defaultTimeout)
 
     def set_cooling_off(self):
-        self.set_switch('CCD_COOLER', ['COOLER_OFF'], sync=True, timeout=5)
+        self.set_switch('CCD_COOLER', ['COOLER_OFF'], sync=True, timeout=self.defaultTimeout)
 
     def set_gain(self, value):
-        self.set_number('CCD_GAIN', {'GAIN': value}, sync=True, timeout=5)
+        self.set_number('CCD_GAIN', {'GAIN': value}, sync=True, timeout=self.defaultTimeout)
 
     def get_gain(self):
         gain = self.get_number('CCD_GAIN')
@@ -268,11 +269,11 @@ class IndiCamera(IndiDevice):
         FRAME_DARK Take a dark frame exposure
         FRAME_FLAT Take a flat field frame exposure
         """
-        self.set_switch('CCD_FRAME_TYPE', [frame_type], sync=True, timeout=5)
+        self.set_switch('CCD_FRAME_TYPE', [frame_type], sync=True, timeout=self.defaultTimeout)
 
     def setUploadTo(self, upload_to='local'):
         uploadTo = IndiCamera.UploadModeDict[upload_to]
-        self.set_switch('UPLOAD_MODE', [uploadTo], sync=True, timeout=5)
+        self.set_switch('UPLOAD_MODE', [uploadTo], sync=True, timeout=self.defaultTimeout)
 
     # def getExposureRange(self):
     #     pv = self.getCCDControls('CCD_EXPOSURE', 'number')[0]

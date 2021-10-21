@@ -85,7 +85,6 @@ class IndiG11(IndiAbstractMount):
                          config=config,
                          connect_on_create=False)
 
-        self.connect_driver()
         self.set_startup_mode(mode='WARM_RESTART')
         self.connect()
         self.set_park_settings(mode='HOME')

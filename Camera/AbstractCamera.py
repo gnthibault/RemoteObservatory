@@ -38,11 +38,6 @@ class AbstractCamera(Base):
         return self._serial_number
 
     @property
-    def is_connected(self):
-        """ Is the camera available vai gphoto2 """
-        return self._connected
-
-    @property
     def file_extension(self):
         """ File extension for images saved by camera """
         return self._file_extension

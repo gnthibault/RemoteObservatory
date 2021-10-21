@@ -35,7 +35,7 @@ if __name__ == '__main__':
     #plt.axis('off')
     #plt.show()
 
-    nova = NovaAstrometryService(logger=logger,configFileName='local')
+    nova = NovaAstrometryService(configFileName='local')
     nova.login()
     t=io.BytesIO()
     f.writeto(t)

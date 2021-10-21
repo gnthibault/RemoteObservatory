@@ -4,7 +4,6 @@ import json
 import io
 
 #Indi stuff
-import PyIndi
 from Camera.IndiCamera import IndiCamera
 
 class IndiASI120MCCamera(IndiCamera):
@@ -19,7 +18,7 @@ class IndiASI120MCCamera(IndiCamera):
             config_filename = './conf_files/IndiASI120MCCamera.json'
 
         # device related intialization
-        IndiCamera.__init__(self, indi_client, logger=logger,
+        IndiCamera.__init__(self, indi_client,
                             config_filename=config_filename)
 
         # Finished configuring

@@ -4,7 +4,6 @@ import json
 import io
 
 #Indi stuff
-import PyIndi
 from Mount.IndiMount import IndiMount
 
 class IndiVirtualMount(IndiMount):
@@ -17,7 +16,7 @@ class IndiVirtualMount(IndiMount):
         logger.debug('Configuring Indi Virtual Mount')
 
         # device related intialization
-        IndiMount.__init__(self, indi_client, logger=logger,\
+        IndiMount.__init__(self, indi_client,\
           configFileName=configFileName)
 
         # Finished configuring

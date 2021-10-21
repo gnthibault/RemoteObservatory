@@ -42,13 +42,13 @@ if __name__ == '__main__':
     logging.config.fileConfig('logging.ini')
     logger = logging.getLogger('mainLogger')
 
-    obs = ShedObservatory(logger=logger)
+    obs = ShedObservatory()
 
     # ntp time server
-    servTime = NTPTimeService(logger=logger)
+    servTime = NTPTimeService()
     
     # ObservationPlanner
-    obs_planner = ObservationPlanner(logger=logger, ntpServ=servTime, obs=obs)
+    obs_planner = ObservationPlanner( ntpServ=servTime, obs=obs)
     #configFileName='test.json')
 
     # Precise time + duration

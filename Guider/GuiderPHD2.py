@@ -146,7 +146,7 @@ class GuiderPHD2(Base):
             self.disconnection_trig()
         else:
             self.force_kill_server()
-            if sock is not None:
+            if self.sock is not None:
                 self.sock.close()
             self.disconnection_trig()
 

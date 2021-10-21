@@ -7,9 +7,7 @@ import logging
 import numpy as np
 
 # Indi stuff
-import PyIndi
 from helper.IndiDevice import IndiDevice
-
 
 class IndiFocuser(IndiDevice):
     """
@@ -46,7 +44,7 @@ class IndiFocuser(IndiDevice):
         logger.debug(f"Indi Focuser, focuser name is: {config['focuser_name']}")
 
         # device related intialization
-        IndiDevice.__init__(self, logger=logger,
+        IndiDevice.__init__(self,
                             device_name=config['focuser_name'],
                             indi_client_config=config["indi_client"])
         if connect_on_create:
@@ -56,14 +54,16 @@ class IndiFocuser(IndiDevice):
         self.logger.debug('Indi Focuser configured successfully')
 
     def initialize(self):
-        self._setup_indi_client()
-        self.connect_client()
-        self.connect_driver()
+        """
+        This is not as simple a just connecting, because we must also set some
+        specific values
+        :return:
+        """
+        self.connect()
         self.set_port()
-        self.connect_device()
 
     def set_port(self):
-        self.set_text("DEVICE_PORT", {"PORT": self.port})
+        self.set_text("DEVICE_PORT", {"PORT": self.port}, sync=True, timeout=self.defaultTimeout)
 
     def on_emergency(self):
         self.logger.debug('Indi Focuser: on emergency routine started...')
@@ -81,7 +81,7 @@ class IndiFocuser(IndiDevice):
         self.logger.debug(f"{self}  moving to position {position}")
         self.set_number('ABS_FOCUS_POSITION', #REL_FOCUS_POSITION
                         {'FOCUS_ABSOLUTE_POSITION': np.float64(position)}, #FOCUS_RELATIVE_POSITION
-                        sync=True)
+                        sync=True, timeout=self.defaultTimeout)
         new_position = self.get_position()
         self.logger.debug(f"{self} Now position is {new_position}")
         return new_position

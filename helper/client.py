@@ -43,6 +43,7 @@ class INDIClient:
 
     def __init__(self, host="localhost", port=7624, read_width=30000):
         self.running = False
+        self.client_connecting = False
         self.reader = None
         self.writer = False
         self.to_indiQ = asyncio.Queue() # Not threadsafe, use janus or aioprocessing if you want to use it directly
@@ -123,7 +124,7 @@ class INDIClient:
             # except asyncio.TimeoutError:
             #     continue
             except asyncio.queues.QueueEmpty:
-                await asyncio.sleep(0.1)
+                await asyncio.sleep(0)
                 continue
             try:
                 logging.debug(f"Writing this to indi {to_indi}")

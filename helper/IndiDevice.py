@@ -56,14 +56,6 @@ class IndiDevice(Base, device):
         self.interfaces = None
         self.debug = debug
 
-    def connect(self):
-        """
-        Enable device connection
-        """
-        self.set_switch("CONNECTION", ["CONNECT"])
-        self.is_connected = True
-        return
-
     def disconnect(self):
         """
         Disable device connection
@@ -82,11 +74,17 @@ class IndiDevice(Base, device):
     def name(self):
         return self.device_name
 
+    async def registering_runner(self):
+        self.indi_client.device_subscriptions.append(self.parse_xml_str)
+        await asyncio.sleep(0)
+
     def register_device_to_client(self):
         self.logger.debug(f"IndiDevice: asking indi_client to listen for device {self.device_name}")
-        self.indi_client.ioloop.call_soon_threadsafe(
-            lambda x: self.indi_client.device_subscriptions.append(x),
-            self.parse_xml_str)
+        #self.indi_client.ioloop.call_soon_threadsafe(
+        #    lambda x: self.indi_client.device_subscriptions.append(x),
+        #    self.parse_xml_str)
+        future = asyncio.run_coroutine_threadsafe(self.registering_runner(), self.indi_client.ioloop)
+        _ = future.result() # This is just sync
 
     def _setup_interfaces(self):
         """
@@ -136,7 +134,7 @@ class IndiDevice(Base, device):
         """
         connect client to indi server
         """
-        self.indi_client.connect_to_server(timeout=self.defaultTimeout, sync=True)
+        self.indi_client.connect_to_server(sync=True, timeout=self.defaultTimeout)
 
     # def connect_driver(self):
     #     # Try first to ask server to give us the device handle, through client
@@ -151,6 +149,8 @@ class IndiDevice(Base, device):
         self.indi_client.trigger_get_properties()
         # set the corresponding switch to on
         self.set_switch('CONNECTION', ['CONNECT'], sync=True, timeout=5)
+        # Keep track of status
+        self.is_connected = True
 
     def connect(self):
         # setup indi client
@@ -169,7 +169,8 @@ class IndiDevice(Base, device):
             return
         self.logger.info(f"Disconnecting from device {self.device_name}")
         # set the corresponding switch to off
-        self.set_switch('CONNECTION', on_switches=['DISCONNECT'])
+        self.set_switch('CONNECTION', on_switches=['DISCONNECT'], sync=True, timeout=self.defaultTimeout)
+        self.is_connected = False
 
     def get_switch(self, name):
         return self.get_vector_dict(name)
@@ -181,6 +182,9 @@ class IndiDevice(Base, device):
         number_dict = self.get_vector_dict(name)
         number_dict.update({k: float(v) for k, v in number_dict.items()})
         return number_dict
+
+    def get_light(self, name):
+        return self.get_vector_dict(name)
 
     def set_switch(self, switch_name, on_switches=[], off_switches=[],
                    sync=True, timeout=None):

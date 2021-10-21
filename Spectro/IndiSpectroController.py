@@ -7,7 +7,6 @@ import logging
 import numpy as np
 
 # Indi stuff
-import PyIndi
 from helper.IndiDevice import IndiDevice
 
 
@@ -35,7 +34,7 @@ class IndiSpectroController(IndiDevice):
                      f"{config['controller_name']}")
 
         # device related intialization
-        IndiDevice.__init__(self, logger=logger,
+        IndiDevice.__init__(self,
                             device_name=config['controller_name'],
                             indi_client_config=config["indi_client"])
         if connect_on_create:
@@ -47,7 +46,6 @@ class IndiSpectroController(IndiDevice):
     def initialize(self):
         self._setup_indi_client()
         self.connect_client()
-        self.connect_driver()
         self.set_port()
         self.connect_device()
 

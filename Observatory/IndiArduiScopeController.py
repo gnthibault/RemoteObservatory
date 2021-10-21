@@ -43,7 +43,7 @@ class IndiScopeController(IndiDevice, Base):
                      f"{self.port}")
       
         # device related intialization
-        IndiDevice.__init__(self, logger=logger,
+        IndiDevice.__init__(self, ,
                             device_name=config["controller_name"],
                             indi_client_config=config["indi_client"])
         if connect_on_create:

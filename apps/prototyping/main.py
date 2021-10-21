@@ -50,15 +50,15 @@ if __name__ == '__main__':
     logger = logging.getLogger('mainLogger')
 
     # Instanciate object of interest
-    obs = ShedObservatory(logger=logger)
+    obs = ShedObservatory()
 
     #test ntp time server
-    servTime = NTPTimeService(logger=logger)
+    servTime = NTPTimeService()
     ntpTime = servTime.get_utc()
     #print('Current Time from NTP is : {}'.format(ntpTime))
 
     # test Weather service
-    servWeather = WUGWeatherService(logger=logger)
+    servWeather = WUGWeatherService()
     servWeather.setgps_coordinates(obs.get_gps_coordinates())
     #servWeather.printEverything()
     #print('Temperature is ',str(servWeather.getTemp_c()))
@@ -71,22 +71,22 @@ if __name__ == '__main__':
     #print('Weather quality is ',str(servWeather.getWeatherQuality()))
 
     # ObservationPlanner
-    obsPlanner = ObservationPlanner(logger=logger, ntpServ=servTime, obs=obs)
+    obsPlanner = ObservationPlanner( ntpServ=servTime, obs=obs)
 
     # test indi client
-    indiCli = IndiClient(logger=logger)
+    indiCli = IndiClient()
     indiCli.connect()
 
     # test indi Device
-    indiDevice = IndiDevice(logger=logger,device_name='CCD Simulator',\
+    indiDevice = IndiDevice(device_name='CCD Simulator',\
         indi_client=indiCli)
 
     # test indi virtual camera class
-    cam = IndiVirtualCamera(logger=logger, indi_client=indiCli,\
+    cam = IndiVirtualCamera( indi_client=indiCli,\
         configFileName=None, connect_on_create=False)
 
     # test indi camera class on a old EOS350D
-    #cam = IndiEos350DCamera(logger=logger, indi_client=indiCli,\
+    #cam = IndiEos350DCamera( indi_client=indiCli,\
     #  configFileName='IndiEos350DCamera.json', connect_on_create=False)
 
     cam.connect()
@@ -97,18 +97,18 @@ if __name__ == '__main__':
     #fits = cam.get_received_image()
 
     # Now test filterWheel
-    filterWheel = IndiFilterWheel(logger=logger, indi_client=indiCli,
+    filterWheel = IndiFilterWheel( indi_client=indiCli,
                                   configFileName=None,
                                   connect_on_create=True)
     filterWheel.initFilterWheelConfiguration()
     print('Filterwheel is {}'.format(filterWheel))
 
     # Now test Mount
-    mount = IndiMount(logger=logger, indi_client=indiCli,
+    mount = IndiMount( indi_client=indiCli,
                       configFileName=None, connect_on_create=True)
 
     # test nova Astrometry service
-    #nova = NovaAstrometryService(logger=logger,configFileName='local')
+    #nova = NovaAstrometryService(configFileName='local')
     #nova.login()
     #t=io.BytesIO()
     #fits.writeto(t)
@@ -122,10 +122,10 @@ if __name__ == '__main__':
     #nova.printRaDecWCSwithSIPCorrectedImage('radec.png')
 
     # Write fits file with all interesting metadata:
-    #writer = FitsWriter(logger=logger, observatory=obs, servWeather=servWeather,
+    #writer = FitsWriter( observatory=obs, servWeather=servWeather,
     #  servSun=servSun, servMoon=servMoon, servTime=servTime,
     #  servAstrometry=nova)
-    writer = FitsWriter(logger=logger, observatory=obs, filterWheel=filterWheel)
+    writer = FitsWriter( observatory=obs, filterWheel=filterWheel)
    
     #Basic way to define async writing
     #hwriter = lambda f,i : writer.writeWithTag(f,i)
@@ -139,7 +139,7 @@ if __name__ == '__main__':
     autoDark = AutoDarkCalculator()
 
     # Test a Shooting Sequence
-    #seq = ShootingSequence(logger=logger, camera=cam, target='M51', exposure=1,
+    #seq = ShootingSequence( camera=cam, target='M51', exposure=1,
     #    count=5,
     #    onStarted=[lambda x : print('On Started')],
     #    onEachStarted=[lambda x,i : print('On Each Started')],
@@ -150,18 +150,18 @@ if __name__ == '__main__':
     #seq.run()
 
     # Test a Dark sequence
-    #darkSeq = AutoDarkSequence(logger=logger, camera=cam,
+    #darkSeq = AutoDarkSequence( camera=cam,
     #                           autoDarkCalculator=autoDark, count=5,
     #                           onEachFinished=[aWriter.AsyncWriteImage])
     #darkSeq.run()
 
     # More basic shooting sequence
-    #seq2 = ShootingSequence(logger=logger, camera=cam, target='M51',
+    #seq2 = ShootingSequence( camera=cam, target='M51',
     #                        exposure=1,
     #    count=5,onEachFinished=[aWriter.AsyncWriteImage])
 
     # Sequence Builder
-    seqB = SequenceBuilder(logger=logger, camera=cam, filterWheel=filterWheel,
+    seqB = SequenceBuilder( camera=cam, filterWheel=filterWheel,
                            observatory=obs, mount=mount, asyncWriter=aWriter,
                            useAutoDark=True, useAutoFlat=True)
 

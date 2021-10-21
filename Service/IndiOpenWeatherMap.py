@@ -36,7 +36,7 @@ class IndiOpenWeatherMap(IndiWeather):
                      f"{config['service_name']}")
 
         # device related intialization
-        super().__init__(logger=logger, config=config, serv_time=serv_time,
+        super().__init__( config=config, serv_time=serv_time,
                          connect_on_create=False, loop_on_create=False)
 
         # actual specific attributes of that class

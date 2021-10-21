@@ -4,9 +4,6 @@ import json
 import logging
 import traceback
 
-# Indi stuff
-import PyIndi
-
 # Astropy stuff
 from astropy import units as u
 from astropy.coordinates import SkyCoord, FK5
@@ -89,18 +86,13 @@ class IndiAbstractMount(IndiMount, AbstractMount):
 ###############################################################################
 # Mandatory overriden methods
 ###############################################################################
-    def connect_driver(self):  # pragma: no cover
-        IndiMount.connect_driver(self)
-
     def connect(self):  # pragma: no cover
         IndiMount.connect(self)
-        self._is_connected = True
 
     def disconnect(self):
         if not self.is_parked:
             self.park()
-
-        self._is_connected = False
+        IndiMount.disconnect(self)
 
     def initialize(self, *arg, **kwargs):  # pragma: no cover
         self.logger.debug(f"Initializing mount with args {arg}, {kwargs}")

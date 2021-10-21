@@ -12,7 +12,7 @@ if __name__ == '__main__':
     logger = logging.getLogger('mainLogger')
 
     # ntp time server
-    servTime = NTPTimeService(logger=logger)
+    servTime = NTPTimeService()
     
     print('UTC from NTP is: {}'.format(servTime.get_utc()))
     print('Time from NTP is: {}'.format(servTime.getTimeFromNTP()))
