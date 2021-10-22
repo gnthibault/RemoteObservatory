@@ -173,15 +173,15 @@ class IndiAAGCloudWatcher(threading.Thread, IndiDevice):
         # Generic indi state for this property, can be OK, IDLE, BUSY, ALERT
         data["state"] = features["state"]
         # name: WEATHER_FORECAST, label: Weather, format: '%4.2f'
-        data["WEATHER_FORECAST"] = features["WEATHER_FORECAST"]['value']
+        data["WEATHER_FORECAST"] = features["WEATHER_FORECAST"]
         # name: WEATHER_TEMPERATURE, label: Temperature (C), format: '%4.2f'
-        data["WEATHER_TEMPERATURE"] = features["WEATHER_TEMPERATURE"]['value']
+        data["WEATHER_TEMPERATURE"] = features["WEATHER_TEMPERATURE"]
         # name: WEATHER_WIND_SPEED, label: Wind (kph), format: '%4.2f'
-        data["WEATHER_WIND_SPEED"] = features["WEATHER_WIND_SPEED"]['value']
+        data["WEATHER_WIND_SPEED"] = features["WEATHER_WIND_SPEED"]
         # name: WEATHER_WIND_GUST, label: Gust (kph), format: '%4.2f'
-        data["WEATHER_WIND_GUST"] = features["WEATHER_WIND_GUST"]['value']
+        data["WEATHER_WIND_GUST"] = features["WEATHER_WIND_GUST"]
         # name: WEATHER_RAIN_HOUR, label: Precip (mm), format: '%4.2f'
-        data["WEATHER_RAIN_HOUR"] = features["WEATHER_RAIN_HOUR"]['value']
+        data["WEATHER_RAIN_HOUR"] = features["WEATHER_RAIN_HOUR"]
         data["safe"] = self._make_safety_decision(data)
         return data
 

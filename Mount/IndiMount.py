@@ -165,8 +165,8 @@ class IndiMount(IndiDevice):
         guide_dict = self.get_number('GUIDE_RATE')
         self.logger.debug(f"Got mount guidinging rate: {guide_dict}")
         guide_rate = {}
-        guide_rate['NS'] = guide_dict['GUIDE_RATE_NS']['value']
-        guide_rate['WE'] = guide_dict['GUIDE_RATE_WE']['value']
+        guide_rate['NS'] = guide_dict['GUIDE_RATE_NS']
+        guide_rate['WE'] = guide_dict['GUIDE_RATE_WE']
         self.logger.debug(f"Got mount guiding rate: {guide_rate}")
         return guide_rate
 

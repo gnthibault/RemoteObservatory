@@ -70,24 +70,24 @@ class IndiOpenWeatherMap(IndiWeather):
         # Generic indi state for this property, can be OK, IDLE, BUSY, ALERT
         data["state"] = features["state"]
         # name: WEATHER_FORECAST, label: Weather, format: '%4.2f'
-        data["WEATHER_FORECAST"] = features["WEATHER_FORECAST"]['value']
+        data["WEATHER_FORECAST"] = features["WEATHER_FORECAST"]
         # name: WEATHER_TEMPERATURE, label: Temperature (C), format: '%4.2f'
-        data["WEATHER_TEMPERATURE"] = features["WEATHER_TEMPERATURE"]['value']
+        data["WEATHER_TEMPERATURE"] = features["WEATHER_TEMPERATURE"]
         # name: WEATHER_PRESSURE, label: Pressure (hPa), format: '%4.2f'
-        data["WEATHER_PRESSURE"] = features["WEATHER_TEMPERATURE"]['value']
+        data["WEATHER_PRESSURE"] = features["WEATHER_TEMPERATURE"]
         # name: WEATHER_HUMIDITY, label: Humidity (%), format= '%4.2f'
-        data["WEATHER_HUMIDITY"] = features["WEATHER_HUMIDITY"]['value']
+        data["WEATHER_HUMIDITY"] = features["WEATHER_HUMIDITY"]
         # name: WEATHER_WIND_SPEED, label: Wind (kph), format: '%4.2f'
-        data["WEATHER_WIND_SPEED"] = features["WEATHER_WIND_SPEED"]['value']
+        data["WEATHER_WIND_SPEED"] = features["WEATHER_WIND_SPEED"]
         # name: WEATHER_RAIN_HOUR, label: Precip (mm), format: '%4.2f'
-        data["WEATHER_RAIN_HOUR"] = features["WEATHER_RAIN_HOUR"]['value']
+        data["WEATHER_RAIN_HOUR"] = features["WEATHER_RAIN_HOUR"]
         # name: WEATHER_SNOW_HOUR, label: Precip (mm), format: '%4.2f'
-        data["WEATHER_SNOW_HOUR"] = features["WEATHER_SNOW_HOUR"]['value']
+        data["WEATHER_SNOW_HOUR"] = features["WEATHER_SNOW_HOUR"]
         # name: WEATHER_CLOUD_COVER, label: Clouds (%), format: '%4.2f'
-        data["WEATHER_CLOUD_COVER"] = features["WEATHER_CLOUD_COVER"]['value']
+        data["WEATHER_CLOUD_COVER"] = features["WEATHER_CLOUD_COVER"]
         # name: WEATHER_CODE, label: Status code, format = '%4.2f'
         # min: 200, max: 810
-        data["WEATHER_CODE"] = features["WEATHER_CODE"]['value']
+        data["WEATHER_CODE"] = features["WEATHER_CODE"]
         data["safe"] = self._make_safety_decision(data)
         return data
 
