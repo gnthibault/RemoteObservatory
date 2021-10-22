@@ -68,16 +68,19 @@ class GuiderPHD2(Base):
         super().__init__()
         if config is None:
             config = dict(
-                host = "localhost",
-                port = 4400,
+                host="localhost",
+                port=4400,
                 publish_port = 6510,
-                profile_id = '1',
-                exposure_time_sec = '3',
-                settle = {
+                profile_id='1',
+                exposure_time_sec='3',
+                settle={
                     "pixels": 1.5,
                     "time": 10,
-                    "timeout": 60}
-          )
+                    "timeout": 60},
+                dither={
+                    "pixels": 3.0,
+                    "ra_only": False}
+            )
 
         self.host = config["host"]
         self.port = config["port"]
@@ -115,8 +118,7 @@ class GuiderPHD2(Base):
         self.shutdown()
 
     def connect(self):
-        self.logger.info("Connect to server PHD2 {}:{}".format(self.host,
-                         self.port))
+        self.logger.info(f"Connect to server PHD2 {self.host}:{self.port}")
         # Create a socket (SOCK_STREAM means a TCP socket)
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.sock.settimeout(SOCKET_TIMEOUT)
@@ -125,14 +127,12 @@ class GuiderPHD2(Base):
             # Connect to server and send data
             #self.session = requests.sessions.Session()
             self.sock.connect((self.host, self.port))
-            self._receive({"Event":"Version"})
-            self.connection_trig()
-            self._receive({"Event":"AppState"}) # get state
+            self._receive({"Event": "AppState"}) # get state
             # we make sure that we are starting from a "proper" state
             self.reset_profile(self.profile_id)
             self.reset_guiding()
         except Exception as e:
-            msg = "PHD2 error connecting: {}".format(e)
+            msg = f"PHD2 error connecting: {e}"
             self.logger.error(msg)
             raise GuidingError(msg)
 
@@ -735,7 +735,7 @@ class GuiderPHD2(Base):
                 raise GuidingError(msg)
             # Check if we receive termination symbol
             msgs = self.recv_buffer.split('\r\n')
-            if len(msgs) <= 1 :
+            if len(msgs) <= 1:
                 # no termination symbol has been received yet, continue
                 self.recv_buffer = msgs[0]
             else:
@@ -747,7 +747,7 @@ class GuiderPHD2(Base):
         event = ""
         expected_event = ""
         expected_status = False
-        for msg in msgs[:-1]:          
+        for msg in msgs[:-1]:
             try:
                 event = json.loads(msg)
                 self.logger.debug(f"Received event: {event}")
@@ -809,6 +809,7 @@ class GuiderPHD2(Base):
         """
         self.logger.debug(f"Received version {event['PHDVersion']}:"
             f"{event['PHDSubver']} - msg ver {event['MsgVersion']}")
+        self.connection_trig()
 
     def _handle_ConfigurationChange(self, event):
         """Waiting for more info: https://github.com/OpenPHDGuiding/phd2/issues/845
