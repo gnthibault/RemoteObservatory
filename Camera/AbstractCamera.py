@@ -24,6 +24,7 @@ class AbstractCamera(Base):
 
         self.serv_time = serv_time
         self.is_primary = primary
+        self.camera_name = kwargs["camera_name"]
         self.filter_type = 'no-filter'
         self._file_extension = 'fits'
         self._serial_number = '0123456789'
@@ -99,7 +100,7 @@ class AbstractCamera(Base):
         # Process the exposure once readout is complete
         t = Thread(target=self.process_exposure, args=(metadata,
                    observation_event, exposure_event))
-        t.name = f"{self.name}Thread"
+        t.name = f"{self.camera_name}Thread"
         t.start()
 
         return observation_event
@@ -135,14 +136,14 @@ class AbstractCamera(Base):
             file_path = filename
 
         image_id = '{}_{}_{}'.format(
-            self.name,
+            self.camera_name,
             self.uid,
             start_time
         )
         self.logger.debug("image_id: {}".format(image_id))
 
         sequence_id = '{}_{}_{}'.format(
-            self.name,
+            self.camera_name,
             self.uid,
             observation.seq_time
         )
@@ -158,7 +159,7 @@ class AbstractCamera(Base):
 
         # Camera metadata
         metadata = {
-            'camera_name': self.name,
+            'camera_name': self.camera_name,
             'observation_id': observation.id,
             'camera_uid': self.uid,
             'target_name': observation.name,
@@ -192,7 +193,7 @@ class AbstractCamera(Base):
         # Process the exposure once readout is complete
         t = Thread(target=self.process_calibration, args=(metadata,
             calib_event, exposure_event))
-        t.name = f"{self.name}_Thread"
+        t.name = f"{self.camera_name}_Thread"
         t.start()
 
         return calib_event
@@ -247,7 +248,7 @@ class AbstractCamera(Base):
 
         # Camera metadata
         metadata = {
-            'camera_name': self.name,
+            'camera_name': self.camera_name,
             'camera_uid': self.uid,
             'calibration_name': calibration_name,
             'file_path': file_path,
