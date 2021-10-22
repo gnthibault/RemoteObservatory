@@ -41,7 +41,7 @@ class INDIClient:
     its data flow.  """
 
 
-    def __init__(self, host="localhost", port=7624, read_width=30000):
+    def __init__(self, host="localhost", port=7624, read_width=1024*1024):
         self.running = False
         self.client_connecting = False
         self.reader = None
@@ -90,6 +90,10 @@ class INDIClient:
     async def xml_from_indiserver(self, data):
         raise NotImplemented("This method should be implemented by the subclass")
 
+    async def read_from_stream(self):
+        data = await self.reader.read(self.read_width)
+        return data
+
     async def read_from_indiserver(self, timeout):
         """Read data from self.reader and then call
         xml_from_indiserver with this data as an arg."""
@@ -98,7 +102,7 @@ class INDIClient:
                 if self.reader.at_eof():
                     raise Exception("INDI server closed")
                 # Read data from indiserver with a timeout, so that we don't block loop
-                data = await asyncio.wait_for(self.reader.read(self.read_width),
+                data = await asyncio.wait_for(self.read_from_stream(),
                                               timeout=timeout)
             except asyncio.TimeoutError:
                 continue

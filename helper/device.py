@@ -13,6 +13,7 @@ import time
 import traceback
 import threading
 import xml.parsers.expat
+from xml.parsers.expat import ExpatError
 
 """
 The Base classes for the pyINDI device. Definitions
@@ -1593,7 +1594,12 @@ class device(ABC):
         """
         """
         try:
-            if vector.is_valid:
+            # This is way to verbose, even in debug mode
+            # if self.device_name == "Telescope Simulator":
+            #     d = {e.name: e._value for e in vector.elements}
+            #     logging.debug(
+            #         f"UPDATE Got vector {d} with light {vector._light._value} and transfertype {vector.tag.get_transfertype()} and valid {vector.is_valid()}")
+            if vector.is_valid():
                 if vector.device != self.device_name:
                     return
                 if vector.tag.is_message():
@@ -1630,6 +1636,7 @@ class device(ABC):
                         with self.property_vectors_lock:
                             self.property_vectors[vector.name].updateByVector(vector)
                     except KeyError:
+
                         with self.property_vectors_lock:
                             self.property_vectors[vector.name] = vector
             else:
@@ -1693,6 +1700,7 @@ class device(ABC):
         """
         obj = self._factory.create(name, attrs)
         if obj is None:
+            logging.warning(f"Received new element with name/attr: {name, attrs}")
             return
         if 'message' in attrs:
             logging.warning(
@@ -1715,8 +1723,12 @@ class device(ABC):
         """
         if len(xml_str) > 0:
             # This is just too verbose, even for debug
-            #logging.debug(f"Device {self.device_name} just received following str {xml_str}")
-            self.expat.Parse(xml_str, 0)
+            # if self.device_name == "Telescope Simulator":
+            #     logging.debug(f"Device {self.device_name} just received following str {xml_str}")
+            try:
+                self.expat.Parse(xml_str, 0)
+            except ExpatError as e:
+                logging.error(f"Parsing error {e}")
         await asyncio.sleep(0.1)
 
     def send_vector(self, vector):
