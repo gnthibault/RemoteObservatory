@@ -206,6 +206,7 @@ PYTHONPATH=. python3 ./apps/launch_arduino_capture.py
 * the publisher_port parameter in weather config should be refactored with messaging parameter
 * PHD2 is not closed properly / two instance might be launched which cause error
 * Transform the Manager.acquire_calibration into a generator, so that every acquisition is yielded toward the State, and it may issue messages in the meantime
+* AbstractCamera (and potentially other classes based on BASE) have its self.config attribute overwritten by inherited classes... that's bad
 
 
 

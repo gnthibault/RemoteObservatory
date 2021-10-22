@@ -112,7 +112,7 @@ class AbstractCamera(Base):
 
         # Get the filepath
         image_dir = "{}/targets/{}/{}/{}".format(
-            self.config['directories']['images'],
+            self._image_dir,
             observation.name,
             self.uid,
             observation.seq_time,
@@ -209,7 +209,7 @@ class AbstractCamera(Base):
 
         # Get the filepath
         image_dir = "{}/calibration/{}/{}".format(
-            self.config['directories']['images'],
+            self._image_dir,
             calibration_name,
             self.uid
         )
@@ -321,7 +321,7 @@ class AbstractCamera(Base):
         self.logger.debug(f"Processing {image_id}")
 
         try:
-            latest_path = f"{self.config['directories']['images']}/latest.jpg"
+            latest_path = f"{self._image_dir}/latest.jpg"
             fits_utils.update_thumbnail(file_path, latest_path)
         except Exception as e:
             self.logger.warning(f"Problem with extracting pretty image: {e}")

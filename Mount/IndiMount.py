@@ -191,9 +191,9 @@ class IndiMount(IndiDevice):
         slew_dict = self.get_switch('TELESCOPE_SLEW_RATE')
         self.logger.debug(f"Got mount slewing rate dict: {slew_dict}")
         if len(slew_dict) > 0:
-            return slew_dict
+            return [k for k, v in slew_dict.items() if v == "On"][0]
         else:
-            return {'name': None, 'label': None, 'value': None}
+            return None
 
     def set_slew_rate(self, slew_rate='3x'):
         """
@@ -233,9 +233,9 @@ class IndiMount(IndiDevice):
         track_dict = self.get_switch('TELESCOPE_TRACK_MODE')
         self.logger.debug(f"Got mount tracking rate dict: {track_dict}")
         if len(track_dict) > 0:
-            return track_dict
+            return [k for k, v in track_dict.items() if v == "On"][0]
         else:
-            return {'name': None, 'label': None, 'value': None}
+            return None
 
     # This does not work with simulator
     def set_track_mode(self, track_mode='TRACK_SIDEREAL'):

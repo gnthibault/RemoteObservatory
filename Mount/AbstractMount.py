@@ -84,11 +84,11 @@ class AbstractMount(Base):
 
             track_mode = self.get_track_mode()
             if track_mode is not None:
-                status['track_mode'] = track_mode['name']
+                status['track_mode'] = track_mode
 
             slew_rate = self.get_slew_rate()
             if slew_rate is not None:
-                status['slew_rate'] = slew_rate['name']
+                status['slew_rate'] = slew_rate
 
             current_coord = self.get_current_coordinates()
             if current_coord is not None:
