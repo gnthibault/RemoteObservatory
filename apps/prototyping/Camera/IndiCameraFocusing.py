@@ -65,5 +65,3 @@ if __name__ == '__main__':
     #autofocus_event = cam.autofocus_async(coarse=True)
     autofocus_event = cam.autofocus_async(coarse=False)
     autofocus_event.wait()
-
-

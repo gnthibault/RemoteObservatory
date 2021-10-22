@@ -43,22 +43,24 @@ class HostTimeService(BaseService):
                 utc_test = datetime.utcnow()
                 test = utc_test.astimezone(self.timezone)
             except Exception as e:
-                self.logger.warning('HostTimeService: wrong tz format provided'
-                                    ' :{}'.format(e))
+                self.logger.warning(f"HostTimeService: wrong tz format provided {e}")
                 self.tz = None
             else:
                 self.tz = tz
         else:
             try:
-                # Now find the timezone from the gps coordinate
-                tzw = tzwhere.tzwhere()
-                timezone_str = tzw.tzNameAt(self.gps['latitude'], 
-                                            self.gps['longitude'])
+                timezone_str = self.config['observatory']['timezone']
                 self.tz = pytz.timezone(timezone_str)
             except Exception as e:
-                self.logger.warning('HostTimeService: cannot get tz from config'
-                                    ' :{}'.format(e))
-                self.tz = None
+                try:
+                    # Now find the timezone from the gps coordinate
+                    tzw = tzwhere.tzwhere()
+                    timezone_str = tzw.tzNameAt(self.gps['latitude'],
+                                                self.gps['longitude'])
+                    self.tz = pytz.timezone(timezone_str)
+                except Exception as e:
+                    self.logger.warning(f"HostTimeService: cannot get tz from config {e}")
+                    self.tz = None
 
         # Finished configuring
         self.logger.debug('Configured Host Time Service successfully')

@@ -565,7 +565,7 @@ class RemoteObservatoryFSM(StateMachine, Base):
         
 if __name__ == '__main__':
     # load the logging configuration
-    #logging.config.fileConfig('logging.ini')
+    logging.config.fileConfig('logging.ini')
     m = Manager()
     r = RemoteObservatoryFSM(manager=m)
     r.initialize()

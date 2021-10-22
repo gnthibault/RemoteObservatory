@@ -56,12 +56,14 @@ class ShedObservatory(Base):
         self.investigator = config['investigator']
         
         # Now find the timezone from the gps coordinate
-        tzw = tzwhere.tzwhere()
-        timezone_str = tzw.tzNameAt(self.gps_coordinates['latitude'],
-                                    self.gps_coordinates['longitude'])
+        try:
+            timezone_str = self.config['observatory']['timezone']
+        except Exception as e:
+            tzw = tzwhere.tzwhere()
+            timezone_str = tzw.tzNameAt(self.gps_coordinates['latitude'],
+                                        self.gps_coordinates['longitude'])
         self.timezone = pytz.timezone(timezone_str)
-        self.logger.debug('Found timezone for observatory: {}'.format(
-                          self.timezone.zone))
+        self.logger.debug(f"Found timezone for observatory: {self.timezone.zone}")
 
         # If scope controller is specified in the config, load
         try:

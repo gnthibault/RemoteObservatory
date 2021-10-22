@@ -109,7 +109,7 @@ class IndiClient(SingletonIndiClientHolder, INDIClient, Base):
         try:
             assert (future.result(timeout) is True)
         except concurrent.futures.TimeoutError:
-            self.logger.error("Waiting for predicate took too long...")
+            self.logger.error(f"Waiting for predicate {predicate_checker} took too long...")
             future.cancel()
             raise RuntimeError
         except Exception as exc:
@@ -159,7 +159,8 @@ class IndiClient(SingletonIndiClientHolder, INDIClient, Base):
         #self.ioloop.call_soon_threadsafe(self.to_indiQ.put_nowait, xml.encode())
 
     async def xml_from_indiserver(self, data):
-        self.logger.debug(f"IndiClient just received data {data}")
+        #self.logger.debug(f"IndiClient just received data {data}")
+        # This is way too verbose, even in debug mode
         for sub in self.device_subscriptions:
             asyncio.run_coroutine_threadsafe(sub(data), self.ioloop)
         await asyncio.sleep(0.01)

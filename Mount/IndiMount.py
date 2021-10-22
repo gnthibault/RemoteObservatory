@@ -131,6 +131,10 @@ class IndiMount(IndiDevice):
         self.set_switch('TELESCOPE_ABORT_MOTION', ['ABORT_MOTION'], sync=True, timeout=self.defaultTimeout)
 
     def park(self):
+        """
+        Timeout is much higher here, because the telescope might need to move to its parking position at a low speed
+        :return:
+        """
         self.logger.debug('Slewing to Park')
         self.set_switch('TELESCOPE_PARK', ['PARK'], sync=True, timeout=180)
 

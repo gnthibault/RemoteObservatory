@@ -1714,7 +1714,8 @@ class device(ABC):
             file.
         """
         if len(xml_str) > 0:
-            logging.debug(f"Device {self.device_name} just received following str {xml_str}")
+            # This is just too verbose, even for debug
+            #logging.debug(f"Device {self.device_name} just received following str {xml_str}")
             self.expat.Parse(xml_str, 0)
         await asyncio.sleep(0.1)
 

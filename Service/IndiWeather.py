@@ -56,7 +56,7 @@ class IndiWeather(threading.Thread, IndiDevice):
         threading.Thread.__init__(self, target=self.serve)
         self._stop_event = threading.Event()
 
-        # we broadcast data throught a message queue style mecanism
+        # we broadcast data through a message queue style mechanism
         self.messaging = None
         self.publish_port = config["publish_port"]
 

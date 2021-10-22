@@ -120,7 +120,6 @@ class INDIClient:
                 # Read from queue with a timeout, so that we don't block loop
                 #to_indi = await asyncio.wait_for(self.to_indiQ.get(), timeout=0.1) #This was preventing subsequent call ?
                 to_indi = self.to_indiQ.get_nowait()
-                logging.debug(f"writing this to indi {to_indi}")
             # except asyncio.TimeoutError:
             #     continue
             except asyncio.queues.QueueEmpty:
