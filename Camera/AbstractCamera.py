@@ -135,14 +135,14 @@ class AbstractCamera(Base):
             file_path = filename
 
         image_id = '{}_{}_{}'.format(
-            self.config['name'],
+            self.name,
             self.uid,
             start_time
         )
         self.logger.debug("image_id: {}".format(image_id))
 
         sequence_id = '{}_{}_{}'.format(
-            self.config['name'],
+            self.name,
             self.uid,
             observation.seq_time
         )
