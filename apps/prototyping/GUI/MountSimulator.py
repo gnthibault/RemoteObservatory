@@ -1,8 +1,5 @@
 # Generic stuff
 
-# Numerical stuff
-import numpy as np
-
 # Meshcat stuff
 import meshcat
 
@@ -10,40 +7,35 @@ import meshcat
 from astropy import units as u
 from astropy.coordinates import SkyCoord
 
-# Local stuff: rendering tools
+# Local stuff: 3D rendering tools
+# from ScopeSimulator.Model3D import Model3D
 from ScopeSimulator.World3D import World3D
 
-# Local stuff : Observatory
-from Observatory.ShedObservatory import ShedObservatory
-from Service.NTPTimeService import NTPTimeService
-
-# Astropy stuff
-from astropy import units as u
-from astropy.coordinates import SkyCoord
-
 # Local stuff
-from ScopeSimulator import Model3D
-from helper.Indi3DSimulatorClient import Indi3DSimulatorClient
+# from helper.Indi3DSimulatorClient import Indi3DSimulatorClient
 from Mount.IndiMount import IndiMount
 from Observatory.ShedObservatory import ShedObservatory
 from Service.NTPTimeService import NTPTimeService
 
-
 class WholeSceneVizualizer():
-    def __init__(self, indi_client, gps_coord, observatory, serv_time):
-        self.indi_client = indi_client
+    def __init__(self, gps_coord, observatory, serv_time, indi_client):
         self.gps_coord = gps_coord
         self.observatory = observatory
         self.serv_time = serv_time
+        self.indi_client = indi_client
 
         # Create a new visualizer
         self.view3D = meshcat.Visualizer()
-
-        # Build all of the objects
-        self.mount3D = Model3D(
+        # Build the "base world" objects
+        self.world3D = World3D(
             view3D=self.view3D,
             gps_coordinates=self.observatory.get_gps_coordinates(),
             serv_time=self.serv_time)
+        # Build the telescope object
+        # self.telescope = Model3D(
+        #     view3D=self.view3D,
+        #     gps_coordinates=self.observatory.get_gps_coordinates(),
+        #     serv_time=self.serv_time)
 
     def run(self):
         ''' Keep in min that backend thread should not do anything because
@@ -52,56 +44,57 @@ class WholeSceneVizualizer():
 
         # We make sure that upon reception of new number from indiserver, the
         # actual virtual mount position gets updated
-        self.indi_client.register_number_callback(
-            device_name=self.mount.device_name,
-            vec_name='EQUATORIAL_EOD_COORD',
-            callback=self.update_coord)
+        # self.indi_client.register_number_callback(
+        #     device_name=self.mount.device_name,
+        #     vec_name='EQUATORIAL_EOD_COORD',
+        #     callback=self.update_coord)
 
         self.view3D.open()
 
     # callback for updating model
-    def update_coord(self, coord):
-        self.main_window.view3D.model.setHA(coord['RA'])
-        self.main_window.view3D.model.setDEC(coord['DEC'])
+    # def update_coord(self, coord):
+    #     self.telescope.setRA(coord['RA'])
+    #     self.telescope.setDEC(coord['DEC'])
 
 if __name__ == "__main__":
+    # Build the observatory
+    obs = ShedObservatory()
+    serv_time = NTPTimeService()
+    gps_coord = obs.get_gps_coordinates()
 
-    # build+connect indi client
+    # Build indi client
     indi_config = {
         "indi_host": "localhost",
         "indi_port": "7624"
     }
-    indi_cli = Indi3DSimulatorClient(indi_config)
-    indi_cli.connect()
-
-    # build utilities
-    obs = ShedObservatory()
-    gps_coord = obs.get_gps_coordinates()
-    serv_time = NTPTimeService()
+    # indi_cli = Indi3DSimulatorClient(indi_config)
+    # indi_cli.connect()
 
     # Build the Mount
-    mount_config = {
-        "mount_name": "Telescope Simulator",
-        "indi_client": indi_config
-    }
-    mount = IndiMount(config=mount_config,
-                      connect_on_create=True)
-    main_loop = WholeSceneVizualizer(
-        indi_client=indi_cli,
-        gps_coord=gps_coord,
-        observatory=obs,
-        serv_time=serv_time)
-    main_loop.run()
+    # mount_config = {
+    #     "mount_name": "Telescope Simulator",
+    #     "indi_client": indi_config
+    # }
+    # mount = IndiMount(config=mount_config,
+    #                   connect_on_create=True)
 
-    # Now start to do stuff
-    mount.set_slew_rate('SLEW_FIND')
+    # Run main utility
+    # main_loop = WholeSceneVizualizer(
+    #     gps_coord=gps_coord,
+    #     observatory=obs,
+    #     serv_time=serv_time,
+    #     indi_client=indi_cli)
+    # main_loop.run()
 
     # Unpark if you want something useful to actually happen
-    mount.unpark()
+    # mount.unpark()
+
+    # Now start to do stuff
+    # mount.set_slew_rate('SLEW_FIND')
 
     # Do a slew and stop
-    c = SkyCoord(ra=10 * u.hour, dec=60 * u.degree, frame='icrs')
-    mount.slew_to_coord_and_stop(c)
+    # c = SkyCoord(ra=10 * u.hour, dec=60 * u.degree, frame='icrs')
+    # mount.slew_to_coord_and_stop(c)
 
     # Park before standby
-    mount.park()
+    # mount.park()
