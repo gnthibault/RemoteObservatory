@@ -49,8 +49,7 @@ class Model3D():
         "dec_axis": [170.0, 0.0, 1085.0],
         "crayford": [-40.0, 0.0, 1225.0]}
 
-    def __init__(self, view3D, serv_time=None):
-        super().__init__()
+    def __init__(self, view3D, gps_coordinates, serv_time=None):
         self.view3D = view3D
         self.serv_time = serv_time
         self.azimuth = 0.0
@@ -96,8 +95,8 @@ class Model3D():
         #    Model3D._model_centers[2], -self.ra + 90, QVector3D(1,0,0)))
         # self.dec.setMatrix(QTransform.rotateAround(
         #    Model3D._model_centers[3], -self.dec + 90, QVector3D(0,0,1)))
-        self.set_longitude(self.longitude)
-        self.set_latitude(self.latitude)
+        self.set_latitude(gps_coordinates["latitude"])
+        self.set_longitude(gps_coordinates["longitude"])
         self.set_ra(self.ra)
         self.set_dec(self.dec)
         self.transforms["crayford"] = tf.rotation_matrix(0, [0, 0, 1])

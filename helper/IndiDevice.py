@@ -74,8 +74,8 @@ class IndiDevice(Base, device):
     def name(self):
         return self.device_name
 
-    async def registering_runner(self):
-        self.indi_client.device_subscriptions.append(self.parse_xml_str)
+    async def registering_runner(self, functor):
+        self.indi_client.device_subscriptions.append(functor)
         await asyncio.sleep(0)
 
     def register_device_to_client(self):
@@ -83,7 +83,7 @@ class IndiDevice(Base, device):
         #self.indi_client.ioloop.call_soon_threadsafe(
         #    lambda x: self.indi_client.device_subscriptions.append(x),
         #    self.parse_xml_str)
-        future = asyncio.run_coroutine_threadsafe(self.registering_runner(), self.indi_client.ioloop)
+        future = asyncio.run_coroutine_threadsafe(self.registering_runner(self.parse_xml_str), self.indi_client.ioloop)
         _ = future.result() # This is just sync
 
     def _setup_interfaces(self):
