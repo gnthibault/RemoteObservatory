@@ -18,6 +18,7 @@ This project either uses, or is directly inspired by:
 * SpectroStars from Serge Golovanow: https://github.com/serge-golovanow/SpectroStars
 * Astroalign: https://github.com/toros-astro/astroalign
 * Aladin-lite (mostly for PAWS actually): https://github.com/cds-astro/aladin-lite
+* MMTO Observatory indi client: https://github.com/MMTObservatory/indiclient
 
 # Install
 
