@@ -19,6 +19,7 @@ This project either uses, or is directly inspired by:
 * Astroalign: https://github.com/toros-astro/astroalign
 * Aladin-lite (mostly for PAWS actually): https://github.com/cds-astro/aladin-lite
 * MMTO Observatory indi client: https://github.com/MMTObservatory/indiclient
+* Meshcat: https://github.com/rdeits/meshcat-python but we might want to replace meshcat with scenepic in the future: https://microsoft.github.io/scenepic/python/
 
 # Install
 
