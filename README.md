@@ -183,7 +183,7 @@ For now, RemoteObservatory uses some web service to acquire data, so ensure that
 PYTHONPATH=. python3 ./apps/launch_arduino_capture.py
 
 
-## TODO: WORK IN PROGRESS: DO NOT USE BEFORE THIS IS DONE (or just do)
+## TODO: WORK IN PROGRESS: Check before calling this a production software
 * make sure we are correctly scoring all constraints (not only binary values) in ObservationPlanner/Scheduler
 * Correct the stub inside of launch_remote_observatory that returns safe even if not safe
 * re-integrate the simulator mode that returns fine, even if not fine
