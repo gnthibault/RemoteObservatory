@@ -1,0 +1,4 @@
+/dev/serial/by-id/usb-1a86_USB2.0-Serial-if00-port0 -> Custom arduino nano with firmata (ttyUSB0 at the time of the test)
+/dev/serial/by-id/usb-FTDI_FT232R_USB_UART_AD0JE0ID-if00-port0 ->  Shelyak arduino SPOX (ttyUSB1 at the time of the test)
+/dev/serial/by-id/usb-Pegasus_Astro_UPBv2_revD_UPB25S4VWV-if00-port0 -> PEGASUS (ttyUSB2 at the time of the test)
+
