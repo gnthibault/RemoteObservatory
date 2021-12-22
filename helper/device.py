@@ -1728,7 +1728,7 @@ class device(ABC):
             try:
                 self.expat.Parse(xml_str, 0)
             except ExpatError as e:
-                logging.error(f"Parsing error {e}")
+                logging.error(f"Parsing error with {e}, xml string was {xml_str}")
         await asyncio.sleep(0.1)
 
     def send_vector(self, vector):
