@@ -152,16 +152,17 @@ class IndiDevice(Base, device):
         # Keep track of status
         self.is_connected = True
 
-    def connect(self):
+    def connect(self, connect_device=True):
         # setup indi client
         self._setup_indi_client()
         # Connect indi client to server
         self.connect_client()
-        # Ask server to give us the device handle, through client
-        #self.connect_driver()
+        # Ask client to parse and process any message related to this device
         self.register_device_to_client()
-        # now enable actual communication between driver and device
-        self.connect_device()
+
+        if connect_device:
+            # now enable actual communication between driver and device
+            self.connect_device()
 
     def disconnect(self):
         if not self.device.isConnected():

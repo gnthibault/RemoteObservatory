@@ -9,7 +9,250 @@ from helper.IndiDevice import IndiDevice
 from utils.error import ScopeControllerError
 
 
-class IndiScopeController(IndiDevice, Base):
+class UPBV2(IndiDevice, Base):
+    """
+        'CONNECTION': <helper.device.indiswitchvector at 0x7effc16842e0>,
+        'DRIVER_INFO': <helper.device.inditextvector at 0x7effc1638040>,
+        'DEBUG': <helper.device.indiswitchvector at 0x7effc1638700>,
+        'SIMULATION': <helper.device.indiswitchvector at 0x7effc16388b0>,
+        'CONFIG_PROCESS': <helper.device.indiswitchvector at 0x7effc1638a60>,
+        'POLLING_PERIOD': <helper.device.indinumbervector at 0x7effc1638cd0>,
+        'CONNECTION_MODE': <helper.device.indiswitchvector at 0x7effc1638df0>,
+        'SYSTEM_PORTS': <helper.device.indiswitchvector at 0x7effc1638f40>,
+        'DEVICE_PORT': <helper.device.inditextvector at 0x7effc1684040>,
+        'DEVICE_BAUD_RATE': <helper.device.indiswitchvector at 0x7effc16407f0>,
+        'DEVICE_AUTO_SEARCH': <helper.device.indiswitchvector at 0x7effc1640b20>,
+        'DEVICE_PORT_SCAN': <helper.device.indiswitchvector at 0x7effc1640cd0>,
+        'FIRMWARE_INFO': <helper.device.inditextvector at 0x7effc1640190>,
+        'POWER_CYCLE': <helper.device.indiswitchvector at 0x7effc16405e0>,
+        'POWER_SENSORS': <helper.device.indinumbervector at 0x7effc1645ee0>,
+        'POWER_CONSUMPTION': <helper.device.indinumbervector at 0x7effc164b700>,
+        'REBOOT_DEVICE': <helper.device.indiswitchvector at 0x7effc164b880>,
+        'POWER_CONTROL': <helper.device.indiswitchvector at 0x7effc1645e50>,
+        'POWER_CONTROL_LABEL': <helper.device.inditextvector at 0x7effc164bdf0>,
+        'POWER_CURRENT': <helper.device.indinumbervector at 0x7effc15840a0>,
+        'POWER_ON_BOOT': <helper.device.indiswitchvector at 0x7effc1584250>,
+        'POWER_OVER_CURRENT': <helper.device.indilightvector at 0x7effc15844f0>,
+        'ADJUSTABLE_VOLTAGE': <helper.device.indinumbervector at 0x7effc15848e0>,
+        'AUTO_DEW': <helper.device.indiswitchvector at 0x7effc1584a00>,
+        'DEW_CONTROL_LABEL': <helper.device.inditextvector at 0x7effc1584c10>,
+        'AUTO_DEW_AGG': <helper.device.indinumbervector at 0x7effc1584e20>,
+        'DEW_PWM': <helper.device.indinumbervector at 0x7effc1584f40>,
+        'DEW_CURRENT': <helper.device.indinumbervector at 0x7effc1586100>,
+        'USB_HUB_CONTROL': <helper.device.indiswitchvector at 0x7effc1586280>,
+        'USB_PORT_CONTROL': <helper.device.indiswitchvector at 0x7effc1586430>,
+        'USB_CONTROL_LABEL': <helper.device.inditextvector at 0x7effc1586760>,
+        'FOCUS_MOTION': <helper.device.indiswitchvector at 0x7effc1586a90>,
+        'REL_FOCUS_POSITION': <helper.device.indinumbervector at 0x7effc1586c40>,
+        'ABS_FOCUS_POSITION': <helper.device.indinumbervector at 0x7effc1586d60>,
+        'FOCUS_MAX': <helper.device.indinumbervector at 0x7effc1586e80>,
+        'FOCUS_ABORT_MOTION': <helper.device.indiswitchvector at 0x7effc1586fa0>,
+        'FOCUS_SYNC': <helper.device.indinumbervector at 0x7effc1587130>,
+        'FOCUS_REVERSE_MOTION': <helper.device.indiswitchvector at 0x7effc1587250>,
+        'FOCUS_BACKLASH_TOGGLE': <helper.device.indiswitchvector at 0x7effc1587400>,
+        'FOCUS_BACKLASH_STEPS': <helper.device.indinumbervector at 0x7effc15875b0>,
+        'FOCUSER_SETTINGS': <helper.device.indinumbervector at 0x7effc15876d0>,
+        'WEATHER_STATUS': <helper.device.indilightvector at 0x7effc15877f0>,
+        'WEATHER_PARAMETERS': <helper.device.indinumbervector at 0x7effc1587940>,
+        'WEATHER_TEMPERATURE': <helper.device.indinumbervector at 0x7effc1587ac0>,
+        'WEATHER_HUMIDITY': <helper.device.indinumbervector at 0x7effc1587c40>,
+        'WEATHER_DEWPOINT': <helper.device.indinumbervector at 0x7effc1587dc0>}
+    """
+    def __init__(self,
+                 config=None,
+                 connect_on_create=True,
+                 logger=None):
+
+        self._is_initialized = False
+        logger = logger or logging.getLogger(__name__)
+
+        if config is None:
+            config = dict(
+                device_name="Pegasus UPB",
+                device_port="/dev/serial/by-id/usb-Pegasus_Astro_UPBv2_revD_UPB25S4VWV-if00-port0",
+                connection_type="CONNECTION_SERIAL",
+                baud_rate=9600,
+                polling_ms=1000,
+                power_labels=dict(
+                    POWER_LABEL_1="MAIN_TELESCOPE_DUSTCAP_CONTROL",
+                    POWER_LABEL_2="TELESCOPE_LEVEL_POWER", #SPOX_AND_DUSTCAP_POWER
+                    POWER_LABEL_3="FOCUSER_LEVEL_POWER", #PRIMARY_FOCUSER_POWER
+                    POWER_LABEL_4="MOUNT_POWER"),
+                always_on_power_identifiers=dict(
+                    MAIN_TELESCOPE_DUSTCAP_CONTROL=False,
+                    TELESCOPE_LEVEL_POWER=False, #SPOX_AND_DUSTCAP_POWER
+                    FOCUSER_LEVEL_POWER=False, #PRIMARY_FOCUSER_POWER
+                    MOUNT_POWER=False),
+                usb_labels=dict(
+                    USB_LABEL_1="PRIMARY_CAMERA",
+                    USB_LABEL_2="ARDUINO_CONTROL_BOX",
+                    USB_LABEL_3="GUIDE_CAMERA",
+                    USB_LABEL_4="PRIMARY_FOCUSER_CONTROL_BOX",
+                    USB_LABEL_5="WIFI_ROUTER",
+                    USB_LABEL_6="SPECTRO_CONTROL_BOX"),
+                always_on_usb_identifiers=dict(
+                    PRIMARY_CAMERA=False,
+                    ARDUINO_CONTROL_BOX=False,
+                    GUIDE_CAMERA=False,
+                    PRIMARY_FOCUSER_CONTROL_BOX=False,
+                    WIFI_ROUTER=True,
+                    SPECTRO_CONTROL_BOX=False),
+                dew_labels=dict(
+                    DEW_LABEL_1="PRIMARY_FAN",
+                    DEW_LABEL_2="SECONDARY_DEW_HEATER",
+                    DEW_LABEL_3="FINDER_DEW_HEATER"),
+                auto_dew_identifiers=dict(
+                    PRIMARY_FAN=False,
+                    SECONDARY_DEW_HEATER=True,
+                    FINDER_DEW_HEATER=True),
+                auto_dew_aggressivity=200, # Number between 50 and 250
+                indi_client=dict(indi_host="localhost",
+                                 indi_port=7624))
+
+        # Communication config
+        self.device_port = config["device_port"]
+        self.connection_type = config["connection_type"]
+        self.baud_rate = str(config["baud_rate"])
+        self.polling_ms = float(config["polling_ms"])
+
+        # labels
+        self.power_labels = config["power_labels"]
+        self.always_on_power_identifiers = config["always_on_power_identifiers"]
+        self.usb_labels = config["usb_labels"]
+        self.always_on_usb_identifiers = config["always_on_usb_identifiers"]
+        self.dew_labels = config["dew_labels"]
+
+        # dew parameters
+        self.auto_dew_identifiers = config["auto_dew_identifiers"]
+        self.auto_dew_aggressivity = str(config["auto_dew_aggressivity"])
+
+        # Indi stuff
+        logger.debug(f"UPBV2, controller board port is on port: {self.device_port}")
+
+        # device related intialization
+        IndiDevice.__init__(self,
+                            device_name=config["device_name"],
+                            indi_client_config=config["indi_client"])
+
+        if connect_on_create:
+            self.initialize()
+
+        # Finished configuring
+        self.logger.debug('configured successfully')
+
+    def initialize(self):
+        """
+        Connection is made in two phases:
+          * connect client to server so that we can setup options, like port
+          * connect server to actual physical device
+        :return:
+        """
+        self.connect(connect_device=False)
+        self.set_device_communication_options()
+        self.connect_device()
+        self.set_all_labels()
+        self.set_all_power_on_boot_off()
+        self.set_all_power_off()
+        self.set_all_dew_off()
+        self.set_all_usb_off()
+        self.set_auto_dew_eligibility()
+        self.set_auto_dew_aggressivity()
+
+        self._is_initialized = True
+
+    def set_device_communication_options(self):
+        self.set_text("DEVICE_PORT", {"PORT": self.device_port})
+        self.set_switch("CONNECTION_MODE", on_switches=[self.connection_type])
+        self.set_switch("DEVICE_BAUD_RATE", on_switches=[self.baud_rate])
+        self.set_polling_ms(polling_ms=self.polling_ms)
+
+    def set_polling_ms(self, polling_ms=None):
+        if polling_ms is not None:
+            self.polling_ms = polling_ms
+        self.set_number("POLLING_PERIOD", {'PERIOD_MS': self.polling_ms})
+
+    def set_auto_dew_aggressivity(self, auto_dew_aggressivity=None):
+        if auto_dew_aggressivity is not None:
+            self.auto_dew_aggressivity = str(auto_dew_aggressivity)
+        self.set_text("AUTO_DEW_AGG", {'AUTO_DEW_AGG_VALUE': self.auto_dew_aggressivity})
+
+    def set_all_labels(self):
+        self.set_text("POWER_CONTROL_LABEL", self.power_labels)
+        self.set_text("USB_CONTROL_LABEL", self.usb_labels)
+        self.set_text("DEW_CONTROL_LABEL", self.dew_labels)
+
+    def set_all_power_on_boot_off(self):
+        off_switches = [f"POWER_PORT_{i}" for i in range(1, 5) if not self.always_on_power_identifiers[self.power_labels[f"POWER_LABEL_{i}"]]]
+        self.set_switch("POWER_ON_BOOT", off_switches=off_switches)
+
+    def set_all_power_off(self):
+        off_switches = [f"POWER_PORT_{i}" for i in range(1, 5) if not self.always_on_power_identifiers[self.power_labels[f"POWER_LABEL_{i}"]]]
+        self.set_switch("POWER_CONTROL", off_switches=off_switches)
+
+    def set_all_usb_off(self):
+        """
+        On our setup, all but the PORT 5 need to be reset.
+        PORT 5 is connected to our GL.inet router and needs to stay up always
+        PORT ids goes from 1 to 6
+        :return:
+        """
+        off_switches = [f"PORT_{i}" for i in range(1, 7) if not self.always_on_usb_identifiers[self.usb_labels[f"USB_LABEL_{i}"]]]
+        self.set_switch("USB_PORT_CONTROL", off_switches=off_switches)
+
+    def set_all_dew_off(self):
+        self.set_number("DEW_PWM", {'DEW_A': 0.0, 'DEW_B': 0.0, 'DEW_C': 0.0})
+
+    def set_auto_dew_eligibility(self):
+        """
+        Set auto dew eligibility
+        :return:
+        """
+        on_switches = [f"DEW_{l}" for i,l in enumerate("ABC") if self.auto_dew_identifiers[self.dew_labels[f"DEW_LABEL_{i+1}"]]]
+        self.set_switch("AUTO_DEW", on_switches=on_switches)
+
+    def get_power_info(self):
+        power_dict = self.get_number("POWER_SENSORS")
+        #{'SENSOR_VOLTAGE': 13.7, 'SENSOR_CURRENT': 1.0, 'SENSOR_POWER': 13.0}
+        power_dict.update(self.get_number("POWER_CONSUMPTION"))
+        #{'CONSUMPTION_AVG_AMPS': 0.74, 'CONSUMPTION_AMP_HOURS': 249.28, 'CONSUMPTION_WATT_HOURS': 3402.6}
+        power_dict.update(self.get_number("POWER_CURRENT"))
+        #{'POWER_CURRENT_1': 0.0, 'POWER_CURRENT_2': 0.04, 'POWER_CURRENT_3': 0.0, 'POWER_CURRENT_4': 0.13}
+        power_dict.update(self.get_number("DEW_CURRENT"))
+        #{'DEW_CURRENT_A': 0.0, 'DEW_CURRENT_B': 0.0, 'DEW_CURRENT_C': 0.0}
+
+        return power_dict
+
+    def get_weather_info(self):
+        """
+        Relevant info vectors:
+            'WEATHER_STATUS': <helper.device.indilightvector at 0x7effc15877f0>,
+            'WEATHER_PARAMETERS': <helper.device.indinumbervector at 0x7effc1587940>,
+            'WEATHER_TEMPERATURE': <helper.device.indinumbervector at 0x7effc1587ac0>,
+            'WEATHER_HUMIDITY': <helper.device.indinumbervector at 0x7effc1587c40>,
+            'WEATHER_DEWPOINT': <helper.device.indinumbervector at 0x7effc1587dc0>}
+        :return:
+        """
+        weather_dict = self.get_light("WEATHER_STATUS")
+        #{'WEATHER_TEMPERATURE': 'Ok'}
+        weather_dict.update(self.get_number("WEATHER_PARAMETERS"))
+        #{'WEATHER_TEMPERATURE': 17.8, 'WEATHER_HUMIDITY': 45.0, 'WEATHER_DEWPOINT': 5.7}
+        #weather_dict.update(self.get_number("WEATHER_TEMPERATURE"))
+        #{'MIN_OK': -15.0, 'MAX_OK': 35.0, 'PERC_WARN': 15.0}
+        #weather_dict.update(self.get_number("WEATHER_HUMIDITY"))
+        #{'MIN_OK': 0.0, 'MAX_OK': 100.0, 'PERC_WARN': 15.0}
+        #weather_dict.update(self.get_number("WEATHER_DEWPOINT"))
+        #{'MIN_OK': 0.0, 'MAX_OK': 100.0, 'PERC_WARN': 15.0}
+
+        return weather_dict
+
+class AggregatedCustomScopeController(IndiDevice, Base):
+    """
+    This is more or less a custom class for a custom setup, where config for ports
+    is the following:
+    /dev/serial/by-id/usb-1a86_USB2.0-Serial-if00-port0 -> Custom arduino nano with firmata (ttyUSB0 at the time of the test)
+    /dev/serial/by-id/usb-FTDI_FT232R_USB_UART_AD0JE0ID-if00-port0 ->  Shelyak arduino SPOX (ttyUSB1 at the time of the test)
+    /dev/serial/by-id/usb-Pegasus_Astro_UPBv2_revD_UPB25S4VWV-if00-port0 -> PEGASUS (ttyUSB2 at the time of the test)
+    """
     def __init__(self, config=None, connect_on_create=True,
                  logger=None):
         Base.__init__(self)
@@ -43,9 +286,9 @@ class IndiScopeController(IndiDevice, Base):
                      f"{self.port}")
       
         # device related intialization
-        IndiDevice.__init__(self, ,
-                            device_name=config["controller_name"],
-                            indi_client_config=config["indi_client"])
+        #IndiDevice.__init__(self, ,
+        #                    device_name=config["controller_name"],
+        #                    indi_client_config=config["indi_client"])
         if connect_on_create:
             self.initialize()
 
