@@ -155,6 +155,7 @@ class UPBV2(IndiDevice, Base):
         self.set_all_power_off()
         self.set_all_dew_off()
         self.set_all_usb_off()
+        self.enable_usb_hub()
         self.set_auto_dew_eligibility()
         self.set_auto_dew_aggressivity()
 
@@ -186,7 +187,7 @@ class UPBV2(IndiDevice, Base):
         self.set_switch("POWER_ON_BOOT", off_switches=off_switches)
 
     def set_all_power_off(self):
-        off_switches = [f"POWER_PORT_{i}" for i in range(1, 5) if not self.always_on_power_identifiers[self.power_labels[f"POWER_LABEL_{i}"]]]
+        off_switches = [f"POWER_CONTROL_{i}" for i in range(1, 5) if not self.always_on_power_identifiers[self.power_labels[f"POWER_LABEL_{i}"]]]
         self.set_switch("POWER_CONTROL", off_switches=off_switches)
 
     def set_all_usb_off(self):
@@ -198,6 +199,10 @@ class UPBV2(IndiDevice, Base):
         """
         off_switches = [f"PORT_{i}" for i in range(1, 7) if not self.always_on_usb_identifiers[self.usb_labels[f"USB_LABEL_{i}"]]]
         self.set_switch("USB_PORT_CONTROL", off_switches=off_switches)
+
+    def enable_usb_hub(self):
+        logging.warning("enable_usb_hub doesn't seems to be currently supported by indi driver")
+        #self.set_switch("USB_HUB_CONTROL", on_switches=["INDI_ENABLED"])
 
     def set_all_dew_off(self):
         self.set_number("DEW_PWM", {'DEW_A': 0.0, 'DEW_B': 0.0, 'DEW_C': 0.0})

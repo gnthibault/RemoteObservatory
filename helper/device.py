@@ -1634,6 +1634,8 @@ class device(ABC):
                     # Now update or create the local vector "storage"
                     try:
                         with self.property_vectors_lock:
+                            #if vector.name == "USB_PORT_CONTROL":
+                            #    print(f"VALUE OF LIGHT IS {vector.get_light()._value}")
                             self.property_vectors[vector.name].updateByVector(vector)
                     except KeyError:
 
