@@ -130,7 +130,6 @@ class INDIClient:
                 await asyncio.sleep(0)
                 continue
             try:
-                logging.debug(f"Writing this to indi {to_indi}")
                 self.writer.write(to_indi.encode())
                 await asyncio.wait_for(self.writer.drain(), timeout=timeout)
             except Exception as err:

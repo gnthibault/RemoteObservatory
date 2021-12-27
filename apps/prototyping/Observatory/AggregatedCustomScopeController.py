@@ -7,7 +7,7 @@ import time
 
 # Local stuff : Mount
 from Observatory.AggregatedCustomScopeController import UPBV2
-#from Observatory.AggregatedCustomScopeController import ArduinoServoController
+from Observatory.AggregatedCustomScopeController import ArduinoServoController
 #from Observatory.AggregatedCustomScopeController import AggregatedCustomScopeController
 
 
@@ -60,12 +60,28 @@ if __name__ == '__main__':
                 indi_client=dict(indi_host="localhost",
                                  indi_port=7624))
 
-    # Now test Mount
+    # Now test UPBV2
     upbv2 = UPBV2(
         config=config_upbv2,
         connect_on_create=True)
     print(upbv2.get_power_info())
     print(upbv2.get_weather_info())
+
+    # Now test Arduino controller
+    upbv2.setup_telescope_power_on()
+
+    # config for simple arduino
+    config_arduino = dict(
+                device_name="Arduino",
+                device_port="/dev/serial/by-id/usb-1a86_USB2.0-Serial-if00-port0",
+                connection_type="CONNECTION_SERIAL",
+                baud_rate=57600,
+                polling_ms=1000,
+                indi_client=dict(indi_host="localhost",
+                                 indi_port=7624))
+    arduino = ArduinoServoController(
+        config=config_arduino,
+        connect_on_create=True)
     print("test")
 
     # delay_sec = 5

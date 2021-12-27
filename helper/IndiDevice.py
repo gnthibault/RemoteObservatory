@@ -144,9 +144,6 @@ class IndiDevice(Base, device):
         """
 
         """
-        # First thing to do is to force the server to re-send all informations
-        # related to devices, so that we can populate the current device pv
-        self.indi_client.trigger_get_properties()
         # set the corresponding switch to on
         self.set_switch('CONNECTION', ['CONNECT'], sync=True, timeout=5)
         # Keep track of status
@@ -159,6 +156,9 @@ class IndiDevice(Base, device):
         self.connect_client()
         # Ask client to parse and process any message related to this device
         self.register_device_to_client()
+        # First thing to do is to force the server to re-send all informations
+        # related to devices, so that we can populate the current device pv
+        self.indi_client.trigger_get_properties()
 
         if connect_device:
             # now enable actual communication between driver and device
