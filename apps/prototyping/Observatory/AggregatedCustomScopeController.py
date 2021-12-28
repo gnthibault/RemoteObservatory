@@ -24,13 +24,14 @@ if __name__ == '__main__':
                 connection_type="CONNECTION_SERIAL",
                 baud_rate=9600,
                 polling_ms=1000,
+                adjustable_voltage_value=5,
                 power_labels=dict(
                     POWER_LABEL_1="MAIN_TELESCOPE_DUSTCAP_CONTROL",
                     POWER_LABEL_2="TELESCOPE_LEVEL_POWER", #SPOX_AND_DUSTCAP_POWER
                     POWER_LABEL_3="FOCUSER_LEVEL_POWER", #PRIMARY_FOCUSER_POWER
                     POWER_LABEL_4="MOUNT_POWER"),
                 always_on_power_identifiers=dict(
-                    MAIN_TELESCOPE_DUSTCAP_CONTROL=False,
+                    MAIN_TELESCOPE_DUSTCAP_CONTROL=True,
                     TELESCOPE_LEVEL_POWER=False, #SPOX_AND_DUSTCAP_POWER
                     FOCUSER_LEVEL_POWER=False, #PRIMARY_FOCUSER_POWER
                     MOUNT_POWER=False),
@@ -83,6 +84,8 @@ if __name__ == '__main__':
         config=config_arduino,
         connect_on_create=True)
     print("test")
+    arduino.open_finder_dustcap()
+    arduino.close_finder_dustcap()
 
     # delay_sec = 5
     # print(f"Switching on flat panel {controller.status()}")

@@ -73,6 +73,7 @@ class UPBV2(IndiDevice, Base):
                 connection_type="CONNECTION_SERIAL",
                 baud_rate=9600,
                 polling_ms=1000,
+                adjustable_voltage_value=5,
                 power_labels=dict(
                     POWER_LABEL_1="MAIN_TELESCOPE_DUSTCAP_CONTROL",
                     POWER_LABEL_2="TELESCOPE_LEVEL_POWER", #SPOX_AND_DUSTCAP_POWER
@@ -122,6 +123,9 @@ class UPBV2(IndiDevice, Base):
         self.always_on_usb_identifiers = config["always_on_usb_identifiers"]
         self.dew_labels = config["dew_labels"]
 
+        # power parameters
+        self.adjustable_voltage_value = config["adjustable_voltage_value"]
+
         # dew parameters
         self.auto_dew_identifiers = config["auto_dew_identifiers"]
         self.auto_dew_aggressivity = str(config["auto_dew_aggressivity"])
@@ -145,6 +149,9 @@ class UPBV2(IndiDevice, Base):
         Connection is made in two phases:
           * connect client to server so that we can setup options, like port
           * connect server to actual physical device
+
+        Then "initialize" all outputs such that the telescope is in a steady
+        state, that can last a very long time (multiple days without operation)
         :return:
         """
         self.connect(connect_device=False)
@@ -153,10 +160,11 @@ class UPBV2(IndiDevice, Base):
         self.set_all_labels()
         self.initialize_all_power_on_boot()
         self.initialize_all_power()
-        self.initialize_all_dew()
+        self.initialize_adjustable_power_source()
+        self.initialize_all_dew_outputs()
+        self.set_auto_dew_aggressivity()
         self.initialize_all_usb()
         self.initialize_usb_hub()
-        self.set_auto_dew_aggressivity()
 
         self._is_initialized = True
 
@@ -191,6 +199,9 @@ class UPBV2(IndiDevice, Base):
         off_switches = [f"POWER_CONTROL_{i}" for i in range(1, 5) if not self.always_on_power_identifiers[self.power_labels[f"POWER_LABEL_{i}"]]]
         self.set_switch("POWER_CONTROL", on_switches=on_switches, off_switches=off_switches)
 
+    def initialize_adjustable_power_source(self):
+        self.set_number('ADJUSTABLE_VOLTAGE', {'ADJUSTABLE_VOLTAGE_VALUE': self.adjustable_voltage_value})
+
     def initialize_all_usb(self):
         """
         On our setup, all but the PORT 5 need to be reset.
@@ -215,6 +226,9 @@ class UPBV2(IndiDevice, Base):
         on_switches = [f"PORT_{i}" for i in range(1, 7) if self.usb_labels[f"USB_LABEL_{i}"]=="ARDUINO_CONTROL_BOX"]
         self.set_switch("USB_PORT_CONTROL", on_switches=on_switches)
 
+        # 5V adjustable power source
+        self.set_number('ADJUSTABLE_VOLTAGE', {'ADJUSTABLE_VOLTAGE_VALUE': self.adjustable_voltage_value})
+
     def setup_mount_power_on(self):
         # Power
         on_switches = [f"POWER_CONTROL_{i}" for i in range(1, 5) if self.power_labels[f"POWER_LABEL_{i}"] == 'MOUNT_POWER']
@@ -230,24 +244,29 @@ class UPBV2(IndiDevice, Base):
                        ["PRIMARY_CAMERA", "GUIDE_CAMERA", "PRIMARY_FOCUSER_CONTROL_BOX", "SPECTRO_CONTROL_BOX"]]
         self.set_switch("USB_PORT_CONTROL", on_switches=on_switches)
 
-        # Dew
-        self.set_auto_dew_eligibility()
-
-    def initialize_all_dew(self):
-        # Set power to 0
+    def initialize_all_dew_outputs(self):
+        # Set power to 0 explicitly
         self.set_number("DEW_PWM", {'DEW_A': 0.0, 'DEW_B': 0.0, 'DEW_C': 0.0})
 
-        # Set eligibility to None for all by default
+        # Set eligbility for automatic dew to False
         off_switches = [f"DEW_{l}" for i, l in enumerate("ABC")]
         self.set_switch("AUTO_DEW", off_switches=off_switches)
 
-    def set_auto_dew_eligibility(self):
+    def set_auto_dew_eligibility_on(self):
         """
         Set auto dew eligibility
         :return:
         """
         on_switches = [f"DEW_{l}" for i,l in enumerate("ABC") if self.auto_dew_identifiers[self.dew_labels[f"DEW_LABEL_{i+1}"]]]
         self.set_switch("AUTO_DEW", on_switches=on_switches)
+
+    def set_auto_dew_eligibility_off(self):
+        """
+        Set auto dew eligibility
+        :return:
+        """
+        off_switches = [f"DEW_{l}" for i,l in enumerate("ABC") if self.auto_dew_identifiers[self.dew_labels[f"DEW_LABEL_{i+1}"]]]
+        self.set_switch("AUTO_DEW", off_switches=off_switches)
 
     def get_power_info(self):
         power_dict = self.get_number("POWER_SENSORS")
@@ -286,91 +305,52 @@ class UPBV2(IndiDevice, Base):
 
     def switch_on_scope_fan(self):
         """ blocking call: switch on fan to cool down primary mirror
+            set pwm value from 0 to 100
         """
-        DEW_LABEL_1 = "PRIMARY_FAN",
-
-        self.logger.debug("Switching on fan to cool down primary mirror")
-        self.set_switch("PRIMARY_FAN_RELAY", on_switches=['RELAY_CMD'])
+        fan_dict = {k: 80 for i, k in enumerate(["DEW_A", "DEW_B", "DEW_C"]) if self.dew_labels[f"DEW_LABEL_{i+1}"] == "PRIMARY_FAN"}
+        self.set_number("DEW_PWM", fan_dict)
 
     def switch_off_scope_fan(self):
         """ blocking call: switch off fan for primary mirror
         """
-        DEW_LABEL_1 = "PRIMARY_FAN",
-        self.logger.debug("Switching off telescope fan on primary mirror")
-        self.set_switch("PRIMARY_FAN_RELAY", off_switches=['RELAY_CMD'])
+        fan_dict = {k: 0 for i, k in enumerate(["DEW_A", "DEW_B", "DEW_C"]) if self.dew_labels[f"DEW_LABEL_{i+1}"] == "PRIMARY_FAN"}
+        self.set_number("DEW_PWM", fan_dict)
 
-    def switch_on_scope_dew_heater(self):
+    def switch_on_dew_heater(self):
         """ blocking call: switch on dew heater to avoid dew on secondary mirror
         """
-        DEW_LABEL_2 = "SECONDARY_DEW_HEATER"
-        self.logger.debug("Switching on dew heater for secondary mirror")
-        self.set_switch("SCOPE_DEW_HEAT_RELAY", on_switches=['RELAY_CMD'])
-        self.statuses["scope_dew"] = True
+        self.set_auto_dew_eligibility_on()
+        self.logger.debug("Switching on automatic dew heater")
 
-    def switch_off_scope_dew_heater(self):
+    def switch_off_dew_heater(self):
         """ blocking call: switch off dew heater on secondary mirror
         """
-        DEW_LABEL_2 = "SECONDARY_DEW_HEATER"
-        self.logger.debug("Switching off telescope dew heater on secondary "
-                          "mirror")
-        self.set_switch("SCOPE_DEW_HEAT_RELAY", off_switches=['RELAY_CMD'])
-
-    def switch_on_finder_dew_heater(self):
-        """ blocking call: switch on dew heater to avoid dew on finder lens
-        """
-        DEW_LABEL_3 = "FINDER_DEW_HEATER"
-        self.logger.debug("Switching on dew heater for finder lens")
-        self.set_switch("FINDER_DEW_HEAT_RELAY", on_switches=['RELAY_CMD'])
-
-    def switch_off_finder_dew_heater(self):
-        """ blocking call: switch off dew heater on finder lens
-        """
-        DEW_LABEL_3 = "FINDER_DEW_HEATER"
-        self.logger.debug("Switching off dew heater on finder lens ")
-        self.set_switch("FINDER_DEW_HEAT_RELAY", off_switches=['RELAY_CMD'])
+        self.set_auto_dew_eligibility_off()
+        self.logger.debug("Switching off automatic dew heater")
 
     def switch_on_mount(self):
         """ blocking call: switch on main mount
         """
-        power_labels = dict(
-            POWER_LABEL_4="MOUNT_POWER"
-
-        self.logger.debug("Switching on main mount")
-        self.set_switch("MOUNT_RELAY", on_switches=['RELAY_CMD'])
-        # Now we need to wait a bit before trying to connect driver
-        time.sleep(self._indi_driver_connect_delay_s)
-        self.start_driver(self._indi_mount_driver_name)
-        self.statuses["mount_relay"] = True
+        on_switches = [f"POWER_CONTROL_{i}" for i in range(1, 5) if [self.power_labels[f"POWER_LABEL_{i}"] == "MOUNT_POWER"]]
+        self.set_switch("POWER_CONTROL", on_switches=on_switches)
 
     def switch_off_mount(self):
         """ blocking call: switch off main mount
         """
-        power_labels = dict(
-            POWER_LABEL_4="MOUNT_POWER"
-
-        self.logger.debug("Switching off main mount")
-        self.set_switch("MOUNT_RELAY", off_switches=['RELAY_CMD'])
-        self.stop_driver(self._indi_mount_driver_name)
-        self.statuses["mount_relay"] = False
+        off_switches = [f"POWER_CONTROL_{i}" for i in range(1, 5) if [self.power_labels[f"POWER_LABEL_{i}"] == "MOUNT_POWER"]]
+        self.set_switch("POWER_CONTROL", off_switches=off_switches)
 
     def open_scope_dustcap(self):
         """ blocking call: open up main scope dustcap
         """
-        power_labels = dict(
-            POWER_LABEL_1="MAIN_TELESCOPE_DUSTCAP_CONTROL",
-
-        self.logger.debug("Opening up main scope dustcap")
-        self.set_switch("SCOPE_SERVO_DUSTCAP_SWITCH",
-                        on_switches=['SERVO_SWITCH'])
+        off_switches = [f"POWER_CONTROL_{i}" for i in range(1, 5) if [self.power_labels[f"POWER_LABEL_{i}"] == "MAIN_TELESCOPE_DUSTCAP_CONTROL"]]
+        self.set_switch("POWER_CONTROL", off_switches=off_switches)
 
     def close_scope_dustcap(self):
         """ blocking call: close main scope dustcap
         """
-        power_labels = dict(
-            POWER_LABEL_1="MAIN_TELESCOPE_DUSTCAP_CONTROL",
-        self.logger.debug("close main scope dustcap")
-        self.set_switch("SCOPE_SERVO_DUSTCAP_SWITCH",
-                        off_switches=['SERVO_SWITCH'])
+        on_switches = [f"POWER_CONTROL_{i}" for i in range(1, 5) if [self.power_labels[f"POWER_LABEL_{i}"] == "MAIN_TELESCOPE_DUSTCAP_CONTROL"]]
+        self.set_switch("POWER_CONTROL", on_switches=on_switches)
 
 
 class ArduinoServoController(IndiDevice, Base):
@@ -437,6 +417,10 @@ class ArduinoServoController(IndiDevice, Base):
         self.connect(connect_device=False)
         self.set_device_communication_options()
         self.connect_device()
+        # We set the polling period only after the connection
+        #('setNumberVector', {'device': 'Arduino', 'name': 'POLLING_PERIOD', 'state': 'Alert', 'timeout': '0', 'timestamp': '2021-12-28T17:47:21',
+        #'message': 'Cannot change property while device is disconnected.'})
+        self.set_polling_ms(polling_ms=self.polling_ms)
         self.initialize_servo()
         self._is_initialized = True
 
@@ -444,7 +428,6 @@ class ArduinoServoController(IndiDevice, Base):
         self.set_text("DEVICE_PORT", {"PORT": self.device_port})
         self.set_switch("CONNECTION_MODE", on_switches=[self.connection_type])
         self.set_switch("DEVICE_BAUD_RATE", on_switches=[self.baud_rate])
-        self.set_polling_ms(polling_ms=self.polling_ms)
 
     def set_polling_ms(self, polling_ms=None):
         if polling_ms is not None:
