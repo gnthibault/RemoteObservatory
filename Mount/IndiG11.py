@@ -55,7 +55,6 @@ class IndiG11(IndiAbstractMount):
      to set a hour angle at for instance 0.2 hours to be safe. Refer to the
      Gemini manual pages 69-70 on setting the GoTo limit.
 
-
      About J2k / JNow coordinates:
      5.3.2.2 Accuracy and Epochs
      With the exception of the Solar System objects and the Alignment Bright
@@ -72,6 +71,10 @@ class IndiG11(IndiAbstractMount):
      entered coordinates to the epoch of the date so that GoTo slews will be
      accurate. The coordinates of the resident catalogs will not, however, be
      affected regardless of which epoch is selected.
+
+     Related to meridian flip:
+     https://indilib.org/forum/mounts/3550-losmandy-gemini-2-auto-meridian-flip-in-ekos.html
+     https://www.indilib.org/forum/mounts/7946-losmandy-g-11-and-gemini-ii-and-merdian-flips.html
     """
     
     def __init__(self, indi_client, location, serv_time, config):
