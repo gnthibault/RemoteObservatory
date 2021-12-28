@@ -87,6 +87,15 @@ if __name__ == '__main__':
     arduino.open_finder_dustcap()
     arduino.close_finder_dustcap()
 
+    config_aggregated = dict(
+        config_upbv2=config_upbv2,
+        config_arduino=config_arduino,
+    )
+
+    aggregated = AggregatedCustomScopeController(
+        config=config_aggregated,
+        connect_on_create=True)
+
     # delay_sec = 5
     # print(f"Switching on flat panel {controller.status()}")
     # controller.switch_on_flat_panel()
