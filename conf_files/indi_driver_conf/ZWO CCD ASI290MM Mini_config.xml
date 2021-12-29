@@ -1,0 +1,229 @@
+<INDIDriver>
+<newSwitchVector device='ZWO CCD ASI290MM Mini' name='DEBUG'>
+  <oneSwitch name='ENABLE'>
+      Off
+  </oneSwitch>
+  <oneSwitch name='DISABLE'>
+      On
+  </oneSwitch>
+</newSwitchVector>
+<newNumberVector device='ZWO CCD ASI290MM Mini' name='POLLING_PERIOD'>
+  <oneNumber name='PERIOD_MS'>
+      1000
+  </oneNumber>
+</newNumberVector>
+<newSwitchVector device='ZWO CCD ASI290MM Mini' name='DEBUG_LEVEL'>
+  <oneSwitch name='DBG_ERROR'>
+      On
+  </oneSwitch>
+  <oneSwitch name='DBG_WARNING'>
+      On
+  </oneSwitch>
+  <oneSwitch name='DBG_SESSION'>
+      On
+  </oneSwitch>
+  <oneSwitch name='DBG_DEBUG'>
+      Off
+  </oneSwitch>
+  <oneSwitch name='DBG_EXTRA_1'>
+      Off
+  </oneSwitch>
+</newSwitchVector>
+<newSwitchVector device='ZWO CCD ASI290MM Mini' name='LOGGING_LEVEL'>
+  <oneSwitch name='LOG_ERROR'>
+      On
+  </oneSwitch>
+  <oneSwitch name='LOG_WARNING'>
+      On
+  </oneSwitch>
+  <oneSwitch name='LOG_SESSION'>
+      On
+  </oneSwitch>
+  <oneSwitch name='LOG_DEBUG'>
+      Off
+  </oneSwitch>
+  <oneSwitch name='LOG_EXTRA_1'>
+      Off
+  </oneSwitch>
+</newSwitchVector>
+<newSwitchVector device='ZWO CCD ASI290MM Mini' name='LOG_OUTPUT'>
+  <oneSwitch name='CLIENT_DEBUG'>
+      On
+  </oneSwitch>
+  <oneSwitch name='FILE_DEBUG'>
+      Off
+  </oneSwitch>
+</newSwitchVector>
+<newTextVector device='ZWO CCD ASI290MM Mini' name='ACTIVE_DEVICES'>
+  <oneText name='ACTIVE_TELESCOPE'>
+      Telescope Simulator
+  </oneText>
+  <oneText name='ACTIVE_ROTATOR'>
+      Rotator Simulator
+  </oneText>
+  <oneText name='ACTIVE_FOCUSER'>
+      Focuser Simulator
+  </oneText>
+  <oneText name='ACTIVE_FILTER'>
+      CCD Simulator
+  </oneText>
+  <oneText name='ACTIVE_SKYQUALITY'>
+      SQM
+  </oneText>
+</newTextVector>
+<newSwitchVector device='ZWO CCD ASI290MM Mini' name='UPLOAD_MODE'>
+  <oneSwitch name='UPLOAD_CLIENT'>
+      On
+  </oneSwitch>
+  <oneSwitch name='UPLOAD_LOCAL'>
+      Off
+  </oneSwitch>
+  <oneSwitch name='UPLOAD_BOTH'>
+      Off
+  </oneSwitch>
+</newSwitchVector>
+<newTextVector device='ZWO CCD ASI290MM Mini' name='UPLOAD_SETTINGS'>
+  <oneText name='UPLOAD_DIR'>
+      /home/gnthibault
+  </oneText>
+  <oneText name='UPLOAD_PREFIX'>
+      IMAGE_XXX
+  </oneText>
+</newTextVector>
+<newSwitchVector device='ZWO CCD ASI290MM Mini' name='TELESCOPE_TYPE'>
+  <oneSwitch name='TELESCOPE_PRIMARY'>
+      On
+  </oneSwitch>
+  <oneSwitch name='TELESCOPE_GUIDE'>
+      Off
+  </oneSwitch>
+</newSwitchVector>
+<newSwitchVector device='ZWO CCD ASI290MM Mini' name='CCD_FAST_TOGGLE'>
+  <oneSwitch name='INDI_ENABLED'>
+      Off
+  </oneSwitch>
+  <oneSwitch name='INDI_DISABLED'>
+      On
+  </oneSwitch>
+</newSwitchVector>
+<newSwitchVector device='ZWO CCD ASI290MM Mini' name='CCD_COMPRESSION'>
+  <oneSwitch name='CCD_COMPRESS'>
+      Off
+  </oneSwitch>
+  <oneSwitch name='CCD_RAW'>
+      On
+  </oneSwitch>
+</newSwitchVector>
+<newNumberVector device='ZWO CCD ASI290MM Mini' name='CCD_FRAME'>
+  <oneNumber name='X'>
+      0
+  </oneNumber>
+  <oneNumber name='Y'>
+      0
+  </oneNumber>
+  <oneNumber name='WIDTH'>
+      1936
+  </oneNumber>
+  <oneNumber name='HEIGHT'>
+      1096
+  </oneNumber>
+</newNumberVector>
+<newNumberVector device='ZWO CCD ASI290MM Mini' name='CCD_BINNING'>
+  <oneNumber name='HOR_BIN'>
+      1
+  </oneNumber>
+  <oneNumber name='VER_BIN'>
+      1
+  </oneNumber>
+</newNumberVector>
+<newSwitchVector device='ZWO CCD ASI290MM Mini' name='CCD_STREAM_ENCODER'>
+  <oneSwitch name='RAW'>
+      On
+  </oneSwitch>
+  <oneSwitch name='MJPEG'>
+      Off
+  </oneSwitch>
+</newSwitchVector>
+<newTextVector device='ZWO CCD ASI290MM Mini' name='RECORD_FILE'>
+  <oneText name='RECORD_FILE_DIR'>
+      /home/gnthibault/indi__D_
+  </oneText>
+  <oneText name='RECORD_FILE_NAME'>
+      indi_record__T_
+  </oneText>
+</newTextVector>
+<newNumberVector device='ZWO CCD ASI290MM Mini' name='RECORD_OPTIONS'>
+  <oneNumber name='RECORD_DURATION'>
+      1
+  </oneNumber>
+  <oneNumber name='RECORD_FRAME_TOTAL'>
+      30
+  </oneNumber>
+</newNumberVector>
+<newSwitchVector device='ZWO CCD ASI290MM Mini' name='CCD_STREAM_RECORDER'>
+  <oneSwitch name='SER'>
+      On
+  </oneSwitch>
+  <oneSwitch name='OGV'>
+      Off
+  </oneSwitch>
+</newSwitchVector>
+<newNumberVector device='ZWO CCD ASI290MM Mini' name='LIMITS'>
+  <oneNumber name='LIMITS_BUFFER_MAX'>
+      512
+  </oneNumber>
+  <oneNumber name='LIMITS_PREVIEW_FPS'>
+      10
+  </oneNumber>
+</newNumberVector>
+<newNumberVector device='ZWO CCD ASI290MM Mini' name='CCD_CONTROLS'>
+  <oneNumber name='Gain'>
+      200
+  </oneNumber>
+  <oneNumber name='Offset'>
+      1
+  </oneNumber>
+  <oneNumber name='BandWidth'>
+      40
+  </oneNumber>
+  <oneNumber name='Flip'>
+      0
+  </oneNumber>
+  <oneNumber name='AutoExpMaxGain'>
+      300
+  </oneNumber>
+  <oneNumber name='AutoExpMaxExpMS'>
+      30000
+  </oneNumber>
+  <oneNumber name='AutoExpTargetBrightness'>
+      100
+  </oneNumber>
+  <oneNumber name='HighSpeedMode'>
+      0
+  </oneNumber>
+</newNumberVector>
+<newSwitchVector device='ZWO CCD ASI290MM Mini' name='CCD_CONTROLS_MODE'>
+  <oneSwitch name='AUTO_Gain'>
+      Off
+  </oneSwitch>
+  <oneSwitch name='AUTO_BandWidth'>
+      Off
+  </oneSwitch>
+</newSwitchVector>
+<newSwitchVector device='ZWO CCD ASI290MM Mini' name='CCD_VIDEO_FORMAT'>
+  <oneSwitch name='ASI_IMG_RAW8'>
+      Off
+  </oneSwitch>
+  <oneSwitch name='ASI_IMG_RAW16'>
+      On
+  </oneSwitch>
+</newSwitchVector>
+<newNumberVector device='ZWO CCD ASI290MM Mini' name='BLINK'>
+  <oneNumber name='BLINK_COUNT'>
+      0
+  </oneNumber>
+  <oneNumber name='BLINK_DURATION'>
+      0
+  </oneNumber>
+</newNumberVector>
+</INDIDriver>

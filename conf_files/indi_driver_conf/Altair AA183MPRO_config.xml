@@ -1,0 +1,245 @@
+<INDIDriver>
+<newSwitchVector device='Altair AA183MPRO' name='DEBUG'>
+  <oneSwitch name='ENABLE'>
+      Off
+  </oneSwitch>
+  <oneSwitch name='DISABLE'>
+      On
+  </oneSwitch>
+</newSwitchVector>
+<newNumberVector device='Altair AA183MPRO' name='POLLING_PERIOD'>
+  <oneNumber name='PERIOD_MS'>
+      1000
+  </oneNumber>
+</newNumberVector>
+<newSwitchVector device='Altair AA183MPRO' name='DEBUG_LEVEL'>
+  <oneSwitch name='DBG_ERROR'>
+      On
+  </oneSwitch>
+  <oneSwitch name='DBG_WARNING'>
+      On
+  </oneSwitch>
+  <oneSwitch name='DBG_SESSION'>
+      On
+  </oneSwitch>
+  <oneSwitch name='DBG_DEBUG'>
+      Off
+  </oneSwitch>
+  <oneSwitch name='DBG_EXTRA_1'>
+      Off
+  </oneSwitch>
+</newSwitchVector>
+<newSwitchVector device='Altair AA183MPRO' name='LOGGING_LEVEL'>
+  <oneSwitch name='LOG_ERROR'>
+      On
+  </oneSwitch>
+  <oneSwitch name='LOG_WARNING'>
+      On
+  </oneSwitch>
+  <oneSwitch name='LOG_SESSION'>
+      On
+  </oneSwitch>
+  <oneSwitch name='LOG_DEBUG'>
+      Off
+  </oneSwitch>
+  <oneSwitch name='LOG_EXTRA_1'>
+      Off
+  </oneSwitch>
+</newSwitchVector>
+<newSwitchVector device='Altair AA183MPRO' name='LOG_OUTPUT'>
+  <oneSwitch name='CLIENT_DEBUG'>
+      On
+  </oneSwitch>
+  <oneSwitch name='FILE_DEBUG'>
+      Off
+  </oneSwitch>
+</newSwitchVector>
+<newTextVector device='Altair AA183MPRO' name='ACTIVE_DEVICES'>
+  <oneText name='ACTIVE_TELESCOPE'>
+      Telescope Simulator
+  </oneText>
+  <oneText name='ACTIVE_ROTATOR'>
+      Rotator Simulator
+  </oneText>
+  <oneText name='ACTIVE_FOCUSER'>
+      Focuser Simulator
+  </oneText>
+  <oneText name='ACTIVE_FILTER'>
+      CCD Simulator
+  </oneText>
+  <oneText name='ACTIVE_SKYQUALITY'>
+      SQM
+  </oneText>
+</newTextVector>
+<newSwitchVector device='Altair AA183MPRO' name='UPLOAD_MODE'>
+  <oneSwitch name='UPLOAD_CLIENT'>
+      On
+  </oneSwitch>
+  <oneSwitch name='UPLOAD_LOCAL'>
+      Off
+  </oneSwitch>
+  <oneSwitch name='UPLOAD_BOTH'>
+      Off
+  </oneSwitch>
+</newSwitchVector>
+<newTextVector device='Altair AA183MPRO' name='UPLOAD_SETTINGS'>
+  <oneText name='UPLOAD_DIR'>
+      /home/gnthibault
+  </oneText>
+  <oneText name='UPLOAD_PREFIX'>
+      IMAGE_XXX
+  </oneText>
+</newTextVector>
+<newSwitchVector device='Altair AA183MPRO' name='TELESCOPE_TYPE'>
+  <oneSwitch name='TELESCOPE_PRIMARY'>
+      On
+  </oneSwitch>
+  <oneSwitch name='TELESCOPE_GUIDE'>
+      Off
+  </oneSwitch>
+</newSwitchVector>
+<newSwitchVector device='Altair AA183MPRO' name='CCD_FAST_TOGGLE'>
+  <oneSwitch name='INDI_ENABLED'>
+      Off
+  </oneSwitch>
+  <oneSwitch name='INDI_DISABLED'>
+      On
+  </oneSwitch>
+</newSwitchVector>
+<newSwitchVector device='Altair AA183MPRO' name='CCD_COMPRESSION'>
+  <oneSwitch name='CCD_COMPRESS'>
+      Off
+  </oneSwitch>
+  <oneSwitch name='CCD_RAW'>
+      On
+  </oneSwitch>
+</newSwitchVector>
+<newNumberVector device='Altair AA183MPRO' name='CCD_FRAME'>
+  <oneNumber name='X'>
+      0
+  </oneNumber>
+  <oneNumber name='Y'>
+      0
+  </oneNumber>
+  <oneNumber name='WIDTH'>
+      5440
+  </oneNumber>
+  <oneNumber name='HEIGHT'>
+      3648
+  </oneNumber>
+</newNumberVector>
+<newNumberVector device='Altair AA183MPRO' name='CCD_BINNING'>
+  <oneNumber name='HOR_BIN'>
+      1
+  </oneNumber>
+  <oneNumber name='VER_BIN'>
+      1
+  </oneNumber>
+</newNumberVector>
+<newSwitchVector device='Altair AA183MPRO' name='CCD_STREAM_ENCODER'>
+  <oneSwitch name='RAW'>
+      On
+  </oneSwitch>
+  <oneSwitch name='MJPEG'>
+      Off
+  </oneSwitch>
+</newSwitchVector>
+<newTextVector device='Altair AA183MPRO' name='RECORD_FILE'>
+  <oneText name='RECORD_FILE_DIR'>
+      /home/gnthibault/indi__D_
+  </oneText>
+  <oneText name='RECORD_FILE_NAME'>
+      indi_record__T_
+  </oneText>
+</newTextVector>
+<newNumberVector device='Altair AA183MPRO' name='RECORD_OPTIONS'>
+  <oneNumber name='RECORD_DURATION'>
+      1
+  </oneNumber>
+  <oneNumber name='RECORD_FRAME_TOTAL'>
+      30
+  </oneNumber>
+</newNumberVector>
+<newSwitchVector device='Altair AA183MPRO' name='CCD_STREAM_RECORDER'>
+  <oneSwitch name='SER'>
+      On
+  </oneSwitch>
+  <oneSwitch name='OGV'>
+      Off
+  </oneSwitch>
+</newSwitchVector>
+<newNumberVector device='Altair AA183MPRO' name='LIMITS'>
+  <oneNumber name='LIMITS_BUFFER_MAX'>
+      512
+  </oneNumber>
+  <oneNumber name='LIMITS_PREVIEW_FPS'>
+      10
+  </oneNumber>
+</newNumberVector>
+<newNumberVector device='Altair AA183MPRO' name='TIMEOUT_FACTOR'>
+  <oneNumber name='VALUE'>
+      1.1999999999999999556
+  </oneNumber>
+</newNumberVector>
+<newNumberVector device='Altair AA183MPRO' name='CCD_CONTROLS'>
+  <oneNumber name='Gain'>
+      100
+  </oneNumber>
+  <oneNumber name='Contrast'>
+      0
+  </oneNumber>
+  <oneNumber name='Hue'>
+      0
+  </oneNumber>
+  <oneNumber name='Saturation'>
+      0
+  </oneNumber>
+  <oneNumber name='Brightness'>
+      0
+  </oneNumber>
+  <oneNumber name='Gamma'>
+      100
+  </oneNumber>
+  <oneNumber name='Speed'>
+      0
+  </oneNumber>
+  <oneNumber name='FPS Limit'>
+      0
+  </oneNumber>
+</newNumberVector>
+<newNumberVector device='Altair AA183MPRO' name='TC_HGC_SET'>
+  <oneNumber name='HCG Threshold'>
+      900
+  </oneNumber>
+  <oneNumber name='HCG/LCG gain ratio'>
+      4.5
+  </oneNumber>
+</newNumberVector>
+<newNumberVector device='Altair AA183MPRO' name='CCD_OFFSET'>
+  <oneNumber name='OFFSET'>
+      0
+  </oneNumber>
+</newNumberVector>
+<newSwitchVector device='Altair AA183MPRO' name='CCD_VIDEO_FORMAT'>
+  <oneSwitch name='TC_VIDEO_MONO_8'>
+      Off
+  </oneSwitch>
+  <oneSwitch name='TC_VIDEO_MONO_16'>
+      On
+  </oneSwitch>
+</newSwitchVector>
+<newSwitchVector device='Altair AA183MPRO' name='CCD_RESOLUTION'>
+  <oneSwitch name='5440 x 3648'>
+      On
+  </oneSwitch>
+  <oneSwitch name='4096 x 2160'>
+      Off
+  </oneSwitch>
+  <oneSwitch name='2736 x 1824'>
+      Off
+  </oneSwitch>
+  <oneSwitch name='1824 x 1216'>
+      Off
+  </oneSwitch>
+</newSwitchVector>
+</INDIDriver>

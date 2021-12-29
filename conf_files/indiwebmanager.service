@@ -6,7 +6,7 @@ After=multi-user.target
 Type=idle
 # MUST SET YOUR USERNAME HERE.
 User=gnthibault
-ExecStart=/home/gnthibault/.local/bin/indi-web -v --xmldir /home/gnthibault/project/RemoteObservatory/conf_files/indi_driver_conf
+ExecStart=/home/gnthibault/.local/bin/indi-web -v --xmldir /home/gnthibault/projects/RemoteObservatory/conf_files/indi_driver_xml --conf /home/gnthibault/projects/RemoteObservatory/conf_files/indi_driver_conf
 
 Restart=always
 RestartSec=5
