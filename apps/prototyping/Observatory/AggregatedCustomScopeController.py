@@ -39,14 +39,14 @@ if __name__ == '__main__':
                     USB_LABEL_1="PRIMARY_CAMERA",
                     USB_LABEL_2="ARDUINO_CONTROL_BOX",
                     USB_LABEL_3="GUIDE_CAMERA",
-                    USB_LABEL_4="PRIMARY_FOCUSER_CONTROL_BOX",
+                    USB_LABEL_4="FIELD_CAMERA",
                     USB_LABEL_5="WIFI_ROUTER",
                     USB_LABEL_6="SPECTRO_CONTROL_BOX"),
                 always_on_usb_identifiers=dict(
                     PRIMARY_CAMERA=False,
                     ARDUINO_CONTROL_BOX=False,
                     GUIDE_CAMERA=False,
-                    PRIMARY_FOCUSER_CONTROL_BOX=False,
+                    FIELD_CAMERA=False,
                     WIFI_ROUTER=True,
                     SPECTRO_CONTROL_BOX=False),
                 dew_labels=dict(

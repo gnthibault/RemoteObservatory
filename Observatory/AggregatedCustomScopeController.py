@@ -88,14 +88,14 @@ class UPBV2(IndiDevice, Base):
                     USB_LABEL_1="PRIMARY_CAMERA",
                     USB_LABEL_2="ARDUINO_CONTROL_BOX",
                     USB_LABEL_3="GUIDE_CAMERA",
-                    USB_LABEL_4="PRIMARY_FOCUSER_CONTROL_BOX",
+                    USB_LABEL_4="FIELD_CAMERA",
                     USB_LABEL_5="WIFI_ROUTER",
                     USB_LABEL_6="SPECTRO_CONTROL_BOX"),
                 always_on_usb_identifiers=dict(
                     PRIMARY_CAMERA=False,
                     ARDUINO_CONTROL_BOX=False,
                     GUIDE_CAMERA=False,
-                    PRIMARY_FOCUSER_CONTROL_BOX=False,
+                    FIELD_CAMERA=False,
                     WIFI_ROUTER=True,
                     SPECTRO_CONTROL_BOX=False),
                 dew_labels=dict(
@@ -227,7 +227,7 @@ class UPBV2(IndiDevice, Base):
 
         # USB
         on_switches = [f"PORT_{i}" for i in range(1, 7) if self.usb_labels[f"USB_LABEL_{i}"] in
-                       ["PRIMARY_CAMERA", "GUIDE_CAMERA", "PRIMARY_FOCUSER_CONTROL_BOX", "SPECTRO_CONTROL_BOX", "ARDUINO_CONTROL_BOX"]]
+                       ["PRIMARY_CAMERA", "GUIDE_CAMERA", "FIELD_CAMERA", "SPECTRO_CONTROL_BOX", "ARDUINO_CONTROL_BOX"]]
         self.set_switch("USB_PORT_CONTROL", on_switches=on_switches)
 
     def power_off_all_telescope_equipments(self):
@@ -237,7 +237,7 @@ class UPBV2(IndiDevice, Base):
 
         # USB
         off_switches = [f"PORT_{i}" for i in range(1, 7) if self.usb_labels[f"USB_LABEL_{i}"] in
-                       ["PRIMARY_CAMERA", "GUIDE_CAMERA", "PRIMARY_FOCUSER_CONTROL_BOX", "SPECTRO_CONTROL_BOX", "ARDUINO_CONTROL_BOX"]]
+                       ["PRIMARY_CAMERA", "GUIDE_CAMERA", "FIELD_CAMERA", "SPECTRO_CONTROL_BOX", "ARDUINO_CONTROL_BOX"]]
         self.set_switch("USB_PORT_CONTROL", on_switches=off_switches)
 
     def power_on_mount(self):
@@ -539,12 +539,9 @@ class AggregatedCustomScopeController(Base):
         self.close()
 
         # Then switch off all electronic devices
-        self.switch_off_flat_panel()
         self.switch_off_scope_fan()
-        self.switch_off_scope_dew_heater()
-        self.switch_off_corrector_dew_heater()
-        self.switch_off_finder_dew_heater()
-        self.switch_off_camera()
+        self.switch_off_dew_heater()
+        self.upbv2.switch_off_instruments()
         self.switch_off_mount()
 
     def open(self):
@@ -596,11 +593,11 @@ class AggregatedCustomScopeController(Base):
     def switch_off_instruments(self):
         """ blocking call: switch off camera
         """
-        self.logger.debug("Switching off camera")
+        self.logger.debug("Switching off all equipments connected to upbv2")
         self.upbv2.power_off_all_telescope_equipments()
 
         for driver_name in self._indi_resetable_instruments_driver_name_list:
-            self.start_driver(driver_name)
+            self.stop_driver(driver_name)
 
     def switch_on_scope_fan(self):
         """ blocking call: switch on fan to cool down primary mirror
