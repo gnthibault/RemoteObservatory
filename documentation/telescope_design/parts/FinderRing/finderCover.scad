@@ -8,8 +8,8 @@ $fn=120;      // DOn't generate more than n faces for a 360deg circle
 
 // main geometry parameters
 $m3_radius = 2.95/2;
-$bar_width = 7.5;
-$bar_depth = 5;
+$bar_width = 10;
+$bar_depth = 8;
 
 // define first arm
 $attach_start_to_opening = 21;
@@ -21,10 +21,10 @@ $center_arm_to_center_disk = 63;
 $center_bar_to_start_disk = $bar_depth/2+1;
 
 //define disk
-$exactouterdiameter = 59.8;
+$exactouterdiameter = 63.5;//59.8;
 $outerdiameter = $exactouterdiameter +2;
 $cap_thickness = 1.6;
-$start_outer_disk_to_end_bar=$bar_depth/2+3.8;
+$start_outer_disk_to_end_bar=$bar_depth/2+2;//+3.8
 
 // protection cap
 $height_protection_cap = $bar_width;
