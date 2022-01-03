@@ -24,6 +24,7 @@ if __name__ == '__main__':
                 connection_type="CONNECTION_SERIAL",
                 baud_rate=9600,
                 polling_ms=1000,
+                dustcap_travel_delay_s=20,
                 adjustable_voltage_value=5,
                 power_labels=dict(
                     POWER_LABEL_1="MAIN_TELESCOPE_DUSTCAP_CONTROL",
@@ -31,7 +32,7 @@ if __name__ == '__main__':
                     POWER_LABEL_3="FOCUSER_LEVEL_POWER", #PRIMARY_FOCUSER_POWER
                     POWER_LABEL_4="MOUNT_POWER"),
                 always_on_power_identifiers=dict(
-                    MAIN_TELESCOPE_DUSTCAP_CONTROL=True,
+                    MAIN_TELESCOPE_DUSTCAP_CONTROL=False,
                     TELESCOPE_LEVEL_POWER=False, #SPOX_AND_DUSTCAP_POWER
                     FOCUSER_LEVEL_POWER=False, #PRIMARY_FOCUSER_POWER
                     MOUNT_POWER=False),

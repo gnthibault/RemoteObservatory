@@ -73,6 +73,7 @@ class UPBV2(IndiDevice, Base):
                 connection_type="CONNECTION_SERIAL",
                 baud_rate=9600,
                 polling_ms=1000,
+                dustcap_travel_delay_s=20,
                 adjustable_voltage_value=5,
                 power_labels=dict(
                     POWER_LABEL_1="MAIN_TELESCOPE_DUSTCAP_CONTROL",
@@ -80,7 +81,7 @@ class UPBV2(IndiDevice, Base):
                     POWER_LABEL_3="FOCUSER_LEVEL_POWER", #PRIMARY_FOCUSER_POWER
                     POWER_LABEL_4="MOUNT_POWER"),
                 always_on_power_identifiers=dict(
-                    MAIN_TELESCOPE_DUSTCAP_CONTROL=True,
+                    MAIN_TELESCOPE_DUSTCAP_CONTROL=False,
                     TELESCOPE_LEVEL_POWER=False, #SPOX_AND_DUSTCAP_POWER
                     FOCUSER_LEVEL_POWER=False, #PRIMARY_FOCUSER_POWER
                     MOUNT_POWER=False),
@@ -115,6 +116,7 @@ class UPBV2(IndiDevice, Base):
         self.connection_type = config["connection_type"]
         self.baud_rate = str(config["baud_rate"])
         self.polling_ms = float(config["polling_ms"])
+        self.dustcap_travel_delay_s = float(config["dustcap_travel_delay_s"])
 
         # labels
         self.power_labels = config["power_labels"]
@@ -202,6 +204,9 @@ class UPBV2(IndiDevice, Base):
     def initialize_adjustable_power_source(self):
         self.set_number('ADJUSTABLE_VOLTAGE', {'ADJUSTABLE_VOLTAGE_VALUE': self.adjustable_voltage_value})
 
+    def wait_dustcap_delay(self):
+        time.sleep(self.dustcap_travel_delay_s)
+
     def initialize_all_usb(self):
         """
         On our setup, all but the PORT 5 need to be reset.
@@ -266,7 +271,7 @@ class UPBV2(IndiDevice, Base):
         Set auto dew eligibility
         :return:
         """
-        on_switches = [f"DEW_{l}" for i,l in enumerate("ABC") if self.auto_dew_identifiers[self.dew_labels[f"DEW_LABEL_{i+1}"]]]
+        on_switches = [f"DEW_{l}" for i, l in enumerate("ABC") if self.auto_dew_identifiers[self.dew_labels[f"DEW_LABEL_{i+1}"]]]
         self.set_switch("AUTO_DEW", on_switches=on_switches)
 
     def set_auto_dew_eligibility_off(self):
@@ -274,7 +279,7 @@ class UPBV2(IndiDevice, Base):
         Set auto dew eligibility
         :return:
         """
-        off_switches = [f"DEW_{l}" for i,l in enumerate("ABC") if self.auto_dew_identifiers[self.dew_labels[f"DEW_LABEL_{i+1}"]]]
+        off_switches = [f"DEW_{l}" for i, l in enumerate("ABC") if self.auto_dew_identifiers[self.dew_labels[f"DEW_LABEL_{i+1}"]]]
         self.set_switch("AUTO_DEW", off_switches=off_switches)
 
     def get_power_info(self):
@@ -340,26 +345,30 @@ class UPBV2(IndiDevice, Base):
     def switch_on_mount(self):
         """ blocking call: switch on main mount
         """
-        on_switches = [f"POWER_CONTROL_{i}" for i in range(1, 5) if [self.power_labels[f"POWER_LABEL_{i}"] == "MOUNT_POWER"]]
+        on_switches = [f"POWER_CONTROL_{i}" for i in range(1, 5) if (self.power_labels[f"POWER_LABEL_{i}"] == "MOUNT_POWER")]
         self.set_switch("POWER_CONTROL", on_switches=on_switches)
 
     def switch_off_mount(self):
         """ blocking call: switch off main mount
         """
-        off_switches = [f"POWER_CONTROL_{i}" for i in range(1, 5) if [self.power_labels[f"POWER_LABEL_{i}"] == "MOUNT_POWER"]]
+        off_switches = [f"POWER_CONTROL_{i}" for i in range(1, 5) if (self.power_labels[f"POWER_LABEL_{i}"] == "MOUNT_POWER")]
         self.set_switch("POWER_CONTROL", off_switches=off_switches)
 
     def open_scope_dustcap(self):
         """ blocking call: open up main scope dustcap
         """
-        off_switches = [f"POWER_CONTROL_{i}" for i in range(1, 5) if [self.power_labels[f"POWER_LABEL_{i}"] == "MAIN_TELESCOPE_DUSTCAP_CONTROL"]]
-        self.set_switch("POWER_CONTROL", off_switches=off_switches)
+        on_switches = [f"POWER_CONTROL_{i}" for i in range(1, 5) if (self.power_labels[f"POWER_LABEL_{i}"] in
+                                                                     ["MAIN_TELESCOPE_DUSTCAP_CONTROL", "TELESCOPE_LEVEL_POWER"])]
+        self.set_switch("POWER_CONTROL", on_switches=on_switches)
+        self.wait_dustcap_delay()
 
     def close_scope_dustcap(self):
         """ blocking call: close main scope dustcap
         """
-        on_switches = [f"POWER_CONTROL_{i}" for i in range(1, 5) if [self.power_labels[f"POWER_LABEL_{i}"] == "MAIN_TELESCOPE_DUSTCAP_CONTROL"]]
-        self.set_switch("POWER_CONTROL", on_switches=on_switches)
+        on_switches = [f"POWER_CONTROL_{i}" for i in range(1, 5) if (self.power_labels[f"POWER_LABEL_{i}"] == "TELESCOPE_LEVEL_POWER")]
+        off_switches = [f"POWER_CONTROL_{i}" for i in range(1, 5) if (self.power_labels[f"POWER_LABEL_{i}"] == "MAIN_TELESCOPE_DUSTCAP_CONTROL")]
+        self.set_switch("POWER_CONTROL", on_switches=on_switches, off_switches=off_switches)
+        self.wait_dustcap_delay()
 
 class ArduinoServoController(IndiDevice, Base):
     """
