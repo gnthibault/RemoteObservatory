@@ -506,7 +506,6 @@ class Manager(Base):
         try:
             # close actual dome + everything managed by obsy
             self.observatory.close_everything()
-
             return True
         except Exception as e:
             self.logger.error(f"Problem closing observatory: {e}")

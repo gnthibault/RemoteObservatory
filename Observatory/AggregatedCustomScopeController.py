@@ -236,19 +236,24 @@ class UPBV2(IndiDevice, Base):
         self.set_switch("USB_PORT_CONTROL", on_switches=on_switches)
 
     def power_off_all_telescope_equipments(self):
-        # Power telescope level equipments
+        # Power off telescope level equipments
         off_switches = [f"POWER_CONTROL_{i}" for i in range(1, 5) if self.power_labels[f"POWER_LABEL_{i}"] in ['TELESCOPE_LEVEL_POWER', 'FOCUSER_LEVEL_POWER']]
-        self.set_switch("POWER_CONTROL", on_switches=off_switches)
+        self.set_switch("POWER_CONTROL", off_switches=off_switches)
 
         # USB
         off_switches = [f"PORT_{i}" for i in range(1, 7) if self.usb_labels[f"USB_LABEL_{i}"] in
                        ["PRIMARY_CAMERA", "GUIDE_CAMERA", "FIELD_CAMERA", "SPECTRO_CONTROL_BOX", "ARDUINO_CONTROL_BOX"]]
-        self.set_switch("USB_PORT_CONTROL", on_switches=off_switches)
+        self.set_switch("USB_PORT_CONTROL", off_switches=off_switches)
 
     def power_on_mount(self):
         # Power
         on_switches = [f"POWER_CONTROL_{i}" for i in range(1, 5) if self.power_labels[f"POWER_LABEL_{i}"] == 'MOUNT_POWER']
         self.set_switch("POWER_CONTROL", on_switches=on_switches)
+
+    def power_off_mount(self):
+        # Power
+        off_switches = [f"POWER_CONTROL_{i}" for i in range(1, 5) if self.power_labels[f"POWER_LABEL_{i}"] == 'MOUNT_POWER']
+        self.set_switch("POWER_CONTROL", off_switches=off_switches)
 
     def power_on_arduino_control_box(self):
         # 5V adjustable power source
@@ -321,7 +326,7 @@ class UPBV2(IndiDevice, Base):
         """ blocking call: switch on fan to cool down primary mirror
             set pwm value from 0 to 100
         """
-        fan_dict = {k: 80 for i, k in enumerate(["DEW_A", "DEW_B", "DEW_C"]) if self.dew_labels[f"DEW_LABEL_{i+1}"] == "PRIMARY_FAN"}
+        fan_dict = {k: 85 for i, k in enumerate(["DEW_A", "DEW_B", "DEW_C"]) if self.dew_labels[f"DEW_LABEL_{i+1}"] == "PRIMARY_FAN"}
         self.set_number("DEW_PWM", fan_dict)
 
     def switch_off_scope_fan(self):
@@ -541,6 +546,8 @@ class AggregatedCustomScopeController(Base):
         self.upbv2.power_on_arduino_control_box()
         self.arduino_servo_controller.initialize()
 
+        self._is_initialized = True
+
     def deinitialize(self):
         self.logger.debug("Deinitializing AggregatedCustomScopeController")
 
@@ -557,6 +564,8 @@ class AggregatedCustomScopeController(Base):
         """ blocking call: opens both main telescope and guiding scope dustcap
         """
         self.logger.debug("Opening AggregatedCustomScopeController")
+        if not self._is_initialized:
+            self.initialize()
         self.open_finder_dustcap()
         self.open_scope_dustcap()
 
