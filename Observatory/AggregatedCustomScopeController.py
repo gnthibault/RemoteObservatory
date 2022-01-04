@@ -73,7 +73,7 @@ class UPBV2(IndiDevice, Base):
                 connection_type="CONNECTION_SERIAL",
                 baud_rate=9600,
                 polling_ms=1000,
-                dustcap_travel_delay_s=20,
+                dustcap_travel_delay_s=10,
                 adjustable_voltage_value=5,
                 power_labels=dict(
                     POWER_LABEL_1="MAIN_TELESCOPE_DUSTCAP_CONTROL",
@@ -498,7 +498,10 @@ class AggregatedCustomScopeController(Base):
                 indi_resetable_instruments_driver_name_list=dict(
                     driver_1="ZWO CCD",
                     driver_2="Altair",
-                    driver_3="Shelyak SPOX"),
+                    driver_3="Shelyak SPOX",
+                    driver_4="Arduino telescope controller",
+                    driver_5="ASI EAF"
+                ),
                 indi_mount_driver_name="Losmandy Gemini",
                 indi_webserver_host="localhost",
                 indi_webserver_port="8624",)
@@ -544,6 +547,8 @@ class AggregatedCustomScopeController(Base):
 
         # Then, we need to use upbv2 to power the arduino USB
         self.upbv2.power_on_arduino_control_box()
+        # Wait for the port to be created
+        time.sleep(self._indi_driver_connect_delay_s)
         self.arduino_servo_controller.initialize()
 
         self._is_initialized = True
@@ -557,8 +562,10 @@ class AggregatedCustomScopeController(Base):
         # Then switch off all electronic devices
         self.switch_off_scope_fan()
         self.switch_off_dew_heater()
-        self.upbv2.switch_off_instruments()
+        self.switch_off_instruments()
         self.switch_off_mount()
+
+        self._is_initialized = False
 
     def open(self):
         """ blocking call: opens both main telescope and guiding scope dustcap
@@ -583,6 +590,8 @@ class AggregatedCustomScopeController(Base):
             req = f"{base_url}/api/drivers/start/"\
                   f"{driver_name.replace(' ', '%20')}"
             response = requests.post(req)
+            self.logger.debug(f"start_driver {driver_name} - url {req} - response: {response}")
+            assert response.status_code == 200
         except Exception as e:
             self.logger.warning(f"Cannot load indi driver : {e}")
 
@@ -593,6 +602,8 @@ class AggregatedCustomScopeController(Base):
             req = f"{base_url}/api/drivers/stop/"\
                   f"{driver_name.replace(' ', '%20')}"
             response = requests.post(req)
+            self.logger.debug(f"stop_driver {driver_name} - url {req} - response: {response}")
+            assert response.status_code == 200
         except Exception as e:
             self.logger.warning(f"Cannot load indi driver : {e}")
 
@@ -605,7 +616,7 @@ class AggregatedCustomScopeController(Base):
 
         # Now we need to wait a bit before trying to connect driver
         time.sleep(self._indi_driver_connect_delay_s)
-        for driver_name in self._indi_resetable_instruments_driver_name_list:
+        for driver_name in self._indi_resetable_instruments_driver_name_list.values():
             self.start_driver(driver_name)
 
     def switch_off_instruments(self):
@@ -614,7 +625,7 @@ class AggregatedCustomScopeController(Base):
         self.logger.debug("Switching off all equipments connected to upbv2")
         self.upbv2.power_off_all_telescope_equipments()
 
-        for driver_name in self._indi_resetable_instruments_driver_name_list:
+        for driver_name in self._indi_resetable_instruments_driver_name_list.values():
             self.stop_driver(driver_name)
 
     def switch_on_scope_fan(self):

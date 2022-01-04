@@ -8,7 +8,7 @@ import time
 # Local stuff : Mount
 from Observatory.AggregatedCustomScopeController import UPBV2
 from Observatory.AggregatedCustomScopeController import ArduinoServoController
-#from Observatory.AggregatedCustomScopeController import AggregatedCustomScopeController
+from Observatory.AggregatedCustomScopeController import AggregatedCustomScopeController
 
 
 #Astropy stuff
@@ -24,7 +24,7 @@ if __name__ == '__main__':
                 connection_type="CONNECTION_SERIAL",
                 baud_rate=9600,
                 polling_ms=1000,
-                dustcap_travel_delay_s=20,
+                dustcap_travel_delay_s=10,
                 adjustable_voltage_value=5,
                 power_labels=dict(
                     POWER_LABEL_1="MAIN_TELESCOPE_DUSTCAP_CONTROL",
@@ -63,14 +63,14 @@ if __name__ == '__main__':
                                  indi_port=7624))
 
     # Now test UPBV2
-    upbv2 = UPBV2(
-        config=config_upbv2,
-        connect_on_create=True)
-    print(upbv2.get_power_info())
-    print(upbv2.get_weather_info())
+    #upbv2 = UPBV2(
+    #    config=config_upbv2,
+    #    connect_on_create=True)
+    #print(upbv2.get_power_info())
+    #print(upbv2.get_weather_info())
 
     # Now test Arduino controller
-    upbv2.setup_telescope_power_on()
+    #upbv2.open_scope_dustcap()
 
     # config for simple arduino
     config_arduino = dict(
@@ -81,21 +81,34 @@ if __name__ == '__main__':
                 polling_ms=1000,
                 indi_client=dict(indi_host="localhost",
                                  indi_port=7624))
-    arduino = ArduinoServoController(
-        config=config_arduino,
-        connect_on_create=True)
-    print("test")
-    arduino.open_finder_dustcap()
-    arduino.close_finder_dustcap()
+    #arduino = ArduinoServoController(
+    #    config=config_arduino,
+    #    connect_on_create=True)
+
+    #arduino.open_finder_dustcap()
+    #arduino.close_finder_dustcap()
 
     config_aggregated = dict(
         config_upbv2=config_upbv2,
         config_arduino=config_arduino,
-    )
+        indi_driver_connect_delay_s=5,
+        indi_resetable_instruments_driver_name_list=dict(
+            driver_1="ZWO CCD",
+            driver_2="Altair",
+            driver_3="Shelyak SPOX",
+            driver_4="Arduino telescope controller",
+            driver_5="ASI EAF"
+        ),
+        indi_mount_driver_name="Losmandy Gemini",
+        indi_webserver_host="localhost",
+        indi_webserver_port="8624", )
 
     aggregated = AggregatedCustomScopeController(
         config=config_aggregated,
         connect_on_create=True)
+    aggregated.switch_on_instruments()
+    aggregated.switch_off_instruments()
+    print("test")
 
     # delay_sec = 5
     # print(f"Switching on flat panel {controller.status()}")
