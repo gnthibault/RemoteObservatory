@@ -19,7 +19,7 @@ On
 
 <defSwitchVector device="scope_controller" name="FINDER_SERVO_DUSTCAP_SWITCH" label="Finder scope dustcap" group="Main Control" state="Idle" perm="rw" rule="AtMostOne" timeout="60">
     <defSwitch name="SERVO_SWITCH" label="Dustcap switch">
-    <indiduino pin="9" type="servo" onangle="175" offangle="104" button="BUTTON_1"/>
+    <indiduino pin="9" type="servo" onangle="175" offangle="105" button="BUTTON_1"/>
 Off
     </defSwitch>
 </defSwitchVector>
