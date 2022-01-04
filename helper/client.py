@@ -127,7 +127,7 @@ class INDIClient:
             # except asyncio.TimeoutError:
             #     continue
             except asyncio.queues.QueueEmpty:
-                await asyncio.sleep(0)
+                await asyncio.sleep(0.01)
                 continue
             try:
                 self.writer.write(to_indi.encode())

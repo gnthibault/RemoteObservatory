@@ -74,7 +74,7 @@ if __name__ == '__main__':
 
     # config for simple arduino
     config_arduino = dict(
-                device_name="Arduino",
+                device_name="Arduino telescope controller",
                 device_port="/dev/serial/by-id/usb-1a86_USB2.0-Serial-if00-port0",
                 connection_type="CONNECTION_SERIAL",
                 baud_rate=57600,

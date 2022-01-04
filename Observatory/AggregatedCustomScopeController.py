@@ -548,7 +548,7 @@ class AggregatedCustomScopeController(Base):
         # Then, we need to use upbv2 to power the arduino USB
         self.upbv2.power_on_arduino_control_box()
         # Wait for the port to be created
-        time.sleep(self._indi_driver_connect_delay_s)
+        time.sleep(self._indi_driver_connect_delay_s*2)
         self.arduino_servo_controller.initialize()
 
         self._is_initialized = True
@@ -597,12 +597,16 @@ class AggregatedCustomScopeController(Base):
 
     def stop_driver(self, driver_name):
         try:
+            #if driver_name in ["Altair", "ASI EAF", "Arduino telescope controller"]: #"Shelyak SPOX",
+            #    return
             base_url = f"http://{self._indi_webserver_host}:"\
                        f"{self._indi_webserver_port}"
             req = f"{base_url}/api/drivers/stop/"\
                   f"{driver_name.replace(' ', '%20')}"
+            self.logger.setLevel("DEBUG")
+            self.logger.debug(f"stop_driver {driver_name} - post on url {req}")
             response = requests.post(req)
-            self.logger.debug(f"stop_driver {driver_name} - url {req} - response: {response}")
+            self.logger.debug(f"stop_driver {driver_name} - response: {response}")
             assert response.status_code == 200
         except Exception as e:
             self.logger.warning(f"Cannot load indi driver : {e}")
