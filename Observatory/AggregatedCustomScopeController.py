@@ -446,6 +446,13 @@ class ArduinoServoController(IndiDevice, Base):
         self.initialize_servo()
         self._is_initialized = True
 
+    def initialize(self):
+
+        self.close_finder_dustcap()
+        self.disconnect()
+
+        self._is_initialized = False
+
     def set_device_communication_options(self):
         self.set_text("DEVICE_PORT", {"PORT": self.device_port})
         self.set_switch("CONNECTION_MODE", on_switches=[self.connection_type])
@@ -494,7 +501,7 @@ class AggregatedCustomScopeController(Base):
             config = dict(
                 config_upbv2=None,
                 config_arduino=None,
-                indi_driver_connect_delay_s=5,
+                indi_driver_connect_delay_s=10,
                 indi_resetable_instruments_driver_name_list=dict(
                     driver_1="ZWO CCD",
                     driver_2="Altair",
@@ -548,7 +555,7 @@ class AggregatedCustomScopeController(Base):
         # Then, we need to use upbv2 to power the arduino USB
         self.upbv2.power_on_arduino_control_box()
         # Wait for the port to be created
-        time.sleep(self._indi_driver_connect_delay_s*2)
+        time.sleep(self._indi_driver_connect_delay_s)
         self.arduino_servo_controller.initialize()
 
         self._is_initialized = True
@@ -597,17 +604,19 @@ class AggregatedCustomScopeController(Base):
 
     def stop_driver(self, driver_name):
         try:
-            #if driver_name in ["Altair", "ASI EAF", "Arduino telescope controller"]: #"Shelyak SPOX",
+            #if driver_name not in ["ZWO CCD"]: #"Shelyak SPOX", "Arduino telescope controller", "ASI EAF", "Altair", "ZWO CCD"
             #    return
             base_url = f"http://{self._indi_webserver_host}:"\
                        f"{self._indi_webserver_port}"
             req = f"{base_url}/api/drivers/stop/"\
                   f"{driver_name.replace(' ', '%20')}"
-            self.logger.setLevel("DEBUG")
-            self.logger.debug(f"stop_driver {driver_name} - post on url {req}")
-            response = requests.post(req)
-            self.logger.debug(f"stop_driver {driver_name} - response: {response}")
-            assert response.status_code == 200
+            #self.logger.setLevel("DEBUG")
+
+            self.logger.warning(f"stop_driver {driver_name} DISABLED for now as it was randomly breaking indiserver")
+            ###self.logger.debug(f"stop_driver {driver_name} - post on url {req}")
+            ###response = requests.post(req)
+            ###self.logger.debug(f"stop_driver {driver_name} - response: {response}")
+            ###assert response.status_code == 200
         except Exception as e:
             self.logger.warning(f"Cannot load indi driver : {e}")
 
@@ -627,6 +636,9 @@ class AggregatedCustomScopeController(Base):
         """ blocking call: switch off camera
         """
         self.logger.debug("Switching off all equipments connected to upbv2")
+
+        # As power_off is also going to unplug arduino controller, we need to deinitialize it beforehand
+
         self.upbv2.power_off_all_telescope_equipments()
 
         for driver_name in self._indi_resetable_instruments_driver_name_list.values():

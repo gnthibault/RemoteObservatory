@@ -72,7 +72,7 @@ class IndiClient(SingletonIndiClientHolder, INDIClient, Base):
         self.logger.debug(f"Indi Client, remote host is: {self.host}:{self.port}")
 
         # Start the main ioloop that will serve all async task in another (single) thread
-        self.device_subscriptions = [] # list of coroutines
+        self.device_subscriptions = {} # dict of device_name: coroutines
         self.ioloop = asyncio.new_event_loop()
         # Not sure why but the default exception handler halts the loops and never shows the traceback.
         self.ioloop.set_exception_handler(self.exception)

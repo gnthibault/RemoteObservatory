@@ -91,7 +91,7 @@ if __name__ == '__main__':
     config_aggregated = dict(
         config_upbv2=config_upbv2,
         config_arduino=config_arduino,
-        indi_driver_connect_delay_s=5,
+        indi_driver_connect_delay_s=10,
         indi_resetable_instruments_driver_name_list=dict(
             driver_1="ZWO CCD",
             driver_2="Altair",
@@ -107,6 +107,8 @@ if __name__ == '__main__':
         config=config_aggregated,
         connect_on_create=True)
     aggregated.switch_on_instruments()
+    #aggregated.open()
+    #aggregated.close()
     aggregated.switch_off_instruments()
     print("test")
 
