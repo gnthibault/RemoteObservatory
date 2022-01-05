@@ -180,6 +180,7 @@ class IndiDevice(Base, device):
         self.logger.info(f"Disconnecting from device {self.device_name}")
         # set the corresponding switch to off
         self.set_switch('CONNECTION', on_switches=['DISCONNECT'], sync=True, timeout=self.defaultTimeout)
+        self.unregister_device_to_client()
         self.is_connected = False
 
     def get_switch(self, name):

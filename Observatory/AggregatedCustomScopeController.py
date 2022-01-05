@@ -446,11 +446,9 @@ class ArduinoServoController(IndiDevice, Base):
         self.initialize_servo()
         self._is_initialized = True
 
-    def initialize(self):
-
+    def deinitialize(self):
         self.close_finder_dustcap()
         self.disconnect()
-
         self._is_initialized = False
 
     def set_device_communication_options(self):
@@ -638,7 +636,7 @@ class AggregatedCustomScopeController(Base):
         self.logger.debug("Switching off all equipments connected to upbv2")
 
         # As power_off is also going to unplug arduino controller, we need to deinitialize it beforehand
-
+        self.arduino_servo_controller.deinitialize()
         self.upbv2.power_off_all_telescope_equipments()
 
         for driver_name in self._indi_resetable_instruments_driver_name_list.values():

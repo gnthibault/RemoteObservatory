@@ -161,7 +161,7 @@ class IndiClient(SingletonIndiClientHolder, INDIClient, Base):
     async def xml_from_indiserver(self, data):
         #self.logger.debug(f"IndiClient just received data {data}")
         # This is way too verbose, even in debug mode
-        for sub in self.device_subscriptions:
+        for sub in self.device_subscriptions.values():
             asyncio.run_coroutine_threadsafe(sub(data), self.ioloop)
         await asyncio.sleep(0.01)
 
