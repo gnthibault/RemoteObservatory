@@ -94,7 +94,7 @@ class UPBV2(IndiDevice, Base):
                     USB_LABEL_6="SPECTRO_CONTROL_BOX"),
                 always_on_usb_identifiers=dict(
                     PRIMARY_CAMERA=False,
-                    ARDUINO_CONTROL_BOX=False,
+                    ARDUINO_CONTROL_BOX=True,
                     GUIDE_CAMERA=False,
                     FIELD_CAMERA=False,
                     WIFI_ROUTER=True,
@@ -170,6 +170,18 @@ class UPBV2(IndiDevice, Base):
 
         self._is_initialized = True
 
+    def deinitialize(self):
+        # Then switch off all electronic devices
+        self.close_scope_dustcap()
+        self.switch_off_scope_fan()
+        self.switch_off_dew_heater()
+        self.power_off_all_telescope_equipments()
+        self.switch_off_mount()
+
+        self.disconnect()
+
+        self._is_initialized = False
+
     def set_device_communication_options(self):
         self.set_text("DEVICE_PORT", {"PORT": self.device_port})
         self.set_switch("CONNECTION_MODE", on_switches=[self.connection_type])
@@ -232,7 +244,7 @@ class UPBV2(IndiDevice, Base):
 
         # USB
         on_switches = [f"PORT_{i}" for i in range(1, 7) if self.usb_labels[f"USB_LABEL_{i}"] in
-                       ["PRIMARY_CAMERA", "GUIDE_CAMERA", "FIELD_CAMERA", "SPECTRO_CONTROL_BOX", "ARDUINO_CONTROL_BOX"]]
+                       ["PRIMARY_CAMERA", "GUIDE_CAMERA", "FIELD_CAMERA", "SPECTRO_CONTROL_BOX"]]
         self.set_switch("USB_PORT_CONTROL", on_switches=on_switches)
 
     def power_off_all_telescope_equipments(self):
@@ -242,7 +254,7 @@ class UPBV2(IndiDevice, Base):
 
         # USB
         off_switches = [f"PORT_{i}" for i in range(1, 7) if self.usb_labels[f"USB_LABEL_{i}"] in
-                       ["PRIMARY_CAMERA", "GUIDE_CAMERA", "FIELD_CAMERA", "SPECTRO_CONTROL_BOX", "ARDUINO_CONTROL_BOX"]]
+                       ["PRIMARY_CAMERA", "GUIDE_CAMERA", "FIELD_CAMERA", "SPECTRO_CONTROL_BOX"]]
         self.set_switch("USB_PORT_CONTROL", off_switches=off_switches)
 
     def power_on_mount(self):
@@ -504,8 +516,7 @@ class AggregatedCustomScopeController(Base):
                     driver_1="ZWO CCD",
                     driver_2="Altair",
                     driver_3="Shelyak SPOX",
-                    driver_4="Arduino telescope controller",
-                    driver_5="ASI EAF"
+                    driver_4="ASI EAF"
                 ),
                 indi_mount_driver_name="Losmandy Gemini",
                 indi_webserver_host="localhost",
@@ -550,25 +561,27 @@ class AggregatedCustomScopeController(Base):
         # initialize upbv2
         self.upbv2.initialize()
 
-        # Then, we need to use upbv2 to power the arduino USB
-        self.upbv2.power_on_arduino_control_box()
-        # Wait for the port to be created
+        # Wait for the arduino os serial port to be created
         time.sleep(self._indi_driver_connect_delay_s)
         self.arduino_servo_controller.initialize()
 
         self._is_initialized = True
 
     def deinitialize(self):
+        """
+
+        :return:
+        """
         self.logger.debug("Deinitializing AggregatedCustomScopeController")
 
-        # First close all dustcap
-        self.close()
+        # stop all drivers that relies on device being on
+        self.stop_all_drivers()
 
-        # Then switch off all electronic devices
-        self.switch_off_scope_fan()
-        self.switch_off_dew_heater()
-        self.switch_off_instruments()
-        self.switch_off_mount()
+        # Deinitialize arduino servo first (as it relies on upb power)
+        self.arduino_servo_controller.deinitialize()
+
+        # Deinitialize upbv2
+        self.upbv2.deinitialize()
 
         self._is_initialized = False
 
@@ -626,7 +639,7 @@ class AggregatedCustomScopeController(Base):
         self.upbv2.power_on_all_telescope_equipments()
 
         # Now we need to wait a bit before trying to connect driver
-        time.sleep(self._indi_driver_connect_delay_s)
+        # but _indi_driver_connect_delay_s was already waited for at previous step
         for driver_name in self._indi_resetable_instruments_driver_name_list.values():
             self.start_driver(driver_name)
 
@@ -635,12 +648,14 @@ class AggregatedCustomScopeController(Base):
         """
         self.logger.debug("Switching off all equipments connected to upbv2")
 
-        # As power_off is also going to unplug arduino controller, we need to deinitialize it beforehand
-        self.arduino_servo_controller.deinitialize()
         self.upbv2.power_off_all_telescope_equipments()
-
         for driver_name in self._indi_resetable_instruments_driver_name_list.values():
             self.stop_driver(driver_name)
+
+    def stop_all_drivers(self):
+        for driver_name in self._indi_resetable_instruments_driver_name_list.values():
+            self.stop_driver(driver_name)
+        self.stop_driver(self._indi_mount_driver_name)
 
     def switch_on_scope_fan(self):
         """ blocking call: switch on fan to cool down primary mirror

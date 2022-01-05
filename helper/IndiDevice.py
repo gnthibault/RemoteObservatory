@@ -50,19 +50,11 @@ class IndiDevice(Base, device):
         Base.__init__(self)
         device.__init__(self, name=device_name)
 
-        self.is_connected = False
+        self.is_client_connected = False
         self.indi_client_config = indi_client_config
         self.timeout = IndiDevice.defaultTimeout
         self.interfaces = None
         self.debug = debug
-
-    def disconnect(self):
-        """
-        Disable device connection
-        """
-        self.set_switch("CONNECTION", ["DISCONNECT"])
-        self.is_connected = False
-        return
 
     async def xml_from_indiserver(self, data):
         """
@@ -154,9 +146,13 @@ class IndiDevice(Base, device):
 
         """
         # set the corresponding switch to on
-        self.set_switch('CONNECTION', ['CONNECT'], sync=True, timeout=5)
-        # Keep track of status
-        self.is_connected = True
+        self.set_switch('CONNECTION', ['CONNECT'], sync=True, timeout=self.defaultTimeout)
+
+    def disconnect_device(self):
+        """
+        Disable device connection
+        """
+        self.set_switch('CONNECTION', on_switches=['DISCONNECT'], sync=True, timeout=self.defaultTimeout)
 
     def connect(self, connect_device=True):
         # setup indi client
@@ -174,14 +170,13 @@ class IndiDevice(Base, device):
             self.connect_device()
 
     def disconnect(self):
-        if not self.device.isConnected():
-            self.logger.warning(f"Not connected to device {self.device_name}")
-            return
-        self.logger.info(f"Disconnecting from device {self.device_name}")
-        # set the corresponding switch to off
-        self.set_switch('CONNECTION', on_switches=['DISCONNECT'], sync=True, timeout=self.defaultTimeout)
-        self.unregister_device_to_client()
-        self.is_connected = False
+        self.logger.info(f"Disconnecting device {self.device_name}")
+
+        if self.is_client_connected:
+            # set the corresponding switch to off
+            self.disconnect_device()
+            self.unregister_device_to_client()
+            self.is_client_connected = False
 
     def get_switch(self, name):
         return self.get_vector_dict(name)
