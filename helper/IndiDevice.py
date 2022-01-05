@@ -50,6 +50,7 @@ class IndiDevice(Base, device):
         Base.__init__(self)
         device.__init__(self, name=device_name)
 
+        self.indi_client = None
         self.is_client_connected = False
         self.indi_client_config = indi_client_config
         self.timeout = IndiDevice.defaultTimeout
@@ -71,7 +72,12 @@ class IndiDevice(Base, device):
         await asyncio.sleep(0)
 
     async def unregistering_runner(self):
-        del self.indi_client.device_subscriptions[self.device_name]
+        try:
+            assert self.indi_client is not None
+            del self.indi_client.device_subscriptions[self.device_name]
+        except KeyError as e:
+            self.logger.warning(f"Device {self.device_name} cannot be unregistered from client, "
+                                f"as it doesn't seems registered yet: {e}")
         await asyncio.sleep(0)
 
     def register_device_to_client(self):
