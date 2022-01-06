@@ -153,6 +153,15 @@ Modify $PWD to the directory where you want to store the configuration file.
 Try it out, default admin user credentials are admin/admin.
 Further documentation can be found [here](http://docs.grafana.org/installation/docker/)
 
+Now you will have to configure your influxdb data source, it is important to select FLUX as the query language, not the other one (influxQL)
+url: http://influxdb-remoteobservatory:8086
+access: server
+No nead to setup any authentication process
+No custom http header
+InfluxDB details:
+Organization: remoteobservatory
+Token: remoteobservatory
+Default bucket: remoteobservatory
 
 
 ## Docker compose stuff
