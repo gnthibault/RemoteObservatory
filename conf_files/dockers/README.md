@@ -55,7 +55,7 @@ Note that if you start a container with a volume that does not yet exist, Docker
 
   ```bash
   sudo apt-get install mosquitto-clients
-  mosquitto_pub -h 192.168.0.48 -t remoteobservatory/hello -m "world"
+  mosquitto_pub -h 192.168.0.48 -p 1883 -t remoteobservatory/hello -m "world" -d
   ```
 
 ## InfluxDB (version 2.X)
