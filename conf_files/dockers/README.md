@@ -53,8 +53,13 @@ Note that if you start a container with a volume that does not yet exist, Docker
 
 ### test
 
+In one shell, launch the following commands
   ```bash
   sudo apt-get install mosquitto-clients
+  mosquitto_sub -h 192.168.0.48 -p 1883 -t remoteobservatory/# -d
+  ```
+  And to test, simply publish in another shell, and check the first one
+  ```bash
   mosquitto_pub -h 192.168.0.48 -p 1883 -t remoteobservatory/hello -m "world" -d
   ```
 
@@ -150,4 +155,5 @@ Further documentation can be found [here](http://docs.grafana.org/installation/d
 
 
 
-
+## Docker compose stuff
+You might find this page helpful: https://community.influxdata.com/t/telegraf-mqtt-connection-network-error/22952
