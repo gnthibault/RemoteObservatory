@@ -60,7 +60,7 @@ In one shell, launch the following commands
   ```
   And to test, simply publish in another shell, and check the first one
   ```bash
-  mosquitto_pub -h 192.168.0.48 -p 1883 -t remoteobservatory/hello -m "world" -d
+  mosquitto_pub -h 192.168.0.48 -p 1883 -t remoteobservatory/device_name/measurment_type/measurment_name -m "{\"value\": 3.6}" -d
   ```
 
 ## InfluxDB (version 2.X)
