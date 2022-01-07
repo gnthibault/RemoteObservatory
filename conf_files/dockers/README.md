@@ -3,16 +3,16 @@
 ## List of docker images
 
 * [Mosquitto for MQTT support](https://hub.docker.com/_/eclipse-mosquitto)
-* [Telegraf for influxdb data ingestion](https://registry.hub.docker.com/_/telegraf/)
 * [InfluxDB for the database](https://registry.hub.docker.com/_/influxdb/)
+* [Telegraf for influxdb data ingestion](https://registry.hub.docker.com/_/telegraf/)
 * [Grafana for monitoring dashboard](https://registry.hub.docker.com/r/grafana/grafana)
 
 ## How to install
   ```bash
   # Quick note: on DSM you can directly launch those with sudo
   docker pull eclipse-mosquitto
-  docker pull telegraf
   docker pull influxdb
+  docker pull telegraf
   docker pull grafana/grafana
   ```
 
@@ -110,6 +110,10 @@ Modify the default configuration, which will now be available under $PWD. Then s
       influxdb
   ```
 
+### Administration of influxDB server
+
+Ther is a web administration user interface available at http://host_ip):8086/
+
 ## Telegraf
 
 The default configuration requires a running InfluxDB instance as an output plugin. Ensure that InfluxDB is running on port 8086 before starting the Telegraf container.
@@ -134,6 +138,7 @@ When customizing the config, pay attention to the following sections:
 * outputs.influxdb_v2
 
 Check [this](https://www.influxdata.com/blog/mqtt-topic-payload-parsing-telegraf/) for more infos
+[This](https://docs.influxdata.com/telegraf/v1.18/administration/configuration/#measurement-filtering) link can also be useful to route data to the right buckets
 
 Once you've customized telegraf.conf, you can run the Telegraf container with it mounted in the expected location:
 
@@ -166,3 +171,42 @@ Default bucket: remoteobservatory
 
 ## Docker compose stuff
 You might find this page helpful: https://community.influxdata.com/t/telegraf-mqtt-connection-network-error/22952
+
+
+
+
+## (OPTIONAL - ONLY FOR TICK STACK) Chronograf
+
+* [Chronograf to manage influxdbd](https://registry.hub.docker.com/_/chronograf)
+
+### Setup docker
+  ```bash
+  docker pull chronograf:1.9.1
+  ```
+
+The instructions here are very similar to the instructions when using telegraf with influxdb.
+
+We can now start a Chronograf container that references this database.
+
+  ```bash
+  docker run -p 8888:8888 \
+      --net=container:influxdb \
+      chronograf --influxdb-url=http://influxdb-remoteobservatory:8086
+  ```
+
+You might also want to enable persistence with
+
+  ```bash
+  docker run -p 8888:8888 \
+      -v /volume1/docker/chronograf-remoteobservatory/:/var/lib/chronograf \
+      --net=container:influxdb \
+      chronograf --influxdb-url=http://influxdb-remoteobservatory:8086
+  ```
+
+Note that if you are using DSM to run you dockers, you need to escape the "=" in the form entry for options: execname --param1\=arg1
+
+### Setup config
+you need to login to http://host_ip_chronograf:8888/sources/
+and then setup the InfluxDB_v2_Auth type of connection and provide the expected organisation, token, etc...
+
+
