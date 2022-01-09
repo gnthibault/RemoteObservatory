@@ -70,7 +70,6 @@ class GuiderPHD2(Base):
             config = dict(
                 host="localhost",
                 port=4400,
-                publish_port = 6510,
                 profile_id='1',
                 exposure_time_sec='3',
                 settle={
@@ -94,9 +93,8 @@ class GuiderPHD2(Base):
         self.settle = config["settle"]
         self.exposure_time_sec = config['exposure_time_sec']
 
-        # we broadcast data throught a message queue style mecanism
+        # we broadcast data through a message queue style mecanism
         self.messaging = None
-        self.publish_port = config["publish_port"]
 
         # Initialize the state machine
         self.machine = Machine(model=self,
@@ -169,7 +167,7 @@ class GuiderPHD2(Base):
 
     def send_message(self, data, channel='GUIDING'):
         if self.messaging is None:
-            self.messaging = PanMessaging.create_publisher(self.publish_port)
+            self.messaging = PanMessaging.create_client(**self.config["messaging"])
         self.messaging.send_message(channel, {"data": data})
 
     def receive(self):

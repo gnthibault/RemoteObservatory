@@ -158,7 +158,6 @@ guider:
     module : GuiderPHD2
     host : localhost
     port : 4400
-    publish_port : 6510
     #profile_id : 1 # For IRL setup
     profile_id : 2
     exposure_time_sec : 2
@@ -175,7 +174,6 @@ weather_service :
     module : IndiWeather
     service_name : Weather Simulator
     key_path : /var/RemoteObservatory/keys.json
-    publish_port : 6510
     delay_sec : 60
     observatory:
         latitude: 43.56 # Degrees
@@ -191,9 +189,8 @@ weather_service :
 time_service :
     module : HostTimeService
 messaging:
-    # Must match ports in peas.yaml.
-    cmd_port: 6500
-    msg_port: 6510
+    mqtt_host: 192.168.0.48
+    mqtt_port: 1883
 #Enable to output POCS messages to social accounts
 # social_accounts:
 #     twitter:

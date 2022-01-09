@@ -10,7 +10,6 @@ logging.basicConfig(level=logging.DEBUG, format='%(levelname)s:%(message)s')
 config = {
     "host": "localhost",
     "port": 4400,
-    "publish_port": 6510,
     # profile_id : 1 # For IRL setup
     "profile_id": 2,
     "exposure_time_sec": 2,

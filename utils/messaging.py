@@ -1,14 +1,15 @@
 # General stuff
 import datetime
 import logging
-import zmq
+import paho.mqtt.client as mqttclient
+import paho.mqtt.subscribe as mqttsubscribe
+import random
 import yaml
 
 from astropy import units as u
 from astropy.time import Time
 from bson import ObjectId
-from json import dumps
-from json import loads
+import json
 
 #from pocs.utils import current_time
 from Service.NTPTimeService import HostTimeService
@@ -53,94 +54,41 @@ class PanMessaging(object):
 
     """
     logger = logging.getLogger('PanMessaging')
-    #TODO TN URGENT
-    #logger = logging.getLogger(self.__class__.__name__)
 
     def __init__(self, **kwargs):
-        # Create a new context
-        self.context = zmq.Context()
-        self.socket = None
+        # Create helper objects
+        self.default_topic = "remoteobservatory"
+        self.default_cmd_topic = "remoteobservatory/cmd"
+        self.client = None
+        self.broker = None
+        self.client_id = None
         self.serv_time = HostTimeService()
 
     @classmethod
-    def create_forwarder(cls, sub_port, pub_port, ready_fn=None, done_fn=None):
-        subscriber, publisher = PanMessaging.create_forwarder_sockets(sub_port, pub_port)
-        PanMessaging.run_forwarder(subscriber, publisher, ready_fn=ready_fn, done_fn=done_fn)
-
-    @classmethod
-    def create_forwarder_sockets(cls, sub_port, pub_port):
-        subscriber = PanMessaging.create_subscriber(sub_port, bind=True, connect=False)
-        publisher = PanMessaging.create_publisher(pub_port, bind=True, connect=False)
-        return subscriber, publisher
-
-    @classmethod
-    def run_forwarder(cls, subscriber, publisher, ready_fn=None, done_fn=None):
-        try:
-            if ready_fn:
-                ready_fn()
-            zmq.device(zmq.FORWARDER, subscriber.socket, publisher.socket)
-        except KeyboardInterrupt:
-            pass
-        except Exception as e:
-            publisher.logger.warning(e)
-            publisher.logger.warning("bringing down zmq device")
-        finally:
-            publisher.close()
-            subscriber.close()
-            if done_fn:
-                done_fn()
-
-    @classmethod
-    def create_publisher(cls, port, bind=False, connect=True):
+    def create_client(cls, mqtt_host, mqtt_port, connect=True):
         """ Create a publisher
 
         Args:
-            port (int): The port (on localhost) to bind to.
-
-        Returns:
-            A ZMQ PUB socket
-        """
-        obj = cls()
-        obj.logger.debug("Creating publisher. Binding to port {} ".format(port))
-
-        socket = obj.context.socket(zmq.PUB)
-
-        if bind:
-            socket.bind('tcp://*:{}'.format(port))
-        elif connect:
-            socket.connect('tcp://localhost:{}'.format(port))
-
-        obj.socket = socket
-
-        return obj
-
-    @classmethod
-    def create_subscriber(cls, port, channel='', bind=False, connect=True):
-        """ Create a listener
-
-        Args:
-            port (int):         The port (on localhost) to bind to.
-            channel (str):      Which topic channel to subscribe to.
+            port (int): The port (to bind to)
 
         """
         obj = cls()
-        obj.logger.debug("Creating subscriber. Port: {} \tChannel: {}".format(
-            port, channel))
+        obj.logger.debug(f"Creating client")
+        obj.broker = {"host": mqtt_host, "port": mqtt_port}
+        obj.client_id = hex(random.getrandbits(128))[2:-1]
+        client = mqttclient.Client(obj.client_id)
 
-        socket = obj.context.socket(zmq.SUB)
-
-        if bind:
-            try:
-                socket.bind('tcp://*:{}'.format(port))
-            except zmq.error.ZMQError:
-                obj.logger.debug('Problem binding port {}'.format(port))
-        elif connect:
-            socket.connect('tcp://localhost:{}'.format(port))
-
-        socket.setsockopt_string(zmq.SUBSCRIBE, channel)
-
-        obj.socket = socket
-
+        # Subscribing in on_connect() means that if we lose the connection and
+        # reconnect then subscriptions will be renewed.
+        def on_connect(client, userdata, flags, rc):
+          #print(f"MQTT Connected with result code {str(rc)}")
+          client.subscribe(f"{obj.default_cmd_topic}/#")
+        client.on_connect = on_connect
+        if connect:
+            client.connect(**obj.broker)
+            client.loop_start()
+            #assert client.is_connected(), "Client cannot connect"
+        obj.client = client
         return obj
 
     def send_message(self, channel, message):
@@ -151,58 +99,82 @@ class PanMessaging(object):
             message(str):   Message to be sent.
 
         """
-        assert channel > '', self.logger.warning("Cannot send blank channel")
+        assert channel > '', "Cannot send blank channel"
+        #assert self.client.is_connected(), "Client should be connected before sending a message"
 
         if isinstance(message, str):
             current_time = self.serv_time.get_utc()
             message = {
                 'message': message,
-                'timestamp': current_time.isoformat().replace(
-                    'T',
-                    ' ').split('.')[0]}
+                'timestamp': current_time.isoformat().replace('T', ' ').split('.')[0]}
         else:
             message = self.scrub_message(message)
 
-        msg_object = dumps(message, skipkeys=True)
-        full_message = f"{channel} {msg_object}"
+        msg_object = json.dumps(message, skipkeys=True)
         self.logger.debug(f"PanMessaging - sending - {channel}: {message}")
 
         # Send the message
-        self.socket.send_string(full_message, flags=zmq.NOBLOCK)
+        self.client.publish(
+            topic=f"{self.default_topic}/{channel}",
+            payload=msg_object, qos=0, retain=False)
 
-    def receive_message(self, blocking=True, flags=0):
+    def register_callback(self, callback, cmd_type=None):
+        """
+        Callback should have a form like:
+        callback(msg_type, msg_obj)
+        but mqtt callback looks like
+        def on_message(client, userdata, message):
+            print("received message =",str(message.payload.decode("utf-8")))
+        :return:
+        """
+        #assert self.client.is_connected(), "Client should be connected before starting loop"
+        def on_message_callback(client, userdata, message):
+            msg_type, msg_data = self.parse_msg(message)
+            callback(msg_type, msg_data)
+        self.client.loop_stop()
+        if cmd_type is None:
+            self.client.on_message(on_message_callback)
+        else:
+            self.client.message_callback_add(
+                f"{self.default_cmd_topic}/{cmd_type}", on_message_callback)
+        self.client.loop_start()
+
+    def receive_message(self):
         """Receive a message
 
-        Receives a message for the current subscriber. Blocks by default, pass
-        `flags=zmq.NOBLOCK` for non-blocking.
+        Receives a message for the current subscriber. Blocks by default
 
         Args:
-            flag (int, optional): Any valid recv flag, e.g. zmq.NOBLOCK
+            blocking (bool, optional): expected behaviour
 
         Returns:
             tuple(str, dict): Tuple containing the channel and a dict
         """
-        msg_type = None
-        msg_obj = None
-        if not blocking:
-            flags = flags | zmq.NOBLOCK
+        #assert self.client.is_connected(), "Client should be connected before receiving a message"
+        topic = f"{self.default_cmd_topic}/#"
         try:
-            message = self.socket.recv_string(flags=flags)
+            msg = mqttsubscribe.simple(
+                topics=topic, qos=0, msg_count=1, retained=False,
+                hostname=self.broker["host"], port=self.broker["port"], client_id=self.client_id)
+            msg_type, msg_data = self.parse_msg(msg)
         except Exception as e:
-            pass
-        else:
-            msg_type, msg = message.split(' ', maxsplit=1)
-            try:
-                msg_obj = loads(msg)
-            except Exception:
-                msg_obj = yaml.safe_load(msg)
+            self.logger.error(f"MQTT error while handling cmd message: {e}")
+        return msg_type, msg_data
 
-        return msg_type, msg_obj
+    def parse_msg(self, msg):
+        msg_type, msg_payload = msg.topic.split(f"{self.default_cmd_topic}/")[1], msg.payload
+        try:
+            msg_data = json.loads(msg_payload)
+        except json.decoder.JSONDecodeError as e:
+            msg_data = yaml.safe_load(msg_payload)
+        except Exception as e:
+            print(f"MQTT error while handling cmd message: {e}")
+        return msg_type, msg_data
 
-    def close(self):
-        """Close the socket """
-        self.socket.close()
-        self.context.term()
+    def close_connection(self):
+        """Close the client connection """
+        self.client.loop_stop()
+        self.client.disconnect()
 
     def scrub_message(self, message):
 

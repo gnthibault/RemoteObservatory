@@ -7,7 +7,6 @@ import queue
 import sys
 import time
 import warnings
-import zmq
 
 # Astropy
 from astropy import units as u
@@ -66,7 +65,6 @@ class RemoteObservatoryFSM(StateMachine, Base):
         self.name = 'Remote Observatory'
         self.logger.info('Initializing Remote Observatory - {}'.format(
                          self.name))
-        self._processes = {}
         self._has_messaging = None
         self.has_messaging = messaging
 
@@ -173,16 +171,16 @@ class RemoteObservatoryFSM(StateMachine, Base):
 
     def say(self, msg):
         """ Remote observatory Units like to talk!
-        Send a message. Message sent out through zmq has unit name as channel.
+        Send a message. Message sent out through mqtt has unit name as channel.
         Args:
             msg(str): Message to be sent
         """
-        if self.has_messaging is False:
+        if not self.has_messaging:
             self.logger.info(f"Unit says: {msg}")
         else:
-            self.send_message(f"{msg}", channel='PANCHAT')
+            self.send_message(f"{msg}", channel='chat')
 
-    def send_message(self, msg, channel='POCS'):
+    def send_message(self, msg, channel='chat'):
         """ Send a message
 
         This will use the `self._msg_publisher` to send a message
@@ -199,8 +197,7 @@ class RemoteObservatoryFSM(StateMachine, Base):
         if self.has_messaging:
             self._msg_publisher.send_message(channel, msg)
         else:
-            # TODO TN this alternative is temporary only
-            self.logger.info('MESSAGE #{}: {}'.format(channel, msg))
+            self.logger.info(f"MESSAGE {channel}: {msg}")
 
     def check_messages(self):
         """ Check messages for the system
@@ -258,12 +255,12 @@ class RemoteObservatoryFSM(StateMachine, Base):
 
             # Shut down messaging
             self.logger.debug('Shutting down messaging system')
-
-            for name, proc in self._processes.items():
-                if proc.is_alive():
-                    self.logger.debug('Terminating {} - PID {}'.format(
-                        name, proc.pid))
-                    proc.terminate()
+            self._msg_client.close_connection()
+            #for name, proc in self._processes.items():
+            #    if proc.is_alive():
+            #        self.logger.debug('Terminating {} - PID {}'.format(
+            #            name, proc.pid))
+            #        proc.terminate()
 
             self._keep_running = False
             self._do_states = False
@@ -499,70 +496,22 @@ class RemoteObservatoryFSM(StateMachine, Base):
         self.power_down()
 
     def _setup_messaging(self):
-        cmd_port = self.config['messaging']['cmd_port']
-        msg_port = self.config['messaging']['msg_port']
+        mqtt_host = self.config['messaging']['mqtt_host']
+        mqtt_port = self.config['messaging']['mqtt_port']
 
-        def create_forwarder(port):
-            try:
-                PanMessaging.create_forwarder(port, port + 1)
-            except Exception:
-                pass
-
-        cmd_forwarder_process = multiprocessing.Process(
-            target=create_forwarder, args=(
-                cmd_port,), name='CmdForwarder')
-        cmd_forwarder_process.start()
-
-        msg_forwarder_process = multiprocessing.Process(
-            target=create_forwarder, args=(
-                msg_port,), name='MsgForwarder')
-        msg_forwarder_process.start()
-
-        self._do_cmd_check = True
         self._cmd_queue = multiprocessing.Queue()
         self._sched_queue = multiprocessing.Queue()
+        self._msg_client = PanMessaging.create_client(mqtt_host, mqtt_port, connect=True)
 
-        self._msg_publisher = PanMessaging.create_publisher(msg_port)
+        def new_cmd_callback(msg_type, msg_obj):
+            self._sched_queue.put(msg_obj)
+        def new_sched_callback(msg_type, msg_obj):
+            self._cmd_queue.put(msg_obj)
 
-        def check_message_loop(cmd_queue):
-            cmd_subscriber = PanMessaging.create_subscriber(cmd_port + 1)
+        self._msg_client.register_callback(callback=new_cmd_callback, cmd_type="POCS-CMD/#")
+        self._msg_client.register_callback(callback=new_sched_callback, cmd_type="POCS-SCHED/#")
+        self.logger.debug(f"Command message subscriber set up on {mqtt_host}:{mqtt_port}")
 
-            poller = zmq.Poller()
-            poller.register(cmd_subscriber.socket, zmq.POLLIN)
-
-            try:
-                while self._do_cmd_check:
-                    # Poll for messages
-                    sockets = dict(poller.poll(500))  # 500 ms timeout
-
-                    if cmd_subscriber.socket in sockets and \
-                            sockets[cmd_subscriber.socket] == zmq.POLLIN:
-
-                        msg_type, msg_obj = cmd_subscriber.receive_message(
-                            flags=zmq.NOBLOCK)
-
-                        # Put the message in a queue to be processed
-                        if msg_type == 'POCS-CMD':
-                            cmd_queue.put(msg_obj)
-
-                    time.sleep(1)
-            except KeyboardInterrupt:
-                pass
-
-        self.logger.debug('Starting command message loop')
-        check_messages_process = multiprocessing.Process(
-            target=check_message_loop, args=(self._cmd_queue,))
-        check_messages_process.name = 'MessageCheckLoop'
-        check_messages_process.start()
-        self.logger.debug('Command message subscriber set up on port {}'.format(
-                          cmd_port))
-
-        self._processes = {
-            'check_messages': check_messages_process,
-            'cmd_forwarder': cmd_forwarder_process,
-            'msg_forwarder': msg_forwarder_process,
-        }
-        
 if __name__ == '__main__':
     # load the logging configuration
     logging.config.fileConfig('logging.ini')

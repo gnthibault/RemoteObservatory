@@ -17,12 +17,10 @@ class ArduiScopeController(Base):
 
         if config is None:
             config = dict(
-                board = "scope_controller",
-                port = "/dev/ttyACM0",
-                cmd_port = 6502,
-                msg_port = 6520,
-                pin_scope_dustcap = 10,
-                pin_finder_dustcap = 11,
+                board="scope_controller",
+                port="/dev/ttyACM0",
+                pin_scope_dustcap=10,
+                pin_finder_dustcap=11,
                 pin_flat_panel=13,
                 pin_fan_primary=14,
             )
@@ -34,9 +32,8 @@ class ArduiScopeController(Base):
 
         # for communication
         self._cmd_channel = "{}:commands".format(self.board)
-        self._sub = None
-        self._pub = None
-
+        self.messaging = None
+        
     @property
     def is_initialized(self):
         return self._is_initialized
@@ -47,13 +44,10 @@ class ArduiScopeController(Base):
                           "subscribe({}), publish({})".format(
                               self.config['msg_port'],
                               self.config['cmd_port']))
-        self._sub = PanMessaging.create_subscriber(port=self.config['msg_port'],
-                                                   channel=self.board)
-        self._pub = PanMessaging.create_publisher(self.config['cmd_port'],
-                                                  bind=True)
+        self.messaging = PanMessaging.create_client(**self.config["messaging"])
         # we also need to launch the arduino service !
         self.acquisition_thread = threading.Thread(
-            target = arduinolauncher,
+            target=arduinolauncher,
             kwargs=dict(board=self.board,
                         cmd_port=self.config['cmd_port'],
                         msg_port=self.config['msg_port']))
@@ -72,7 +66,7 @@ class ArduiScopeController(Base):
         # Now shutdown
         msg = dict()
         msg['command'] = 'shutdown'
-        self._pub.send_message(self._cmd_channel, msg)
+        self.messaging.send_message(self._cmd_channel, msg)
 
         # acquisition thread should terminate after shutdown
         self.acquisition_thread.join()
@@ -81,7 +75,7 @@ class ArduiScopeController(Base):
         msg = dict()
         msg['command'] = 'write_line'
         msg['line'] = '{},{}'.format(pin, value)
-        self._pub.send_message(self._cmd_channel, msg)
+        self.messaging.send_message(self._cmd_channel, msg)
 
     def send_blocking_order(self, pin, value):
         """
@@ -99,7 +93,7 @@ class ArduiScopeController(Base):
         is_confirmed = False
         timeout_obj = serialutil.Timeout(100)
         while not timeout_obj.expired():
-            mtype, mmsg = self._sub.receive_message(blocking=True)
+            mtype, mmsg = self.messaging.receive_message(blocking=True)
             for device in mmsg['data']['devices']:
                 try:
                     cpin, cval = [device[x] for x in ['pin_number', 'pin_value']]
@@ -152,7 +146,7 @@ class ArduiScopeController(Base):
         try:
             timeout_obj = serialutil.Timeout(4.0)
             while not timeout_obj.expired():
-                msg_type, msg_obj = self._sub.receive_message(blocking=False)
+                msg_type, msg_obj = self.messaging.receive_message(blocking=False)
                 if msg_obj is not None:
                     if self.board in msg_obj:
                         self.latest_status = msg_obj

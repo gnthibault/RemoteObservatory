@@ -29,7 +29,6 @@ class IndiAAGCloudWatcher(threading.Thread, IndiDevice):
         if config is None:
             config = dict(
                 service_name="AAG Cloud Watcher",
-                publish_port=6510,
                 delay_sec=60,
                 indi_client=dict(
                     indi_host="localhost",
@@ -53,7 +52,6 @@ class IndiAAGCloudWatcher(threading.Thread, IndiDevice):
 
         # we broadcast data throught a message queue style mecanism
         self.messaging = None
-        self.publish_port = config["publish_port"]
 
         # store result in a database
         self.serv_time = serv_time
@@ -85,7 +83,7 @@ class IndiAAGCloudWatcher(threading.Thread, IndiDevice):
 
     def send_message(self, msg, channel='WEATHER'):
         if self.messaging is None:
-            self.messaging = PanMessaging.create_publisher(self.publish_port)
+            self.messaging = PanMessaging.create_client(**self.config["messaging"])
         self.messaging.send_message(channel, msg)
 
     def capture(self, send_message=True, store_result=True):
