@@ -12,7 +12,7 @@ import numpy as np
 import astropy.units as u
 
 #Local stuff
-from Base.Base import Base
+from Base.Base import _config
 from helper.IndiDevice import IndiDevice
 from utils.messaging import PanMessaging
 
@@ -91,7 +91,7 @@ class IndiWeather(threading.Thread, IndiDevice):
 
     def send_message(self, msg, channel='WEATHER'):
         if self.messaging is None:
-            self.messaging = PanMessaging.create_client(**self.config["messaging"])
+            self.messaging = PanMessaging.create_client(**_config["messaging"])
         self.messaging.send_message(channel, msg)
 
     def capture(self, send_message=True, store_result=True):

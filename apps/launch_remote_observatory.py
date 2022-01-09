@@ -195,7 +195,7 @@ class RemoteObservatoryFSM(StateMachine, Base):
             channel {str} -- Channel to send message on (default: {'POCS'})
         """
         if self.has_messaging:
-            self._msg_publisher.send_message(channel, msg)
+            self._msg_client.send_message(channel, msg)
         else:
             self.logger.info(f"MESSAGE {channel}: {msg}")
 
