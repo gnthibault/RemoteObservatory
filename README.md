@@ -217,8 +217,3 @@ PYTHONPATH=. python3 ./apps/launch_arduino_capture.py
 * use find . -path ./venv -prune -o -name '*.py' to search stuf not in venv
 * use find . -path ./venv -prune -o -name '*.py' -exec grep -H string_to_find {} \;
 * use find . -path ./venv -prune -o -name '*.py' -exec sed -i -e 's/get_local_time_from_ntp/get_local_time/g' {} \; to replace stuff
-
-  File "/home//projects/RemoteObservatory/Manager/Manager.py", line 463, in autofocus_cameras
-    assert camera.focuser.is_connected
-AttributeError: 'IndiFocuser' object has no attribute 'is_connected'
-

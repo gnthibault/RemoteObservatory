@@ -184,6 +184,15 @@ class IndiDevice(Base, device):
             self.unregister_device_to_client()
             self.is_client_connected = False
 
+    @property
+    def is_connected(self):
+        if self.is_client_connected:
+            return False
+        try:
+            return self.get_switch("CONNECTION")["CONNECT"] == 'On'
+        except Exception as e:
+            return False
+
     def get_switch(self, name):
         return self.get_vector_dict(name)
 
@@ -234,4 +243,3 @@ class IndiDevice(Base, device):
         blob_checker = lambda: self.check_blob_vector(blob_vector_name)
         self.indi_client.sync_with_predicate(blob_checker, timeout=timeout)
         return
-

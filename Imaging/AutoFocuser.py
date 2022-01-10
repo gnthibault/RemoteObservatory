@@ -535,7 +535,7 @@ class AutoFocuser(Base):
         self.logger.debug(f"Autofocus of {self.camera.name} complete - final "
                           f"focus position: {final_focus}")
 
-        if focus_event:
+        if focus_event is not None:
             focus_event.set()
 
         return initial_focus, final_focus

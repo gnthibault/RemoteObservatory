@@ -124,6 +124,7 @@ class IndiCamera(IndiDevice):
 
     def get_received_image(self):
         try:
+            self.logger.debug(f"Indicamera blob queue size is {self.blob_queue.qsize()}")
             image = fits.open(self.blob_queue.get())
             return image
         except Exception as e:
@@ -136,7 +137,6 @@ class IndiCamera(IndiDevice):
             self.set_number('CCD_EXPOSURE',
                             {'CCD_EXPOSURE_VALUE': self.sanitize_exp_time(self.exp_time_sec)},
                             sync=False)
-            print()
             #     self.last_blob = blob_listener.get(timeout=self.exp_time_sec +
             #                                        self.READOUT_TIME_MARGIN)
         except Exception as e:
@@ -219,6 +219,7 @@ class IndiCamera(IndiDevice):
             ex: cam.set_roi({'X':256, 'Y':480, 'WIDTH':512, 'HEIGHT':640})
         """
         self.set_number('CCD_FRAME', roi, sync=True, timeout=self.defaultTimeout)
+        #self.logger.debug(f"After set_roi, ROI is {self.get_roi()}")
 
     def get_dynamic(self):
         return self.get_number('CCD_INFO')['CCD_BITSPERPIXEL']
