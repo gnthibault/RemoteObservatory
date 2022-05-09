@@ -99,6 +99,16 @@ pip install django Pillow
 ## Arduino stuff
 If you are interested in compiling/using the arduino stuff here, please download the official Arduino IDE, and define the following environment variable: $ARDUINO_SDK_PATH
 
+```console
+  export ARDUINO_SDK_PATH="/opt/arduino-1.8.19/"
+  cd Arduino
+  mkdir build && cd build
+  cmake ..
+  make
+  cd ..
+  ./upload.sh
+```
+
 ## Building 3D support for virtual telescope
 pip install PyQt5 PyQt3D pyqtgraph
 
