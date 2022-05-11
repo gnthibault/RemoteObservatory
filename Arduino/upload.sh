@@ -15,8 +15,9 @@ out="./build/$APP/$APP.hex"
 # If arduino nano
 tty=$(ls /dev/ttyUSB*)
 #tty=/dev/arduino
-device=m328p
-baud=57600
+device=ATmega328P
+#device=m328p
+baud=115200
 
 avr-objcopy -O ihex -R .eeprom $in $out
 avrdude -V -carduino -p$device -b$baud -P $tty -D -Uflash:w:$out:i \
