@@ -2,6 +2,8 @@
 
 # Viz stuff
 import matplotlib.pyplot as plt
+from skimage import img_as_float
+from skimage import exposure
 
 # Local stuff : IndiClient
 from helper.IndiClient import IndiClient
@@ -47,11 +49,11 @@ if __name__ == '__main__':
     #print('Setting cooling on')
     #cam.set_cooling_on() THIS VECTOR IS EXPECTED TO BE IN BUSY STATE, NOT IDLE NOR OK, THAT's WHY THERE IS TIMEOUT
     print(f"Current camera temperature is: {cam.get_temperature()}")
-    target_temp = 8
+    target_temp = -5.5
     print(f"Now, setting temperature to: {target_temp}")
     cam.set_temperature(target_temp)
     print(f"Current camera temperature is: {cam.get_temperature()}")
-    target_temp = 5
+    target_temp = -8
     print(f"Now, setting temperature to: {target_temp}")
     cam.set_temperature(target_temp)
     print(f"Current camera temperature is: {cam.get_temperature()}")
@@ -77,5 +79,9 @@ if __name__ == '__main__':
 
     # Show image
     fig, ax = plt.subplots(1, figsize=(16, 9))
-    ax.imshow(fits[0].data)
+    img = fits[0].data
+    img_eq = exposure.equalize_hist(img)
+    print_ready_img = img_as_float(img_eq)
+    print(f"Print ready has shape {print_ready_img.shape}")
+    ax.imshow(print_ready_img)
     plt.show()
