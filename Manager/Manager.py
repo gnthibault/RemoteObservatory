@@ -568,7 +568,10 @@ class Manager(Base):
             raise RuntimeError('Problem setting up services')
 
     def _setup_messaging(self):
-        self.messaging = PanMessaging.create_client(**self.config["messaging"])
+        try:
+            self.messaging = PanMessaging.create_client(**self.config["messaging"])
+        except Exception:
+            raise RuntimeError('Problem setting up messaging service')
 
     def _setup_weather_service(self):
         """

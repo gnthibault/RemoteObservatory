@@ -81,7 +81,7 @@ class PanMessaging(object):
         # Subscribing in on_connect() means that if we lose the connection and
         # reconnect then subscriptions will be renewed.
         def on_connect(client, userdata, flags, rc):
-          #print(f"MQTT Connected with result code {str(rc)}")
+          print(f"MQTT Connected with result code {str(rc)}")
           client.subscribe(f"{obj.default_cmd_topic}/#")
         client.on_connect = on_connect
         if connect:
@@ -100,7 +100,7 @@ class PanMessaging(object):
 
         """
         assert channel > '', "Cannot send blank channel"
-        #assert self.client.is_connected(), "Client should be connected before sending a message"
+        assert self.client.is_connected(), "Client should be connected before sending a message"
 
         if isinstance(message, str):
             current_time = self.serv_time.get_utc()
@@ -127,7 +127,7 @@ class PanMessaging(object):
             print("received message =",str(message.payload.decode("utf-8")))
         :return:
         """
-        #assert self.client.is_connected(), "Client should be connected before starting loop"
+        assert self.client.is_connected(), "Client should be connected before starting loop"
         def on_message_callback(client, userdata, message):
             msg_type, msg_data = self.parse_msg(message)
             callback(msg_type, msg_data)
@@ -150,7 +150,7 @@ class PanMessaging(object):
         Returns:
             tuple(str, dict): Tuple containing the channel and a dict
         """
-        #assert self.client.is_connected(), "Client should be connected before receiving a message"
+        assert self.client.is_connected(), "Client should be connected before receiving a message"
         topic = f"{self.default_cmd_topic}/#"
         try:
             msg = mqttsubscribe.simple(
