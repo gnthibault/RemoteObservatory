@@ -34,7 +34,6 @@ from utils import error
 from utils.config import load_config
 #from pocs.utils import images as img_utils
 from utils import load_module
-from utils.messaging import PanMessaging
 
 class Manager(Base):
 
@@ -569,7 +568,10 @@ class Manager(Base):
 
     def _setup_messaging(self):
         try:
-            self.messaging = PanMessaging.create_client(**self.config["messaging"])
+            messaging_name = self.config['messaging_service']['module']
+            messaging_module = load_module('Service.'+messaging_name)
+            self.messaging = getattr(messaging_module, messaging_name)(
+                config=self.config['messaging_service'])
         except Exception:
             raise RuntimeError('Problem setting up messaging service')
 

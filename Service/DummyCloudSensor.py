@@ -18,7 +18,7 @@ import astropy.units as u
 from Base.Base import Base
 from Service.NTPTimeService import NTPTimeService
 from utils.config import load_config
-from utils.messaging import PanMessaging
+from Service.PanMessaging import PanMessaging
 
 class DummyCloudSensor(Base):
 
@@ -35,7 +35,7 @@ class DummyCloudSensor(Base):
 
     def send_message(self, msg, channel='weather'):
         if self.messaging is None:
-            self.messaging = PanMessaging.create_client(**self.config["messaging"])
+            self.messaging = PanMessaging(**self.config["messaging"])
         self.messaging.send_message(channel, msg)
 
     def capture(self, store_result=False, send_message=False, **kwargs):

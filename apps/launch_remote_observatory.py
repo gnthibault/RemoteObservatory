@@ -16,8 +16,9 @@ from Base.Base import Base
 from Manager.Manager import Manager
 from StateMachine.StateMachine import StateMachine
 from utils import get_free_space
-from utils.messaging import PanMessaging
-
+from Service.PanMessaging import PanMessaging
+#from Service.PanMessagingZMQ import PanMessagingZMQ
+#from Service.PanMessagingMQTT import PanMessagingMQTT
 
 class RemoteObservatoryFSM(StateMachine, Base):
 
@@ -496,12 +497,13 @@ class RemoteObservatoryFSM(StateMachine, Base):
         self.power_down()
 
     def _setup_messaging(self):
-        mqtt_host = self.config['messaging']['mqtt_host']
-        mqtt_port = self.config['messaging']['mqtt_port']
+        #mqtt_host = self.config['messaging']['mqtt_host']
+        #mqtt_port = self.config['messaging']['mqtt_port']
+        #self._msg_client = PanMessaging(mqtt_host, mqtt_port, connect=True)
 
         self._cmd_queue = multiprocessing.Queue()
         self._sched_queue = multiprocessing.Queue()
-        self._msg_client = PanMessaging.create_client(mqtt_host, mqtt_port, connect=True)
+        self._msg_client = PanMessaging(**self.config['messaging_service'])
 
         def new_cmd_callback(msg_type, msg_obj):
             self._sched_queue.put(msg_obj)
@@ -510,7 +512,6 @@ class RemoteObservatoryFSM(StateMachine, Base):
 
         self._msg_client.register_callback(callback=new_cmd_callback, cmd_type="POCS-CMD/#")
         self._msg_client.register_callback(callback=new_sched_callback, cmd_type="POCS-SCHED/#")
-        self.logger.debug(f"Command message subscriber set up on {mqtt_host}:{mqtt_port}")
 
 if __name__ == '__main__':
     # load the logging configuration

@@ -14,7 +14,7 @@ import astropy.units as u
 #Local stuff
 from Base.Base import Base
 from helper.IndiDevice import IndiDevice
-from utils.messaging import PanMessaging
+from Service.PanMessaging import PanMessaging
 
 
 class IndiAAGCloudWatcher(threading.Thread, IndiDevice):
@@ -84,7 +84,7 @@ class IndiAAGCloudWatcher(threading.Thread, IndiDevice):
     def send_message(self, msg, channel='WEATHER'):
         if self.messaging is None:
             # TODO TN: if it breaks, checkout IndiWeather code instead
-            self.messaging = PanMessaging.create_client(**self.config["messaging"])
+            self.messaging = PanMessaging(**self.config["messaging"])
         self.messaging.send_message(channel, msg)
 
     def capture(self, send_message=True, store_result=True):

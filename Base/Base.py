@@ -21,7 +21,6 @@ def reset_global_config():
     global _config
     _config = None
 
-
 class Base:
     """ Base class for other classes within the PANOPTES ecosystem
 

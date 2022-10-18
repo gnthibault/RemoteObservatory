@@ -13,7 +13,7 @@ from Base.Base import Base
 from helper import ArduinoIO
 from utils.config import load_config
 from utils.database import DB
-from utils.messaging import PanMessaging
+from Service.PanMessaging import PanMessaging
 
 
 def main(board, cmd_port, msg_port):
@@ -23,7 +23,7 @@ def main(board, cmd_port, msg_port):
     logger = logging.getLogger('arduino_capture')
     serial_data = ArduinoIO.open_serial_device(
         serial_config=serial_config, name=board)
-    client = PanMessaging.create_client(**config["messaging"])
+    client = PanMessaging(**config["messaging"])
     aio = ArduinoIO.ArduinoIO(board, serial_data, client)
     aio.run()
 

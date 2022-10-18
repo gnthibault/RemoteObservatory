@@ -3,9 +3,9 @@ import json
 import time
 
 #Local utils
-from utils.messaging import PanMessaging
+from Service.PanMessaging import PanMessaging
 
-msg_client = PanMessaging.create_client("192.168.0.48", 1883, connect=True)
+msg_client = PanMessaging("192.168.0.48", 1883, connect=True)
 
 # while True:
 #   msg_type, msg_data = msg_client.receive_message()

@@ -7,7 +7,7 @@ import threading
 from apps.launch_arduino_capture import main as arduinolauncher
 from Base.Base import Base
 from utils.error import ScopeControllerError
-from utils.messaging import PanMessaging
+from Service.PanMessaging import PanMessaging
 
 class ArduiScopeController(Base):
     def __init__(self, config=None):
@@ -44,7 +44,7 @@ class ArduiScopeController(Base):
                           "subscribe({}), publish({})".format(
                               self.config['msg_port'],
                               self.config['cmd_port']))
-        self.messaging = PanMessaging.create_client(**self.config["messaging"])
+        self.messaging = PanMessaging(**self.config["messaging"])
         # we also need to launch the arduino service !
         self.acquisition_thread = threading.Thread(
             target=arduinolauncher,

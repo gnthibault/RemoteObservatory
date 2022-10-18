@@ -14,12 +14,11 @@ import astropy.units as u
 #Local stuff
 from Base.Base import _config
 from helper.IndiDevice import IndiDevice
-from utils.messaging import PanMessaging
-
+from Service.PanMessaging import PanMessaging
 
 class IndiWeather(threading.Thread, IndiDevice):
     """
-        This is a nice tool
+        Based on indi-driver compatible stations, and simulator
     """
 
     def __init__(self, logger=None, config=None, serv_time=None,
@@ -73,7 +72,7 @@ class IndiWeather(threading.Thread, IndiDevice):
         self.observatory = config["observatory"]
 
         if connect_on_create:
-            self.initialize()
+            self.initialize(config=config)
 
         # Finished configuring
         self.logger.debug('Indi Weather service configured successfully')
@@ -81,17 +80,20 @@ class IndiWeather(threading.Thread, IndiDevice):
         if loop_on_create:
             self.start()
 
-    def initialize(self):
+    def initialize(self, config=None):
         """
         Connect, and setup coordinatea
         """
         self.connect()
         self.set_geographic_coord()
         self.set_update_period()
+        self.initialize_messaging(config=config)
+
+    def initialize_messaging(self, config):
+        if self.messaging is None:
+            self.messaging = PanMessaging(**config["messaging"])
 
     def send_message(self, msg, channel='WEATHER'):
-        if self.messaging is None:
-            self.messaging = PanMessaging.create_client(**_config["messaging"])
         self.messaging.send_message(channel, msg)
 
     def capture(self, send_message=True, store_result=True):
