@@ -1913,7 +1913,7 @@ class device(ABC):
             self.send_vector(vector)
         return vector
 
-    def set_and_send_float(self, vector_name, element_name, number):
+    def set_and_send_float(self, vector_name, value_vector):
         """
         Sets the value of an indi element by a floating point number, and sends it to the server
         @param devicename:  The name of the device
@@ -1929,7 +1929,8 @@ class device(ABC):
         """
         vector = self.get_vector(vector_name)
         if vector is not None:
-            vector.get_element(element_name).set_float(number)
+            for element_name, number in value_vector.items():
+                vector.get_element(element_name).set_float(number)
             self.send_vector(vector)
         return vector
 

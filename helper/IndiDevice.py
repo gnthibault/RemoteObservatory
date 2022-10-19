@@ -221,8 +221,7 @@ class IndiDevice(Base, device):
     def set_number(self, number_name, value_vector, sync=True, timeout=None):
         if timeout is None:
             timeout = self.defaultTimeout
-        for element_name, number in value_vector.items():
-            self.set_and_send_float(vector_name=number_name, element_name=element_name, number=number)
+        self.set_and_send_float(vector_name=number_name, value_vector=value_vector)
         if sync:
             self.wait_for_vector_light(number_name, timeout=timeout)
 

@@ -113,7 +113,7 @@ class IndiMount(IndiDevice):
         else:
             self.logger.info(f"Now setting JNow coord: {rahour_decdeg}")
             self.set_number('EQUATORIAL_EOD_COORD', rahour_decdeg, sync=True,
-                           timeout=180)
+                            timeout=180)
 
     def on_coord_set(self, what_to_do='TRACK'):
         """ What do to with the new set of given coordinates
