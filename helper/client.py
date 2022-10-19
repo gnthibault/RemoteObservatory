@@ -96,7 +96,8 @@ class INDIClient:
 
     async def read_from_indiserver(self, timeout):
         """Read data from self.reader and then call
-        xml_from_indiserver with this data as an arg."""
+           xml_from_indiserver with this data as an arg.
+        """
         while self.running:
             try:
                 if self.reader.at_eof():

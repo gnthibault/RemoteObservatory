@@ -1595,10 +1595,10 @@ class device(ABC):
         """
         try:
             # This is way to verbose, even in debug mode
-            # if self.device_name == "Telescope Simulator":
-            #     d = {e.name: e._value for e in vector.elements}
-            #     logging.debug(
-            #         f"UPDATE Got vector {d} with light {vector._light._value} and transfertype {vector.tag.get_transfertype()} and valid {vector.is_valid()}")
+            if self.device_name == "10micron":
+                d = {e.name: e._value for e in vector.elements}
+                logging.debug(
+                    f"UPDATE Got vector {d} with light {vector._light._value} and transfertype {vector.tag.get_transfertype()} and valid {vector.is_valid()}")
             if vector.is_valid():
                 if vector.device != self.device_name:
                     return
@@ -1723,8 +1723,8 @@ class device(ABC):
         """
         if len(xml_str) > 0:
             # This is just too verbose, even for debug
-            # if self.device_name == "Telescope Simulator":
-            #     logging.debug(f"Device {self.device_name} just received following str {xml_str}")
+            if self.device_name == "10micron":
+                logging.debug(f"Device {self.device_name} just received following str {xml_str}")
             try:
                 self.expat.Parse(xml_str, 0)
             except ExpatError as e:
@@ -1743,8 +1743,11 @@ class device(ABC):
             raise RuntimeError(f"Attempt to set vector with wrong tag: {vector.tag}")
         # Now update or create the local vector "storage"
         # Notice that timestamp is not modified, ie, we can still check for the date of latest server update
-        # CHECK TIMESTAMP PLEASE
+        # TODO TN: CHECK TIMESTAMP PLEASE
         vector._light._set_value("Busy")
+        # This is just too verbose, even for debug
+        if self.device_name == "10micron":
+            logging.debug(f"Device {self.device_name} About to update vector {vector.name} with busy value")
         try:
             with self.property_vectors_lock:
                 self.property_vectors[vector.name].updateByVector(
@@ -1798,6 +1801,7 @@ class device(ABC):
 
     def get_vector(self, vectorname, timeout=None):
         """
+        Simply returns a copy of the vector corresponding to the given vector name
         Returns an L{indivector} matching the given L{devicename} and L{vectorname}
         This method will wait until it has been received. In case the vector doesn't exists this
         routine will never return.

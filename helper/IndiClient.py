@@ -34,9 +34,6 @@ class IndiClient(SingletonIndiClientHolder, INDIClient, Base):
         This Indi Client class can be used as a singleton, so that it can be
         used to interact with multiple devices, instead of declaring one client
         per device to manage.
-
-        Every virtual function instanciated is called asynchronously by an
-        external C++ thread, and not by the python main thread, so be careful.
     '''
 
     # states = ['NotConnected', 'Connecting', 'Connected', 'Disconnecting']
@@ -65,7 +62,7 @@ class IndiClient(SingletonIndiClientHolder, INDIClient, Base):
             config = dict(indi_host="localhost",
                           indi_port=7624)
 
-        # Call indi client base classe ctor
+        # Call MMTO indi client base classe ctor
         INDIClient.__init__(self,
                             host=config["indi_host"],
                             port=config["indi_port"])
@@ -159,7 +156,12 @@ class IndiClient(SingletonIndiClientHolder, INDIClient, Base):
         #self.ioloop.call_soon_threadsafe(self.to_indiQ.put_nowait, xml.encode())
 
     async def xml_from_indiserver(self, data):
-        #self.logger.debug(f"IndiClient just received data {data}")
+        """
+
+        :param data:
+        :return:
+        """
+        self.logger.debug(f"IndiClient just received data {data}")
         # This is way too verbose, even in debug mode
         for sub in self.device_subscriptions.values():
             asyncio.run_coroutine_threadsafe(sub(data), self.ioloop)
