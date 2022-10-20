@@ -1873,7 +1873,7 @@ class device(ABC):
             if elementname == element.name:
                 return element
 
-    def set_and_send_text(self, vector_name, element_name, text):
+    def set_and_send_text(self, vector_name, value_vector):
         """
         Sets the value of an element by a text, and sends it to the server
         @param devicename:  The name of the device
@@ -1889,7 +1889,8 @@ class device(ABC):
         """
         vector = self.get_vector(vector_name)
         if vector is not None:
-            vector.get_element(element_name).set_text(text)
+            for element_name, text in value_vector.items():
+                vector.get_element(element_name).set_text(text)
             self.send_vector(vector)
         return vector
 
@@ -1934,7 +1935,7 @@ class device(ABC):
             self.send_vector(vector)
         return vector
 
-    def set_and_send_switchvector_by_element_name(self, vectorname, element_name, is_active=True):
+    def set_and_send_switchvector_by_element_name(self, vectorname, on_switches=[], off_switches=[]):
         """
         Sets all L{indiswitch} elements in this vector to C{Off}. And sets the one matching the given L{element_name}
         to C{On}
@@ -1949,7 +1950,10 @@ class device(ABC):
         """
         vector = self.get_vector(vectorname)
         if vector is not None:
-            vector.set_by_element_name(element_name, is_active)
+            for on_switch in on_switches:
+                vector.set_by_element_name(on_switch, True)
+            for off_switch in off_switches:
+                vector.set_by_element_name(off_switch, False)
             self.send_vector(vector)
         else:
             raise RuntimeError(f"Indi switchvector {vectorname} does not exist")

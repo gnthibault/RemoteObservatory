@@ -211,10 +211,7 @@ class IndiDevice(Base, device):
                    sync=True, timeout=None):
         if timeout is None:
             timeout = self.defaultTimeout
-        for on_switch in on_switches:
-            self.set_and_send_switchvector_by_element_name(switch_name, on_switch, True)
-        for off_switch in off_switches:
-            self.set_and_send_switchvector_by_element_name(switch_name, off_switch, False)
+        self.set_and_send_switchvector_by_element_name(switch_name, on_switches=on_switches, off_switches=off_switches)
         if sync:
            self.wait_for_vector_light(switch_name, timeout=timeout)
 
@@ -228,8 +225,7 @@ class IndiDevice(Base, device):
     def set_text(self, text_name, value_vector, sync=True, timeout=None):
         if timeout is None:
             timeout = self.defaultTimeout
-        for element_name, text in value_vector.items():
-            self.set_and_send_text(vector_name=text_name, element_name=element_name, text=text)
+        self.set_and_send_text(vector_name=text_name, value_vector=value_vector)
         if sync:
             self.wait_for_vector_light(text_name, timeout=timeout)
 
