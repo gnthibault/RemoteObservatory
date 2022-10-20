@@ -19,8 +19,8 @@ observatory:
     # Paris is in the Central European Time Zone ( CET ) is 1 hours ahead of
     # Greenwich Mean Time ( GMT+1 ).
     gmt_offset: 60 # Minutes
-    webcam:
-        rtsp_url: rtsp://user:password@192.168.0.16
+#    webcam:
+#        rtsp_url: rtsp://user:password@192.168.0.16
     scope_controller:
         module: DummyScopeController #IndiArduiScopeController
         port: /dev/ttyACM0
@@ -53,10 +53,10 @@ db:
 ntp:
     ntpserver: time.google.com
 scheduler:
-    #module: DefaultScheduler
-    module: SpectroScheduler
-    #target_file: targets
-    target_file: spectral_targets
+    module: DefaultScheduler
+    # module: SpectroScheduler
+    target_file: targets
+    #target_file: spectral_targets
 spectroscope_controller:
     module: IndiSpectroController
 calibration:
@@ -175,10 +175,12 @@ weather_service :
     service_name : Weather Simulator
     key_path : /var/RemoteObservatory/keys.json
     delay_sec : 60
-    messaging :
-        module : PanMessaging #PanMessagingZMQ, PanMessagingMQTT
+    messaging:
+        module: PanMessagingZMQ #PanMessagingZMQ, PanMessagingMQTT
         mqtt_host: 192.168.0.48
         mqtt_port: 1883
+        cmd_port: 6500
+        msg_port: 6510
     observatory:
         latitude: 43.56 # Degrees
         longitude: 5.43 # Degrees
@@ -192,10 +194,12 @@ weather_service :
         indi_port : 7624
 time_service :
     module : HostTimeService
-messaging_service:
-    module : PanMessaging #PanMessagingZMQ, PanMessagingMQTT
+messaging:
+    module : PanMessagingZMQ #PanMessagingZMQ, PanMessagingMQTT
     mqtt_host: 192.168.0.48
     mqtt_port: 1883
+    cmd_port: 6500
+    msg_port: 6510
 #Enable to output POCS messages to social accounts
 # social_accounts:
 #     twitter:

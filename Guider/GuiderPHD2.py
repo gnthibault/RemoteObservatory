@@ -13,7 +13,7 @@ from Base.Base import Base
 from utils import Timeout
 from utils import error
 from utils.error import GuidingError
-from Service.PanMessaging import PanMessaging
+from Service.PanMessagingZMQ import PanMessagingZMQ
 
 MAXIMUM_CALIBRATION_TIMEOUT = 6 * 60 * u.second
 MAXIMUM_DITHER_TIMEOUT = 45 * u.second
@@ -167,7 +167,7 @@ class GuiderPHD2(Base):
 
     def send_message(self, data, channel='GUIDING'):
         if self.messaging is None:
-            self.messaging = PanMessaging(**self.config["messaging"])
+            self.messaging = PanMessagingZMQ(**self.config["messaging"])
         self.messaging.send_message(channel, {"data": data})
 
     def receive(self):

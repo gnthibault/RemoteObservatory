@@ -21,7 +21,7 @@ import zmq
 from Service.NTPTimeService import HostTimeService
 from Service.PanMessaging import PanMessaging
 
-class PanMessagingZMQ(PanMessaging):
+class PanMessagingZMQ: #(PanMessaging):
 
     """Messaging class for PANOPTES project. Creates a new ZMQ
     context that can be shared across parent application.
@@ -63,20 +63,49 @@ class PanMessagingZMQ(PanMessaging):
     logger = logging.getLogger('PanMessaging')
 
     def __init__(self, **kwargs):
-        super().__init__(kwargs["config"])
+        super().__init__(**kwargs)
+        self.serv_time = HostTimeService()
         # Create a new context
         self.context = zmq.Context()
         self.socket = None
 
+    def scrub_message(self, message):
+        for k, v in message.items():
+            if isinstance(v, dict):
+                v = self.scrub_message(v)
+
+            if isinstance(v, u.Quantity):
+                v = v.value
+
+            if isinstance(v, datetime.datetime):
+                v = v.isoformat()
+
+            if isinstance(v, ObjectId):
+                v = str(v)
+
+            if isinstance(v, Time):
+                v = str(v.isot).split('.')[0].replace('T', ' ')
+
+            # Hmmmm
+            if k.endswith('_time'):
+                v = str(v).split(' ')[-1]
+
+            if isinstance(v, float):
+                v = round(v, 3)
+
+            message[k] = v
+
+        return message
+
     @classmethod
     def create_forwarder(cls, sub_port, pub_port, ready_fn=None, done_fn=None):
-        subscriber, publisher = PanMessaging.create_forwarder_sockets(sub_port, pub_port)
-        PanMessaging.run_forwarder(subscriber, publisher, ready_fn=ready_fn, done_fn=done_fn)
+        subscriber, publisher = PanMessagingZMQ.create_forwarder_sockets(sub_port, pub_port)
+        PanMessagingZMQ.run_forwarder(subscriber, publisher, ready_fn=ready_fn, done_fn=done_fn)
 
     @classmethod
     def create_forwarder_sockets(cls, sub_port, pub_port):
-        subscriber = PanMessaging.create_subscriber(sub_port, bind=True, connect=False)
-        publisher = PanMessaging.create_publisher(pub_port, bind=True, connect=False)
+        subscriber = PanMessagingZMQ.create_subscriber(sub_port, bind=True, connect=False)
+        publisher = PanMessagingZMQ.create_publisher(pub_port, bind=True, connect=False)
         return subscriber, publisher
 
     @classmethod

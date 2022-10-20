@@ -14,7 +14,9 @@ import astropy.units as u
 #Local stuff
 from Base.Base import _config
 from helper.IndiDevice import IndiDevice
-from Service.PanMessaging import PanMessaging
+#from Service.PanMessaging import PanMessaging
+#TODO TN FIX THAT
+from Service.PanMessagingZMQ import PanMessagingZMQ
 
 class IndiWeather(threading.Thread, IndiDevice):
     """
@@ -91,9 +93,14 @@ class IndiWeather(threading.Thread, IndiDevice):
 
     def initialize_messaging(self, config):
         if self.messaging is None:
-            self.messaging = PanMessaging(**config["messaging"])
+            #TODO TN FIX THIS
+            #self.messaging = PanMessagingZMQ(**config["messaging"])
+            self.publish_port = config["messaging"]["msg_port"]
+            pass
 
     def send_message(self, msg, channel='WEATHER'):
+        if self.messaging is None:
+            self.messaging = PanMessagingZMQ.create_publisher(self.publish_port)
         self.messaging.send_message(channel, msg)
 
     def capture(self, send_message=True, store_result=True):

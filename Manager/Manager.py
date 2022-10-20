@@ -28,6 +28,8 @@ from helper.IndiClient import IndiClient
 
 # Local stuff: Service
 from Service.NovaAstrometryService import NovaAstrometryService
+#TODO TN TO BE FIXED
+from Service.PanMessagingZMQ import PanMessagingZMQ
 
 # Local stuff: Utils
 from utils import error
@@ -568,10 +570,12 @@ class Manager(Base):
 
     def _setup_messaging(self):
         try:
-            messaging_name = self.config['messaging_service']['module']
-            messaging_module = load_module('Service.'+messaging_name)
-            self.messaging = getattr(messaging_module, messaging_name)(
-                config=self.config['messaging_service'])
+            messaging_name = self.config['messaging']['module']
+            #messaging_module = load_module('Service.'+messaging_name)
+            # self.messaging = getattr(messaging_module, messaging_name)(
+            #     config=self.config['messaging'])
+            #TODO TN: TO BE FIXED
+            self.messaging = PanMessagingZMQ.create_publisher(self.config["messaging"]["msg_port"])
         except Exception:
             raise RuntimeError('Problem setting up messaging service')
 
