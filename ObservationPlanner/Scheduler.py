@@ -274,7 +274,7 @@ class Scheduler(Base):
                                          frame='icrs',
                                          equinox='J2000.0'))
             except:
-                raise RuntimeError(f"SpectroScheduler: did not managed to "
+                raise RuntimeError(f"Scheduler: did not managed to "
                                    f"define target {target_name}")
         return target
 

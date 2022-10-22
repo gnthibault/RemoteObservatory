@@ -175,7 +175,7 @@ class RemoteObservatoryFSM(StateMachine, Base):
         if not self.has_messaging:
             self.logger.info(f"Unit says: {msg}")
         else:
-            self.send_message(f"{msg}", channel='chat')
+            self.send_message(f"{msg}", channel='CHAT')
 
     def send_message(self, msg, channel='chat'):
         """ Send a message
@@ -307,6 +307,9 @@ class RemoteObservatoryFSM(StateMachine, Base):
         is_safe_values['free_space'] = self.has_free_space()
 
         safe = all(is_safe_values.values())
+        #TODO TN URGENT
+        safe = True
+
 
         if not safe:
             if no_warning is False:

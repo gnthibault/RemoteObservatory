@@ -134,7 +134,9 @@ def get_solve_field(fname, replace=True, remove_extras=True, **kwargs):
 
     # Set a default radius of 15
     kwargs.setdefault('radius', 15)
-
+    #print("#############################################################################")
+    #print(f"SOLVING {fname} with kwargs {kwargs}")
+    #print("#############################################################################")
     proc = solve_field(fname, **kwargs)
     try:
         output, errs = proc.communicate(timeout=kwargs.get('timeout', 180))

@@ -38,7 +38,7 @@ class IndiEos6DCamera(IndiAbstractCamera):
       Indi CCD related stuff
     '''
     def init_frame_features(self):
-        self.logger.debug("COnfig for camera device is {}".format(self.indi_camera_config))
+        self.logger.debug("Config for camera device is {}".format(self.indi_camera_config))
         # TODO TN: we decide that IndiCamera takes over AbstractCamera in the
         # case we have diamond like inheritance problem
         self.set_number("CCD_INFO", self.indi_camera_config["CCD_INFO"])

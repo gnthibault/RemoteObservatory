@@ -23,7 +23,7 @@ config = {
     }
 
 g = GuiderPHD2.GuiderPHD2(config=config)
-#g.launch_server()
+g.launch_server()
 g.connect()
 g.get_connected()
 g.set_exposure(2.0)
@@ -35,4 +35,4 @@ for i in range(5*60):
     time.sleep(1)
 
 g.disconnect()
-#g.terminate_server()
+g.terminate_server()

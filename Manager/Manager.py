@@ -216,15 +216,15 @@ class Manager(Base):
 
     def acquire_calibration(self):
         obs_list = [obs for seq_t, obs in self.scheduler.observed_list.items()]
-        self.logger.debug(f"Acquiring calibratrions for {obs_list}")
+        self.logger.debug(f"Acquiring calibratrions for {[obs_list.target.name]}")
 
         for cam_name, camera in self.acquisition_cameras.items():
             self.logger.debug(f"Going to start calibration of camera {cam_name}"
                               f"[{camera.uid}]")
-            calibration = self._get_calibration(camera)
-            calibration.calibrate(self.scheduler.observed_list)
-            #calib_event_generator = calibration.calibrate(self.scheduler.observed_list)
-            #yield from calib_event_generator
+            # calibration = self._get_calibration(camera)
+            # calibration.calibrate(self.scheduler.observed_list)
+            ####calib_event_generator = calibration.calibrate(self.scheduler.observed_list)
+            ####yield from calib_event_generator
         self.scheduler.set_observed_to_calibrated()
         #raise StopIteration
 

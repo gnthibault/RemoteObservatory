@@ -167,7 +167,7 @@ class GuiderPHD2(Base):
 
     def send_message(self, data, channel='GUIDING'):
         if self.messaging is None:
-            self.messaging = PanMessagingZMQ(**self.config["messaging"])
+            self.messaging = PanMessagingZMQ.create_publisher(self.config["messaging"]["msg_port"])
         self.messaging.send_message(channel, {"data": data})
 
     def receive(self):
