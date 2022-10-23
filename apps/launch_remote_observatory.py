@@ -7,6 +7,7 @@ import queue
 import sys
 import time
 import warnings
+import zmq
 
 # Astropy
 from astropy import units as u

@@ -410,6 +410,9 @@ class AutoFocuser(Base):
             #thumbnail = np.ma.array(thumbnail, mask=master_mask)
             metric[i] = self.focus_metric(
                 thumbnail, merit_function, **merit_function_kwargs)
+            assert np.isfinite(metric[i]), f"Issue with values from merit function {merit_function}, with arguments " \
+                                           f"{merit_function_kwargs}, at focus position {focus_positions[i]}: " \
+                                           f"{metric[i]} "
         fitted = False
 
         # Find best values
