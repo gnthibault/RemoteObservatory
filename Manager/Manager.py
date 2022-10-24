@@ -282,15 +282,12 @@ class Manager(Base):
 
         # Take exposure with each camera
         for cam_name, camera in self.acquisition_cameras.items():
-            self.logger.debug("Exposing for camera: {}".format(cam_name))
-
+            self.logger.debug(f"Exposing for camera: {cam_name}")
             try:
                 # Start the exposures
                 cam_event = camera.take_observation(
                     observation=self.current_observation, headers=headers)
-
                 camera_events[cam_name] = cam_event
-
             except Exception as e:
                 self.logger.error(f"Problem waiting for images, {e}: "
                                   f"{traceback.format_exc()}")

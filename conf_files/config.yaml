@@ -120,7 +120,7 @@ acquisition_camera:
     pointing_seconds: 30
     autofocus_seconds: 5
     autofocus_size : 500
-    autofocus_merit_function : vollath_F4 #half_flux_radius
+    autofocus_merit_function : half_flux_radius #vollath_F4
     indi_client :
         indi_host : localhost
         indi_port : 7624

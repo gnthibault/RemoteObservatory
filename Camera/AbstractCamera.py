@@ -7,6 +7,9 @@ from threading import Thread
 # Astropy
 import astropy.units as u
 
+# Numerical tool
+import numpy as np
+
 # Local
 from Base.Base import Base
 from Imaging import fits as fits_utils

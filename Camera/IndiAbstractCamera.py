@@ -39,8 +39,10 @@ class IndiAbstractCamera(IndiCamera, AbstractCamera):
             self.set_temperature(temperature)
         # Now shoot
         self.setExpTimeSec(exp_time_sec)
+        self.logger.debug(f"Camera {self.camera_name}, about to shoot for {self.exp_time_sec}")
         self.shoot_async()
-        self.synchronize_with_image_reception() 
+        self.synchronize_with_image_reception()
+        self.logger.debug(f"Camera {self.camera_name}, done with image reception")
         image = self.get_received_image()
         try:
             with open(filename, "wb") as f:

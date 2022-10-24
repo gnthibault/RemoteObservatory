@@ -118,7 +118,8 @@ class IndiCamera(IndiDevice):
 
     def synchronize_with_image_reception(self):
         try:
-            self.logger.debug('synchronize_with_image_reception: Start waiting')
+            self.logger.debug(f"synchronize_with_image_reception: Start waiting for " \
+                              f"{self.exp_time_sec}s with margin {self.READOUT_TIME_MARGIN}s")
             self.wait_for_incoming_blob_vector(timeout=self.exp_time_sec + self.READOUT_TIME_MARGIN)
             self.logger.debug('synchronize_with_image_reception: Done')
         except Exception as e:

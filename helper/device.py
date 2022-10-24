@@ -1530,6 +1530,8 @@ class device(ABC):
         place where blobvector are manipulated
         """
         blob = blob_vector.get_first_element()
+        if self.name == "CCD Simulator":
+            print(f"##################### JUST RECEIVED BLOB WITH FORMAT {blob.get_plain_format()}")
         if blob.get_plain_format() == ".fits":
             self.blob_queue.put(io.BytesIO(blob.get_data()))
             self.blob_event.set()
