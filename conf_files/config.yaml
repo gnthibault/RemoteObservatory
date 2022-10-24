@@ -161,8 +161,8 @@ acquisition_camera:
     SCOPE_INFO: # 200/800 newtonian
         FOCAL_LENGTH: 800
         APERTURE: 200
-    pointing_seconds: 30
-    autofocus_seconds: 5
+    pointing_seconds: 5
+    autofocus_seconds: 2
     autofocus_size : 500
     autofocus_merit_function : half_flux_radius #vollath_F4
     indi_client :
@@ -173,13 +173,13 @@ acquisition_camera:
         focuser_name : Focuser Simulator
         port : /dev/ttyUSB0
         focus_range :
-            min : 30000
-            max : 50000
+            min : 32500
+            max : 40000
         autofocus_step :
             fine : 750
             coarse : 2500
         autofocus_range :
-            fine : 15000
+            fine : 10000
             coarse : 30000
         indi_client :
             indi_host : localhost

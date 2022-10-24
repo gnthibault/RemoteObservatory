@@ -26,7 +26,7 @@ targets :
             count : 3
             temperature :
             gain : 1
-            exp_time_sec : 180
+            exp_time_sec : 3
 #    M51 :
 #        Luminance :
 #           count : 10

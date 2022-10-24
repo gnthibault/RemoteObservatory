@@ -373,12 +373,15 @@ class AutoFocuser(Base):
                           f"Max position is {self.max_position}")
         self.logger.debug(f"Focus step is {cur_focus_step}")
 
+        if not (self.min_position <= initial_focus <= self.max_position):
+            central_position = (self.min_position+self.max_position)/2
+            self.move_to(central_position)
+            initial_focus = self.position
         focus_positions = np.arange(max(initial_focus - cur_focus_range / 2, self.min_position),
                                     min(initial_focus + cur_focus_range / 2, self.max_position) + 1,
                                     cur_focus_step, dtype=np.int)
         self.logger.debug(f"Autofocuser {self}  is going to sweep over the "
-                          f"following positions for autofocusing "
-                          f"{focus_positions}")
+                          f"following positions for autofocusing {focus_positions}")
         n_positions = len(focus_positions)
 
         thumbnails = np.zeros((n_positions, thumbnail_size, thumbnail_size),

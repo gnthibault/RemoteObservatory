@@ -69,7 +69,7 @@ if __name__ == '__main__':
     cam.connect()
     # Acquire data
     cam.prepare_shoot()
-    cam.setExpTimeSec(180)
+    cam.setExpTimeSec(10)
     cam.shoot_async()
     cam.synchronize_with_image_reception()
     fits = cam.get_received_image()
