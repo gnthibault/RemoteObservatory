@@ -599,7 +599,7 @@ class Manager(Base):
             time_name = self.config['time_service']['module']
             time_module = load_module('Service.'+time_name)
             self.serv_time = getattr(time_module, time_name)(
-                config = self.config['time_service'])
+                config=self.config['time_service'])
         except Exception:
             raise RuntimeError('Problem setting up time service')
 

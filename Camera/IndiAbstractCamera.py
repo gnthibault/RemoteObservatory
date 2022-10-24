@@ -74,7 +74,7 @@ class IndiAbstractCamera(IndiCamera, AbstractCamera):
                              args=(autofocus_event))
         self.set_frame_type('FRAME_LIGHT')
         w.start()
-        return exposure_event
+        return autofocus_event
 
     def take_bias_exposure(self, *args, **kwargs):
         kwargs["frame_type"]="FRAME_BIAS"

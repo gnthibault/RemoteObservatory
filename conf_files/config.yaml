@@ -88,15 +88,37 @@ mount:
         indi_host : localhost
         indi_port : 7624
 pointing_camera:
-    module: IndiAbstractCamera
+    module: IndiAbstractCameraSimulator
     camera_name : Guide Simulator
-    CCD_INFO:
-        CCD_MAX_X: 1936
-        CCD_MAX_Y: 1096
-        CCD_PIXEL_SIZE: 2.9
-        CCD_PIXEL_SIZE_X: 2.9
-        CCD_PIXEL_SIZE_Y: 2.9
-        CCD_BITSPERPIXEL: 12
+#    CCD_INFO:
+#        CCD_MAX_X: 1936
+#        CCD_MAX_Y: 1096
+#        CCD_PIXEL_SIZE: 2.9
+#        CCD_PIXEL_SIZE_X: 2.9
+#        CCD_PIXEL_SIZE_Y: 2.9
+#        CCD_BITSPERPIXEL: 12
+    SIMULATOR_SETTINGS: # 290MM
+        SIM_XRES: 1936
+        SIM_YRES: 1096
+        SIM_XSIZE: 2.9
+        SIM_YSIZE: 2.9
+        SIM_MAXVAL: 65000
+        SIM_SATURATION: 1
+        SIM_LIMITINGMAG: 17
+        SIM_NOISE: 0
+        SIM_SKYGLOW: 19.5
+        SIM_OAGOFFSET: 0
+        SIM_POLAR: 0
+        SIM_POLARDRIFT: 0
+        SIM_ROTATION: 0
+        SIM_KING_GAMMA: 0
+        SIM_KING_THETA: 0
+#        SIM_PEPERIOD: 0
+#        SIM_PEMAX: 0
+        SIM_TIME_FACTOR: 1
+    SCOPE_INFO: # 200/800 newtonian
+        FOCAL_LENGTH: 800
+        APERTURE: 200
     pointing_seconds: 30
     autofocus_seconds: 5
     autofocus_size : 500
@@ -105,18 +127,40 @@ pointing_camera:
         indi_host : localhost
         indi_port : 7624
 acquisition_camera:
-    module: IndiAbstractCamera
+    module: IndiAbstractCameraSimulator
     camera_name : CCD Simulator
     #module: IndiEos6DCamera
     #camera_name: Canon DSLR EOS 6D
     #camera_name: GPhoto CCD
-    CCD_INFO :
-        CCD_MAX_X : 5496
-        CCD_MAX_Y : 3672
-        CCD_PIXEL_SIZE : 2.4
-        CCD_PIXEL_SIZE_X : 2.4
-        CCD_PIXEL_SIZE_Y : 2.4
-        CCD_BITSPERPIXEL : 12
+#    CCD_INFO :
+#        CCD_MAX_X : 5496
+#        CCD_MAX_Y : 3672
+#        CCD_PIXEL_SIZE : 2.4
+#        CCD_PIXEL_SIZE_X : 2.4
+#        CCD_PIXEL_SIZE_Y : 2.4
+#        CCD_BITSPERPIXEL : 12
+    SIMULATOR_SETTINGS: # 180mm
+        SIM_XRES: 5496
+        SIM_YRES: 3672
+        SIM_XSIZE: 2.4
+        SIM_YSIZE: 2.4
+        SIM_MAXVAL: 65000
+        SIM_SATURATION: 1
+        SIM_LIMITINGMAG: 17
+        SIM_NOISE: 5
+        SIM_SKYGLOW: 19.5
+        SIM_OAGOFFSET: 0
+        SIM_POLAR: 0
+        SIM_POLARDRIFT: 0
+        SIM_ROTATION: 0
+#        SIM_KING_GAMMA: 0
+#        SIM_KING_THETA: 0
+        SIM_PEPERIOD: 0
+        SIM_PEMAX: 0
+        SIM_TIME_FACTOR: 1
+    SCOPE_INFO: # 200/800 newtonian
+        FOCAL_LENGTH: 800
+        APERTURE: 200
     pointing_seconds: 30
     autofocus_seconds: 5
     autofocus_size : 500

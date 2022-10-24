@@ -492,7 +492,7 @@ class AutoFocuser(Base):
         #                                "final",
         #                                self.camera.file_extension)
         final_thumbnail = self.get_thumbnail(seconds, thumbnail_size)
-        self.logger.debug(f"Autofocusing: initial thumbnail size is {final_thumbnail.shape}")
+        self.logger.debug(f"Autofocusing: final thumbnail size is {final_thumbnail.shape}")
 
         if make_plots:
             initial_thumbnail = initial_thumbnail #self.mask_saturated(initial_thumbnail)

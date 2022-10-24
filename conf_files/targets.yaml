@@ -21,7 +21,7 @@ targets :
             temperature :
             gain : 1
             exp_time_sec : 180
-    Vega :
+    HD179527 :
         Luminance :
             count : 3
             temperature :
