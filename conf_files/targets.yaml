@@ -15,9 +15,9 @@ targets :
             temperature :
             gain : 1
             exp_time_sec : 180
-    M51 :
+    HCG49 :
         Luminance :
-            count : 3
+            count : 30
             temperature :
             gain : 1
             exp_time_sec : 180
@@ -27,6 +27,12 @@ targets :
             temperature :
             gain : 1
             exp_time_sec : 3
+    HD3360:
+        Luminance:
+            count: 3
+            temperature:
+            gain: 1
+            exp_time_sec: 3
 #    M51 :
 #        Luminance :
 #           count : 10

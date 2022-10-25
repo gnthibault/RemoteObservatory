@@ -267,8 +267,7 @@ class IndiMount(IndiDevice):
         return ret
 
     def get_current_coordinates(self):
-        self.logger.debug('Asking mount {} for its current coordinates'.format(
-            self.device_name)) 
+        self.logger.debug(f"Asking mount {self.device_name} for its current coordinates")
         rahour_decdeg = self.get_number('EQUATORIAL_EOD_COORD')
         self.logger.debug(f"Received current JNOW coordinates {rahour_decdeg}")
         ret = SkyCoord(ra=rahour_decdeg['RA']*u.hourangle,

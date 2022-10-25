@@ -11,6 +11,8 @@ from Mount.IndiMount import IndiMount
 from astropy import units as u
 from astropy.coordinates import SkyCoord
 
+logging.getLogger().setLevel(logging.DEBUG)
+
 if __name__ == '__main__':
 
     # test indi client
@@ -59,6 +61,9 @@ if __name__ == '__main__':
     dec = random.randint(-90, 90)
     c = SkyCoord(ra=ra*u.hour, dec=dec*u.degree, frame='icrs')
     mount.sync_to_coord(c)
+
+    # Set tracking
+    mount.set_track_mode(track_mode='TRACK_SIDEREAL')
 
     #Do a slew and stop
     c = SkyCoord(ra=10*u.hour, dec=60*u.degree, frame='icrs')

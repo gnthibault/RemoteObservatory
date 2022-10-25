@@ -13,7 +13,7 @@ SLEEP_SECONDS = 1.0
 STATUS_INTERVAL = 10. * u.second
 GUIDER_STATUS_INTERVAL = 5. * u.second
 WAITING_MSG_INTERVAL = 5. * u.second
-MAX_EXTRA_TIME = 60 * u.second
+MAX_EXTRA_TIME = (60+SLEEP_SECONDS) * u.second
 
 def on_enter(event_data):
     """Wait for camera exposures to complete.

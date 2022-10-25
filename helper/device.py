@@ -8,7 +8,7 @@ import functools
 import io
 import logging
 import os
-import queue
+import collections
 import time
 import traceback
 import threading
@@ -557,7 +557,9 @@ class indielement(indinamedobject):
         @return: B{None}
         @rtype: NoneType
         """
-        logging.info("INDIElement: %s %s %s %s" % (self.name, self.label, self.tag.get_type(), self._value))
+        #TODO TN URGENT
+        logging.info("INDIElement: %s %s %s" % (self.name, self.label, self.tag.get_type()))
+        #logging.info("INDIElement: %s %s %s %s" % (self.name, self.label, self.tag.get_type(), self._value))
 
     def get_text(self):
         """
@@ -1297,7 +1299,6 @@ class indiswitchvector(indivector):
         if not found:
             raise RuntimeError(f"There is no element with label {element_label} in indiswitch")
 
-
     def set_one_of_many_by_element_label(self, element_label):
         """
         Sets all L{indiswitch} elements of this vector to C{Off}. And sets the one who's label property matches L{element_name}
@@ -1455,7 +1456,7 @@ class device(ABC):
 
         # Specific events that might be manipulated by handlers
         self.blob_event = threading.Event()
-        self.blob_queue = queue.Queue(maxsize=64)
+        self.blob_queue = collections.deque(maxlen=1)
 
         # vector/property handlers
         self.custom_element_handler_list = []
@@ -1529,11 +1530,11 @@ class device(ABC):
         because this call is blocking inside the main ioloop, an it is the only single
         place where blobvector are manipulated
         """
+        #blob_vector.tell()
         blob = blob_vector.get_first_element()
-        if self.name == "CCD Simulator":
-            print(f"##################### JUST RECEIVED BLOB WITH FORMAT {blob.get_plain_format()}")
+        print(f"##################### DEVICE {self.name} JUST RECEIVED BLOB WITH FORMAT {blob.get_plain_format()}")
         if blob.get_plain_format() == ".fits":
-            self.blob_queue.put(io.BytesIO(blob.get_data()))
+            self.blob_queue.append(io.BytesIO(blob.get_data()))
             self.blob_event.set()
             #self.blob_event.clear()
 
@@ -1638,7 +1639,6 @@ class device(ABC):
                         with self.property_vectors_lock:
                             self.property_vectors[vector.name].updateByVector(vector)
                     except KeyError:
-
                         with self.property_vectors_lock:
                             self.property_vectors[vector.name] = vector
             else:
@@ -1784,6 +1784,7 @@ class device(ABC):
             is_set = self.blob_event.is_set()
             #self.blob_event.wait()
             if is_set:
+                logging.debug(f"device {self.device_name} blob event has been set and about to clear")
                 self.blob_event.clear()
             # with self.property_vectors_lock:
                 #bv = self.property_vectors[blob_vector_name]
