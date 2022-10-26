@@ -1532,7 +1532,6 @@ class device(ABC):
         """
         #blob_vector.tell()
         blob = blob_vector.get_first_element()
-        print(f"##################### DEVICE {self.name} JUST RECEIVED BLOB WITH FORMAT {blob.get_plain_format()}")
         if blob.get_plain_format() == ".fits":
             self.blob_queue.append(io.BytesIO(blob.get_data()))
             self.blob_event.set()
