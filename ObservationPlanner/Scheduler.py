@@ -208,7 +208,7 @@ class Scheduler(Base):
                               time_range=time_range)
 
 
-    def add_observation(self, observing_block, exp_set_size=None):
+    def add_observation(self, observing_block):
         """Adds an `Observation` to the scheduler
         Args:
             target_name (str): Name of the target, should be referenced in a
@@ -216,7 +216,7 @@ class Scheduler(Base):
         """
 
         try:
-            observation = Observation(observing_block, exp_set_size)
+            observation = Observation(observing_block)
         except Exception as e:
             self.logger.warning(f"Cannot add  observing_block: "
                                 f"{observing_block}")
@@ -304,8 +304,8 @@ class Scheduler(Base):
                     'gain': gain
                 }
                 #TODO TN retrieve priority from the file ?
-                priority = 0 if (filter_name=='Luminance') else 1
-                while count>0:
+                priority = 0 if (filter_name == 'Luminance') else 1
+                while count > 0:
                     try:
                         # number of image per scheduled "round" of imaging
                         # min number of exposure must be an integer number of times
@@ -323,7 +323,7 @@ class Scheduler(Base):
                                 camera_time,
                                 configuration=configuration,
                                 constraints=self.constraints)
-                        self.add_observation(b,)
+                        self.add_observation(b)
                         count -= exp_set_size
                     except AssertionError as e:
                         self.logger.debug(f"Error while adding target : {e}")

@@ -17,7 +17,7 @@ targets :
             exp_time_sec : 10
     HCG49 :
         Luminance :
-            count : 30
+            count : 3
             temperature :
             gain : 1
             exp_time_sec : 10
