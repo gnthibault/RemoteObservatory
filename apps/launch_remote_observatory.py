@@ -12,6 +12,9 @@ import zmq
 # Astropy
 from astropy import units as u
 
+#
+from transitions import MachineError
+
 # Local
 from Base.Base import Base
 from Manager.Manager import Manager
@@ -315,11 +318,13 @@ class RemoteObservatoryFSM(StateMachine, Base):
         if not safe:
             if no_warning is False:
                 self.logger.warning(f"Unsafe conditions: {is_safe_values}")
-
-            if self.state not in ['sleeping', 'parked', 'parking',
-                                  'housekeeping', 'ready']:
-                self.logger.warning('Safety failed so sending to park')
-                self.park() #FSM trigger
+            # Only if transition is valid
+            #if self.state not in ['sleeping', 'parked', 'parking', 'housekeeping', 'ready']:
+            try:
+                self.logger.warning('Safety failed so sending to park if possible')
+                self.park()
+            except MachineError as e:
+                self.logger.debug(f"Cannot park from current state: {e}")
 
         return safe
 
