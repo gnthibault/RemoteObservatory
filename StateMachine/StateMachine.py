@@ -166,7 +166,8 @@ class StateMachine(Machine, Base):
         # The auto_transitions=False disable automatic addition of
         #to_<statename> method to the machine/model, that otherwise would allow
         #to go from any other state to <statename> upon triggering
-        super(StateMachine, self).__init__(
+        Machine.__init__(
+            self,
             states=states_list,
             transitions=transitions_list,
             initial=state_machine_table.get('initial'),
@@ -181,6 +182,9 @@ class StateMachine(Machine, Base):
         self._next_state = None
         self._keep_running = False
         self._do_states = True
+
+        # Now, show state machine graph
+        self._update_graph()
 
         self.logger.debug("State machine created")
 
@@ -353,11 +357,10 @@ class StateMachine(Machine, Base):
     def wait_until_safe(self):
         """ Waits until all safety flags are set 
         """
-        while not self.is_safe(no_warning=True):
-            self.sleep(30)
+        return NotImplemented
 
     def sleep(self, delay=2.5, with_status=True):
-        time.sleep(delay)
+        return NotImplemented
 
     def check_messages(self):
         """
@@ -486,8 +489,7 @@ class StateMachine(Machine, Base):
         """ returns name of trigger method based on state and next_state
 
         """
-        self.logger.debug("Source: {}\t Dest: {}".format(self.state,
-                          self.next_state))
+        self.logger.debug(f"Source: {self.state}\t Dest: {self.next_state}")
         if self.state == 'parking' and self.next_state == 'parking':
             return 'set_park'
         else:
@@ -503,23 +505,26 @@ class StateMachine(Machine, Base):
     def _update_status(self, event_data):
         self.status()
 
-    def _update_graph(self, event_data, ext=['png', 'svg']): # pragma: no cover
-        model = event_data.model
+    def _update_graph(self, event_data=None, ext=['png', 'svg']): # pragma: no cover
+        #model = event_data.model
 
         try:
-            state_id = 'state_{}_{}'.format(event_data.event.name,
-                                            event_data.state.name)
+            if event_data is None:
+                state_id = f"state_{self.state}"
+            else:
+                state_id = f"state_{event_data.event.name}_{event_data.state.name}"
 
             image_dir = self.config['directories']['images']
-            os.makedirs('{}/state_images/'.format(image_dir), exist_ok=True)
+            os.makedirs(f"{image_dir}/state_images/", exist_ok=True)
 
             for fext in ext:
-                fn = '{}/state_images/{}.{}'.format(image_dir, state_id, fext)
-                ln_fn = '{}/state.{}'.format(image_dir, fext)
+                fn = f"{image_dir}/state_images/{state_id}.{fext}"
+                ln_fn = f"{image_dir}/state.{fext}"
 
                 # Only make the file once
                 if not os.path.exists(fn):
-                    model.get_graph().draw(fn, prog='dot')
+                    self.get_graph().draw(fn, prog='dot')
+                    #model.get_graph().draw(fn, prog='dot')
 
                 # Link current image
                 if os.path.exists(ln_fn):
@@ -528,7 +533,7 @@ class StateMachine(Machine, Base):
                 os.symlink(fn, ln_fn)
 
         except Exception as e:
-            self.logger.warning("Can't generate state graph: {}".format(e))
+            self.logger.warning(f"Can't generate state graph: {e}")
 
     def _load_state(self, state):
         """
@@ -562,18 +567,15 @@ class StateMachine(Machine, Base):
                 state
             ))
             # Get the `on_enter` method
-            self.logger.debug("Checking {}".format(state_module))
+            self.logger.debug(f"Checking {state_module}")
             on_enter_method = getattr(state_module, 'on_enter')
-            setattr(self, 'on_enter_{}'.format(state), on_enter_method)
-            self.logger.debug(
-                "Added `on_enter` method from {} {}".format(
-                state_module, on_enter_method))
-
+            setattr(self, f"on_enter_{state}", on_enter_method)
+            self.logger.debug(f"Added `on_enter` method from {state_module} {on_enter_method}")
             self.logger.debug("Created state")
             s = State(name=state)
             s.add_callback('enter', '_update_status')
             s.add_callback('enter', '_update_graph')
-            s.add_callback('enter', 'on_enter_{}'.format(state))
+            s.add_callback('enter', f"on_enter_{state}")
 
         except Exception as e:
             raise RuntimeError("Can't load state modules: {}\t{}".format(

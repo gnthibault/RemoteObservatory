@@ -1532,10 +1532,11 @@ class device(ABC):
         """
         #blob_vector.tell()
         blob = blob_vector.get_first_element()
+        #print(f"################## JUST RECEIVED BLOB with FORMAT {blob.get_plain_format()}")
         if blob.get_plain_format() == ".fits":
+            #await self.blob_queue.put(io.BytesIO(blob.get_data()))
             self.blob_queue.append(io.BytesIO(blob.get_data()))
             self.blob_event.set()
-            #self.blob_event.clear()
 
     def _default_def_handler(self, vector, indi):
         """

@@ -129,6 +129,8 @@ class IndiCamera(IndiDevice):
         try:
             self.logger.debug(f"Indicamera {self.device_name} about to read blob")
             image = fits.open(self.blob_queue.popleft()) # FIFO in "circular buffer" mode
+            #blob = await self.blob_queue.get() # FIFO in "circular buffer" mode
+            #image = fits.open(blob)
             return image
         except Exception as e:
             self.logger.error(f"Indi Camera Error in get_received_image: {e}")

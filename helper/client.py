@@ -50,7 +50,6 @@ class INDIClient:
         self.port = port
         self.host = host
         self.read_width = read_width
-        self.lastblob = None
 
     async def connect(self, timeout):
         """Attempt to connect to the indiserver in a loop.

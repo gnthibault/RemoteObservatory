@@ -119,7 +119,7 @@ pointing_camera:
     SCOPE_INFO: # 200/800 newtonian
         FOCAL_LENGTH: 800
         APERTURE: 200
-    pointing_seconds: 30
+    pointing_seconds: 10
     autofocus_seconds: 5
     autofocus_size : 500
     autofocus_merit_function: half_flux_radius #vollath_F4
@@ -147,7 +147,7 @@ acquisition_camera:
         SIM_MAXVAL: 65000
         SIM_SATURATION: 1
         SIM_LIMITINGMAG: 17
-        SIM_NOISE: 5
+        SIM_NOISE: 0
         SIM_SKYGLOW: 19.5
         SIM_OAGOFFSET: 0
         SIM_POLAR: 0
@@ -163,7 +163,7 @@ acquisition_camera:
         APERTURE: 200
     pointing_seconds: 5
     autofocus_seconds: 2
-    autofocus_size : 500
+    autofocus_size : 1500
     autofocus_merit_function : half_flux_radius #vollath_F4
     indi_client :
         indi_host : localhost
@@ -256,4 +256,4 @@ messaging:
 #     slack:
 #         webhook_url: [your_webhook_url]
 #         output_timestamp: False
-state_machine: simple_state_table
+state_machine: simple_state_table.yaml

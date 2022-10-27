@@ -635,7 +635,6 @@ class AutoFocuser(Base):
         return radius.mean()
 
 
-
     def vollath_F4(self, data, axis=None):
         """Compute F4 focus metric
 
