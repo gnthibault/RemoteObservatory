@@ -294,9 +294,8 @@ class StateMachine(Machine, Base):
                 try:
                     state_changed = self.goto_next_state()
                 except Exception as e:
-                    self.logger.warning('Problem going from {} to {}, exiting '
-                        'loop: {}:{}'.format(self.state, self.next_state, e,
-                        traceback.format_exc()))
+                    self.logger.warning(f"Problem going from {self.state} to {self.next_state}, exiting loop: "
+                                        f"{e}: {traceback.format_exc()}")
                     self.stop_states()
                     #TODO TN URGENT DO SOME INTERNAL SIGNALING HERE !
                     break
@@ -334,7 +333,7 @@ class StateMachine(Machine, Base):
         # Get the next transition method based on `state` and `next_state`
         call_method = self._lookup_trigger()
 
-        self.logger.debug("Transition method: {}".format(call_method))
+        self.logger.debug(f"Transition method: {call_method}")
         caller = getattr(self, call_method, self.park)
         state_changed = caller()
         self.db.insert_current('state', {"source": self.state,
@@ -395,8 +394,7 @@ class StateMachine(Machine, Base):
         # It's always safe to be in some states
         if event_data and event_data.event.name in [
                 'park', 'set_park', 'clean_up', 'goto_sleep', 'get_ready']:
-            self.logger.debug("Always safe to move to {}".format(
-                              event_data.event.name))
+            self.logger.debug(f"Always safe to move to {event_data.event.name}")
             is_safe = True
         else:
             is_safe = self.is_safe()
@@ -433,9 +431,7 @@ class StateMachine(Machine, Base):
             event_data(transitions.EventData):  Contains informaton about the
                 event
          """
-        self.logger.debug(
-            "Before calling {} from {} state".format(event_data.event.name,
-                                                     event_data.state.name))
+        self.logger.debug(f"Before calling {event_data.event.name} from {event_data.state.name} state")
 
     def after_state(self, event_data):
         """ Called after each state.
@@ -447,9 +443,7 @@ class StateMachine(Machine, Base):
                 event
         """
 
-        self.logger.debug(
-            "After calling {}. Now in {} state".format(event_data.event.name,
-                                                       event_data.state.name))
+        self.logger.debug(f"After calling {event_data.event.name}. Now in {event_data.state.name} state")
 
 
 ###############################################################################
@@ -608,7 +602,7 @@ class StateMachine(Machine, Base):
             statemachine if there is no model
         """
 
-        self.logger.debug('Loading transition: {}'.format(transition))
+        self.logger.debug(f"Loading transition: {transition}")
 
         # Add `check_safety` as the first transition for all states
         conditions = listify(transition.get('conditions', []))

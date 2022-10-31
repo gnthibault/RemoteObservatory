@@ -318,13 +318,10 @@ class RemoteObservatoryFSM(StateMachine, Base):
         if not safe:
             if no_warning is False:
                 self.logger.warning(f"Unsafe conditions: {is_safe_values}")
-            # Only if transition is valid
-            #if self.state not in ['sleeping', 'parked', 'parking', 'housekeeping', 'ready']:
-            try:
-                self.logger.warning('Safety failed so sending to park if possible')
+            # It is ok not to be safe in one of those states
+            if self.state not in ['sleeping', 'parked', 'parking', 'housekeeping', 'ready']:
+                self.logger.warning('Safety check is  so sending to park if possible')
                 self.park()
-            except MachineError as e:
-                self.logger.debug(f"Cannot park from current state: {e}")
 
         return safe
 
