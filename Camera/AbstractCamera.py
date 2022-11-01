@@ -17,7 +17,7 @@ from utils import error
 
 class AbstractCamera(Base):
 
-    def __init__(self, serv_time, primary=False, *args,  **kwargs):
+    def __init__(self, serv_time, *args,  **kwargs):
         super().__init__(*args, **kwargs)
 
         try:
@@ -26,7 +26,10 @@ class AbstractCamera(Base):
             self.logger.error("No images directory. Set image_dir in config")
 
         self.serv_time = serv_time
-        self.is_primary = primary
+        self.do_acquisition = kwargs.get("do_acquisition", False)
+        self.do_pointing = kwargs.get("do_pointing", False)
+        self.do_autofocus = kwargs.get("do_autofocus", False)
+
         self.camera_name = kwargs["camera_name"]
         self.filter_type = 'no-filter'
         self._file_extension = 'fits'
@@ -95,7 +98,7 @@ class AbstractCamera(Base):
             filename=file_path, *args, **kwargs)
 
         # Add most recent exposure to list
-        if self.is_primary:
+        if self.do_acquisition and not is_pointing:
             observation.exposure_list[image_id] = file_path
         if is_pointing:
             observation.pointing_list[image_id] = file_path
@@ -169,7 +172,7 @@ class AbstractCamera(Base):
             'file_path': file_path,
             'filter': filter_name,
             'image_id': image_id,
-            'is_primary': self.is_primary,
+            'is_acquisition': self.do_acquisition,
             'sequence_id': sequence_id,
             'start_time': start_time,
             'exp_time': exp_time,
@@ -250,13 +253,14 @@ class AbstractCamera(Base):
             exp_time, calibration_ref, calibration_name, filename)
 
         # Camera metadata
+        #TODO TN URGENT: MISSING IMAGE_ID AND SEQUENCE_ID AND START_TIME
         metadata = {
             'camera_name': self.camera_name,
             'camera_uid': self.uid,
             'calibration_name': calibration_name,
             'file_path': file_path,
             'image_id': image_id,
-            'is_primary': self.is_primary,
+            'is_acquisition': self.do_acquisition,
             'sequence_id': sequence_id,
             'start_time': start_time,
             'exp_time' : exp_time.to(u.second).value,
@@ -321,7 +325,7 @@ class AbstractCamera(Base):
         observation_id = info['observation_id']
         file_path = info['file_path']
         title=info['target_name']
-        primary=info['is_primary']
+        is_acquisition=info['is_acquisition']
         self.logger.debug(f"Processing {image_id}")
 
         try:
@@ -336,7 +340,7 @@ class AbstractCamera(Base):
         except Exception as e:
             self.logger.error(f"Problem getting exp_time information: {e}")
 
-        if info['is_primary']:
+        if info['is_acquisition']:
             self.logger.debug(f"Adding current observation to db: {image_id}")
             try:
                 self.db.insert_current('observations', info,
@@ -370,7 +374,7 @@ class AbstractCamera(Base):
         image_id = info['image_id']
         seq_id = info['sequence_id']
         title = info['target_name']
-        primary = info['is_primary']
+        is_acquisition = info['is_acquisition']
         observation_ids = info['observation_ids']
         del info['observation_ids']
         self.logger.debug(f"Processing {image_id}")
@@ -381,9 +385,8 @@ class AbstractCamera(Base):
         except Exception as e:
             self.logger.error(f"Problem getting exp_time information: {e}")
 
-        if info['is_primary']:
-            self.logger.debug("Adding current calibration to db: {}".format(
-                              image_id))
+        if info['is_acquisition']:
+            self.logger.debug(f"Adding current calibration to db: {image_id}")
             try:
                 self.db.insert_current('calibrations', info,
                                        store_permanently=False)

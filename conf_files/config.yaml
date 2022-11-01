@@ -87,100 +87,107 @@ mount:
     indi_client :
         indi_host : localhost
         indi_port : 7624
-pointing_camera:
-    module: IndiAbstractCameraSimulator
-    camera_name : Guide Simulator
-#    CCD_INFO:
-#        CCD_MAX_X: 1936
-#        CCD_MAX_Y: 1096
-#        CCD_PIXEL_SIZE: 2.9
-#        CCD_PIXEL_SIZE_X: 2.9
-#        CCD_PIXEL_SIZE_Y: 2.9
-#        CCD_BITSPERPIXEL: 12
-    SIMULATOR_SETTINGS: # 290MM
-        SIM_XRES: 1936
-        SIM_YRES: 1096
-        SIM_XSIZE: 2.9
-        SIM_YSIZE: 2.9
-        SIM_MAXVAL: 65000
-        SIM_SATURATION: 1
-        SIM_LIMITINGMAG: 17
-        SIM_NOISE: 0
-        SIM_SKYGLOW: 19.5
-        SIM_OAGOFFSET: 0
-        SIM_POLAR: 0
-        SIM_POLARDRIFT: 0
-        SIM_ROTATION: 0
-        SIM_KING_GAMMA: 0
-        SIM_KING_THETA: 0
-#        SIM_PEPERIOD: 0
-#        SIM_PEMAX: 0
-        SIM_TIME_FACTOR: 1
-    SCOPE_INFO: # 200/800 newtonian
-        FOCAL_LENGTH: 800
-        APERTURE: 200
-    pointing_seconds: 10
-    autofocus_seconds: 5
-    autofocus_size : 500
-    autofocus_merit_function: half_flux_radius #vollath_F4
-    indi_client :
-        indi_host : localhost
-        indi_port : 7624
-acquisition_camera:
-    module: IndiAbstractCameraSimulator
-    camera_name : CCD Simulator
-    #module: IndiEos6DCamera
-    #camera_name: Canon DSLR EOS 6D
-    #camera_name: GPhoto CCD
-#    CCD_INFO :
-#        CCD_MAX_X : 5496
-#        CCD_MAX_Y : 3672
-#        CCD_PIXEL_SIZE : 2.4
-#        CCD_PIXEL_SIZE_X : 2.4
-#        CCD_PIXEL_SIZE_Y : 2.4
-#        CCD_BITSPERPIXEL : 12
-    SIMULATOR_SETTINGS: # 180mm
-        SIM_XRES: 5496
-        SIM_YRES: 3672
-        SIM_XSIZE: 2.4
-        SIM_YSIZE: 2.4
-        SIM_MAXVAL: 65000
-        SIM_SATURATION: 1
-        SIM_LIMITINGMAG: 17
-        SIM_NOISE: 0
-        SIM_SKYGLOW: 19.5
-        SIM_OAGOFFSET: 0
-        SIM_POLAR: 0
-        SIM_POLARDRIFT: 0
-        SIM_ROTATION: 0
-#        SIM_KING_GAMMA: 0
-#        SIM_KING_THETA: 0
-        SIM_PEPERIOD: 0
-        SIM_PEMAX: 0
-        SIM_TIME_FACTOR: 1
-    SCOPE_INFO: # 200/800 newtonian
-        FOCAL_LENGTH: 800
-        APERTURE: 200
-    pointing_seconds: 5
-    autofocus_seconds: 2
-    autofocus_size : 1500
-    autofocus_merit_function : half_flux_radius #vollath_F4
-    indi_client :
-        indi_host : localhost
-        indi_port : 7624
-    focuser:
-        module: IndiFocuser
-        focuser_name : Focuser Simulator
-        port : /dev/ttyUSB0
-        focus_range :
-            min : 32500
-            max : 40000
-        autofocus_step :
-            fine : 750
-            coarse : 2500
-        autofocus_range :
-            fine : 10000
-            coarse : 30000
+cameras:
+    -
+        module: IndiAbstractCameraSimulator
+        camera_name : Guide Simulator
+    #    CCD_INFO:
+    #        CCD_MAX_X: 1936
+    #        CCD_MAX_Y: 1096
+    #        CCD_PIXEL_SIZE: 2.9
+    #        CCD_PIXEL_SIZE_X: 2.9
+    #        CCD_PIXEL_SIZE_Y: 2.9
+    #        CCD_BITSPERPIXEL: 12
+        do_acquisition: false
+        SIMULATOR_SETTINGS: # 290MM
+            SIM_XRES: 1936
+            SIM_YRES: 1096
+            SIM_XSIZE: 2.9
+            SIM_YSIZE: 2.9
+            SIM_MAXVAL: 65000
+            SIM_SATURATION: 1
+            SIM_LIMITINGMAG: 17
+            SIM_NOISE: 0
+            SIM_SKYGLOW: 19.5
+            SIM_OAGOFFSET: 0
+            SIM_POLAR: 0
+            SIM_POLARDRIFT: 0
+            SIM_ROTATION: 0
+            SIM_KING_GAMMA: 0
+            SIM_KING_THETA: 0
+    #        SIM_PEPERIOD: 0
+    #        SIM_PEMAX: 0
+            SIM_TIME_FACTOR: 1
+        SCOPE_INFO: # 200/800 newtonian
+            FOCAL_LENGTH: 800
+            APERTURE: 200
+        do_pointing: true
+        pointing_seconds: 10
+        do_autofocus: true
+        autofocus_seconds: 5
+        autofocus_size : 750
+        autofocus_merit_function: half_flux_radius #vollath_F4
+        focuser:
+            module: IndiFocuser
+            focuser_name: Focuser Simulator
+            port: /dev/ttyUSB0
+            focus_range:
+                min: 32500
+                max: 40000
+            autofocus_step:
+                fine: 750
+                coarse: 2500
+            autofocus_range:
+                fine: 10000
+                coarse: 30000
+            indi_client:
+                indi_host: localhost
+                indi_port: 7624
+        indi_client :
+            indi_host : localhost
+            indi_port : 7624
+    -
+        module: IndiAbstractCameraSimulator
+        camera_name : CCD Simulator
+        do_acquisition: true
+        #module: IndiEos6DCamera
+        #camera_name: Canon DSLR EOS 6D
+        #camera_name: GPhoto CCD
+    #    CCD_INFO :
+    #        CCD_MAX_X : 5496
+    #        CCD_MAX_Y : 3672
+    #        CCD_PIXEL_SIZE : 2.4
+    #        CCD_PIXEL_SIZE_X : 2.4
+    #        CCD_PIXEL_SIZE_Y : 2.4
+    #        CCD_BITSPERPIXEL : 12
+        SIMULATOR_SETTINGS: # 180mm
+            SIM_XRES: 5496
+            SIM_YRES: 3672
+            SIM_XSIZE: 2.4
+            SIM_YSIZE: 2.4
+            SIM_MAXVAL: 65000
+            SIM_SATURATION: 1
+            SIM_LIMITINGMAG: 17
+            SIM_NOISE: 0
+            SIM_SKYGLOW: 19.5
+            SIM_OAGOFFSET: 0
+            SIM_POLAR: 0
+            SIM_POLARDRIFT: 0
+            SIM_ROTATION: 0
+    #        SIM_KING_GAMMA: 0
+    #        SIM_KING_THETA: 0
+            SIM_PEPERIOD: 0
+            SIM_PEMAX: 0
+            SIM_TIME_FACTOR: 1
+        SCOPE_INFO: # 200/800 newtonian
+            FOCAL_LENGTH: 800
+            APERTURE: 200
+        do_pointing: false
+        pointing_seconds: 10
+        do_autofocus: false
+        autofocus_seconds: 2
+        autofocus_size : 1500
+        autofocus_merit_function : half_flux_radius #vollath_F4
         indi_client :
             indi_host : localhost
             indi_port : 7624
