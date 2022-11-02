@@ -15,7 +15,7 @@ class IndiAbstractCamera(IndiCamera, AbstractCamera):
     def __init__(self, serv_time, config=None, connect_on_create=True):
 
         # Parent initialization
-        AbstractCamera.__init__(self, serv_time=serv_time, camera_name=config["camera_name"], **config)
+        AbstractCamera.__init__(self, serv_time=serv_time, **config)
 
         # device related intialization
         IndiCamera.__init__(self, logger=self.logger, config=config,
