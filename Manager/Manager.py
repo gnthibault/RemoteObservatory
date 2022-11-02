@@ -412,7 +412,7 @@ class Manager(Base):
         headers['equinox'] = equinox
         return headers
 
-    def autofocus_cameras(self, camera_list=None, coarse=False):
+    def perform_cameras_autofocus(self, camera_list=None, coarse=False):
         """
         Perform autofocus on all cameras with focus capability, or a named
         subset of these. Optionally will perform a coarse autofocus first,

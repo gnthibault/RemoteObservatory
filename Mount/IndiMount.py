@@ -147,7 +147,8 @@ class IndiMount(IndiDevice):
             GUIDE_RATE number should look like this:
             {'GUIDE_RATE_WE': {
                  'name': 'GUIDE_RATE_WE',
-                 'label': 'W/E Rate', 'value': 0.5,
+                 'label': 'W/E Rate',
+                 'value': 0.5,
                  'min': 0.0,
                  'max': 1.0,
                  'step': 0.1,

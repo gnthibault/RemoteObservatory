@@ -48,7 +48,7 @@ def on_enter(event_data):
         # Before each observation, we should refocus
         maximum_duration = MAX_FOCUSING_TIME
         start_time = model.manager.serv_time.get_astropy_time_from_utc()
-        camera_events = model.manager.autofocus_cameras(coarse=False)
+        camera_events = model.manager.perform_cameras_autofocus(coarse=False)
 
         timeout = Timeout(maximum_duration)
         next_status_time = start_time + STATUS_INTERVAL
