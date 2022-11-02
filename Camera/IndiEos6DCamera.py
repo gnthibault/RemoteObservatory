@@ -11,7 +11,7 @@ class IndiEos6DCamera(IndiAbstractCamera):
     ''' Indi Camera class for eos 6D ( ×  full frame cmos) '''
 
     def __init__(self, serv_time, indi_client, config=None,
-                 connect_on_create=True, primary=False):
+                 connect_on_create=True):
 
         if config is None:
             config = dict(
@@ -27,8 +27,7 @@ class IndiEos6DCamera(IndiAbstractCamera):
 
         # device related intialization
         super().__init__(serv_time=serv_time, indi_client=indi_client,
-                         config=config, connect_on_create=connect_on_create,
-                         primary=primary)
+                         config=config, connect_on_create=connect_on_create)
         self.init_frame_features()
 
         # Finished configuring

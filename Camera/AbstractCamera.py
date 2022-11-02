@@ -172,7 +172,6 @@ class AbstractCamera(Base):
             'file_path': file_path,
             'filter': filter_name,
             'image_id': image_id,
-            'is_acquisition': self.do_acquisition,
             'sequence_id': sequence_id,
             'start_time': start_time,
             'exp_time': exp_time,
@@ -253,6 +252,12 @@ class AbstractCamera(Base):
             exp_time, calibration_ref, calibration_name, filename)
 
         # Camera metadata
+        image_id = '{}_{}_{}'.format(
+            self.camera_name,
+            self.uid,
+            start_time
+        )
+
         #TODO TN URGENT: MISSING IMAGE_ID AND SEQUENCE_ID AND START_TIME
         metadata = {
             'camera_name': self.camera_name,
@@ -260,7 +265,6 @@ class AbstractCamera(Base):
             'calibration_name': calibration_name,
             'file_path': file_path,
             'image_id': image_id,
-            'is_acquisition': self.do_acquisition,
             'sequence_id': sequence_id,
             'start_time': start_time,
             'exp_time' : exp_time.to(u.second).value,
@@ -305,9 +309,11 @@ class AbstractCamera(Base):
         """
         Processes the exposure.
 
-        If the camera is a primary camera, extract the jpeg image and save
-        metadata to mongo `current` collection. Saves metadata to mongo
-        `observations` collection for all images.
+        Initially, there was a test on wether the camera was a primary camera or not. In the case of a primary camera,
+        we extracted the jpeg image and saved metadata to mongo `current` collection.
+        For all camera (prim+non-prim), we saved metadata to mongo `observations` collection.
+        Now, we save the metadata to all collections
+        #TODO TN URGENT
 
         Args:
             info (dict): Header metadata saved for the image
@@ -325,7 +331,6 @@ class AbstractCamera(Base):
         observation_id = info['observation_id']
         file_path = info['file_path']
         title=info['target_name']
-        is_acquisition=info['is_acquisition']
         self.logger.debug(f"Processing {image_id}")
 
         try:
@@ -340,13 +345,12 @@ class AbstractCamera(Base):
         except Exception as e:
             self.logger.error(f"Problem getting exp_time information: {e}")
 
-        if info['is_acquisition']:
-            self.logger.debug(f"Adding current observation to db: {image_id}")
-            try:
-                self.db.insert_current('observations', info,
-                                       store_permanently=False)
-            except Exception as e:
-                self.logger.error(f"Problem adding observation to db: {e}")
+        # if info['is_acquisition']:
+        #     self.logger.debug(f"Adding current observation to db: {image_id}")
+        #     try:
+        self.db.insert_current('observations', info, store_permanently=False)
+        #     except Exception as e:
+        #         self.logger.error(f"Problem adding observation to db: {e}")
         #else:
             #self.logger.debug(f"Compressing {file_path}")
             #fits_utils.fpack(file_path)
@@ -374,7 +378,6 @@ class AbstractCamera(Base):
         image_id = info['image_id']
         seq_id = info['sequence_id']
         title = info['target_name']
-        is_acquisition = info['is_acquisition']
         observation_ids = info['observation_ids']
         del info['observation_ids']
         self.logger.debug(f"Processing {image_id}")
@@ -385,16 +388,16 @@ class AbstractCamera(Base):
         except Exception as e:
             self.logger.error(f"Problem getting exp_time information: {e}")
 
-        if info['is_acquisition']:
-            self.logger.debug(f"Adding current calibration to db: {image_id}")
-            try:
-                self.db.insert_current('calibrations', info,
-                                       store_permanently=False)
-            except Exception as e:
-                self.logger.error(f"Problem adding calibration to db: {e}")
-        else:
-            self.logger.debug(f"Compressing {file_path}")
-            fits_utils.fpack(file_path)
+        # if info['is_acquisition']:
+        #     self.logger.debug(f"Adding current calibration to db: {image_id}")
+        #     try:
+        self.db.insert_current('calibrations', info,
+                               store_permanently=False)
+        #     except Exception as e:
+        #         self.logger.error(f"Problem adding calibration to db: {e}")
+        # else:
+        #     self.logger.debug(f"Compressing {file_path}")
+        #     fits_utils.fpack(file_path)
 
         self.logger.debug(f"Adding image metadata to db: {image_id}")
 

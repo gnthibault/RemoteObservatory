@@ -110,15 +110,6 @@ class Manager(Base):
             self.serv_time.get_astropy_time_from_utc())
 
     @property
-    def primary_camera(self):
-        return self._primary_camera
-
-    @primary_camera.setter
-    def primary_camera(self, cam):
-        cam.is_primary = True
-        self._primary_camera = cam
-
-    @property
     def current_observation(self):
         return self.scheduler.current_observation
 
@@ -671,8 +662,7 @@ class Manager(Base):
                     cam = getattr(cam_module, cam_name)(
                         serv_time=self.serv_time,
                         config=cam_config,
-                        connect_on_create=True,
-                        primary=True)
+                        connect_on_create=True)
                     cam.prepare_shoot()
                     self.cameras[cam.name] = cam
             except Exception as e:

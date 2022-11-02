@@ -83,8 +83,7 @@ class Observation(Base):
         """ Return the latest exposure information
 
         Returns:
-            tuple: `image_id` and full path of most recent exposure from the
-                    primary camera
+            tuple: `image_id` and full path of most recent exposure from an acquisition camera
         """
         try:
             return list(self.exposure_list.items())[0]
@@ -96,8 +95,7 @@ class Observation(Base):
         """ Return the latest exposure information
 
         Returns:
-            tuple: `image_id` and full path of most recent exposure from the
-                   primary camera
+            tuple: `image_id` and full path of most recent exposure from an acquisition camera
         """
         try:
             return list(self.exposure_list.items())[-1]

@@ -64,8 +64,7 @@ if __name__ == '__main__':
     # test indi virtual camera class
     cam = IndiAbstractCameraSimulator(serv_time=HostTimeService(),
                                       config=config,
-                                      connect_on_create=False,
-                                      primary=True)
+                                      connect_on_create=False)
     cam.connect()
     cam.prepare_shoot()
     # Acquire data
