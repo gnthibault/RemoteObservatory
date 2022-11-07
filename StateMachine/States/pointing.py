@@ -21,6 +21,9 @@ max_pointing_error = OffsetError(20*u.arcsec, 20*u.arcsec, 30*u.arcsec)
 
 
 def on_enter(event_data):
+    #TODO TN DEBUG
+    event_data.model.next_state = 'tracking'
+    return
     """Pointing State
 
     Take 30 second exposure and plate-solve to get the pointing error

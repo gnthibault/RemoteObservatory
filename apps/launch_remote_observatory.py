@@ -320,7 +320,7 @@ class RemoteObservatoryFSM(StateMachine, Base):
                 self.logger.warning(f"Unsafe conditions: {is_safe_values}")
             # It is ok not to be safe in one of those states
             if self.state not in ['sleeping', 'parked', 'parking', 'housekeeping', 'ready']:
-                self.logger.warning('Safety check is  so sending to park if possible')
+                self.logger.warning('Safety check indicates a risk, so sending to park if possible')
                 self.park()
 
         return safe

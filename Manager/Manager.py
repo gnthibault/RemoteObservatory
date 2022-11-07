@@ -207,7 +207,8 @@ class Manager(Base):
 
     def acquire_calibration(self):
         obs_list = [obs for seq_t, obs in self.scheduler.observed_list.items()]
-        self.logger.debug(f"Acquiring calibratrions for {[obs_list.target.name]}")
+        target_name_list = [obs.target.name for obs in obs_list]
+        self.logger.debug(f"Acquiring calibrations for targets {target_name_list}")
 
         for cam_name, camera in self.acquisition_cameras.items():
             self.logger.debug(f"Going to start calibration of camera {cam_name}"
@@ -445,19 +446,16 @@ class Manager(Base):
         # Start autofocus with each camera
         for cam_name, camera in cameras.items():
             self.logger.debug(f"Autofocusing camera: {cam_name}")
-
             try:
                 assert camera.focuser.is_connected
             except AttributeError:
-                msg = f"Camera {cam_name} has no focuser, skipping "\
-                      f"autofocus"
-                self.logger.debug(msg)
-                raise RuntimeError("msg")
+                msg = f"Camera {cam_name} has no focuser, skipping autofocus"
+                self.logger.error(msg)
+                raise RuntimeError(msg)
             except AssertionError:
-                msg = f"Camera {cam_name} focuser not connected, "\
-                      f"skipping autofocus"
-                self.logger.debug(msg)
-                raise RuntimeError("msg")
+                msg = f"Camera {cam_name} focuser not connected, skipping autofocus"
+                self.logger.error(msg)
+                raise RuntimeError(msg)
             else:
                 try:
                     # Start the autofocus
@@ -465,7 +463,7 @@ class Manager(Base):
                 except Exception as e:
                     msg = f"Problem running autofocus: {e}"
                     self.logger.debug(msg)
-                    raise RuntimeError("msg")
+                    raise RuntimeError(msg)
                 else:
                     autofocus_events[cam_name] = autofocus_event
 

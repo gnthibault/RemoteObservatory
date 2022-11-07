@@ -123,26 +123,26 @@ cameras:
             APERTURE: 200
         do_pointing: true
         pointing_seconds: 10
-        do_autofocus: true
+        do_autofocus: false
         autofocus_seconds: 5
         autofocus_size : 750
         autofocus_merit_function: half_flux_radius #vollath_F4
-        focuser:
-            module: IndiFocuser
-            focuser_name: Focuser Simulator
-            port: /dev/ttyUSB0
-            focus_range:
-                min: 32500
-                max: 40000
-            autofocus_step:
-                fine: 750
-                coarse: 2500
-            autofocus_range:
-                fine: 10000
-                coarse: 30000
-            indi_client:
-                indi_host: localhost
-                indi_port: 7624
+#        focuser:
+#            module: IndiFocuser
+#            focuser_name: Focuser Simulator
+#            port: /dev/ttyUSB0
+#            focus_range:
+#                min: 32500
+#                max: 40000
+#            autofocus_step:
+#                fine: 750
+#                coarse: 2500
+#            autofocus_range:
+#                fine: 10000
+#                coarse: 30000
+#            indi_client:
+#                indi_host: localhost
+#                indi_port: 7624
         indi_client :
             indi_host : localhost
             indi_port : 7624
@@ -184,9 +184,25 @@ cameras:
             APERTURE: 200
         do_pointing: false
         pointing_seconds: 10
-        do_autofocus: false
+        do_autofocus: true
         autofocus_seconds: 2
         autofocus_size : 1500
+        focuser:
+            module: IndiFocuser
+            focuser_name: Focuser Simulator
+            port: /dev/ttyUSB0
+            focus_range:
+                min: 32500
+                max: 40000
+            autofocus_step:
+                fine: 750
+                coarse: 2500
+            autofocus_range:
+                fine: 10000
+                coarse: 30000
+            indi_client:
+                indi_host: localhost
+                indi_port: 7624
         autofocus_merit_function : half_flux_radius #vollath_F4
         indi_client :
             indi_host : localhost
