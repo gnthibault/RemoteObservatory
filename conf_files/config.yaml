@@ -161,8 +161,8 @@ cameras:
     #        CCD_PIXEL_SIZE_Y : 2.4
     #        CCD_BITSPERPIXEL : 12
         SIMULATOR_SETTINGS: # 180mm
-            SIM_XRES: 5496
-            SIM_YRES: 3672
+            SIM_XRES: 1500 #5496
+            SIM_YRES: 1500 #3672
             SIM_XSIZE: 2.4
             SIM_YSIZE: 2.4
             SIM_MAXVAL: 65000
@@ -187,6 +187,7 @@ cameras:
         do_autofocus: true
         autofocus_seconds: 2
         autofocus_size : 1500
+        autofocus_merit_function : half_flux_radius #vollath_F4
         focuser:
             module: IndiFocuser
             focuser_name: Focuser Simulator
@@ -203,26 +204,25 @@ cameras:
             indi_client:
                 indi_host: localhost
                 indi_port: 7624
-        autofocus_merit_function : half_flux_radius #vollath_F4
+        do_filter_wheel: false
+        filter_wheel:
+            module: IndiFilterWheel
+            filterwheel_name: Filter Simulator
+            filter_list:
+                Luminance: 1
+                Red: 2
+                Green: 3
+                Blue: 4
+                H_Alpha: 5
+                OIII: 6
+                SII: 7
+                LPR: 8
+            indi_client:
+                indi_host: localhost
+                indi_port: 7624
         indi_client :
             indi_host : localhost
             indi_port : 7624
-#filterwheel:
-nofilterwheel:
-    module : IndiFilterWheel 
-    filterwheel_name : Filter Simulator
-    filter_list : 
-        Luminance : 1
-        Red : 2
-        Green : 3
-        Blue : 4
-        H_Alpha : 5
-        OIII : 6
-        SII : 7
-        LPR : 8
-    indi_client :
-        indi_host : localhost
-        indi_port : 7624
 guider:
     module : GuiderPHD2
     host : localhost

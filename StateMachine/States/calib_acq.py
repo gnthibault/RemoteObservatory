@@ -71,6 +71,7 @@ def on_enter(event_data):
         model.logger.warning(msg)
         model.say(f"Exception while acquiring calibration {e}")
     else:
+        model.manager.scheduler.set_observed_to_calibrated()
         msg = f"Finished with calibration acquisition, going to housekeeping"
         model.logger.debug(msg)
         model.say(msg)

@@ -53,20 +53,10 @@ class IndiCamera(IndiDevice):
         self.pointing_seconds = float(config['pointing_seconds'])
         self.autofocus_size = int(config['autofocus_size'])
         self.autofocus_merit_function = config['autofocus_merit_function']
-        # If scope focuser is specified in the config, load
-        try:
-            cfg = config['focuser']
-            focuser_name = cfg['module']
-            focuser = load_module('Focuser.'+focuser_name)
-            #TODO TN, we need to better handle optional connection of focuser
-            self.focuser = getattr(focuser, focuser_name)(
-                logger=None, config=cfg, connect_on_create=True)
-            #    logger=None, config=cfg, connect_on_create=connect_on_create)
-        except Exception as e:
-            logger.warning(f"Cannot load focuser module: {e}")
-            self.focuser = None
+        self._setup_focuser(config, connect_on_create)
+        self._setup_filter_wheel(config, connect_on_create)
 
-        logger.debug('Indi camera, camera name is: {}'.format(device_name))
+        logger.debug(f"Indi camera, camera name is: {device_name}")
       
         # device related intialization
         IndiDevice.__init__(self,
@@ -76,22 +66,44 @@ class IndiCamera(IndiDevice):
             self.connect()
 
         # Frame Blob: reference that will be used to receive binary
-        #self.frame_blob = None
         self.last_blob = None
 
         # Default exposureTime, gain
         self.exp_time_sec = 5
         self.gain = 400
 
-        # Now check if there is a focuser attached
-        #try:
-        #    self.focuser = IndiFocuser(indi_client=self.indi_client,
-        #                               connect_on_create=True)
-        #except Exception:
-        #    raise RuntimeError('Problem setting up focuser')
-
         # Finished configuring
         self.logger.debug('Configured Indi Camera successfully')
+
+    def _setup_focuser(self, config, connect_on_create):
+        # If scope focuser is specified in the config, load
+        try:
+            cfg = config['focuser']
+            focuser_name = cfg['module']
+            focuser = load_module('Focuser.'+focuser_name)
+            #TODO TN, we need to better handle optional connection of focuser
+            self.focuser = getattr(focuser, focuser_name)(
+                logger=None,
+                config=cfg,
+                connect_on_create=connect_on_create)
+        except Exception as e:
+            self.logger.warning(f"Cannot load focuser module: {e}")
+            self.focuser = None
+
+    def _setup_filter_wheel(self, config, connect_on_create):
+        # If scope filterwheel is specified in the config, load
+        try:
+            cfg = config['filter_wheel']
+            fw_name = cfg['module']
+            fw_module = load_module('FilterWheel.'+fw_name)
+            #TODO TN, we need to better handle optional connection of filter_wheel
+            self.filter_wheel = getattr(fw_module, fw_name)(
+                logger=None,
+                config=self.config['filter_wheel'],
+                connect_on_create=connect_on_create)
+        except Exception as e:
+            self.logger.warning(f"Cannot load filter_wheel module: {e}")
+            self.filter_wheel = None
 
     @property
     def dynamic(self):

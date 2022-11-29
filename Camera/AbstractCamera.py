@@ -118,27 +118,25 @@ class AbstractCamera(Base):
         start_time = headers.get('start_time', self.serv_time.flat_time())
 
         # Get the filepath
-        image_dir = "{}/targets/{}/{}/{}".format(
+        image_dir = os.path.join(
             self._image_dir,
+            "targets",
             observation.name,
             self.uid,
-            observation.seq_time,
+            observation.seq_time
         )
         os.makedirs(image_dir, exist_ok=True)
 
         # Get full file path with filename
         if filename is None:
-            file_path = "{}/{}.{}".format(image_dir, start_time,
-                                          self.file_extension)
+            file_path = os.path.join(image_dir, start_time) + "." + self.file_extension
         else:
             # Add extension
             if '.' not in filename:
                 filename = '{}.{}'.format(filename, self.file_extension)
-
             # Add directory
             if '/' not in filename:
-                filename = '{}/{}'.format(image_dir, filename)
-
+                filename = os.path.join(image_dir, filename)
             file_path = filename
 
         image_id = '{}_{}_{}'.format(
@@ -146,13 +144,8 @@ class AbstractCamera(Base):
             self.uid,
             start_time
         )
-        self.logger.debug("image_id: {}".format(image_id))
-
-        sequence_id = '{}_{}_{}'.format(
-            self.camera_name,
-            self.uid,
-            observation.seq_time
-        )
+        self.logger.debug(f"image_id: {image_id}")
+        sequence_id = observation.seq_time
 
         # check if it is a pointing image
         is_pointing = ('POINTING' in headers) and (headers["POINTING"] == "True")
@@ -175,21 +168,21 @@ class AbstractCamera(Base):
             'sequence_id': sequence_id,
             'start_time': start_time,
             'exp_time': exp_time,
-            'temperature_degC' : temperature
+            'temperature_degC': temperature
         }
         metadata.update(headers)
         return (exp_time, gain, temperature, file_path, image_id, metadata,
             is_pointing)
 
     def take_calibration(self, temperature, gain, exp_time, headers=None,
-                  calibration_ref=None, calibration_name="unknown_calibration",
+                  calibration_seq_id=None, calibration_name="unknown_calibration",
                   observations=None, filename=None, *args, **kwargs):
         # To be used for marking when exposure is complete
         # (see `process_calibration`)
         calib_event = Event()
 
         file_path, metadata = self._setup_calibration(temperature,
-           gain,  exp_time, headers, calibration_ref, calibration_name,
+           gain,  exp_time, headers, calibration_seq_id, calibration_name,
            observations, filename, *args, **kwargs)
  
         exposure_event = self.take_calibration_exposure(exposure_time=exp_time,
@@ -203,62 +196,72 @@ class AbstractCamera(Base):
 
         return calib_event
 
-    def get_calibration_directory(self, temperature, gain, exp_time,
-        calibration_ref=None, filename=None,
-        calibration_name='unknown_calibration'):
-        if headers is None:
-            headers = {}
-        if calibration_ref is None:
-            calibration_name += ('-' + calibration_ref)
+    def get_calibration_directory(self,
+                                  headers,
+                                  calibration_seq_id=None,
+                                  filename=None,
+                                  calibration_name='unknown_calibration'):
 
         start_time = headers.get('start_time', self.serv_time.flat_time())
 
         # Get the filepath
-        image_dir = "{}/calibration/{}/{}".format(
+        image_dir = os.path.join(
             self._image_dir,
+            "calibrations",
             calibration_name,
-            self.uid
+            self.uid,
+            calibration_seq_id
         )
         os.makedirs(image_dir, exist_ok=True)
 
         # Get full file path with filename
         if filename is None:
-            file_path = "{}/{}_{}_{}_{}.{}".format(image_dir,
-                                          start_time,
-                                          temperature,
-                                          gain,
-                                          exp_time.to(u.second).value,
-                                          self.file_extension)
+            file_path = f"{image_dir}/{start_time}.{self.file_extension}"
         else:
             # Add extension
             if '.' not in filename:
-                filename = '{}.{}'.format(filename, self.file_extension)
-
+                filename = f"{filename}.{self.file_extension}"
             # Add directory
             if '/' not in filename:
-                filename = '{}/{}'.format(image_dir, filename)
+                filename = os.path.join(image_dir, filename)
 
             file_path = filename
         return file_path
 
-    def _setup_calibration(self, temperature, gain, exp_time,
-                                headers=None, calibration_ref=None,
-                                calibration_name='unknown_calibration',
-                                observations=[], filename=None, **kwargs):
-        """
-            parameter can be temperature for dark or filter for flat ?
-        """
-        file_path = self.get_calibration_directory(temperature, gain,
-            exp_time, calibration_ref, calibration_name, filename)
 
-        # Camera metadata
+    def _setup_calibration(self, observation, headers, filename, **kwargs):
+        if headers is None:
+            headers = {}
+        start_time = headers.get('start_time', self.serv_time.flat_time())
+
+    # def _setup_calibration(self, temperature, gain, exp_time,
+    #                             headers=None, calibration_seq_id=None,
+    #                             calibration_name='unknown_calibration',
+    #                             observations=[], filename=None, **kwargs):
+    #     """
+    #         parameter can be temperature for dark or filter for flat ?
+    #     """
+
+        # def get_calibration_directory(self,
+        #                               headers,
+        #                               calibration_seq_id=None,
+        #                               filename=None,
+        #                               calibration_name='unknown_calibration'):
+
+        start_time = self.serv_time.flat_time()
+        file_path = self.get_calibration_directory(temperature, gain,
+            exp_time, headers, calibration_seq_id, calibration_name, filename)
+
+        # Image primary key
         image_id = '{}_{}_{}'.format(
             self.camera_name,
             self.uid,
             start_time
         )
+        # Sequence primary key, if available
+        sequence_id = calibration_seq_id
 
-        #TODO TN URGENT: MISSING IMAGE_ID AND SEQUENCE_ID AND START_TIME
+        #TODO TN URGENT: MISSING IMAGE_ID AND SEQUENCE_ID
         metadata = {
             'camera_name': self.camera_name,
             'camera_uid': self.uid,
@@ -330,7 +333,7 @@ class AbstractCamera(Base):
         image_id = info['image_id']
         observation_id = info['observation_id']
         file_path = info['file_path']
-        title=info['target_name']
+        title = info['target_name']
         self.logger.debug(f"Processing {image_id}")
 
         try:
@@ -374,9 +377,9 @@ class AbstractCamera(Base):
         # to be set
         if exposure_event is not None:
             exposure_event.wait()
-
         image_id = info['image_id']
         seq_id = info['sequence_id']
+        file_path = info['file_path']
         title = info['target_name']
         observation_ids = info['observation_ids']
         del info['observation_ids']
@@ -403,8 +406,8 @@ class AbstractCamera(Base):
 
         # We are actually looping on each observation, so that a calibration is
         # actually featured once per observation
-        if len(observation_ids)<1:
-            observation_ids=[""]
+        if len(observation_ids) < 1:
+            observation_ids = [""]
         for observation_id in observation_ids:
             self.db.insert('calibrations', {
                 'data': info,
@@ -422,4 +425,3 @@ class AbstractCamera(Base):
         self.logger.debug(f"Updating FITS headers: {file_path}")
         fits_utils.update_headers(file_path, info)
         return file_path
-

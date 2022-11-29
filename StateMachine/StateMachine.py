@@ -493,8 +493,7 @@ class StateMachine(Machine, Base):
             return 'set_park'
         else:
             for state_info in self._state_machine_table['transitions']:
-                if self.state in state_info['source'] and (state_info['dest']
-                                                           == self.next_state):
+                if self.state in state_info['source'] and (state_info['dest'] == self.next_state):
                     return state_info['trigger']
 
         # Return park transition if we don't find existing transition in

@@ -68,10 +68,6 @@ class Manager(Base):
         self.logger.info('\tSetting up cameras')
         self._setup_cameras()
 
-        # Setup filter wheel
-        self.logger.info('\tSetting up filterwheel')
-        self._setup_filterwheel()
-
         # setup guider
         self.logger.info('\tSetting up guider')
         self._setup_guider()
@@ -210,15 +206,17 @@ class Manager(Base):
         target_name_list = [obs.target.name for obs in obs_list]
         self.logger.debug(f"Acquiring calibrations for targets {target_name_list}")
 
+        # List of camera events to wait for to signal exposure is done processing
+        camera_events = dict()
         for cam_name, camera in self.acquisition_cameras.items():
-            self.logger.debug(f"Going to start calibration of camera {cam_name}"
-                              f"[{camera.uid}]")
-            # calibration = self._get_calibration(camera)
-            # calibration.calibrate(self.scheduler.observed_list)
-            ####calib_event_generator = calibration.calibrate(self.scheduler.observed_list)
-            ####yield from calib_event_generator
-        self.scheduler.set_observed_to_calibrated()
-        #raise StopIteration
+            try:
+                self.logger.debug(f"Going to start calibration of camera {cam_name}[{camera.uid}]")
+                calibration = self._get_calibration(camera)
+                cam_event = calibration.calibrate(self.scheduler.observed_list)
+                camera_events[cam_name] = cam_event
+            except Exception as e:
+                self.logger.error(f"Problem trying to calibrate camera {cam_name}, {e}: {traceback.format_exc()}")
+        return camera_events
 
     def cleanup_observations(self):
         """Cleanup observation list
@@ -268,8 +266,7 @@ class Manager(Base):
         # All cameras share a similar start time
         headers['start_time'] = self.serv_time.flat_time()
 
-        # List of camera events to wait for to signal exposure is done
-        # processing
+        # List of camera events to wait for to signal exposure is done processing
         camera_events = dict()
 
         # Take exposure with each camera
@@ -281,8 +278,7 @@ class Manager(Base):
                     observation=self.current_observation, headers=headers)
                 camera_events[cam_name] = cam_event
             except Exception as e:
-                self.logger.error(f"Problem waiting for images, {e}: "
-                                  f"{traceback.format_exc()}")
+                self.logger.error(f"Problem waiting for images, {e}: {traceback.format_exc()}")
         return camera_events
 
     def analyze_recent(self):
@@ -675,21 +671,6 @@ class Manager(Base):
             raise error.CameraNotFound(
                 msg="No acquisition camera available. Exiting.", exit=True)
 
-    # TODO TN: filterwheel should be relative to a camera
-    def _setup_filterwheel(self):
-        """
-            Setup a filterwheel object.
-        """
-        try:
-            if 'filterwheel' in self.config:
-                fw_name = self.config['filterwheel']['module']
-                fw_module = load_module('FilterWheel.'+fw_name)
-                self.filterwheel = getattr(fw_module, fw_name)(
-                    config = self.config['filterwheel'],
-                    connect_on_create=True)
-        except Exception:
-            raise RuntimeError(f'Problem setting up filterwheel: {e}')
-
     def _setup_guider(self):
         """
             Setup a guider object.
@@ -711,15 +692,12 @@ class Manager(Base):
         try:
             if 'calibration' in self.config:
                 calibration_name = self.config["calibration"]["module"]
-                calibration_module = load_module("calibration."+
-                                               calibration_name)
-                calibration = getattr(calibration_module,
-                                           calibration_name)(
+                calibration_module = load_module("calibration."+calibration_name)
+                calibration = getattr(calibration_module, calibration_name)(
                     camera=camera,
                     config=self.config["calibration"])
         except Exception as e:
             raise RuntimeError(f"Problem setting up scheduler: {e}")
-        
         return calibration
 
     def _setup_scheduler(self):
