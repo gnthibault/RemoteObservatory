@@ -35,7 +35,7 @@ class ImagingCalibration(Base):
         self.flat_nb = config["flat"]["nb"]
         self.flat_gain = config["flat"]["gain"]
         self.flat_temperature = config["flat"]["temperature"]
-        self.dark_nb = config["dark_nb"]
+        self.dark_nb = config["dark"]["dark_nb"]
 
         # Get devices
         self.camera = camera
@@ -56,14 +56,14 @@ class ImagingCalibration(Base):
             flat_config.add(conf)
         self.controller.switch_on_flat_light()
         for filter_name in flat_config:
-            if filter_name != "no-filter":
+            if filter_name != "no-filter" and self.camera.filter_wheel is not None:
                 self.camera.filter_wheel.set_filter(filter_name)
             for i in range(self.flat_nb):
                 event = self.camera.take_calibration(
                     temperature=self.flat_temperature,
                     gain=self.flat_gain,
                     exp_time=self.flat_exp_sec,
-                    headers={"filter":filter_name},
+                    headers={"filter": filter_name},
                     calibration_name="flat",
                     observations=observed_list.values())
                 event.wait()
@@ -95,8 +95,6 @@ class ImagingCalibration(Base):
                         gain=gain,
                         exp_time=exp_time_sec,
                         calibration_name="dark",
-                        observations=[observed_list[i] for i in
-                                      dark_config_dict[obsk]]
+                        observations=[])
                     event.wait()
         self.controller.open_optical_path()
-

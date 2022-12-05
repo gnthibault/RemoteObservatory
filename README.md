@@ -1,6 +1,7 @@
 # RemoteObservatory
 [![astropy](http://img.shields.io/badge/powered%20by-AstroPy-orange.svg?style=flat)](http://www.astropy.org/)
 
+TODO TN: Currently in ugly debug mode to check for calibration behaviour: #TODO TN DEBUG
 
 Another astronomical observatory manager.
 This project either uses, or is directly inspired by:

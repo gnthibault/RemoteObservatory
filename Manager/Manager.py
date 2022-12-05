@@ -697,7 +697,7 @@ class Manager(Base):
                     camera=camera,
                     config=self.config["calibration"])
         except Exception as e:
-            raise RuntimeError(f"Problem setting up scheduler: {e}")
+            raise RuntimeError(f"Problem setting up calibration: {e}")
         return calibration
 
     def _setup_scheduler(self):
