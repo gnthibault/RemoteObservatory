@@ -23,6 +23,7 @@ if __name__ == '__main__':
         autofocus_seconds=5,
         pointing_seconds=10,
         autofocus_size=500,
+        autofocus_merit_function="half_flux_radius",
         focuser=dict(
             module="IndiFocuser",
             focuser_name="Focuser Simulator",
