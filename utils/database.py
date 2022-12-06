@@ -190,6 +190,7 @@ class DB():
             'scope_controller',
             'config',
             'current',
+            'calibrations',
             'drift_align',
             'environment',
             'mount',

@@ -87,14 +87,16 @@ class ImagingCalibration(Base):
 
         self.controller.close_optical_path_for_dark()
         for temp_deg, times_gains in dark_config_dict.items():
-            self.camera.set_temperature(temp_deg)
-            for (exp_time_sec, gain) in times_gains:
+            if temp_deg:
+                self.camera.set_temperature(temp_deg)
+            for (exp_time, gain) in times_gains:
                 for i in range(self.dark_nb):
                     event = self.camera.take_calibration(
                         temperature=temp_deg,
                         gain=gain,
-                        exp_time=exp_time_sec,
+                        exp_time=exp_time,
+                        headers={},
                         calibration_name="dark",
-                        observations=[])
+                        observations=observed_list.values())
                     event.wait()
         self.controller.open_optical_path()

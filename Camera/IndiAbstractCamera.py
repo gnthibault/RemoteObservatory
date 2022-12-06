@@ -76,15 +76,15 @@ class IndiAbstractCamera(IndiCamera, AbstractCamera):
         return autofocus_event
 
     def take_bias_exposure(self, *args, **kwargs):
-        kwargs["frame_type"]="FRAME_BIAS"
+        kwargs["frame_type"] = "FRAME_BIAS"
         return self.take_exposure(*args, **kwargs)
 
     def take_dark_exposure(self, *args, **kwargs):
-        kwargs["frame_type"]="FRAME_DARK"
+        kwargs["frame_type"] = "FRAME_DARK"
         return self.take_exposure(*args, **kwargs)
 
     def take_flat_exposure(self, *args, **kwargs):
-        kwargs["frame_type"]="FRAME_FLAT"
+        kwargs["frame_type"] = "FRAME_FLAT"
         return self.take_exposure(*args, **kwargs)
 
     # TODO TN: we decide that IndiCamera takes over AbstractCamera in the

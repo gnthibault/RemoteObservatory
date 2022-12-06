@@ -68,7 +68,7 @@ class SpectralCalibration(Base):
             event = self.camera.take_calibration(
                 temperature=self.flat_temperature,
                 gain=self.flat_gain,
-                exp_time=self.flat_exp_sec,
+                exp_time_sec=self.flat_exp_sec,
                 calibration_name="flat",
                 observations=observed_list.values())
             #yield event
@@ -81,7 +81,7 @@ class SpectralCalibration(Base):
             event = self.camera.take_calibration(
                 temperature=self.spectral_calib_temperature,
                 gain=self.spectral_calib_gain,
-                exp_time=self.spectral_calib_exp_sec,
+                exp_time_sec=self.spectral_calib_exp_sec,
                 calibration_name="spectral_calib",
                 observations=observed_list.values())
             # yield event
@@ -106,7 +106,7 @@ class SpectralCalibration(Base):
                 event = self.camera.take_calibration(
                     temperature=temperature,
                     gain=gain,
-                    exp_time=exp_time_sec,
+                    exp_time_sec=exp_time_sec,
                     calibration_name="dark",
                     observations=[observed_list[seq_time] for seq_time in seq_times])
                 #yield event
