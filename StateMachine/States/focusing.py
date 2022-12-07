@@ -21,8 +21,8 @@ def on_enter(event_data):
     channel and to the debug log.
     """
     #TODO TN DEBUG
-    event_data.model.next_state = 'observing'
-    return
+    #event_data.model.next_state = 'observing'
+    #return
 
     model = event_data.model
     model.next_state = 'parking'

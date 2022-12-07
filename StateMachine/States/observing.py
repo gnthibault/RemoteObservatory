@@ -17,7 +17,7 @@ MAX_EXTRA_TIME = (60+SLEEP_SECONDS) * u.second
 
 def on_enter(event_data):
     #TODO TN DEBUG
-    event_data.model.manager.guider = None
+    #event_data.model.manager.guider = None
     """Wait for camera exposures to complete.
 
     Frequently check for the exposures to complete, the observation to be

@@ -1,8 +1,8 @@
 
 def on_enter(event_data):
     #TODO TN DEBUG
-    event_data.model.next_state = 'focusing'
-    return
+    #event_data.model.next_state = 'focusing'
+    #return
 
     """ The unit is tracking the target. Proceed to observations. """
     model = event_data.model
