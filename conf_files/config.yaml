@@ -68,12 +68,12 @@ calibration:
         gain: 1
         temperature:
     flat:
-        nb: 21
+        nb: 1
         sec: 5
         gain: 1
         temperature:
     dark:
-        dark_nb: 11
+        dark_nb: 1
     controller:
         module: DummySpectroController
         controller_name: dummy
@@ -161,10 +161,10 @@ cameras:
     #        CCD_PIXEL_SIZE_Y : 2.4
     #        CCD_BITSPERPIXEL : 12
         SIMULATOR_SETTINGS: # 180mm
-            SIM_XRES: 1500 #5496
-            SIM_YRES: 1500 #3672
-            SIM_XSIZE: 2.4
-            SIM_YSIZE: 2.4
+            SIM_XRES: 1000 #5496
+            SIM_YRES: 1000 #3672
+            SIM_XSIZE: 4.8 #2.4
+            SIM_YSIZE: 4.8 #2.4
             SIM_MAXVAL: 65000
             SIM_SATURATION: 1
             SIM_LIMITINGMAG: 17

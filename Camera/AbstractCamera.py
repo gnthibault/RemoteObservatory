@@ -426,10 +426,7 @@ class AbstractCamera(Base):
         title = info.get('target_name', "no-target")
         observation_ids = info['observation_ids']
         del info['observation_ids']
-        try:
-            info['exp_time'] = info['exp_time'].to(u.second).value
-        except Exception as e:
-            self.logger.error(f"Problem getting exp_time information: {e}")
+        info['exp_time'] = info['exp_time']
         self.logger.debug(f"Processing {image_id}")
         file_path = self._process_fits(file_path, info)
 
