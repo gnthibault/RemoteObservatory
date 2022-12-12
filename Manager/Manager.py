@@ -438,6 +438,7 @@ class Manager(Base):
             cameras = self.autofocus_cameras
 
         autofocus_events = dict()
+        autofocus_statuses = dict()
 
         # Start autofocus with each camera
         for cam_name, camera in cameras.items():
@@ -455,15 +456,17 @@ class Manager(Base):
             else:
                 try:
                     # Start the autofocus
-                    autofocus_event = camera.autofocus_async(coarse=coarse)
+                    autofocus_status = [False]
+                    autofocus_event = camera.autofocus_async(coarse=coarse, autofocus_status=autofocus_status)
                 except Exception as e:
                     msg = f"Problem running autofocus: {e}"
                     self.logger.debug(msg)
                     raise RuntimeError(msg)
                 else:
                     autofocus_events[cam_name] = autofocus_event
+                    autofocus_statuses[cam_name] = autofocus_status
 
-        return autofocus_events
+        return autofocus_events, autofocus_statuses
 
     def open_observatory(self):
         """Open the observatory, if there is one.

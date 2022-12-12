@@ -18,7 +18,7 @@ if __name__ == '__main__':
     # camera_name='Altair AA183MPRO',
     # autofocus_seconds=5,
     # pointing_seconds=30,
-    # autofocus_size=500,
+    # autofocus_roi_size=500,
     # indi_client=dict(
     #     indi_host="192.168.0.33",
     #     indi_port="7624"
@@ -27,7 +27,7 @@ if __name__ == '__main__':
         camera_name='CCD Simulator',
         autofocus_seconds=5,
         pointing_seconds=30,
-        autofocus_size=500,
+        autofocus_roi_size=500,
         indi_client=dict(
             indi_host="localhost",
             indi_port=7624

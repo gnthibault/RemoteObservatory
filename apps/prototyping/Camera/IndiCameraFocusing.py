@@ -43,7 +43,7 @@ if __name__ == '__main__':
             APERTURE=200),
         pointing_seconds=30,
         autofocus_seconds=5,
-        autofocus_size=650,
+        autofocus_roi_size=650,
         autofocus_merit_function="half_flux_radius",
         focuser=dict(
             module="IndiFocuser",
@@ -84,7 +84,9 @@ if __name__ == '__main__':
 
     # Now focus
     assert(cam.focuser.is_connected)
-    #autofocus_event = cam.autofocus_async(coarse=True)
-    autofocus_event = cam.autofocus_async(coarse=False)
+    autofocus_status = [False]
+    #autofocus_event = cam.autofocus_async(coarse=True, autofocus_status=autofocus_status)
+    autofocus_event = cam.autofocus_async(coarse=False, autofocus_status=autofocus_status)
     autofocus_event.wait()
+    assert autofocus_status[0], "Focusing failed"
     print("Done")

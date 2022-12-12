@@ -40,7 +40,7 @@ if __name__ == '__main__':
             APERTURE=200),
         pointing_seconds=30,
         autofocus_seconds=5,
-        autofocus_size=500,
+        autofocus_roi_size=500,
         autofocus_merit_function="half_flux_radius",
         indi_client=dict(
             indi_host="localhost",
@@ -96,7 +96,7 @@ if __name__ == '__main__':
             APERTURE=200),
         pointing_seconds=30,
         autofocus_seconds=5,
-        autofocus_size=500,
+        autofocus_roi_size=500,
         autofocus_merit_function="half_flux_radius",
         indi_client=dict(
             indi_host="localhost",

@@ -22,8 +22,8 @@ max_pointing_error = OffsetError(20*u.arcsec, 20*u.arcsec, 30*u.arcsec)
 
 def on_enter(event_data):
     #TODO TN DEBUG
-    event_data.model.next_state = 'tracking'
-    return
+    #event_data.model.next_state = 'tracking'
+    #return
     """Pointing State
 
     Take 30 second exposure and plate-solve to get the pointing error
@@ -96,7 +96,7 @@ def on_enter(event_data):
                     location=model.manager.earth_location
                 )
 
-                pointing_image.solve_field(verbose=True)
+                pointing_image.solve_field(verbose=True, gen_hips=True)
                 observation.pointing_image = pointing_image
                 model.logger.debug(f"Pointing file: {pointing_image}")
                 pointing_error = pointing_image.pointing_error

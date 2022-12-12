@@ -5,6 +5,7 @@ constraints :
 targets :
 #    "15h12m43.2s +31d12m43s" :
 #        Luminance :
+#            count : 2+ (you can put a + if you want to acquire minimum 2, and, more if possible
 #            count : 2
 #            temperature :
 #            gain : 1

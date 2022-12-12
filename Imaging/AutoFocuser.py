@@ -36,7 +36,7 @@ class AutoFocuser(Base):
         autofocus_range ((int, int) optional): Coarse & fine focus sweep range, in encoder units
         autofocus_step ((int, int), optional): Coarse & fine focus sweep steps, in encoder units
         autofocus_seconds (scalar, optional): Exposure time for focus exposures
-        autofocus_size (int, optional): Size of square central region of image to use, default
+        autofocus_roi_size (int, optional): Size of square central region of image to use, default
             500 x 500 pixels.
         autofocus_keep_files (bool, optional): If True will keep all images taken during focusing.
             If False (default) will delete all except the first and last images from each focus run.
@@ -54,7 +54,7 @@ class AutoFocuser(Base):
                  camera=None,
                  initial_position=None,
                  autofocus_seconds=None,
-                 autofocus_size=None,
+                 autofocus_roi_size=None,
                  autofocus_keep_files=None,
                  autofocus_take_dark=None,
                  autofocus_merit_function=None,
@@ -87,7 +87,7 @@ class AutoFocuser(Base):
         if self.camera is not None:
             self.autofocus_seconds = self.camera.autofocus_seconds
         if self.camera is not None:
-            self.autofocus_size = self.camera.autofocus_size
+            self.autofocus_roi_size = self.camera.autofocus_roi_size
 
         self.autofocus_keep_files = autofocus_keep_files
         self.autofocus_take_dark = autofocus_take_dark
@@ -150,6 +150,7 @@ class AutoFocuser(Base):
         return self.move_to(self.position + increment)
 
     def autofocus(self,
+                  autofocus_status=None,
                   seconds=None,
                   focus_range=None,
                   focus_step=None,
@@ -206,6 +207,9 @@ class AutoFocuser(Base):
         assert self.camera.focuser.is_connected, self.logger.error(
             f"Focuser {self.camera.focuser} must be connected for autofocus")
 
+        if not autofocus_status:
+            autofocus_status = [False]
+
         if not focus_range:
             if self.autofocus_range:
                 focus_range = self.autofocus_range
@@ -228,8 +232,8 @@ class AutoFocuser(Base):
                                  f"autofocus of {self.camera}")
 
         if not thumbnail_size:
-            if self.autofocus_size:
-                thumbnail_size = self.autofocus_size
+            if self.autofocus_roi_size:
+                thumbnail_size = self.autofocus_roi_size
             else:
                 raise ValueError(f"No focus thumbnail size specified, aborting"
                                  f" autofocus of {self.camera}")
@@ -267,6 +271,7 @@ class AutoFocuser(Base):
         # Set up the focus parameters
         focus_event = Event()
         focus_params = {
+            'autofocus_status': autofocus_status,
             'seconds': seconds,
             'focus_range': focus_range,
             'focus_step': focus_step,
@@ -295,6 +300,48 @@ class AutoFocuser(Base):
         return image.astype(np.float32)
 
     def _autofocus(self,
+                   autofocus_status,
+                   seconds,
+                   focus_range,
+                   focus_step,
+                   thumbnail_size,
+                   keep_files,
+                   take_dark,
+                   merit_function,
+                   merit_function_kwargs,
+                   structuring_element,
+                   make_plots,
+                   coarse,
+                   focus_event,
+                   *args,
+                   **kwargs):
+        try:
+            initial_focus, final_focus = self.do_autofocus(
+                seconds,
+                focus_range,
+                focus_step,
+                thumbnail_size,
+                keep_files,
+                take_dark,
+                merit_function,
+                merit_function_kwargs,
+                structuring_element,
+                make_plots,
+                coarse,
+                focus_event,
+                *args,
+                **kwargs)
+            assert np.isfinite(initial_focus)
+            assert np.isfinite(final_focus)
+        except Exception as e:
+            self.logger.error(f"Focusing method failed: {e}")
+            if focus_event is not None:
+                focus_event.set()
+        autofocus_status[0] = True
+        if focus_event is not None:
+            focus_event.set()
+
+    def do_autofocus(self,
                    seconds,
                    focus_range,
                    focus_step,
@@ -428,7 +475,7 @@ class AutoFocuser(Base):
                                 f"were {metric}, restarting autofocus on {self.camera} from position {best_focus}")
             self.move_to(best_focus)
 
-            return self._autofocus(
+            return self.do_autofocus(
                seconds=seconds,
                focus_range=focus_range,
                focus_step=focus_step,
@@ -556,9 +603,6 @@ class AutoFocuser(Base):
 
         self.logger.debug(f"Autofocus of {self.camera.name} complete - final "
                           f"focus position: {final_focus}")
-
-        if focus_event is not None:
-            focus_event.set()
 
         return initial_focus, final_focus
 

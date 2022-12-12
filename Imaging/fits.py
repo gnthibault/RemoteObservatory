@@ -183,9 +183,10 @@ def get_solve_field(fname, replace=True, remove_extras=True, **kwargs):
                 if "config" in kwargs:
                     latest_path = f"{kwargs['config']['directories']['images']}/latest_pointing.png"
                     shutil.copyfile(annotated, latest_path)
-                    # Manage creation of the HIPS
-                    hips_dir = f"{kwargs['config']['directories']['images']}/HIPS"
-                    gen_hips(hips_dir=hips_dir, fits_path=fname)
+                    if kwargs.get("gen_hips", False):
+                        # Manage creation of the HIPS
+                        hips_dir = f"{kwargs['config']['directories']['images']}/HIPS"
+                        gen_hips(hips_dir=hips_dir, fits_path=fname)
 
             except Exception as e:
                 warn(f"Problem with extracting pretty pointing image: {e}")
@@ -383,6 +384,7 @@ def gen_hips(hips_dir, fits_path):
     cmd = ["java", "-Xmx2g", "-jar", "scripts/AladinBeta.jar", "-hipsgen", "maxthread=20",
            f"in={fits_path}", f"out={hips_dir}", "creator_did=HiPSID"]
     try:
+        warn(f"About to start java program to generate pointing image HIPS")
         subprocess.run(cmd)
     except Exception as e:
         warn(f"Exception while trying to generate HIPS with command {cmd}: {e}")

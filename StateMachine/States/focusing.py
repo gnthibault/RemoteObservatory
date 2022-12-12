@@ -51,7 +51,7 @@ def on_enter(event_data):
         # Before each observation, we should refocus
         maximum_duration = MAX_FOCUSING_TIME
         start_time = model.manager.serv_time.get_astropy_time_from_utc()
-        camera_events = model.manager.perform_cameras_autofocus(coarse=False)
+        camera_events, autofocus_statuses = model.manager.perform_cameras_autofocus(coarse=False)
 
         timeout = Timeout(maximum_duration)
         next_status_time = start_time + STATUS_INTERVAL
@@ -59,6 +59,14 @@ def on_enter(event_data):
 
         while not all([event.is_set() for event in
                        camera_events.values()]):
+            # Check for possible failures from cameras focusing statuses:
+            for camera_name in camera_events.keys():
+                if camera_events[camera_name].is_set() and not autofocus_statuses[camera_name][0]:
+                    msg = f"Pre-observation autofocus failed for camera {camera_name}"
+                    model.logger.error(msg)
+                    model.say(msg)
+                    break
+
             # check for important message in mq
             model.check_messages()
             if model.interrupted:
@@ -68,8 +76,7 @@ def on_enter(event_data):
             now = model.manager.serv_time.get_astropy_time_from_utc()
             if now >= next_msg_time:
                 elapsed_secs = (now - start_time).to(u.second).value
-                model.logger.debug(f"State: focusing, elapsed "
-                                   f"{round(elapsed_secs)}")
+                model.logger.debug(f"State: focusing, elapsed {round(elapsed_secs)}")
                 next_msg_time += WAITING_MSG_INTERVAL
                 now = model.manager.serv_time.get_astropy_time_from_utc()
 
@@ -84,14 +91,22 @@ def on_enter(event_data):
             # Sleep for a little bit.
             time.sleep(SLEEP_SECONDS)
 
+        focusing_failure = False
+        for camera_name in camera_events.keys():
+            if not autofocus_statuses[camera_name][0]:
+                msg = f"Autofocus failed for camera {camera_name}, status is {autofocus_statuses[camera_name]}, " \
+                      f"finished event value was {camera_events[camera_name].is_set()}"
+                model.logger.error(msg)
+                focusing_failure = True
+        if focusing_failure:
+            raise Exception(msg)
+
     except error.Timeout as e:
-        msg = f"Timeout while waiting for focusing: {e}. Something is wrong "\
-              f"with camera/focuser, going to park" 
+        msg = f"Timeout while waiting for focusing: {e}. Something is wrong with camera/focuser, going to park"
         model.logger.warning(msg)
         model.say(msg)
     except Exception as e:
-        model.logger.warning(f"Problem with focusing, {e}: "
-                             f"{traceback.format_exc()}")
+        model.logger.warning(f"Problem with focusing, {e}: {traceback.format_exc()}")
         model.logger.warning(str(e))
         model.say(f"Exception while focusing {e}")
     else:

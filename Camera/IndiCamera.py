@@ -39,7 +39,7 @@ class IndiCamera(IndiDevice):
                 camera_name='CCD Simulator',
                 autofocus_seconds=5,
                 pointing_seconds=30,
-                autofocus_size=500,
+                autofocus_roi_size=500,
                 autofocus_merit_function="half_flux_radius",
                 focuser=dict(
                     module="IndiFocuser",
@@ -74,7 +74,7 @@ class IndiCamera(IndiDevice):
         # Specific initialization
         self.autofocus_seconds = float(config['autofocus_seconds'])
         self.pointing_seconds = float(config['pointing_seconds'])
-        self.autofocus_size = int(config['autofocus_size'])
+        self.autofocus_roi_size = int(config['autofocus_roi_size'])
         self.autofocus_merit_function = config['autofocus_merit_function']
         self._setup_focuser(config, connect_on_create)
         self._setup_filter_wheel(config, connect_on_create)
@@ -344,7 +344,7 @@ class IndiCamera(IndiDevice):
     def setExpTimeSec(self, exp_time_sec):
         self.exp_time_sec = self.sanitize_exp_time(exp_time_sec)
 
-    def autofocus_async(self, coarse=True):
+    def autofocus_async(self, coarse=True, autofocus_status=None):
         """
 
         """
@@ -352,10 +352,12 @@ class IndiCamera(IndiDevice):
                          f"autofocus with device {self.focuser.device_name}...")
         af = IndiAutoFocuser(
             camera=self,
-            autofocus_size=self.autofocus_size,
+            autofocus_roi_size=self.autofocus_roi_size,
             autofocus_merit_function=self.autofocus_merit_function)
-        autofocus_event = af.autofocus(coarse=coarse, blocking=False,
-                                       make_plots=True)
+        autofocus_event = af.autofocus(coarse=coarse,
+                                       blocking=False,
+                                       make_plots=True,
+                                       autofocus_status=autofocus_status)
         self.logger.info(f"Camera {self.device_name} just launched async "
                          f"autofocus with focuser {self.focuser.device_name}")
         return autofocus_event
