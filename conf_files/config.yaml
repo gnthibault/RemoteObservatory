@@ -124,7 +124,7 @@ cameras:
         do_pointing: true
         pointing_seconds: 10
         do_autofocus: false
-        autofocus_seconds: 5
+        autofocus_seconds: 2
         autofocus_roi_size : 750
         autofocus_merit_function: half_flux_radius #vollath_F4
 #        focuser:
@@ -186,8 +186,7 @@ cameras:
         pointing_seconds: 10
         do_autofocus: true
         autofocus_seconds: 2
-        #autofocus_roi_size : 750
-        autofocus_roi_size: 10
+        autofocus_roi_size : 750
         autofocus_merit_function : half_flux_radius #vollath_F4
         focuser:
             module: IndiFocuser
@@ -230,8 +229,8 @@ guider:
     module : GuiderPHD2
     host : localhost
     port : 4400
-    #profile_id : 1 # For IRL setup
-    profile_id : 2
+    do_calibration : False
+    profile_name : Simulator
     exposure_time_sec : 2
     settle :
         pixels : 1.5

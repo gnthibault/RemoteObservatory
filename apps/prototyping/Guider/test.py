@@ -10,8 +10,8 @@ logging.basicConfig(level=logging.DEBUG, format='%(levelname)s:%(message)s')
 config = {
     "host": "localhost",
     "port": 4400,
-    # profile_id : 1 # For IRL setup
-    "profile_id": 2,
+    "do_calibration": False,
+    "profile_name": "",
     "exposure_time_sec": 2,
     "settle": {
         "pixels": 1.5,

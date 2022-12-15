@@ -52,6 +52,12 @@ class DefaultScheduler(Scheduler):
             time = self.serv_time.get_astropy_time_from_utc() #get_utc()
 
         # dictionary where key is obs key and value is priority (aka merit)
+        # self.current_observation.exp_set_size
+        # self.current_observation.current_exp
+        # self.current_observation.number_exposures
+        # self.current_observation.observing_block
+        # if self.current_observation in self.observations.values()
+        # self.current_observation.observing_block.number_exposures
         valid_obs = {obs: 1.0 for obs in self.observations}
         best_obs = []
         
@@ -100,8 +106,8 @@ class DefaultScheduler(Scheduler):
                     # If current is better or equal to top, add it to best
                     # but no need to update current_observation
                     if self.current_observation.merit >= best_obs[0][1]:
-                        best_obs.insert(0,(self.current_observation.id,
-                                           self.current_observation.merit))
+                        best_obs.insert(0, (self.current_observation.id,
+                                            self.current_observation.merit))
 
             self.current_observation = self.observations[best_obs[0][0]]
             self.current_observation.merit = best_obs[0][1]

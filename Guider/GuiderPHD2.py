@@ -70,7 +70,8 @@ class GuiderPHD2(Base):
             config = dict(
                 host="localhost",
                 port=4400,
-                profile_id='1',
+                do_calibration=True,
+                profile_name="",
                 exposure_time_sec='3',
                 settle={
                     "pixels": 1.5,
@@ -87,8 +88,10 @@ class GuiderPHD2(Base):
         self.session = None
         self.sock = None
         self.recv_buffer = ''
-        self.id = 1                            # message id
-        self.profile_id = config["profile_id"] # profile id for equipment
+        self.id = 1                                # message id
+        self.do_calibration = config["do_calibration"]
+        self.profile_id = None                     # yet to be defined
+        self.profile_name = config["profile_name"] # profile name for equipment
         self.mount = None
         self.settle = config["settle"]
         self.exposure_time_sec = config['exposure_time_sec']
@@ -127,7 +130,7 @@ class GuiderPHD2(Base):
             self.sock.connect((self.host, self.port))
             self._receive({"Event": "AppState"}) # get state
             # we make sure that we are starting from a "proper" state
-            self.reset_profile(self.profile_id)
+            self.reset_profile(self.profile_name)
             self.reset_guiding()
         except Exception as e:
             msg = f"PHD2 error connecting: {e}"
@@ -148,10 +151,15 @@ class GuiderPHD2(Base):
                 self.sock.close()
             self.disconnection_trig()
 
-    def reset_profile(self, profile_id):
+    def get_profile_id_from_name(self, profile_name):
+        profiles = self.get_profiles()
+        profile_id = [d["id"] for d in profiles if d["name"] == profile_name][0]
+        return profile_id, profiles
+
+    def reset_profile(self, profile_name):
         self.set_connected(False)
-        self.logger.debug(f"About to set profile with id {profile_id} among the"
-                          f" following list: {self.get_profiles()}")
+        profile_id, profiles = self.get_profile_id_from_name(profile_name=profile_name)
+        self.logger.debug(f"About to set profile with id {profile_name} among the following list: {profiles}")
         self.set_profile(profile_id)
         self.set_connected(True)
 
@@ -270,6 +278,7 @@ class GuiderPHD2(Base):
             if "result" not in data or data["result"] != 0:
                 raise GuidingError(f"Wrong answer to set_profile request: "
                                    f"{data}")
+            self.profile_id = profile_id
         except Exception as e:
             msg = f"PHD2 error setting profile: {e}"
             self.logger.error(msg)
@@ -564,7 +573,7 @@ class GuiderPHD2(Base):
             self.logger.error(msg)
             raise GuidingError(msg)
 
-    def guide(self, recalibrate=True):
+    def guide(self, recalibrate=None):
         """
             params: SETTLE (object), RECALIBRATE (boolean)
             result: integer (0)
@@ -589,6 +598,8 @@ class GuiderPHD2(Base):
                     a SettleDone event some time later indicating the success
                     or failure of the guide sequence.
         """
+        if recalibrate is None:
+            recalibrate = self.do_calibration
         req={"method": "guide",
              "params": [self.settle, recalibrate],
              "id": self.id}
