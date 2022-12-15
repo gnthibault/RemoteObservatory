@@ -16,3 +16,21 @@ __pycache__
 /dark_calibration
 /state_images
 /venv
+
+# Custom options for latex:
+reports_build
+documentation/papers/latex/**/*.aux
+documentation/papers/latex/**/*.bbl
+documentation/papers/latex/**/*.bib
+documentation/papers/latex/**/*.blg
+documentation/papers/latex/**/*.dvi
+documentation/papers/latex/**/*.lof
+documentation/papers/latex/**/*.log
+documentation/papers/latex/**/*.lot
+documentation/papers/latex/**/*.out
+documentation/papers/latex/**/*.pdf
+documentation/papers/latex/**/*.ps
+documentation/papers/latex/**/*.run.xml
+documentation/papers/latex/**/*.tmp
+documentation/papers/latex/**/*.toc
+
