@@ -92,6 +92,16 @@ sudo apt-get install \
     pip install -r requirements.txt
 ```
 
+## Building the nice reporting / latex reports
+```bash
+  sudo apt-get update
+  sudo apt-get install -y texlive-latex-recommended texlive-publishers texlive-bibtex-extra texlive-science
+```
+Then build with
+```console
+  python setup.py gen_report
+```
+
 ## Python requirements
 pip install Cython setuptools wheel requests pyindi-client requests-cache watchdog astropy ntplib astroplan matplotlib tzwhere astroquery pymongo rawpy serial pyserial socket astroalign
 If you want to run the astrometry server locally, use:
@@ -110,8 +120,6 @@ If you are interested in compiling/using the arduino stuff here, please download
   ./upload.sh
 ```
 
-## Building 3D support for virtual telescope
-pip install PyQt5 PyQt3D pyqtgraph
 
 ## Setup indiweb on the machine that will host drivers
 check installation information on: https://github.com/knro/indiwebmanager
