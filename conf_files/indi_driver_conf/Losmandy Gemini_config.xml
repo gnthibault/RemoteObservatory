@@ -1,0 +1,232 @@
+<INDIDriver>
+    <newSwitchVector device="Losmandy Gemini" name="DEBUG">
+        <oneSwitch name="ENABLE">
+Off
+        </oneSwitch>
+        <oneSwitch name="DISABLE">
+On
+        </oneSwitch>
+    </newSwitchVector>
+    <newNumberVector device="Losmandy Gemini" name="POLLING_PERIOD">
+        <oneNumber name="PERIOD_MS">
+1000
+        </oneNumber>
+    </newNumberVector>
+    <newSwitchVector device="Losmandy Gemini" name="CONNECTION_MODE">
+        <oneSwitch name="CONNECTION_SERIAL">
+Off
+        </oneSwitch>
+        <oneSwitch name="CONNECTION_TCP">
+On
+        </oneSwitch>
+    </newSwitchVector>
+    <newTextVector device="Losmandy Gemini" name="DEVICE_ADDRESS">
+        <oneText name="ADDRESS">
+192.168.8.63
+        </oneText>
+        <oneText name="PORT">
+11110
+        </oneText>
+    </newTextVector>
+    <newSwitchVector device="Losmandy Gemini" name="CONNECTION_TYPE">
+        <oneSwitch name="TCP">
+Off
+        </oneSwitch>
+        <oneSwitch name="UDP">
+On
+        </oneSwitch>
+    </newSwitchVector>
+    <newSwitchVector device="Losmandy Gemini" name="DEBUG_LEVEL">
+        <oneSwitch name="DBG_ERROR">
+On
+        </oneSwitch>
+        <oneSwitch name="DBG_WARNING">
+On
+        </oneSwitch>
+        <oneSwitch name="DBG_SESSION">
+On
+        </oneSwitch>
+        <oneSwitch name="DBG_DEBUG">
+Off
+        </oneSwitch>
+        <oneSwitch name="DBG_EXTRA_1">
+Off
+        </oneSwitch>
+    </newSwitchVector>
+    <newSwitchVector device="Losmandy Gemini" name="LOGGING_LEVEL">
+        <oneSwitch name="LOG_ERROR">
+On
+        </oneSwitch>
+        <oneSwitch name="LOG_WARNING">
+On
+        </oneSwitch>
+        <oneSwitch name="LOG_SESSION">
+On
+        </oneSwitch>
+        <oneSwitch name="LOG_DEBUG">
+Off
+        </oneSwitch>
+        <oneSwitch name="LOG_EXTRA_1">
+Off
+        </oneSwitch>
+    </newSwitchVector>
+    <newSwitchVector device="Losmandy Gemini" name="LOG_OUTPUT">
+        <oneSwitch name="CLIENT_DEBUG">
+On
+        </oneSwitch>
+        <oneSwitch name="FILE_DEBUG">
+Off
+        </oneSwitch>
+    </newSwitchVector>
+    <newTextVector device="Losmandy Gemini" name="ACTIVE_DEVICES">
+        <oneText name="ACTIVE_GPS">
+GPS Simulator
+        </oneText>
+        <oneText name="ACTIVE_DOME">
+Dome Simulator
+        </oneText>
+    </newTextVector>
+    <newSwitchVector device="Losmandy Gemini" name="DOME_POLICY">
+        <oneSwitch name="DOME_IGNORED">
+On
+        </oneSwitch>
+        <oneSwitch name="DOME_LOCKS">
+Off
+        </oneSwitch>
+    </newSwitchVector>
+    <newNumberVector device="Losmandy Gemini" name="GEOGRAPHIC_COORD">
+        <oneNumber name="LAT">
+      46.233100000000000307
+        </oneNumber>
+        <oneNumber name="LONG">
+      6.0666700000000002291
+        </oneNumber>
+        <oneNumber name="ELEV">
+      418.05000000000001137
+        </oneNumber>
+    </newNumberVector>
+    <newSwitchVector device="Losmandy Gemini" name="TELESCOPE_SLEW_RATE">
+        <oneSwitch name="1x">
+Off
+        </oneSwitch>
+        <oneSwitch name="2x">
+Off
+        </oneSwitch>
+        <oneSwitch name="3x">
+On
+        </oneSwitch>
+        <oneSwitch name="4x">
+Off
+        </oneSwitch>
+    </newSwitchVector>
+    <newSwitchVector device="Losmandy Gemini" name="TELESCOPE_TRACK_MODE">
+        <oneSwitch name="TRACK_SIDEREAL">
+On
+        </oneSwitch>
+        <oneSwitch name="TRACK_CUSTOM">
+Off
+        </oneSwitch>
+        <oneSwitch name="TRACK_LUNAR">
+Off
+        </oneSwitch>
+        <oneSwitch name="TRACK_SOLAR">
+Off
+        </oneSwitch>
+    </newSwitchVector>
+    <newSwitchVector device="Losmandy Gemini" name="USEJOYSTICK">
+        <oneSwitch name="ENABLE">
+Off
+        </oneSwitch>
+        <oneSwitch name="DISABLE">
+On
+        </oneSwitch>
+    </newSwitchVector>
+    <newTextVector device="Losmandy Gemini" name="JOYSTICKSETTINGS">
+        <oneText name="MOTIONDIR">
+JOYSTICK_1
+        </oneText>
+        <oneText name="MOTIONDIRNS">
+AXIS_8
+        </oneText>
+        <oneText name="MOTIONDIRWE">
+AXIS_7
+        </oneText>
+        <oneText name="SLEWPRESET">
+JOYSTICK_2
+        </oneText>
+        <oneText name="SLEWPRESETUP">
+BUTTON_5
+        </oneText>
+        <oneText name="SLEWPRESETDOWN">
+BUTTON_6
+        </oneText>
+        <oneText name="ABORTBUTTON">
+BUTTON_1
+        </oneText>
+        <oneText name="PARKBUTTON">
+BUTTON_2
+        </oneText>
+        <oneText name="UNPARKBUTTON">
+BUTTON_3
+        </oneText>
+    </newTextVector>
+    <newTextVector device="Losmandy Gemini" name="SNOOP_JOYSTICK">
+        <oneText name="SNOOP_JOYSTICK_DEVICE">
+Joystick
+        </oneText>
+    </newTextVector>
+    <newSwitchVector device="Losmandy Gemini" name="MOTION_CONTROL_MODE">
+        <oneSwitch name="MOTION_CONTROL_MODE_JOYSTICK">
+On
+        </oneSwitch>
+        <oneSwitch name="MOTION_CONTROL_MODE_AXES">
+Off
+        </oneSwitch>
+    </newSwitchVector>
+    <newSwitchVector device="Losmandy Gemini" name="JOYSTICK_LOCK_AXIS">
+        <oneSwitch name="LOCK_AXIS_1">
+Off
+        </oneSwitch>
+        <oneSwitch name="LOCK_AXIS_2">
+Off
+        </oneSwitch>
+    </newSwitchVector>
+    <newSwitchVector device="Losmandy Gemini" name="SIMULATE_PIER_SIDE">
+        <oneSwitch name="SIMULATE_YES">
+Off
+        </oneSwitch>
+        <oneSwitch name="SIMULATE_NO">
+On
+        </oneSwitch>
+    </newSwitchVector>
+    <newSwitchVector device="Losmandy Gemini" name="Use Pulse Cmd">
+        <oneSwitch name="Off">
+Off
+        </oneSwitch>
+        <oneSwitch name="On">
+On
+        </oneSwitch>
+    </newSwitchVector>
+    <newSwitchVector device="Losmandy Gemini" name="STARTUP_MODE">
+        <oneSwitch name="COLD_START">
+On
+        </oneSwitch>
+        <oneSwitch name="WARM_START">
+Off
+        </oneSwitch>
+        <oneSwitch name="WARM_RESTART">
+Off
+        </oneSwitch>
+    </newSwitchVector>
+    <newSwitchVector device="Losmandy Gemini" name="PARK_SETTINGS">
+        <oneSwitch name="HOME">
+On
+        </oneSwitch>
+        <oneSwitch name="STARTUP">
+Off
+        </oneSwitch>
+        <oneSwitch name="ZENITH">
+Off
+        </oneSwitch>
+    </newSwitchVector>
+</INDIDriver>

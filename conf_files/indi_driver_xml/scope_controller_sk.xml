@@ -1,0 +1,28 @@
+<INDIDriver>
+
+<defSwitchVector device="scope_controller" name="CONNECTION" label="Connection" group="Main Control" state="Idle" perm="rw" rule="OneOfMany" timeout="60">
+    <defSwitch name="CONNECT" label="Connect">
+Off
+    </defSwitch>
+    <defSwitch name="DISCONNECT" label="Disconnect">
+On
+    </defSwitch>
+</defSwitchVector>
+
+
+<defNumberVector device="scope_controller" name="FINDER_SERVO_DUSTCAP_POS" label="Finder scope dustcap" group="Main Control" state="Idle" perm="rw" timeout="0">
+    <defNumber name="SERVO_POS" label="Dustcap value" format="%4.0f" min="0" max="255" step="1">
+    <indiduino pin="11" type="servo"/>
+0
+    </defNumber>
+</defNumberVector>
+
+<defSwitchVector device="scope_controller" name="FINDER_SERVO_DUSTCAP_SWITCH" label="Finder scope dustcap" group="Main Control" state="Idle" perm="rw" rule="AtMostOne" timeout="60">
+    <defSwitch name="SERVO_SWITCH" label="Dustcap switch">
+    <indiduino pin="11" type="servo" onangle="170" offangle="105" button="BUTTON_1"/>
+Off
+    </defSwitch>
+</defSwitchVector>
+
+
+</INDIDriver>

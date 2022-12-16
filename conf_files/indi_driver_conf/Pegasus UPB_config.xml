@@ -1,0 +1,219 @@
+<INDIDriver>
+<newSwitchVector device='Pegasus UPB' name='DEBUG'>
+  <oneSwitch name='ENABLE'>
+      Off
+  </oneSwitch>
+  <oneSwitch name='DISABLE'>
+      On
+  </oneSwitch>
+</newSwitchVector>
+<newNumberVector device='Pegasus UPB' name='POLLING_PERIOD'>
+  <oneNumber name='PERIOD_MS'>
+      950
+  </oneNumber>
+</newNumberVector>
+<newSwitchVector device='Pegasus UPB' name='CONNECTION_MODE'>
+  <oneSwitch name='CONNECTION_SERIAL'>
+      On
+  </oneSwitch>
+</newSwitchVector>
+<newTextVector device='Pegasus UPB' name='DEVICE_PORT'>
+  <oneText name='PORT'>
+      /dev/serial/by-id/usb-Pegasus_Astro_UPBv2_revD_UPB25S4VWV-if00-port0
+  </oneText>
+</newTextVector>
+<newSwitchVector device='Pegasus UPB' name='DEVICE_BAUD_RATE'>
+  <oneSwitch name='9600'>
+      On
+  </oneSwitch>
+  <oneSwitch name='19200'>
+      Off
+  </oneSwitch>
+  <oneSwitch name='38400'>
+      Off
+  </oneSwitch>
+  <oneSwitch name='57600'>
+      Off
+  </oneSwitch>
+  <oneSwitch name='115200'>
+      Off
+  </oneSwitch>
+  <oneSwitch name='230400'>
+      Off
+  </oneSwitch>
+</newSwitchVector>
+<newSwitchVector device='Pegasus UPB' name='DEVICE_AUTO_SEARCH'>
+  <oneSwitch name='INDI_ENABLED'>
+      Off
+  </oneSwitch>
+  <oneSwitch name='INDI_DISABLED'>
+      On
+  </oneSwitch>
+</newSwitchVector>
+<newSwitchVector device='Pegasus UPB' name='DEBUG_LEVEL'>
+  <oneSwitch name='DBG_ERROR'>
+      On
+  </oneSwitch>
+  <oneSwitch name='DBG_WARNING'>
+      On
+  </oneSwitch>
+  <oneSwitch name='DBG_SESSION'>
+      On
+  </oneSwitch>
+  <oneSwitch name='DBG_DEBUG'>
+      Off
+  </oneSwitch>
+</newSwitchVector>
+<newSwitchVector device='Pegasus UPB' name='LOGGING_LEVEL'>
+  <oneSwitch name='LOG_ERROR'>
+      On
+  </oneSwitch>
+  <oneSwitch name='LOG_WARNING'>
+      On
+  </oneSwitch>
+  <oneSwitch name='LOG_SESSION'>
+      On
+  </oneSwitch>
+  <oneSwitch name='LOG_DEBUG'>
+      Off
+  </oneSwitch>
+</newSwitchVector>
+<newSwitchVector device='Pegasus UPB' name='LOG_OUTPUT'>
+  <oneSwitch name='CLIENT_DEBUG'>
+      On
+  </oneSwitch>
+  <oneSwitch name='FILE_DEBUG'>
+      Off
+  </oneSwitch>
+</newSwitchVector>
+<newNumberVector device='Pegasus UPB' name='FOCUS_MAX'>
+  <oneNumber name='FOCUS_MAX_VALUE'>
+      100000
+  </oneNumber>
+</newNumberVector>
+<newSwitchVector device='Pegasus UPB' name='FOCUS_REVERSE_MOTION'>
+  <oneSwitch name='INDI_ENABLED'>
+      Off
+  </oneSwitch>
+  <oneSwitch name='INDI_DISABLED'>
+      On
+  </oneSwitch>
+</newSwitchVector>
+<newSwitchVector device='Pegasus UPB' name='FOCUS_BACKLASH_TOGGLE'>
+  <oneSwitch name='INDI_ENABLED'>
+      Off
+  </oneSwitch>
+  <oneSwitch name='INDI_DISABLED'>
+      On
+  </oneSwitch>
+</newSwitchVector>
+<newNumberVector device='Pegasus UPB' name='FOCUS_BACKLASH_STEPS'>
+  <oneNumber name='FOCUS_BACKLASH_VALUE'>
+      0
+  </oneNumber>
+</newNumberVector>
+<newNumberVector device='Pegasus UPB' name='WEATHER_TEMPERATURE'>
+  <oneNumber name='MIN_OK'>
+      -15
+  </oneNumber>
+  <oneNumber name='MAX_OK'>
+      35
+  </oneNumber>
+  <oneNumber name='PERC_WARN'>
+      15
+  </oneNumber>
+</newNumberVector>
+<newNumberVector device='Pegasus UPB' name='WEATHER_HUMIDITY'>
+  <oneNumber name='MIN_OK'>
+      0
+  </oneNumber>
+  <oneNumber name='MAX_OK'>
+      100
+  </oneNumber>
+  <oneNumber name='PERC_WARN'>
+      15
+  </oneNumber>
+</newNumberVector>
+<newNumberVector device='Pegasus UPB' name='WEATHER_DEWPOINT'>
+  <oneNumber name='MIN_OK'>
+      0
+  </oneNumber>
+  <oneNumber name='MAX_OK'>
+      100
+  </oneNumber>
+  <oneNumber name='PERC_WARN'>
+      15
+  </oneNumber>
+</newNumberVector>
+<newSwitchVector device='Pegasus UPB' name='POWER_LED'>
+  <oneSwitch name='POWER_LED_ON'>
+      On
+  </oneSwitch>
+  <oneSwitch name='POWER_LED_OFF'>
+      Off
+  </oneSwitch>
+</newSwitchVector>
+<newSwitchVector device='Pegasus UPB' name='AUTO_DEW'>
+  <oneSwitch name='INDI_ENABLED'>
+      Off
+  </oneSwitch>
+  <oneSwitch name='INDI_DISABLED'>
+      On
+  </oneSwitch>
+</newSwitchVector>
+<newNumberVector device='Pegasus UPB' name='AUTO_DEW_AGG'>
+  <oneNumber name='AUTO_DEW_AGG_VALUE'>
+      200
+  </oneNumber>
+</newNumberVector>
+<newNumberVector device='Pegasus UPB' name='FOCUSER_SETTINGS'>
+  <oneNumber name='SETTING_MAX_SPEED'>
+      200
+  </oneNumber>
+</newNumberVector>
+<newTextVector device='Pegasus UPB' name='POWER_CONTROL_LABEL'>
+  <oneText name='POWER_LABEL_1'>
+      MAIN_TELESCOPE_DUSTCAP_CONTROL
+  </oneText>
+  <oneText name='POWER_LABEL_2'>
+      TELESCOPE_LEVEL_POWER
+  </oneText>
+  <oneText name='POWER_LABEL_3'>
+      FOCUSER_LEVEL_POWER
+  </oneText>
+  <oneText name='POWER_LABEL_4'>
+      MOUNT_POWER
+  </oneText>
+</newTextVector>
+<newTextVector device='Pegasus UPB' name='DEW_CONTROL_LABEL'>
+  <oneText name='DEW_LABEL_1'>
+      PRIMARY_FAN
+  </oneText>
+  <oneText name='DEW_LABEL_2'>
+      SECONDARY_DEW_HEATER
+  </oneText>
+  <oneText name='DEW_LABEL_3'>
+      FINDER_DEW_HEATER
+  </oneText>
+</newTextVector>
+<newTextVector device='Pegasus UPB' name='USB_CONTROL_LABEL'>
+  <oneText name='USB_LABEL_1'>
+      PRIMARY_CAMERA
+  </oneText>
+  <oneText name='USB_LABEL_2'>
+      ARDUINO_CONTROL_BOX
+  </oneText>
+  <oneText name='USB_LABEL_3'>
+      GUIDE_CAMERA
+  </oneText>
+  <oneText name='USB_LABEL_4'>
+      PRIMARY_FOCUSER_CONTROL_BOX
+  </oneText>
+  <oneText name='USB_LABEL_5'>
+      WIFI_ROUTER
+  </oneText>
+  <oneText name='USB_LABEL_6'>
+      SPECTRO_CONTROL_BOX
+  </oneText>
+</newTextVector>
+</INDIDriver>
