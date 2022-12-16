@@ -118,24 +118,35 @@ class GuiderPHD2(Base):
     def terminate_server(self):
         self.shutdown()
 
-    def connect(self):
-        self.logger.info(f"Connect to server PHD2 {self.host}:{self.port}")
+    def connect_server(self):
+        self.logger.info(f"Connect to PHD2 server {self.host}:{self.port}")
         # Create a socket (SOCK_STREAM means a TCP socket)
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.sock.settimeout(SOCKET_TIMEOUT)
-
         try:
             # Connect to server and send data
             #self.session = requests.sessions.Session()
             self.sock.connect((self.host, self.port))
             self._receive({"Event": "AppState"}) # get state
-            # we make sure that we are starting from a "proper" state
-            self.reset_profile(self.profile_name)
-            self.reset_guiding()
         except Exception as e:
             msg = f"PHD2 error connecting: {e}"
             self.logger.error(msg)
             raise GuidingError(msg)
+
+    def connect_profile(self,
+                        profile_name=None,
+                        do_calibration=None):
+        if profile_name is None:
+            profile_name = self.profile_name
+        if do_calibration is None:
+            do_calibration = self.do_calibration
+        self.logger.info(f"Connect profile {profile_name}")
+        # we make sure that we are starting from a "proper" state
+        self.set_connected(False)
+        self.set_profile_from_name(profile_name)
+        if do_calibration:
+            self.clear_calibration()
+        self.set_connected(True)
 
     def disconnect_and_terminate_server(self):
         self.logger.info(f"Closing connection to server PHD2 {self.host}"
@@ -156,19 +167,10 @@ class GuiderPHD2(Base):
         profile_id = [d["id"] for d in profiles if d["name"] == profile_name][0]
         return profile_id, profiles
 
-    def reset_profile(self, profile_name):
-        self.set_connected(False)
+    def set_profile_from_name(self, profile_name):
         profile_id, profiles = self.get_profile_id_from_name(profile_name=profile_name)
         self.logger.debug(f"About to set profile with id {profile_name} among the following list: {profiles}")
         self.set_profile(profile_id)
-        self.set_connected(True)
-
-    def reset_guiding(self):
-        """
-            throw away calibration, current settle and current star
-        """
-        self.stop_capture()
-        self.clear_calibration()
 
     def status(self):
         return {'state': self.state}
@@ -561,7 +563,7 @@ class GuiderPHD2(Base):
                 raise GuidingError(f"Wrong answer to stop_capture request: "
                                    f"{data}")
             timeout = Timeout(STANDARD_TIMEOUT)
-            if self.state in ["Guiding","Looping"]:
+            if self.state in ["Guiding", "Looping"]:
                 while self.state not in ['Stopped', 'GuidingStopped']:
                     data = self._receive(loop_mode=True)
                     if timeout.expired():
@@ -699,7 +701,7 @@ class GuiderPHD2(Base):
         except Exception as e:
             msg = f"PHD2 error getting profiles list: {e}"
             self.logger.warning(msg)
-            return ''
+            raise RuntimeError(msg)
 
     #### Some specific handle code for decoding messages ####
 
