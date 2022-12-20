@@ -345,7 +345,7 @@ class Manager(Base):
             self.mount.set_track_mode('TRACK_SIDEREAL')
             if self.guider is not None:
                 self.logger.info("Initializing guider before observing")
-                self.guider.reset_guiding()
+                self.guider.connect_profile()
                 self.logger.info("Starting guiding calibration")
                 self.guider.guide()
                 self.logger.info("Guiding calibration over")
@@ -506,7 +506,7 @@ class Manager(Base):
             #connect guider server and client
             if self.guider is not None:
                 self.guider.launch_server()
-                self.guider.connect()
+                self.guider.connect_server()
 
             return True
         except Exception as e:
@@ -518,7 +518,8 @@ class Manager(Base):
         try:
             #close running guider server and client
             if self.guider is not None:
-                self.guider.disconnect_and_terminate_server()
+                self.guider.disconnect_profile()
+                self.guider.disconnect_server()
 
             # park the mount
             self.mount.park()
