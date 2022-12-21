@@ -30,12 +30,19 @@ g.connect_profile()
 print(f"Is profile connected: {g.is_profile_connected()} = {g.is_profile_connected(g.profile_name)}")
 print(f"Currently connected equipment is {g.get_current_equipment()}")
 g.set_exposure(2.0)
-#g.loop() not needed
+print("About to start looping to get images")
+g.loop()
+print("About to start star selection")
+ret = g.find_star(x=0, y=0, width=1000, height=1000)
+print(f"Return from find_star is {ret}")
+print("About to set lock position")
+g.set_lock_position(320.0, 350.0)
+print("Lock position set")
 g.guide(recalibrate=False)
 # guide for 5 min:
-for i in range(5*60):
-    g.receive()
-    time.sleep(1)
+# for i in range(5*60):
+#     g.receive()
+#     time.sleep(1)
 
 # you can use set_paused in full mode (pause both looping and guiding) to test if profile disconnection works
 g.set_paused(paused=True, full="full")

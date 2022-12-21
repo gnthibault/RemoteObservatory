@@ -6,15 +6,15 @@ class Indi10Micron(IndiAbstractMount):
     """
     """
 
-    def __init__(self, indi_client, location, serv_time, config):
+    def __init__(self, location, serv_time,
+                 config=None, connect_on_create=True):
         if config is None:
-            config = dict(mount_name="Losmandy Gemini")
+            config = dict(mount_name="10micron")
 
-        super().__init__(indi_client=indi_client,
-                         location=location,
+        super().__init__(location=location,
                          serv_time=serv_time,
                          config=config,
-                         connect_on_create=True) #TODO TN/FC, change that later on
+                         connect_on_create=connect_on_create)
 
     def get_guide_rate(self):
         """

@@ -16,10 +16,12 @@ from utils.error import GuidingError
 from Service.PanMessagingZMQ import PanMessagingZMQ
 
 MAXIMUM_CALIBRATION_TIMEOUT = 6 * 60 * u.second
-MAXIMUM_DITHER_TIMEOUT = 45 * u.second
-MAXIMUM_PAUSING_TIMEOUT = 30 * u.second
-STANDARD_TIMEOUT = 120 * u.second
-SOCKET_TIMEOUT = 120.0 #when launching set_connected sometimes response can take a lot of time
+FIND_STAR_TIMEOUT           = 60 * u.second
+POSITION_LOCKING_TIMEOUT    = 60 * u.second
+MAXIMUM_DITHER_TIMEOUT      = 45 * u.second
+MAXIMUM_PAUSING_TIMEOUT     = 30 * u.second
+STANDARD_TIMEOUT            = 120 * u.second
+SOCKET_TIMEOUT              = 120.0 #when launching set_connected sometimes response can take a lot of time
 
 class GuiderPHD2(Base):
     """
@@ -48,21 +50,22 @@ class GuiderPHD2(Base):
               'SteadyGuiding', 'Paused', 'Calibrating',
               'StarSelected', 'LostLock', 'Looping', 'Stopped']
     transitions = [
-        { 'trigger': 'connection_trig', 'source': '*', 'dest': 'Connected'},
-        { 'trigger': 'disconnection_trig', 'source': '*', 'dest': 'NotConnected'},
-        { 'trigger': 'GuideStep', 'source': 'SteadyGuiding', 'dest': 'SteadyGuiding'},
+        {'trigger': 'connection_trig', 'source': '*', 'dest': 'Connected'},
+        {'trigger': 'disconnection_trig', 'source': '*', 'dest': 'NotConnected'},
+        {'trigger': 'GuideStep', 'source': 'SteadyGuiding', 'dest': 'SteadyGuiding'},
         # from https://github.com/pytransitions/transitions#transitioning-from-multiple-states:
         # Note that only the first matching transition will execute
-        { 'trigger': 'GuideStep', 'source': '*', 'dest': 'Guiding'},
-        { 'trigger': 'Paused', 'source': '*', 'dest': 'Paused'},
-        { 'trigger': 'StartCalibration', 'source': '*', 'dest': 'Calibrating'},
-        { 'trigger': 'LoopingExposures', 'source': '*', 'dest': 'Looping'},
-        { 'trigger': 'LoopingExposuresStopped', 'source': '*', 'dest': 'Stopped'},
-        { 'trigger': 'SettleBegin', 'source': '*', 'dest': 'Settling'},
-        { 'trigger': 'SettleDone', 'source': '*', 'dest': 'SteadyGuiding'},
-        { 'trigger': 'StarLost', 'source': '*', 'dest': 'LostLock'},
-        { 'trigger': 'StarSelected', 'source': '*', 'dest': 'StarSelected'},
-        { 'trigger': 'ConnectionLost', 'source': '*', 'dest': 'NotConnected'}
+        {'trigger': 'GuideStep', 'source': '*', 'dest': 'Guiding'},
+        {'trigger': 'Paused', 'source': '*', 'dest': 'Paused'},
+        {'trigger': 'StartCalibration', 'source': '*', 'dest': 'Calibrating'},
+        {'trigger': 'LoopingExposures', 'source': '*', 'dest': 'Looping'},
+        {'trigger': 'LoopingExposuresStopped', 'source': '*', 'dest': 'Stopped'},
+        {'trigger': 'GuidingStopped', 'source': '*', 'dest': 'Stopped'},
+        {'trigger': 'SettleBegin', 'source': '*', 'dest': 'Settling'},
+        {'trigger': 'SettleDone', 'source': '*', 'dest': 'SteadyGuiding'},
+        {'trigger': 'StarLost', 'source': '*', 'dest': 'LostLock'},
+        {'trigger': 'StarSelected', 'source': '*', 'dest': 'StarSelected'},
+        {'trigger': 'ConnectionLost', 'source': '*', 'dest': 'NotConnected'}
         ]
 
     def __init__(self, config=None):
@@ -229,8 +232,7 @@ class GuiderPHD2(Base):
             except error.Timeout as e:
                 pass
             if tout.expired():
-                raise error.Timeout(f"Timeout while waiting for one of "
-                                    f"those states: {one_of_states}")
+                raise error.Timeout(f"Timeout while waiting for one of those states: {one_of_states}")
 
     def set_settle(self, pixels, time, timeout):
         """
@@ -346,11 +348,6 @@ class GuiderPHD2(Base):
             data = self._receive({"id": req["id"]})
             if "result" not in data or data["result"] != 0:
                 raise GuidingError(f"Wrong answer to set_paused request: {data}")
-            timeout = Timeout(MAXIMUM_PAUSING_TIMEOUT)
-            while self.state != 'Paused':
-                self._receive(loop_mode=True)
-                if timeout.expired():
-                    raise error.Timeout(f"Timeout while waiting for Paused")
         except Exception as e:
             msg = f"PHD2 error setting paused status: {e}"
             self.logger.error(msg)
@@ -422,10 +419,7 @@ class GuiderPHD2(Base):
                    events to indicate when guiding has stabilized after the
                    dither.
         """
-        params = []
-        params.append(pixels)
-        params.append(ra_only)
-        params.append(self.settle)
+        params = [pixels, ra_only, self.settle]
         req={"method": "dither",
              "params": params,
              "id": self.id}
@@ -436,37 +430,37 @@ class GuiderPHD2(Base):
             data = self._receive({"id": req["id"]})
             if "result" not in data or data["result"] != 0:
                 raise GuidingError(f"Wrong answer to dither request: {data}")
-            timeout = Timeout(MAXIMUM_DITHER_TIMEOUT)
-            while self.state != 'SteadyGuiding':
-                self._receive(loop_mode=True)
-                if timeout.expired():
-                    raise error.Timeout(f"Timeout while waiting for settle "
-                                        f"after dither was sent to GuiderPHD2")
+            self._receive({"Event": "SettleDone"}, timeout=MAXIMUM_DITHER_TIMEOUT)
         except Exception as e:
             msg = "PHD2 error dithering: {e}"
             self.logger.error(msg)
             raise GuidingError(msg)
         
-    def find_star(self):
+    def find_star(self, x=None, y=None, width=None, height=None):
         """
-           params: None
+           params: roi: [x,y,width,height], optional, default = use full frame
            result: on success: returns the lock position of the selected star,
                    otherwise returns an error object
-           desc. : Auto-select a star
+           desc. : Select a star
         """
+        params = [x, y, width, height]
+        if all(map(lambda x: x is None, params)):
+            params = []
+        else:
+            assert not any(map(lambda x: x is None, params)), f"Please provide all parameters, invalid {params}"
+            params = [params]
         req={"method": "find_star",
-             "params": [],
+             "params": params,
              "id": self.id}
         self.id += 1
         self._send_request(req)
         status = self._receive({"id": req["id"]})
-        # Should generate an event like this:
-        # {'Event': 'LockPositionSet', 'Timestamp': 15.16, 'Host': 'XXXX', 'Inst': 1, 'X': 1040.007, 'Y': 224.034}
         if 'result' in status:
             if not status["result"]:
                 msg = f"PHD2 find_star failed"
                 self.logger.error(msg)
                 raise GuidingError(msg)
+            return status["result"]
         else:
             msg = f"Cannot find guiding star automatically"
             self.logger.error(msg)
@@ -493,7 +487,7 @@ class GuiderPHD2(Base):
             self.logger.error(msg)
             raise GuidingError(msg)
 
-    def set_lock_position(self, pos_x, pos_y):
+    def set_lock_position(self, pos_x, pos_y, exact=True):
         """
             params: X: float, Y: float,
                     EXACT: boolean (optional, default = true)
@@ -527,10 +521,7 @@ class GuiderPHD2(Base):
                     the camera sensor after guiding has begun, you can use the
                     'Adjust Lock Position' function under the Tools menu:
         """
-        params = [{}]
-        params[0]["X"] = pos_x
-        params[0]["Y"] = pos_y
-        params[0]["EXACT"] = False
+        params = [pos_x, pos_y, exact]
         req={"method": "set_lock_position",
              "params": params,
              "id": self.id}
@@ -584,6 +575,7 @@ class GuiderPHD2(Base):
             data = self._receive({"id": req["id"]})
             if "result" not in data or data["result"] != 0:
                 raise GuidingError(f"Wrong answer to loop request: {data}")
+            self._receive({"Event": "LoopingExposures"}, timeout=STANDARD_TIMEOUT)
         except Exception as e:
             msg = f"PHD2 error looping: {e}"
             self.logger.error(msg)
@@ -604,14 +596,8 @@ class GuiderPHD2(Base):
             data = self._receive({"id": req["id"]})
             if "result" not in data or data["result"] != 0:
                 raise GuidingError(f"Wrong answer to stop_capture request: {data}")
-            timeout = Timeout(STANDARD_TIMEOUT)
             if self.state in ["Calibrating", "Guiding", "SteadyGuiding", "Looping", "LostLock", "Paused"]:
-                while self.state not in ['Stopped']: #GuidingStopped
-                    data = self._receive(loop_mode=True)
-                    if timeout.expired():
-                        raise error.Timeout(f"Timeout while waiting for response after stop_capture was sent to "
-                                            f"GuiderPHD2")
-
+                self.wait_for_state(one_of_states=["Stopped"])
         except Exception as e:
             msg = f"PHD2 error stopping capture: {e}"
             self.logger.error(msg)
@@ -653,16 +639,7 @@ class GuiderPHD2(Base):
             data = self._receive({"id": req["id"]})
             if "result" not in data or data["result"] != 0:
                 raise GuidingError(f"Wrong answer to guide request: {data}")
-
-            timeout = Timeout(MAXIMUM_CALIBRATION_TIMEOUT)
-            while self.state != 'SteadyGuiding':
-                try:
-                    self._receive(loop_mode=True)
-                except error.Timeout as e:
-                    pass
-                if timeout.expired():
-                    raise error.Timeout(f"Timeout while waiting for settle "
-                                        f"after guide was sent to GuiderPHD2")
+            self._receive({"Event": "SettleDone"}, timeout=MAXIMUM_CALIBRATION_TIMEOUT)
         except Exception as e:
             msg = f"PHD2 error guiding: {e}"
             self.logger.error(msg)
