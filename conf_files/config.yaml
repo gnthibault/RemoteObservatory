@@ -84,6 +84,7 @@ mount:
     #mount_name: Losmandy Gemini
     module: IndiAbstractMount
     mount_name : Telescope Simulator
+    equatorial_eod: J2000 # JNOW
     indi_client :
         indi_host : localhost
         indi_port : 7624
@@ -193,10 +194,8 @@ cameras:
             focuser_name: Focuser Simulator
             port: /dev/ttyUSB0
             focus_range:
-                #min: 32500
-                #max: 40000
-                min: 20500
-                max: 22500
+                min: 32500
+                max: 40000
             autofocus_step:
                 fine: 750
                 coarse: 2500

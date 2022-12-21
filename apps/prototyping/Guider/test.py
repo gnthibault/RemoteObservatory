@@ -28,6 +28,7 @@ g.connect_server()
 print(f"Is server connected: {g.is_server_connected()}")
 g.connect_profile()
 print(f"Is profile connected: {g.is_profile_connected()} = {g.is_profile_connected(g.profile_name)}")
+print(f"Currently connected equipment is {g.get_current_equipment()}")
 g.set_exposure(2.0)
 #g.loop() not needed
 g.guide(recalibrate=False)

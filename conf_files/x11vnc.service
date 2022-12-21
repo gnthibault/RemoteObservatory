@@ -1,0 +1,16 @@
+# x11vnc -storepasswd
+#sudo gedit /lib/systemd/system/x11vnc.service
+
+[Unit]
+Description=Start x11vnc at startup.
+After=multi-user.target
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/x11vnc -auth guess -forever -loop -noxdamage -repeat -rfbauth /home/gnthibault/.vnc/passwd -rfbport 5900 -shared
+
+[Install]
+WantedBy=multi-user.target
+
+#sudo systemctl daemon-reload
+#sudo systemctl enable x11vnc.service

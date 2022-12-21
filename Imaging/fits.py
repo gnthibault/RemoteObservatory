@@ -381,7 +381,7 @@ def gen_hips(hips_dir, fits_path):
     if os.path.exists(hips_dir):
         shutil.rmtree(hips_dir)
     os.makedirs(hips_dir)
-    cmd = ["java", "-Xmx2g", "-jar", "scripts/AladinBeta.jar", "-hipsgen", "maxthread=20",
+    cmd = ["java", "-Xmx2g", "-jar", "scripts/Aladin.jar", "-hipsgen", "maxthread=20",
            f"in={fits_path}", f"out={hips_dir}", "creator_did=HiPSID"]
     try:
         warn(f"About to start java program to generate pointing image HIPS")

@@ -345,6 +345,7 @@ class Manager(Base):
             self.mount.set_track_mode('TRACK_SIDEREAL')
             if self.guider is not None:
                 self.logger.info("Initializing guider before observing")
+                self.guider.connect_server()
                 self.guider.connect_profile()
                 self.logger.info("Starting guiding calibration")
                 self.guider.guide()
@@ -503,10 +504,9 @@ class Manager(Base):
             # unpark the observatory
             self.observatory.unpark()
 
-            #connect guider server and client
+            # Launch guider server
             if self.guider is not None:
                 self.guider.launch_server()
-                self.guider.connect_server()
 
             return True
         except Exception as e:

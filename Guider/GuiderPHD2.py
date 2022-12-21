@@ -18,8 +18,8 @@ from Service.PanMessagingZMQ import PanMessagingZMQ
 MAXIMUM_CALIBRATION_TIMEOUT = 6 * 60 * u.second
 MAXIMUM_DITHER_TIMEOUT = 45 * u.second
 MAXIMUM_PAUSING_TIMEOUT = 30 * u.second
-STANDARD_TIMEOUT = 30 * u.second
-SOCKET_TIMEOUT = 5.0
+STANDARD_TIMEOUT = 120 * u.second
+SOCKET_TIMEOUT = 120.0 #when launching set_connected sometimes response can take a lot of time
 
 class GuiderPHD2(Base):
     """
@@ -121,7 +121,7 @@ class GuiderPHD2(Base):
         if self.is_local_instance() and self.process is None:
             cmd = 'phd2'
             self.process = subprocess.Popen(cmd, stdout=subprocess.PIPE)
-            time.sleep(5) #Did not found anything better than that...
+            time.sleep(10) #Did not found anything better than that...
 
     def connect_server(self):
         self.logger.info(f"Connect to PHD2 server {self.host}:{self.port}")
@@ -170,7 +170,7 @@ class GuiderPHD2(Base):
         return is_profile_selected and is_equipment_connected
 
     def is_guiding_ok(self):
-        return self.state == "SteadyGuiding"
+        return self.state in ["Guiding", "SteadyGuiding"]
 
     def disconnect_profile(self):
         if self.state != 'NotConnected':
@@ -742,6 +742,34 @@ class GuiderPHD2(Base):
             return data["result"]
         except Exception as e:
             msg = f"PHD2 error getting profiles list: {e}"
+            self.logger.warning(msg)
+            raise RuntimeError(msg)
+
+    def get_current_equipment(self):
+        """
+            params: none
+            result: example  {
+                              "camera": {
+                                "name": "Simulator",
+                                "connected": true
+                              },
+                              "mount": {
+                                "name": "On Camera",
+                                "connected": true
+                              }
+                            }
+            desc. : get the devices selected in the current equipment profile
+        """
+        req={"method": "get_current_equipment",
+             "params": [],
+             "id": self.id}
+        self.id += 1
+        try:
+            self._send_request(req)
+            data = self._receive({"id": req["id"]})
+            return data["result"]
+        except Exception as e:
+            msg = f"PHD2 error getting current equipment: {e}"
             self.logger.warning(msg)
             raise RuntimeError(msg)
 

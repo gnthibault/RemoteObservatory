@@ -1,0 +1,21 @@
+#sudo gedit /lib/systemd/system/phd2.service
+
+[Unit]
+Description=PHD2 Autoguiding server
+After=multi-user.target x11vnc.service
+Requires=x11vnc.service
+
+[Service]
+Type=idle
+# MUST SET YOUR USERNAME HERE.
+User=gnthibault
+Environment=LD_LIBRARY_PATH=/usr/local/lib:/usr/lib
+ExecStart=/usr/bin/phd2
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
+
+#sudo systemctl daemon-reload
+#sudo systemctl enable phd2.service
