@@ -59,6 +59,7 @@ def on_enter(event_data):
             if (now >= next_guider_status_time and
                     model.manager.guider is not None):
                 model.manager.guider.receive()
+                assert(model.manager.guider.is_guiding_ok())
                 next_guider_status_time += GUIDER_STATUS_INTERVAL
                 now = model.manager.serv_time.get_astropy_time_from_utc()
 

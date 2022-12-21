@@ -103,10 +103,14 @@ class IndiMount(IndiDevice):
         As our software only manipulates J2000. we decided to convert to jnow
         for the generic case
         """
+        # fk5_j2k = FK5(equinox=Time('J2000'))
+        # coord_j2k = coord.transform_to(fk5_j2k)
+        # rahour_decdeg = {'RA': coord_j2k.ra.hour,
+        #                  'DEC': coord_j2k.dec.degree}
         fk5_now = FK5(equinox=Time.now())
         coord_jnow = coord.transform_to(fk5_now)
         rahour_decdeg = {'RA': coord_jnow.ra.hour,
-                         'DEC': coord_jnow.dec.degree}
+                        'DEC': coord_jnow.dec.degree}
         if self.is_parked:
             self.logger.warning(f"Cannot set coord: {rahour_decdeg} because "
                                 f"mount is parked")

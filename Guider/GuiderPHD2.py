@@ -17,8 +17,9 @@ from Service.PanMessagingZMQ import PanMessagingZMQ
 
 MAXIMUM_CALIBRATION_TIMEOUT = 6 * 60 * u.second
 MAXIMUM_DITHER_TIMEOUT = 45 * u.second
-STANDARD_TIMEOUT = 30 * u.second
-SOCKET_TIMEOUT = 5.0
+MAXIMUM_PAUSING_TIMEOUT = 30 * u.second
+STANDARD_TIMEOUT = 120 * u.second
+SOCKET_TIMEOUT = 120.0 #when launching set_connected sometimes response can take a lot of time
 
 class GuiderPHD2(Base):
     """
@@ -47,21 +48,21 @@ class GuiderPHD2(Base):
               'SteadyGuiding', 'Paused', 'Calibrating',
               'StarSelected', 'LostLock', 'Looping', 'Stopped']
     transitions = [
-        { 'trigger': 'connection_trig', 'source': '*', 'dest': 'Connected' },
-        { 'trigger': 'disconnection_trig', 'source': '*', 'dest': 'NotConnected' },
-        { 'trigger': 'GuideStep', 'source': 'SteadyGuiding', 'dest': 'SteadyGuiding' },
+        { 'trigger': 'connection_trig', 'source': '*', 'dest': 'Connected'},
+        { 'trigger': 'disconnection_trig', 'source': '*', 'dest': 'NotConnected'},
+        { 'trigger': 'GuideStep', 'source': 'SteadyGuiding', 'dest': 'SteadyGuiding'},
         # from https://github.com/pytransitions/transitions#transitioning-from-multiple-states:
         # Note that only the first matching transition will execute
-        { 'trigger': 'GuideStep', 'source': '*', 'dest': 'Guiding' },
-        { 'trigger': 'Paused', 'source': '*', 'dest': 'Paused' },
-        { 'trigger': 'StartCalibration', 'source': '*', 'dest': 'Calibrating' },
-        { 'trigger': 'LoopingExposures', 'source': '*', 'dest': 'Looping' },
-        { 'trigger': 'LoopingExposureStopped', 'source': '*', 'dest': 'Stopped' },
-        { 'trigger': 'SettleBegin', 'source': '*', 'dest': 'Settling' },
+        { 'trigger': 'GuideStep', 'source': '*', 'dest': 'Guiding'},
+        { 'trigger': 'Paused', 'source': '*', 'dest': 'Paused'},
+        { 'trigger': 'StartCalibration', 'source': '*', 'dest': 'Calibrating'},
+        { 'trigger': 'LoopingExposures', 'source': '*', 'dest': 'Looping'},
+        { 'trigger': 'LoopingExposuresStopped', 'source': '*', 'dest': 'Stopped'},
+        { 'trigger': 'SettleBegin', 'source': '*', 'dest': 'Settling'},
         { 'trigger': 'SettleDone', 'source': '*', 'dest': 'SteadyGuiding'},
-        { 'trigger': 'StarLost', 'source': '*', 'dest': 'LostLock' },
-        { 'trigger': 'StarSelected', 'source': '*', 'dest': 'StarSelected' },
-        { 'trigger': 'ConnectionLost', 'source': '*', 'dest': 'NotConnected' }
+        { 'trigger': 'StarLost', 'source': '*', 'dest': 'LostLock'},
+        { 'trigger': 'StarSelected', 'source': '*', 'dest': 'StarSelected'},
+        { 'trigger': 'ConnectionLost', 'source': '*', 'dest': 'NotConnected'}
         ]
 
     def __init__(self, config=None):
@@ -105,70 +106,108 @@ class GuiderPHD2(Base):
                                transitions=GuiderPHD2.transitions,
                                initial=GuiderPHD2.states[0])
 
+    def __del__(self):
+        self.terminate_server()
+
+    def is_local_instance(self):
+        return True if self.host == "localhost" else False
+
     def launch_server(self):
         """
         Usage: phd2 [-i <num>] [-R]
           -i, --instanceNumber=<num>  sets the PHD2 instance number (default=1)
           -R, --Reset                 Reset all PHD2 settings to default values
         """
-        cmd = 'phd2' 
-        self.process = subprocess.Popen(cmd, stdout=subprocess.PIPE)
-        time.sleep(20) #Did not found anything better than that...
+        if self.is_local_instance() and self.process is None:
+            cmd = 'phd2'
+            self.process = subprocess.Popen(cmd, stdout=subprocess.PIPE)
+            time.sleep(10) #Did not found anything better than that...
 
-    def terminate_server(self):
-        self.shutdown()
-
-    def connect(self):
-        self.logger.info(f"Connect to server PHD2 {self.host}:{self.port}")
+    def connect_server(self):
+        self.logger.info(f"Connect to PHD2 server {self.host}:{self.port}")
         # Create a socket (SOCK_STREAM means a TCP socket)
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.sock.settimeout(SOCKET_TIMEOUT)
-
         try:
             # Connect to server and send data
             #self.session = requests.sessions.Session()
             self.sock.connect((self.host, self.port))
             self._receive({"Event": "AppState"}) # get state
-            # we make sure that we are starting from a "proper" state
-            self.reset_profile(self.profile_name)
-            self.reset_guiding()
         except Exception as e:
             msg = f"PHD2 error connecting: {e}"
             self.logger.error(msg)
             raise GuidingError(msg)
 
-    def disconnect_and_terminate_server(self):
-        self.logger.info(f"Closing connection to server PHD2 {self.host}"
-                         f":{self.port}")
+    def connect_profile(self, profile_name=None):
+        if profile_name is None:
+            profile_name = self.profile_name
+        self.logger.info(f"Connect profile {profile_name}")
+        # Abstract from PHD2 documentation: https://github.com/OpenPHDGuiding/phd2/wiki/EventMonitoring
+        # Select an equipment profile. All equipment must be disconnected before switching profiles.
+        self.disconnect_profile()
+        self.set_profile_from_name(profile_name)
+        self.set_connected(True)
+
+    def is_server_connected(self):
+        return self.state != 'NotConnected'
+
+    def is_profile_connected(self, profile_name=None):
+        if profile_name is None:
+            profile_name = self.profile_name
+        try:
+            profiles = self.get_profiles()
+            is_profile_selected = [d["selected"] for d in profiles if ("selected" in d) and (d["name"] ==
+                                                                                             profile_name)][0]
+        except Exception as e:
+            msg = f"Profile {profile_name} is not either not selected or not know to phd2, reported " \
+                  f"profiles are {profiles}"
+            self.logger.warning(msg)
+            is_profile_selected = False
+        try:
+            is_equipment_connected = self.get_connected()
+        except Exception as e:
+            is_equipment_connected = False
+        return is_profile_selected and is_equipment_connected
+
+    def is_guiding_ok(self):
+        return self.state in ["Guiding", "SteadyGuiding"]
+
+    def disconnect_profile(self):
         if self.state != 'NotConnected':
-            self.reset_guiding()
-            self.terminate_server()
+            self.stop_capture()
+            self.set_connected(False)
+
+    def disconnect_server(self):
+        self.logger.info(f"Closing connection to server PHD2 {self.host}:{self.port}")
+        if self.state != 'NotConnected':
+            self.stop_capture()
+        if self.sock is not None:
             self.sock.close()
-            self.disconnection_trig()
-        else:
+        self.disconnection_trig()
+
+    def terminate_server(self):
+        if self.state != 'NotConnected':
+            self.shutdown()
+            self.sock.close()
+        self.disconnection_trig()
+
+        if self.is_local_instance():
             self.force_kill_server()
-            if self.sock is not None:
-                self.sock.close()
-            self.disconnection_trig()
 
     def get_profile_id_from_name(self, profile_name):
         profiles = self.get_profiles()
-        profile_id = [d["id"] for d in profiles if d["name"] == profile_name][0]
+        try:
+            profile_id = [d["id"] for d in profiles if d["name"] == profile_name][0]
+        except IndexError as e:
+            msg = f"Profile {profile_name} is not know to phd2, that reported the following profiles {profiles}"
+            self.logger.error(msg)
+            raise RuntimeError(msg)
         return profile_id, profiles
 
-    def reset_profile(self, profile_name):
-        self.set_connected(False)
+    def set_profile_from_name(self, profile_name):
         profile_id, profiles = self.get_profile_id_from_name(profile_name=profile_name)
         self.logger.debug(f"About to set profile with id {profile_name} among the following list: {profiles}")
         self.set_profile(profile_id)
-        self.set_connected(True)
-
-    def reset_guiding(self):
-        """
-            throw away calibration, current settle and current star
-        """
-        self.stop_capture()
-        self.clear_calibration()
 
     def status(self):
         return {'state': self.state}
@@ -216,6 +255,7 @@ class GuiderPHD2(Base):
     def force_kill_server(self):
         if self.process is not None:
             self.process.kill()
+            self.process = None
 
     ####    PHD2 rpc API methods ####
 
@@ -253,10 +293,9 @@ class GuiderPHD2(Base):
             self._send_request(req)
             data = self._receive({"id": req["id"]})
             if "result" not in data or data["result"] != 0:
-                raise GuidingError("Wrong answer to set_connected request: {}"
-                                   "".format(data))
+                raise GuidingError(f"Wrong answer to set_connected request: {data}")
         except Exception as e:
-            msg = "PHD2 error set_connected: {}".format(e)
+            msg = f"PHD2 error set_connected: {e}"
             self.logger.error(msg)
             raise GuidingError(msg)
 
@@ -294,6 +333,8 @@ class GuiderPHD2(Base):
                 Otherwise, exposures continue to loop, and only
                 guide output is paused. Example:
                 {"method":"set_paused","params":[true,"full"],"id":42}
+                {"method":"set_paused","params":[true,""],"id":42}
+                {"method":"set_paused","params":[false,"whatever"],"id":42}
         """
         params = [paused, full]
         req={"method": "set_paused",
@@ -304,8 +345,12 @@ class GuiderPHD2(Base):
             self._send_request(req)
             data = self._receive({"id": req["id"]})
             if "result" not in data or data["result"] != 0:
-                raise GuidingError(f"Wrong answer to set_paused request: "
-                                   f"{data}")
+                raise GuidingError(f"Wrong answer to set_paused request: {data}")
+            timeout = Timeout(MAXIMUM_PAUSING_TIMEOUT)
+            while self.state != 'Paused':
+                self._receive(loop_mode=True)
+                if timeout.expired():
+                    raise error.Timeout(f"Timeout while waiting for Paused")
         except Exception as e:
             msg = f"PHD2 error setting paused status: {e}"
             self.logger.error(msg)
@@ -558,16 +603,15 @@ class GuiderPHD2(Base):
             self._send_request(req)
             data = self._receive({"id": req["id"]})
             if "result" not in data or data["result"] != 0:
-                raise GuidingError(f"Wrong answer to stop_capture request: "
-                                   f"{data}")
+                raise GuidingError(f"Wrong answer to stop_capture request: {data}")
             timeout = Timeout(STANDARD_TIMEOUT)
-            if self.state in ["Guiding","Looping"]:
-                while self.state not in ['Stopped', 'GuidingStopped']:
+            if self.state in ["Calibrating", "Guiding", "SteadyGuiding", "Looping", "LostLock", "Paused"]:
+                while self.state not in ['Stopped']: #GuidingStopped
                     data = self._receive(loop_mode=True)
                     if timeout.expired():
-                        raise error.Timeout(f"Timeout while waiting for "
-                            f"response after stop_capture was sent to "
-                            f"GuiderPHD2")
+                        raise error.Timeout(f"Timeout while waiting for response after stop_capture was sent to "
+                                            f"GuiderPHD2")
+
         except Exception as e:
             msg = f"PHD2 error stopping capture: {e}"
             self.logger.error(msg)
@@ -679,8 +723,8 @@ class GuiderPHD2(Base):
             return data["result"]
         except Exception as e:
             msg = f"PHD2 error getting connection status: {e}"
-            self.logger.warning(msg)
-            return self.state != 'NotConnected'
+            self.logger.error(msg)
+            raise RuntimeError(msg)
 
     def get_profiles(self):
         """
@@ -699,7 +743,35 @@ class GuiderPHD2(Base):
         except Exception as e:
             msg = f"PHD2 error getting profiles list: {e}"
             self.logger.warning(msg)
-            return ''
+            raise RuntimeError(msg)
+
+    def get_current_equipment(self):
+        """
+            params: none
+            result: example  {
+                              "camera": {
+                                "name": "Simulator",
+                                "connected": true
+                              },
+                              "mount": {
+                                "name": "On Camera",
+                                "connected": true
+                              }
+                            }
+            desc. : get the devices selected in the current equipment profile
+        """
+        req={"method": "get_current_equipment",
+             "params": [],
+             "id": self.id}
+        self.id += 1
+        try:
+            self._send_request(req)
+            data = self._receive({"id": req["id"]})
+            return data["result"]
+        except Exception as e:
+            msg = f"PHD2 error getting current equipment: {e}"
+            self.logger.warning(msg)
+            raise RuntimeError(msg)
 
     #### Some specific handle code for decoding messages ####
 
@@ -938,7 +1010,7 @@ class GuiderPHD2(Base):
            (no event attributes)
         """
         self.logger.debug(f"Looping exposure has stopped ")
-        self.LoopingExposureStopped()
+        self.LoopingExposuresStopped()
         self.send_message(self.status(), channel='GUIDING_STATUS')
 
     def _handle_SettleBegin(self, event):
