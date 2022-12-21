@@ -51,7 +51,7 @@ jobs:
     - name: Set failure state
       if: failure()
       run: |
-        echo "::set-env name=SLACK_ICON::🔴"
+        echo "FAILURE"
 
     - name: Publish pdf reports
       uses: actions/upload-artifact@v2
