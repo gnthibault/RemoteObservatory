@@ -101,8 +101,29 @@ def get_solve_field(fname, replace=True, remove_extras=True, **kwargs):
 
     This function merely passes the `fname` of the image to be solved along to `solve_field`,
     which returns a subprocess.Popen object. This function then waits for that command
-    to complete, populates a dictonary with the EXIF informaiton and returns. This is often
+    to complete, populates a dictonary with the EXIF information and returns. This is often
     more useful than the raw `solve_field` function
+
+    The solve-field program produces the file X.rdls which contains the RA,Dec positions of reference (known) stars.
+    (Not all known stars, but those that appeared in the index files.)
+    The X.corr file contains "correspondences" -- reference stars near stars detected in your image,
+    with X,Y,RA,Dec positions. The X.axy file contains the pixel positions of sources detected in your image.
+    You can use wcs-rd2xy and wcs-xy2rd programs to convert between X,Y and RA,Dec lists.
+
+    <base>-ngc.png  : an annotation of the image.
+    <base>.wcs      : a FITS WCS header for the solution.
+    <base>.new      : a new FITS file containing the WCS header.
+    <base>-objs.png : a plot of the sources (stars) we extracted from the image.
+    <base>-indx.png : sources (red), plus stars from the index (green), plus the skymark (“quad”) used to solve the image.
+    <base>-indx.xyls: a FITS BINTABLE with the pixel locations of stars from the index.
+    <base>.rdls     : a FITS BINTABLE with the RA,Dec of sources we extracted from the image.
+    <base>.axy      : a FITS BINTABLE of the sources we extracted, plus headers that describe the job (how the image is
+                      going to be solved).
+    <base>.solved   : exists and contains (binary) 1 if the field solved.
+    <base>.match    : a FITS BINTABLE describing the quad match that solved the image.
+    <base>.kmz      : (optional) KMZ file for Google Sky-in-Earth. You need to have “wcs2kml” in your PATH. See
+                      http://code.google.com/p/wcs2kml/downloads/list
+                      http://code.google.com/p/google-gflags/downloads/list
 
     Args:
         fname ({str}): Name of FITS file to be solved
@@ -150,7 +171,7 @@ def get_solve_field(fname, replace=True, remove_extras=True, **kwargs):
             print("Errors:", errs)
 
         if proc.returncode == 3:
-            raise error.SolveError('solve-field not found: {}'.format(output))
+            raise error.SolveError(f"solve-field not found: {output}")
 
         if not os.path.exists(fname.replace('.fits', '.solved')):
             raise error.SolveError('File not solved')
@@ -174,7 +195,7 @@ def get_solve_field(fname, replace=True, remove_extras=True, **kwargs):
                 out_dict['solved_fits_file'] = new
 
             if remove_extras:
-                for f in [rdls, xyls, axy]:
+                for f in [rdls, xyls]: # we decide to keep axy file
                     if os.path.exists(f):
                         os.remove(f)
 
