@@ -530,12 +530,30 @@ class GuiderPHD2(Base):
             self._send_request(req)
             data = self._receive({"id": req["id"]})
             if "result" not in data or data["result"] != 0:
-                raise GuidingError(f"Wrong answer to set_lock_position "
-                                   f"request: {data}")
+                raise GuidingError(f"Wrong answer to set_lock_position request: {data}")
         except Exception as e:
             msg = f"PHD2 error setting lock position: {e}"
             self.logger.error(msg)
             raise GuidingError(msg)
+
+    def get_lock_position(self):
+        """
+            params: none
+            result: array: [x, y] coordinates of lock position, or null if lock position is not set
+            desc. :
+        """
+        req={"method": "get_lock_position",
+             "params": [],
+             "id": self.id}
+        self.id += 1
+        try:
+            self._send_request(req)
+            data = self._receive({"id": req["id"]})
+            return data["result"]
+        except Exception as e:
+            msg = f"PHD2 error getting lock position: {e}"
+            self.logger.warning(msg)
+            raise RuntimeError(msg)
 
     def set_exposure(self, exp_time_sec):
         """
@@ -603,9 +621,10 @@ class GuiderPHD2(Base):
             self.logger.error(msg)
             raise GuidingError(msg)
 
-    def guide(self, recalibrate=None):
+    def guide(self, settle=None, recalibrate=None, roi=None):
         """
-            params: SETTLE (object), RECALIBRATE (boolean)
+            params: settle: object; recalibrate: boolean, optional, default = false;
+                    roi: array [x,y,width,height], optional, default = full frame
             result: integer (0)
             desc. : The guide method allows a client to request PHD2 to do
                     whatever it needs to start guiding and to report when
@@ -628,10 +647,17 @@ class GuiderPHD2(Base):
                     a SettleDone event some time later indicating the success
                     or failure of the guide sequence.
         """
+        params = []
+        if settle is None:
+            settle = self.settle
+        params.append(settle)
         if recalibrate is None:
             recalibrate = self.do_calibration
+        params.append(recalibrate)
+        if not (roi is None):
+            params.append(roi)
         req={"method": "guide",
-             "params": [self.settle, recalibrate],
+             "params": params,
              "id": self.id}
         self.id += 1
         try:

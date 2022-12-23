@@ -29,16 +29,26 @@ print(f"Is server connected: {g.is_server_connected()}")
 g.connect_profile()
 print(f"Is profile connected: {g.is_profile_connected()} = {g.is_profile_connected(g.profile_name)}")
 print(f"Currently connected equipment is {g.get_current_equipment()}")
-g.set_exposure(2.0)
+g.set_exposure(1.0)
 print("About to start looping to get images")
 g.loop()
 print("About to start star selection")
 ret = g.find_star(x=0, y=0, width=1000, height=1000)
 print(f"Return from find_star is {ret}")
+# If successful, there should be a lock position set
+ret = g.get_lock_position()
+print(f"Get lock position now returns {ret}")
 print("About to set lock position")
 g.set_lock_position(320.0, 350.0)
 print("Lock position set")
+# If successful, there should be a lock position set
+ret = g.get_lock_position()
+print(f"Get lock position now returns {ret}")
 g.guide(recalibrate=False)
+print(f"Guiding is now steady, about to check lock position")
+ret = g.get_lock_position()
+print(f"Get lock position now returns {ret}")
+
 # guide for 5 min:
 # for i in range(5*60):
 #     g.receive()
