@@ -1,5 +1,5 @@
 # x11vnc -storepasswd
-#sudo gedit /lib/systemd/system/x11vnc.service
+#sudo gedit /etc/systemd/system/x11vnc.service
 
 [Unit]
 Description=Start x11vnc at startup.

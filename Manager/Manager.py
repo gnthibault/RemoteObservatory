@@ -347,9 +347,9 @@ class Manager(Base):
                 self.logger.info("Initializing guider before observing")
                 self.guider.connect_server()
                 self.guider.connect_profile()
-                self.logger.info("Starting guiding calibration")
+                self.logger.info("Start guiding")
                 self.guider.guide()
-                self.logger.info("Guiding calibration over")
+                self.logger.info("Guiding successfully started")
             return True
         except Exception as e:
             self.logger.error('Error while trying to initialize tracking')
@@ -622,6 +622,20 @@ class Manager(Base):
         return [v for k, v in self.cameras.items() if v.do_pointing][0]
 
     @property
+    def adjust_pointing_camera(self):
+        cam_list = [v for k, v in self.cameras.items() if v.do_adjust_pointing]
+        if not len(cam_list):
+            return None
+        return cam_list[0]
+
+    @property
+    def guiding_camera(self):
+        cam_list = [v for k, v in self.cameras.items() if v.do_guiding]
+        if not len(cam_list):
+            return None
+        return cam_list[0]
+
+    @property
     def acquisition_cameras(self):
         """
         We make sure we always provide cameras in the order of their declaration
@@ -712,10 +726,8 @@ class Manager(Base):
         try:
             if 'scheduler' in self.config:
                 scheduler_name = self.config['scheduler']['module']
-                scheduler_target_file = self.config[
-                    'scheduler']['target_file']
-                scheduler_module = load_module('ObservationPlanner.'+
-                                               scheduler_name)
+                scheduler_target_file = self.config['scheduler']['target_file']
+                scheduler_module = load_module(f"ObservationPlanner.{scheduler_name}")
                 self.scheduler = getattr(scheduler_module, scheduler_name)(
                     ntpServ=self.serv_time,
                     obs=self.observatory,

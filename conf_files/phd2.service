@@ -1,20 +1,23 @@
-#sudo gedit /lib/systemd/system/phd2.service
+#sudo gedit /etc/systemd/system/phd2.service
 
 [Unit]
 Description=PHD2 Autoguiding server
-After=multi-user.target x11vnc.service
-Requires=x11vnc.service
+# After=graphical.target
+After=multi-user.target
 
 [Service]
 Type=idle
 # MUST SET YOUR USERNAME HERE.
 User=gnthibault
 Environment=LD_LIBRARY_PATH=/usr/local/lib:/usr/lib
+Environment="DISPLAY=:0"
+# "XAUTHORITY=/home/obs/.Xauthority"
 ExecStart=/usr/bin/phd2
 Restart=always
-RestartSec=5
+RestartSec=3
 
 [Install]
+# WantedBy=graphical.target
 WantedBy=multi-user.target
 
 #sudo systemctl daemon-reload

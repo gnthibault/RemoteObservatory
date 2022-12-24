@@ -41,7 +41,6 @@ def solve_field(fname, timeout=180, solve_opts=None, **kwargs):
     if solve_opts is not None:
         options = solve_opts
     else:
-        # TODO TN URGENT THIS IS HORRIBLE AND SHOULD BE FIXED ASAP
         #'--no-fits2fits',
         options = [
             '--guess-scale',
@@ -143,9 +142,7 @@ def get_solve_field(fname, replace=True, remove_extras=True, **kwargs):
     if kwargs.get('skip_solved', True) and \
             (os.path.exists(fname.replace('.fits', '.solved')) or WCS(fname).is_celestial):
         if verbose:
-            print("Solved file exists, skipping",
-                  "(pass skip_solved=False to solve again):",
-                  fname)
+            print(f"Solved file exists, skipping (pass skip_solved=False to solve again): {fname}")
 
         out_dict['solved_fits_file'] = fname
         return out_dict
@@ -163,67 +160,62 @@ def get_solve_field(fname, replace=True, remove_extras=True, **kwargs):
         output, errs = proc.communicate(timeout=kwargs.get('timeout', 180))
     except subprocess.TimeoutExpired:
         proc.kill()
-        raise error.Timeout("Timeout while solving")
-    else:
-        if verbose:
-            print("Returncode:", proc.returncode)
-            print("Output:", output)
-            print("Errors:", errs)
+        raise error.AstrometrySolverError("Timeout while solving")
+    if verbose:
+        print("Returncode:", proc.returncode)
+        print("Output:", output)
+        print("Errors:", errs)
+    if proc.returncode == 3:
+        raise error.AstrometrySolverError(f"solve-field not found: {output}")
+    if not os.path.exists(fname.replace('.fits', '.solved')):
+        raise error.AstrometrySolverError(f"File not solved, output {output}, errors: {errs}")
 
-        if proc.returncode == 3:
-            raise error.SolveError(f"solve-field not found: {output}")
+    try:
+        # Handle extra files created by astrometry.net
+        new = fname.replace('.fits', '.new')
+        rdls = fname.replace('.fits', '.rdls')
+        axy = fname.replace('.fits', '.axy')
+        xyls = fname.replace('.fits', '-indx.xyls')
+        annotated = fname.replace('.fits', '-ngc.png')
 
-        if not os.path.exists(fname.replace('.fits', '.solved')):
-            raise error.SolveError('File not solved')
+        if replace and os.path.exists(new):
+            # Remove converted fits
+            os.remove(fname)
+            # Rename solved fits to proper extension
+            os.rename(new, fname)
 
+            out_dict['solved_fits_file'] = fname
+        else:
+            out_dict['solved_fits_file'] = new
+
+        if remove_extras:
+            for f in [rdls, axy, xyls]:
+                if os.path.exists(f):
+                    os.remove(f)
+
+        # Always save the solved fits and solved png at the root of the project
         try:
-            # Handle extra files created by astrometry.net
-            new = fname.replace('.fits', '.new')
-            rdls = fname.replace('.fits', '.rdls')
-            axy = fname.replace('.fits', '.axy')
-            xyls = fname.replace('.fits', '-indx.xyls')
-            annotated = fname.replace('.fits', '-ngc.png')
-
-            if replace and os.path.exists(new):
-                # Remove converted fits
-                os.remove(fname)
-                # Rename solved fits to proper extension
-                os.rename(new, fname)
-
-                out_dict['solved_fits_file'] = fname
-            else:
-                out_dict['solved_fits_file'] = new
-
-            if remove_extras:
-                for f in [rdls, xyls]: # we decide to keep axy file
-                    if os.path.exists(f):
-                        os.remove(f)
-
-            # Always save the solved fits and solved png at the root of the project
-            try:
-                if "config" in kwargs:
-                    latest_path = f"{kwargs['config']['directories']['images']}/latest_pointing.png"
-                    shutil.copyfile(annotated, latest_path)
-                    if kwargs.get("gen_hips", False):
-                        # Manage creation of the HIPS
-                        hips_dir = f"{kwargs['config']['directories']['images']}/HIPS"
-                        gen_hips(hips_dir=hips_dir, fits_path=fname)
-
-            except Exception as e:
-                warn(f"Problem with extracting pretty pointing image: {e}")
-
+            if "config" in kwargs:
+                latest_path = f"{kwargs['config']['directories']['images']}/latest_pointing.png"
+                shutil.copyfile(annotated, latest_path)
+                if kwargs.get("gen_hips", False):
+                    # Manage creation of the HIPS
+                    hips_dir = f"{kwargs['config']['directories']['images']}/HIPS"
+                    gen_hips(hips_dir=hips_dir, fits_path=fname)
         except Exception as e:
-            warn(f"Cannot remove extra files: {e}")
+            warn(f"Problem with extracting pretty pointing image: {e}")
+
+    except Exception as e:
+        warn(f"Cannot remove extra files: {e}")
 
     if errs is not None:
-        warn("Error in solving: {}".format(errs))
+        warn(f"Error in solving: {errs}")
     else:
         try:
             out_dict.update(fits.getheader(fname))
         except OSError:
             if verbose:
-                print("Can't read fits header for:", fname)
-
+                print(f"Can't read fits header for: {fname}")
     return out_dict
 
 

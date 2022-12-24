@@ -10,6 +10,7 @@ states:
     - scheduling
     - slewing
     - pointing
+    - offset_pointing
     - tracking
     - focusing
     - observing
@@ -24,6 +25,7 @@ transitions:
             - pointing
             - tracking
             - focusing
+            - offset_pointing
             - observing
             - analyzing
             - calib_acq
@@ -78,18 +80,11 @@ transitions:
     -
         source: slewing
         dest: pointing
-        trigger: adjust_pointing
-        conditions: mount_is_tracking
-    -
-        source: pointing
-        dest: slewing
-        trigger: start_slewing
-        conditions: mount_is_tracking
+        trigger: iterate_astrometry
     -
         source: pointing
         dest: tracking
         trigger: track
-        conditions: mount_is_tracking
     -
         source: tracking
         dest: focusing
@@ -97,6 +92,10 @@ transitions:
         conditions: mount_is_tracking
     -
         source: focusing
+        dest: offset_pointing
+        trigger: adjust_pointing
+    -
+        source: offset_pointing
         dest: observing
         trigger: observe
         conditions: mount_is_tracking

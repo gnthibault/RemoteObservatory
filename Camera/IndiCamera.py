@@ -37,8 +37,12 @@ class IndiCamera(IndiDevice):
         if config is None:
             config = dict(
                 camera_name='CCD Simulator',
-                autofocus_seconds=5,
                 pointing_seconds=30,
+                adjust_center_x=400,
+                adjust_center_y= 400,
+                adjust_roi_search_size=50,
+                adjust_pointing_seconds=5,
+                autofocus_seconds=5,
                 autofocus_roi_size=500,
                 autofocus_merit_function="half_flux_radius",
                 focuser=dict(
@@ -72,17 +76,18 @@ class IndiCamera(IndiDevice):
             self.connect()
 
         # Specific initialization
-        self.autofocus_seconds = float(config['autofocus_seconds'])
         self.pointing_seconds = float(config['pointing_seconds'])
+        self.adjust_center_x = float(config['adjust_center_x'])
+        self.adjust_center_y = float(config['adjust_center_y'])
+        self.adjust_roi_search_size = int(config['adjust_roi_search_size'])
+        self.adjust_pointing_seconds = float(config['adjust_pointing_seconds'])
+        self.autofocus_seconds = float(config['autofocus_seconds'])
         self.autofocus_roi_size = int(config['autofocus_roi_size'])
         self.autofocus_merit_function = config['autofocus_merit_function']
         self._setup_focuser(config, connect_on_create)
         self._setup_filter_wheel(config, connect_on_create)
 
         self.logger.debug(f"Indi camera, camera name is: {device_name}")
-
-        # Frame Blob: reference that will be used to receive binary
-        self.last_blob = None
 
         # Default exposureTime, gain
         self.exp_time_sec = 5
@@ -141,8 +146,6 @@ class IndiCamera(IndiDevice):
         self.logger.debug('Indi client will register to server in order to '
                           'receive blob CCD1 when it is ready')
         self.indi_client.enable_blob()
-        #self.indi_client.setBLOBMode(PyIndi.B_ALSO, self.device_name, 'CCD1')
-        #self.frame_blob = self.get_prop(propName='CCD1', propType='blob')
 
     def synchronize_with_image_reception(self):
         try:
@@ -170,8 +173,6 @@ class IndiCamera(IndiDevice):
             self.set_number('CCD_EXPOSURE',
                             {'CCD_EXPOSURE_VALUE': self.sanitize_exp_time(self.exp_time_sec)},
                             sync=False)
-            #     self.last_blob = blob_listener.get(timeout=self.exp_time_sec +
-            #                                        self.READOUT_TIME_MARGIN)
         except Exception as e:
             self.logger.error(f"Indi Camera Error in shoot: {e}")
 
@@ -294,7 +295,7 @@ class IndiCamera(IndiDevice):
         return gain["GAIN"]
 
     def get_frame_type(self):
-        return self.get_prop('CCD_FRAME_TYPE', 'switch')
+        return self.get_switch('CCD_FRAME_TYPE')
 
     def set_frame_type(self, frame_type):
         """

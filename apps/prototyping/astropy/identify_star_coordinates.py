@@ -5,6 +5,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 # Astropy
+from astropy.coordinates import SkyCoord
 from astropy.io import fits
 from astropy import units as u
 from astropy.visualization import AsymmetricPercentileInterval, ImageNormalize, MinMaxInterval, SqrtStretch
@@ -22,8 +23,13 @@ data = hdu.data.astype(np.float32)
 detections = fits.open(xy_filename)[1].data
 
 # detection data
-px_centers = np.array([[x, y] for x,y,_,_ in detections])           # np.array of shape is (n, 2)
+px_centers = np.array([[x, y] for x,y,flux,bkg in detections])            # np.array of shape is (n, 2)
 rd_centers = [wcs.pixel_to_world(*px.tolist()) for px in px_centers] # list of SkyCoord
+# rd_centers = list(map(
+#     lambda x: SkyCoord(x[0]*u.hourangle, x[1]*u.degree),
+#     wcs.all_pix2world(px_centers, 0).tolist()))
+# site-packages/astropy/wcs/wcsapi/fitswcs.py:347: UserWarning: 'WCS.all_world2pix' failed to converge to the requested accuracy.
+# After 20 iterations, the solution is diverging at least for one input point.
 
 #TODO TN CHANGE
 rd_target_star_reference = rd_centers[0]

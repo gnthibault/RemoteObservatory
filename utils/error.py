@@ -73,7 +73,11 @@ class Timeout(Error):
 
     """ Error called when an event times out """
 
-    def __init__(self, msg='Timeout waiting for event'):
+
+class AstrometrySolverError(Error):
+
+    """ Error while trying to perform astrometry solving on an image """
+    def __init__(self, msg='Error while trying to perform astrometry solving'):
         super().__init__(msg)
 
 
@@ -149,11 +153,6 @@ class DomeNotFound(NotFound):
     """Dome device not found."""
     pass
 
-
-class SolveError(NotFound):
-
-    """ Camera cannot be imported """
-    pass
 
 class BadSerialConnection(Error):
 
