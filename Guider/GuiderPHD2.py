@@ -555,6 +555,26 @@ class GuiderPHD2(Base):
             self.logger.warning(msg)
             raise RuntimeError(msg)
 
+    def get_pixel_scale(self):
+        """
+            params: none
+            result: number: guider image scale in arc-sec/pixel.
+            desc. :
+        :return:
+        """
+        req={"method": "get_pixel_scale",
+             "params": [],
+             "id": self.id}
+        self.id += 1
+        try:
+            self._send_request(req)
+            data = self._receive({"id": req["id"]})
+            return data["result"]
+        except Exception as e:
+            msg = f"PHD2 error getting pixel scale: {e}"
+            self.logger.warning(msg)
+            raise RuntimeError(msg)
+
     def set_exposure(self, exp_time_sec):
         """
             params: integer: exposure time in milliseconds
