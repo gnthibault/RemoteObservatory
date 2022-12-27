@@ -112,8 +112,8 @@ class GuiderPHD2(Base):
                                transitions=GuiderPHD2.transitions,
                                initial=GuiderPHD2.states[0])
 
-    def __del__(self):
-        self.terminate_server()
+    # def __del__(self):
+    #     self.terminate_server()
 
     def is_local_instance(self):
         return True if self.host == "localhost" else False
