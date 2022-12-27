@@ -5,7 +5,10 @@ from transitions import Machine
 import socket
 import subprocess
 
-#Astropy
+# Numerical tools
+import numpy as np
+
+# Astropy
 import astropy.units as u
 
 #local libs
@@ -225,14 +228,21 @@ class GuiderPHD2(Base):
 
     def wait_for_state(self, one_of_states, timeout=STANDARD_TIMEOUT):
         assert isinstance(one_of_states, list)
+        def predicate():
+            return self.state in one_of_states
+        error_msg = f"Timeout while waiting for one of those states: {one_of_states}"
+        self.wait_for_predicate(predicate=predicate, error_msg=error_msg, timeout=timeout)
+
+    def wait_for_predicate(self, predicate, error_msg=None, timeout=STANDARD_TIMEOUT):
         tout = Timeout(timeout)
-        while self.state not in one_of_states:
+        while not predicate():
             try:
                 self._receive(loop_mode=True)
             except error.Timeout as e:
                 pass
             if tout.expired():
-                raise error.Timeout(f"Timeout while waiting for one of those states: {one_of_states}")
+                raise error.Timeout(f"Timeout while waiting for predicate: {error_msg}")
+
 
     def set_settle(self, pixels, time, timeout):
         """
@@ -487,7 +497,7 @@ class GuiderPHD2(Base):
             self.logger.error(msg)
             raise GuidingError(msg)
 
-    def set_lock_position(self, pos_x, pos_y, exact=True):
+    def set_lock_position(self, pos_x, pos_y, exact=True, wait_reached=True, angle_sep_reached=2*u.arcsec):
         """
             params: X: float, Y: float,
                     EXACT: boolean (optional, default = true)
@@ -521,16 +531,38 @@ class GuiderPHD2(Base):
                     the camera sensor after guiding has begun, you can use the
                     'Adjust Lock Position' function under the Tools menu:
         """
+        if self.state not in ["Guiding", "SteadyGuiding"]:
+            self.logger.warn(f"Guider currently in state {self.state}, consequence of set_lock are not clear ")
         params = [pos_x, pos_y, exact]
         req={"method": "set_lock_position",
              "params": params,
              "id": self.id}
         self.id += 1
+
+        # We need to convert arcseconds to pixels
+        pixel_sep_reached = 0
+        if wait_reached:
+            pixel_sep_reached = self.convert_angle_sep_to_pixels(angle_sep_reached)
+        # We define a predicate expectinf a GuideStep event to feature an information related to the target position
+        # Being reached
+        def predicate(event):
+            status = False
+            if "Event" in event:
+                if event['Event'] == "GuideStep":
+                    dist_px = np.linalg.norm([event["RADistanceRaw"], event["DECDistanceRaw"]])
+                    status = dist_px < pixel_sep_reached
+            return status
         try:
             self._send_request(req)
             data = self._receive({"id": req["id"]})
             if "result" not in data or data["result"] != 0:
                 raise GuidingError(f"Wrong answer to set_lock_position request: {data}")
+            # Confirm msg stack has been flushed by getting lock position feedback
+            assert np.allclose(self.get_lock_position(), [pos_x, pos_y])
+            # Now wait for the target position to be reached
+            if wait_reached:
+                self._receive(expected=predicate, timeout=POSITION_LOCKING_TIMEOUT)
+                self.logger.debug(f"Pixel separation of {pixel_sep_reached}px has been reached")
         except Exception as e:
             msg = f"PHD2 error setting lock position: {e}"
             self.logger.error(msg)
@@ -574,6 +606,10 @@ class GuiderPHD2(Base):
             msg = f"PHD2 error getting pixel scale: {e}"
             self.logger.warning(msg)
             raise RuntimeError(msg)
+
+    def convert_angle_sep_to_pixels(self, angle_sep):
+        pixel_scale = self.get_pixel_scale()
+        return angle_sep.to(u.arcsec).value * pixel_scale
 
     def set_exposure(self, exp_time_sec):
         """
@@ -879,18 +915,27 @@ class GuiderPHD2(Base):
             raise GuidingError(msg)
 
     def _check_event(self, event, expected=None):
-        status = True
-        # No check the expected
-        if expected is not None:
-            for k, v in expected.items():
-                try:
-                    status = (status and (event[k] == v))
-                except KeyError as e:
-                    status = False
+        status = False
+        # No check is expected
+        if expected is None:
+            status = True
+        elif isinstance(expected, dict):
+            status = self._check_dictionary(event, expected)
+        elif callable(expected): # Assume it is a predicate on the event
+            status = expected(event)
         # Also check that there is no error
         if "error" in event:
             msg = f"Received error msg: {event['error']}"
             self.logger.error(msg)
+        return status
+
+    def _check_dictionary(self, event, expected):
+        status = True
+        for k, v in expected.items():
+            try:
+                status = (status and (event[k] == v))
+            except KeyError as e:
+                status = False
         return status
 
     def _handle_event(self, event):
@@ -1132,28 +1177,22 @@ class GuiderPHD2(Base):
            Mount            string  the name of the mount
            dx               number  the X-offset in pixels
            dy               number  the Y-offset in pixels
-           RADistanceRaw    number  the RA distance in pixels of the guide
-                                    offset vector
-           DecDistanceRaw   number  the Dec distance in pixels of the guide
-                                    offset vector
-           RADistanceGuide  number  the guide algorithm-modified RA distance in
-                                    pixels of the guide offset vector
-           DecDistanceGuide number  the guide algorithm-modified Dec distance
-                                    in pixels of the guide offset vector
+           RADistanceRaw    number  the RA distance in pixels of the guide offset vector
+           DECDistanceRaw   number  the Dec distance in pixels of the guide offset vector
+           RADistanceGuide  number  the guide algorithm-modified RA distance in pixels of the guide offset vector
+           DECDistanceGuide number  the guide algorithm-modified Dec distance in pixels of the guide offset vector
            RADuration       number  the RA guide pulse duration in milliseconds
            RADirection      string  "East" or "West"
            DECDuration      number  the Dec guide pulse duration in milliseconds
            DECDirection     string  "South" or "North"
            StarMass         number  the Star Mass value of the guide star
-           SNR              number  the computed Signal-to-noise ratio of the
-                                    guide star
-           AvgDist          number  a smoothed average of the guide distance in
-                            pixels (equivalent to value returned by socket
-                            server MSG_REQDIST)
-           RALimited        boolean true if step was limited by the Max RA
-                            setting (attribute omitted if step was not limited)
-           DecLimited       boolean true if step was limited by the Max Dec
-                            setting (attribute omitted if step was not limited)
+           SNR              number  the computed Signal-to-noise ratio of the guide star
+           AvgDist          number  a smoothed average of the guide distance in pixels (equivalent to value returned by
+                                    socket server MSG_REQDIST)
+           RALimited        boolean true if step was limited by the Max RA setting (attribute omitted if step was not
+                                    limited)
+           DecLimited       boolean true if step was limited by the Max Dec setting (attribute omitted if step was not
+                                    limited)
            ErrorCode        number  the star finder error code
         """
         self.logger.debug(f"Guiding frame {event['Frame']}, for mount "

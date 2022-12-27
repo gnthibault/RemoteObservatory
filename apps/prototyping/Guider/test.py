@@ -2,6 +2,9 @@
 import logging
 import time
 
+# Astorpy helpers
+import astropy.units as u
+
 # Local code
 from Guider import GuiderPHD2
 
@@ -38,22 +41,24 @@ print(f"Return from find_star is {ret}")
 # If successful, there should be a lock position set
 ret = g.get_lock_position()
 print(f"Get lock position now returns {ret}")
-print("About to set lock position")
-g.set_lock_position(320.0, 150.0)
-print("Lock position set")
-# If successful, there should be a lock position set
-ret = g.get_lock_position()
 
-print(f"Get lock position now returns {ret}")
+ret = g.get_calibrated()
+print(f"Get Calibrated returns {ret}")
 g.guide(recalibrate=False)
 print(f"Guiding is now steady, about to check lock position")
 ret = g.get_lock_position()
 print(f"Get lock position now returns {ret}")
+print("About to set lock position")
+g.set_lock_position(ret[0]+100, ret[1]+100, exact=True, wait_reached=True, angle_sep_reached=2*u.arcsec)
+print("Lock position set")
+# If successful, there should be a lock position set
+ret = g.get_lock_position()
+print(f"Get lock position now returns {ret}")
 
-# guide for 5 min:
-# for i in range(5*60):
-#     g.receive()
-#     time.sleep(1)
+# guide for some time (receive takes some time)
+for i in range(1*60):
+    g.receive()
+    time.sleep(1)
 
 # you can use set_paused in full mode (pause both looping and guiding) to test if profile disconnection works
 g.set_paused(paused=True, full="full")
