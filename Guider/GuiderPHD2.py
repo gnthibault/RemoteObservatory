@@ -212,7 +212,8 @@ class GuiderPHD2(Base):
 
     def set_profile_from_name(self, profile_name):
         profile_id, profiles = self.get_profile_id_from_name(profile_name=profile_name)
-        self.logger.debug(f"About to set profile with id {profile_name} among the following list: {profiles}")
+        self.logger.debug(f"About to set profile with name {profile_name} and id {profile_id} among the following list:"
+                          f" {profiles}")
         self.set_profile(profile_id)
 
     def status(self):
