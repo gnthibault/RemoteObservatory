@@ -20,7 +20,7 @@ from Service.PanMessagingZMQ import PanMessagingZMQ
 
 MAXIMUM_CALIBRATION_TIMEOUT = 6 * 60 * u.second
 FIND_STAR_TIMEOUT           = 60 * u.second
-POSITION_LOCKING_TIMEOUT    = 60 * u.second
+POSITION_LOCKING_TIMEOUT    = 5 * 60 * u.second
 MAXIMUM_DITHER_TIMEOUT      = 45 * u.second
 MAXIMUM_PAUSING_TIMEOUT     = 30 * u.second
 STANDARD_TIMEOUT            = 120 * u.second
@@ -606,6 +606,11 @@ class GuiderPHD2(Base):
             msg = f"PHD2 error getting pixel scale: {e}"
             self.logger.warning(msg)
             raise RuntimeError(msg)
+
+    def is_lock_position_close_to(self, px_target, max_angle_sep):
+        max_pixel_sep = self.convert_angle_sep_to_pixels(max_angle_sep)
+        lock_pos = self.get_lock_position()
+        return np.linalg.norm(np.array(px_target)-np.array(lock_pos)) < max_pixel_sep
 
     def convert_angle_sep_to_pixels(self, angle_sep):
         pixel_scale = self.get_pixel_scale()

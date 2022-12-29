@@ -38,6 +38,7 @@ class Observation(Base):
         self.exposure_list = OrderedDict()
         self.pointing_list = OrderedDict()
         self.pointing_image = None
+        self.adjust_pointing_image = None
         self._seq_time = None
         self.id = self.name+'_'+str(hash(self))
 

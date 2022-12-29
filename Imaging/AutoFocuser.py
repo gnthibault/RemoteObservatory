@@ -207,7 +207,7 @@ class AutoFocuser(Base):
         assert self.camera.focuser.is_connected, self.logger.error(
             f"Focuser {self.camera.focuser} must be connected for autofocus")
 
-        if not autofocus_status:
+        if autofocus_status is None:
             autofocus_status = [False]
 
         if not focus_range:
@@ -335,8 +335,10 @@ class AutoFocuser(Base):
             assert np.isfinite(final_focus)
         except Exception as e:
             self.logger.error(f"Focusing method failed: {e}")
+            autofocus_status[0] = False
             if focus_event is not None:
                 focus_event.set()
+            return
         autofocus_status[0] = True
         if focus_event is not None:
             focus_event.set()

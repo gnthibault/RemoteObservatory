@@ -22,26 +22,31 @@ class IndiAbstractCamera(IndiCamera, AbstractCamera):
                            connect_on_create=connect_on_create)
         self.indi_camera_config = config
 
+
     # TODO TN: setup event based acquisition properly
     def shoot_asyncWithEvent(self, exp_time_sec, filename, exposure_event,
                              **kwargs):
-        # set frame type
-        frame_type = kwargs.get("frame_type", "FRAME_LIGHT")
-        self.set_frame_type(frame_type)
-        # set gain
-        gain = kwargs.get("gain", self.gain)
-        self.set_gain(gain)
-        # set temperature
-        temperature = kwargs.get("temperature", None)
-        if temperature is not None:
-            self.set_cooling_on()
-            self.set_temperature(temperature)
-        # Now shoot
-        self.setExpTimeSec(exp_time_sec)
-        self.logger.debug(f"Camera {self.camera_name}, about to shoot for {self.exp_time_sec}")
-        self.shoot_async()
+        # If there is no external trigger, then we proceed to handle setup on our side
+        external_trigger = kwargs.get("external_trigger", False)
+        if not external_trigger:
+            # set frame type
+            frame_type = kwargs.get("frame_type", "FRAME_LIGHT")
+            self.set_frame_type(frame_type)
+            # set gain
+            gain = kwargs.get("gain", self.gain)
+            self.set_gain(gain)
+            # set temperature
+            temperature = kwargs.get("temperature", None)
+            if temperature is not None:
+                self.set_cooling_on()
+                self.set_temperature(temperature)
+            # Now shoot
+            self.setExpTimeSec(exp_time_sec)
+            self.logger.debug(f"Camera {self.camera_name}, about to shoot for {self.exp_time_sec}")
+            self.shoot_async()
+        # Wether trigger was internal or external, we rely on the last received blob
         self.synchronize_with_image_reception()
-        self.logger.debug(f"Camera {self.camera_name}, done with image reception")
+        self.logger.debug(f"Camera {self.camera_name}, done with image reception, external trigger {external_trigger}")
         image = self.get_received_image()
         try:
             with open(filename, "wb") as f:

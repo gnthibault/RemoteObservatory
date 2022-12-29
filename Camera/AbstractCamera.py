@@ -27,7 +27,9 @@ class AbstractCamera(Base):
 
         self.serv_time = serv_time
         self.do_acquisition = kwargs.get("do_acquisition", False)
+        self.do_guiding = kwargs.get("do_guiding", False)
         self.do_pointing = kwargs.get("do_pointing", False)
+        self.do_adjust_pointing = kwargs.get("do_adjust_pointing", False)
         self.do_autofocus = kwargs.get("do_autofocus", False)
 
         self.camera_name = kwargs["camera_name"]

@@ -46,7 +46,7 @@ class IndiAbstractMount(IndiMount, AbstractMount):
         self._setup_abstract_config()
         #Setup AbstractMount
         AbstractMount.__init__(self, location=location,
-                               serv_time=serv_time)
+                               serv_time=serv_time, **config)
 
         if connect_on_create:
             self.connect()
@@ -150,8 +150,7 @@ class IndiAbstractMount(IndiMount, AbstractMount):
                 self._is_slewing = True
 
                 target = self.get_target_coordinates()
-                IndiMount.slew_to_coord_and_track(self,
-                    self.get_target_coordinates())
+                IndiMount.slew_to_coord_and_track(self, target)
                 success = True
                 self._is_slewing = False
                 self._is_tracking = True

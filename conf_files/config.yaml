@@ -55,8 +55,8 @@ ntp:
 scheduler:
     module: DefaultScheduler
     # module: SpectroScheduler
-    target_file: targets
-    #target_file: spectral_targets
+    target_file: targets.yaml
+    #target_file: spectral_targets.yaml
 spectroscope_controller:
     module: IndiSpectroController
 calibration:
@@ -85,6 +85,7 @@ mount:
     module: IndiAbstractMount
     mount_name : Telescope Simulator
     equatorial_eod: J2000 # JNOW
+    is_simulator: true
     indi_client :
         indi_host : localhost
         indi_port : 7624
@@ -92,13 +93,6 @@ cameras:
     -
         module: IndiAbstractCameraSimulator
         camera_name : Guide Simulator
-    #    CCD_INFO:
-    #        CCD_MAX_X: 1936
-    #        CCD_MAX_Y: 1096
-    #        CCD_PIXEL_SIZE: 2.9
-    #        CCD_PIXEL_SIZE_X: 2.9
-    #        CCD_PIXEL_SIZE_Y: 2.9
-    #        CCD_BITSPERPIXEL: 12
         do_acquisition: false
         SIMULATOR_SETTINGS: # 290MM
             SIM_XRES: 1936
@@ -122,10 +116,16 @@ cameras:
         SCOPE_INFO: # 200/800 newtonian
             FOCAL_LENGTH: 800
             APERTURE: 200
+        do_guiding: true
         do_pointing: true
-        pointing_seconds: 10
+        pointing_seconds: 5
+        do_adjust_pointing: true
+        adjust_center_x: 400
+        adjust_center_y: 400
+        adjust_roi_search_size: 50
+        adjust_pointing_seconds: 5
         do_autofocus: false
-        autofocus_seconds: 2
+        autofocus_seconds: 4
         autofocus_roi_size : 750
         autofocus_merit_function: half_flux_radius #vollath_F4
 #        focuser:
@@ -183,10 +183,16 @@ cameras:
         SCOPE_INFO: # 200/800 newtonian
             FOCAL_LENGTH: 800
             APERTURE: 200
+        do_guiding: false
         do_pointing: false
-        pointing_seconds: 10
+        pointing_seconds: 5
+        do_adjust_pointing: true
+        adjust_center_x: 400
+        adjust_center_y: 400
+        adjust_roi_search_size: 50
+        adjust_pointing_seconds: 5
         do_autofocus: true
-        autofocus_seconds: 2
+        autofocus_seconds: 5
         autofocus_roi_size : 750
         autofocus_merit_function : half_flux_radius #vollath_F4
         focuser:

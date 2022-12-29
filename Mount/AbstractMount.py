@@ -63,6 +63,8 @@ class AbstractMount(Base):
         self._is_home = False
         self._state = 'Parked'
 
+        self.is_simulator = kwargs.get("is_simulator", False)
+
         self.sidereal_rate = ((360 * u.degree).to(u.arcsec) /
                               (86164 * u.second))
         self.ra_guide_rate = 0.5  # Sidereal
