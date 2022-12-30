@@ -3,6 +3,7 @@ from bson import ObjectId
 import datetime
 import json
 import logging
+import multiprocessing
 import random
 import yaml
 
@@ -10,18 +11,15 @@ import yaml
 from astropy import units as u
 from astropy.time import Time
 
-# MQTT
-import paho.mqtt.client as mqttclient
-import paho.mqtt.subscribe as mqttsubscribe
-
 # ZMQ
 import zmq
+from zmq.eventloop.zmqstream import ZMQStream
 
 # Local
 from Service.NTPTimeService import HostTimeService
 from Service.PanMessaging import PanMessaging
 
-class PanMessagingZMQ: #(PanMessaging):
+class PanMessagingZMQ(PanMessaging):
 
     """Messaging class for PANOPTES project. Creates a new ZMQ
     context that can be shared across parent application.
@@ -62,54 +60,34 @@ class PanMessagingZMQ: #(PanMessaging):
     """
     logger = logging.getLogger('PanMessaging')
 
-    def __init__(self, **kwargs):
+    def __init__(self, config={}, **kwargs):
         super().__init__(**kwargs)
         self.serv_time = HostTimeService()
         # Create a new context
         self.context = zmq.Context()
         self.socket = None
+        self.stream = None
+        if config.get("com_mode", None) == "subscriber":
+            self.create_subscriber(config["cmd_port"])
+        elif config.get("com_mode", None) == "publisher":
+            self.create_publisher(config["msg_port"])
+        # else:
+        #     msg = f"Messaging expect com_mode subscriber or publisher, {config['com_mode']} is not supported"
+        #     self.logger.error(msg)
+        #     raise RuntimeError(msg)
 
-    def scrub_message(self, message):
-        for k, v in message.items():
-            if isinstance(v, dict):
-                v = self.scrub_message(v)
+    def create_forwarder(self, sub_port, pub_port, ready_fn=None, done_fn=None):
+        subscriber, publisher = self.create_forwarder_sockets(sub_port, pub_port)
+        self.run_forwarder(subscriber, publisher, ready_fn=ready_fn, done_fn=done_fn)
 
-            if isinstance(v, u.Quantity):
-                v = v.value
-
-            if isinstance(v, datetime.datetime):
-                v = v.isoformat()
-
-            if isinstance(v, ObjectId):
-                v = str(v)
-
-            if isinstance(v, Time):
-                v = str(v.isot).split('.')[0].replace('T', ' ')
-
-            # Hmmmm
-            if k.endswith('_time'):
-                v = str(v).split(' ')[-1]
-
-            if isinstance(v, float):
-                v = round(v, 3)
-
-            message[k] = v
-
-        return message
-
-    @classmethod
-    def create_forwarder(cls, sub_port, pub_port, ready_fn=None, done_fn=None):
-        subscriber, publisher = PanMessagingZMQ.create_forwarder_sockets(sub_port, pub_port)
-        PanMessagingZMQ.run_forwarder(subscriber, publisher, ready_fn=ready_fn, done_fn=done_fn)
-
-    @classmethod
-    def create_forwarder_sockets(cls, sub_port, pub_port):
-        subscriber = PanMessagingZMQ.create_subscriber(sub_port, bind=True, connect=False)
-        publisher = PanMessagingZMQ.create_publisher(pub_port, bind=True, connect=False)
+    def create_forwarder_sockets(self, sub_port, pub_port):
+        subscriber = PanMessagingZMQ()
+        subscriber.create_subscriber(sub_port, bind=True, connect=False)
+        publisher = PanMessagingZMQ()
+        publisher.create_publisher(pub_port, bind=True, connect=False, create_forwarder=False)
         return subscriber, publisher
 
-    @classmethod
-    def run_forwarder(cls, subscriber, publisher, ready_fn=None, done_fn=None):
+    def run_forwarder(self, subscriber, publisher, ready_fn=None, done_fn=None):
         try:
             if ready_fn:
                 ready_fn()
@@ -125,8 +103,15 @@ class PanMessagingZMQ: #(PanMessaging):
             if done_fn:
                 done_fn()
 
-    @classmethod
-    def create_publisher(cls, port, bind=False, connect=True):
+    def register_callback(self, callback, cmd_type=None):
+        if cmd_type is None:
+            if self.stream is None:
+                self.stream = ZMQStream(self.socket)
+            self.stream.on_recv(callback)
+        else:
+            raise NotImplementedError
+
+    def create_publisher(self, port, bind=False, connect=True, create_forwarder=True):
         """ Create a publisher
 
         Args:
@@ -135,46 +120,47 @@ class PanMessagingZMQ: #(PanMessaging):
         Returns:
             A ZMQ PUB socket
         """
-        obj = cls()
-        obj.logger.debug("Creating publisher. Binding to port {} ".format(port))
-
-        socket = obj.context.socket(zmq.PUB)
-
+        self.logger.debug(f"Creating publisher. Binding to port {port}")
+        socket = self.context.socket(zmq.PUB)
         if bind:
-            socket.bind('tcp://*:{}'.format(port))
+            socket.bind(f"tcp://*:{port}")
         elif connect:
-            socket.connect('tcp://localhost:{}'.format(port))
+            socket.connect(f"tcp://localhost:{port}")
+        self.socket = socket
 
-        obj.socket = socket
+        if create_forwarder:
+            def create_forwarder(fw_port):
+                try:
+                    self.create_forwarder(fw_port, fw_port+1)
+                # The idea is to ignore the "Address already in use" error on bind
+                # but there is no specific error class for this error in zmq
+                except zmq.error.ZMQError as e:
+                    pass
+            msg_forwarder_process = multiprocessing.Process(
+                target=create_forwarder, args=(
+                    port,), name='MsgForwarder')
+            msg_forwarder_process.start()
 
-        return obj
 
-    @classmethod
-    def create_subscriber(cls, port, channel='', bind=False, connect=True):
+        return self
+
+    def create_subscriber(self, port, channel='', bind=False, connect=True):
         """ Create a listener
         Args:
             port (int):         The port (on localhost) to bind to.
             channel (str):      Which topic channel to subscribe to.
         """
-        obj = cls()
-        obj.logger.debug("Creating subscriber. Port: {} \tChannel: {}".format(
-            port, channel))
-
-        socket = obj.context.socket(zmq.SUB)
-
+        self.logger.debug(f"Creating subscriber. Port: {port} \tChannel: {channel}")
+        socket = self.context.socket(zmq.SUB)
         if bind:
             try:
-                socket.bind('tcp://*:{}'.format(port))
+                socket.bind(f"tcp://*:{port}")
             except zmq.error.ZMQError:
-                obj.logger.debug('Problem binding port {}'.format(port))
+                self.logger.debug(f"Problem binding port {port}")
         elif connect:
-            socket.connect('tcp://localhost:{}'.format(port))
-
+            socket.connect(f"tcp://localhost:{port}")
         socket.setsockopt_string(zmq.SUBSCRIBE, channel)
-
-        obj.socket = socket
-
-        return obj
+        self.socket = socket
 
     def send_message(self, channel, message):
         """ Responsible for actually sending message across a channel
@@ -185,7 +171,6 @@ class PanMessagingZMQ: #(PanMessaging):
 
         """
         assert channel > '', self.logger.warning("Cannot send blank channel")
-
         if isinstance(message, str):
             current_time = self.serv_time.get_utc()
             message = {
@@ -199,7 +184,6 @@ class PanMessagingZMQ: #(PanMessaging):
         msg_object = json.dumps(message, skipkeys=True)
         full_message = f"{channel} {msg_object}"
         self.logger.debug(f"PanMessaging - sending - {channel}: {message}")
-
         # Send the message
         self.socket.send_string(full_message, flags=zmq.NOBLOCK)
 
@@ -230,7 +214,6 @@ class PanMessagingZMQ: #(PanMessaging):
                 msg_obj = json.loads(msg)
             except Exception:
                 msg_obj = yaml.safe_load(msg)
-
         return msg_type, msg_obj
 
     def close(self):

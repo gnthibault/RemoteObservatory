@@ -44,7 +44,7 @@ class ArduiScopeController(Base):
                           "subscribe({}), publish({})".format(
                               self.config['msg_port'],
                               self.config['cmd_port']))
-        self.messaging = PanMessaging(**self.config["messaging"])
+        self.messaging = PanMessaging(**self.config["messaging_publisher"])
         # we also need to launch the arduino service !
         self.acquisition_thread = threading.Thread(
             target=arduinolauncher,

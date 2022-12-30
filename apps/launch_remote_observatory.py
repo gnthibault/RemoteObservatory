@@ -20,9 +20,7 @@ from Base.Base import Base
 from Manager.Manager import Manager
 from StateMachine.StateMachine import StateMachine
 from utils import get_free_space
-#from Service.PanMessaging import PanMessaging
-from Service.PanMessagingZMQ import PanMessagingZMQ
-#from Service.PanMessagingMQTT import PanMessagingMQTT
+from utils import load_module
 
 class RemoteObservatoryFSM(StateMachine, Base):
 
@@ -496,13 +494,13 @@ class RemoteObservatoryFSM(StateMachine, Base):
         self.power_down()
 
     # def _setup_messaging(self):
-    #     #mqtt_host = self.config['messaging']['mqtt_host']
-    #     #mqtt_port = self.config['messaging']['mqtt_port']
+    #     #mqtt_host = self.config["messaging_publisher"]['mqtt_host']
+    #     #mqtt_port = self.config["messaging_publisher"]['mqtt_port']
     #     #self._msg_client = PanMessaging(mqtt_host, mqtt_port, connect=True)
     # 
     #     self._cmd_queue = multiprocessing.Queue()
     #     self._sched_queue = multiprocessing.Queue()
-    #     self._msg_client = PanMessaging(**self.config['messaging'])
+    #     self._msg_client = PanMessaging(**self.config["messaging_publisher"])
     # 
     #     def new_cmd_callback(msg_type, msg_obj):
     #         self._sched_queue.put(msg_obj)
@@ -513,69 +511,60 @@ class RemoteObservatoryFSM(StateMachine, Base):
     #     self._msg_client.register_callback(callback=new_sched_callback, cmd_type="POCS-SCHED/#")
     
     def _setup_messaging(self):
-        cmd_port = self.config['messaging']['cmd_port']
-        msg_port = self.config['messaging']['msg_port']
+    #
+    #     cmd_forwarder_process = multiprocessing.Process(
+    #         target=create_forwarder, args=(
+    #             cmd_port,), name='CmdForwarder')
+    #     cmd_forwarder_process.start()
+    #
 
-        def create_forwarder(port):
-            try:
-                PanMessagingZMQ.create_forwarder(port, port + 1)
-            except Exception:
-                pass
-
-        cmd_forwarder_process = multiprocessing.Process(
-            target=create_forwarder, args=(
-                cmd_port,), name='CmdForwarder')
-        cmd_forwarder_process.start()
-
-        msg_forwarder_process = multiprocessing.Process(
-            target=create_forwarder, args=(
-                msg_port,), name='MsgForwarder')
-        msg_forwarder_process.start()
-
-        self._do_cmd_check = True
+        self._do_cmd_check = False
         self._cmd_queue = multiprocessing.Queue()
         self._sched_queue = multiprocessing.Queue()
 
-        self._msg_publisher = PanMessagingZMQ.create_publisher(msg_port)
+        messaging_name = self.config["messaging_publisher"]['module']
+        messaging_module = load_module('Service.' + messaging_name)
+        self._msg_publisher = getattr(messaging_module, messaging_name)(
+            config=self.config["messaging_publisher"])
 
-        def check_message_loop(cmd_queue):
-            cmd_subscriber = PanMessagingZMQ.create_subscriber(cmd_port + 1)
-
-            poller = zmq.Poller()
-            poller.register(cmd_subscriber.socket, zmq.POLLIN)
-
-            try:
-                while self._do_cmd_check:
-                    # Poll for messages
-                    sockets = dict(poller.poll(500))  # 500 ms timeout
-
-                    if cmd_subscriber.socket in sockets and \
-                            sockets[cmd_subscriber.socket] == zmq.POLLIN:
-
-                        msg_type, msg_obj = cmd_subscriber.receive_message(
-                            flags=zmq.NOBLOCK)
-
-                        # Put the message in a queue to be processed
-                        if msg_type == 'POCS-CMD':
-                            cmd_queue.put(msg_obj)
-
-                    time.sleep(1)
-            except KeyboardInterrupt:
-                pass
-
-        self.logger.debug('Starting command message loop')
-        check_messages_process = multiprocessing.Process(
-            target=check_message_loop, args=(self._cmd_queue,))
-        check_messages_process.name = 'MessageCheckLoop'
-        check_messages_process.start()
-        self.logger.debug('Command message subscriber set up on port {}'.format(
-                          cmd_port))
-
-        self._processes = {
-            'check_messages': check_messages_process,
-            'cmd_forwarder': cmd_forwarder_process,
-            'msg_forwarder': msg_forwarder_process,
-        }
+        # def check_message_loop(cmd_queue):
+        #     cmd_subscriber = PanMessagingZMQ.create_subscriber(cmd_port + 1)
+        #
+        #     poller = zmq.Poller()
+        #     poller.register(cmd_subscriber.socket, zmq.POLLIN)
+        #
+        #     try:
+        #         while self._do_cmd_check:
+        #             # Poll for messages
+        #             sockets = dict(poller.poll(500))  # 500 ms timeout
+        #
+        #             if cmd_subscriber.socket in sockets and \
+        #                     sockets[cmd_subscriber.socket] == zmq.POLLIN:
+        #
+        #                 msg_type, msg_obj = cmd_subscriber.receive_message(
+        #                     flags=zmq.NOBLOCK)
+        #
+        #                 # Put the message in a queue to be processed
+        #                 if msg_type == 'POCS-CMD':
+        #                     cmd_queue.put(msg_obj)
+        #
+        #             time.sleep(1)
+        #     except KeyboardInterrupt:
+        #         pass
+        #
+        # self.logger.debug('Starting command message loop')
+        # check_messages_process = multiprocessing.Process(
+        #     target=check_message_loop, args=(self._cmd_queue,))
+        # check_messages_process.name = 'MessageCheckLoop'
+        # check_messages_process.start()
+        # self.logger.debug('Command message subscriber set up on port {}'.format(
+        #                   cmd_port))
+        #
+        # self._processes = {
+        #     'check_messages': check_messages_process,
+        #     'cmd_forwarder': cmd_forwarder_process,
+        #     'msg_forwarder': msg_forwarder_process,
+        # }
 
 if __name__ == '__main__':
     # load the logging configuration

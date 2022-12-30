@@ -84,7 +84,7 @@ class IndiAAGCloudWatcher(threading.Thread, IndiDevice):
     def send_message(self, msg, channel='WEATHER'):
         if self.messaging is None:
             # TODO TN: if it breaks, checkout IndiWeather code instead
-            self.messaging = PanMessaging(**self.config["messaging"])
+            self.messaging = PanMessaging(**self.config["messaging_publisher"])
         self.messaging.send_message(channel, msg)
 
     def capture(self, send_message=True, store_result=True):
