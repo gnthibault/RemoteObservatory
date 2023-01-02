@@ -1472,7 +1472,6 @@ class device(ABC):
         # Dictonary of Property vector for the current device, each having multiple properties
         self.property_vectors = {}
         self.property_vectors_lock = threading.Lock()
-        self.config = config
         self.timer_queue = asyncio.Queue()
 
     def __getitem__(self, name: str):

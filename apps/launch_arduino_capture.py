@@ -23,7 +23,7 @@ def main(board, cmd_port, msg_port):
     logger = logging.getLogger('arduino_capture')
     serial_data = ArduinoIO.open_serial_device(
         serial_config=serial_config, name=board)
-    client = PanMessaging(**config["messaging"])
+    client = PanMessaging(**config["messaging_publisher"])
     aio = ArduinoIO.ArduinoIO(board, serial_data, client)
     aio.run()
 

@@ -554,12 +554,11 @@ class Manager(Base):
 
     def _setup_messaging(self):
         try:
-            messaging_name = self.config['messaging']['module']
-            #messaging_module = load_module('Service.'+messaging_name)
-            # self.messaging = getattr(messaging_module, messaging_name)(
-            #     config=self.config['messaging'])
-            #TODO TN: TO BE FIXED
-            self.messaging = PanMessagingZMQ.create_publisher(self.config["messaging"]["msg_port"])
+            messaging_name = self.config["messaging_publisher"]['module']
+            messaging_module = load_module('Service.'+messaging_name)
+            self.messaging = getattr(messaging_module, messaging_name)(
+                 config=self.config["messaging_publisher"])
+            # self.messaging = PanMessagingZMQ.create_publisher(self.config["messaging_publisher"]["msg_port"])
         except Exception:
             raise RuntimeError('Problem setting up messaging service')
 

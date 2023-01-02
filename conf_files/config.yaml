@@ -251,12 +251,6 @@ weather_service :
     service_name : Weather Simulator
     key_path : /var/RemoteObservatory/keys.json
     delay_sec : 60
-    messaging:
-        module: PanMessagingZMQ #PanMessagingZMQ, PanMessagingMQTT
-        mqtt_host: 192.168.0.48
-        mqtt_port: 1883
-        cmd_port: 6500
-        msg_port: 6510
     observatory:
         latitude: 43.56 # Degrees
         longitude: 5.43 # Degrees
@@ -270,12 +264,31 @@ weather_service :
         indi_port : 7624
 time_service :
     module : HostTimeService
-messaging:
-    module : PanMessagingZMQ #PanMessagingZMQ, PanMessagingMQTT
-    mqtt_host: 192.168.0.48
+messaging_publisher:
+    module: PanMessagingZMQ #PanMessagingZMQ, PanMessagingMQTT
+    mqtt_host: localhost
     mqtt_port: 1883
-    cmd_port: 6500
+    com_mode: publisher
     msg_port: 6510
+messaging_subscriber:
+    module: PanMessagingZMQ #PanMessagingZMQ, PanMessagingMQTT
+    mqtt_host: localhost
+    mqtt_port: 1883
+    com_mode: subscriber
+    cmd_port: 6500
+paws_subscriber:
+    module: PanMessagingZMQ #PanMessagingZMQ, PanMessagingMQTT
+    mqtt_host: localhost
+    mqtt_port: 1883
+    com_mode: subscriber
+    cmd_port: 6511
+paws_publisher:
+    module: PanMessagingZMQ #PanMessagingZMQ, PanMessagingMQTT
+    mqtt_host: localhost
+    mqtt_port: 1883
+    com_mode: publisher
+    msg_port: 6500
+
 #Enable to output POCS messages to social accounts
 # social_accounts:
 #     twitter:

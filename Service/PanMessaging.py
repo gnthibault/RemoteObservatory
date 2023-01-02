@@ -27,9 +27,28 @@ class PanMessaging:
             channel(str):   Name of channel to send on.
             message(str):   Message to be sent.
         """
-        print(f"Messaging placeholder, sending msg {message} on channel {channel}")
-        #return NotImplementedError()
+        raise NotImplementedError()
 
-    def register_callback(self, callback, cmd_type):
-        return
-        #return NotImplementedError()
+    def register_callback(self, callback, cmd_type=None):
+        raise NotImplementedError()
+
+    def scrub_message(self, message):
+        for k, v in message.items():
+            if isinstance(v, dict):
+                v = self.scrub_message(v)
+            if isinstance(v, u.Quantity):
+                v = v.value
+            if isinstance(v, datetime.datetime):
+                v = v.isoformat()
+            if isinstance(v, ObjectId):
+                v = str(v)
+            if isinstance(v, Time):
+                v = str(v.isot).split('.')[0].replace('T', ' ')
+            # Hmmmm
+            if k.endswith('_time'):
+                v = str(v).split(' ')[-1]
+            if isinstance(v, float):
+                v = round(v, 3)
+            message[k] = v
+        return message
+

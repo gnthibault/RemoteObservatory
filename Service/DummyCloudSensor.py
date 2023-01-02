@@ -35,7 +35,7 @@ class DummyCloudSensor(Base):
 
     def send_message(self, msg, channel='weather'):
         if self.messaging is None:
-            self.messaging = PanMessaging(**self.config["messaging"])
+            self.messaging = PanMessaging(**self.config["messaging_publisher"])
         self.messaging.send_message(channel, msg)
 
     def capture(self, store_result=False, send_message=False, **kwargs):
