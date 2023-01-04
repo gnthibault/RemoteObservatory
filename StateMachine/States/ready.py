@@ -4,6 +4,7 @@ def on_enter(event_data):
     The next step is to schedule something for the night.
     """
     model = event_data.model
+    model.status()
     model.logger.debug("Ok, I'm all set up and ready to go!")
     model.next_state = 'parking'
 

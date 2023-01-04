@@ -876,6 +876,7 @@ class GuiderPHD2(Base):
                 else:
                     msg = f"PHD2 Timeout: No response from server"
                     self.logger.error(msg)
+                    self.ConnectionLost()
                     raise GuidingError(msg)
             except Exception as e:
                 msg = f"PHD2 error {e}"
@@ -967,12 +968,14 @@ class GuiderPHD2(Base):
         self.logger.debug(f"Received version {event['PHDVersion']}:"
             f"{event['PHDSubver']} - msg ver {event['MsgVersion']}")
         self.connection_trig()
+        self.send_message(self.status(), channel='GUIDING_STATUS')
 
     def _handle_ConfigurationChange(self, event):
         """Waiting for more info: https://github.com/OpenPHDGuiding/phd2/issues/845
            Attribute   Type   Description
         """
         self.logger.debug(f"Received ConfigurationChange event: {event}")
+        self.send_message(self.status(), channel='GUIDING_STATUS')
 
     def _handle_LockPositionSet(self, event):
         """The lock position has been established.
@@ -982,7 +985,8 @@ class GuiderPHD2(Base):
         """
         self.logger.debug(f"Lock position X:{event['X']} , Y:{event['Y']} "
                           f"has been established")
-                          
+        self.send_message(self.status(), channel='GUIDING_STATUS')
+
     def _handle_Calibrating(self, event):
         """ Attribute Type            Description
             Mount     string          name of the mount that was calibrated
@@ -1007,12 +1011,14 @@ class GuiderPHD2(Base):
            Mount     string  name of the mount that was calibrated
         """
         self.logger.debug("Successfully calibrated mount {event['Mount']}")
+        self.send_message(self.status(), channel='GUIDING_STATUS')
 
     def _handle_StartGuiding(self, event):
         """Guiding begins.
            (no message attributes)
         """
         self.logger.debug(f"Guiding started !")
+        self.send_message(self.status(), channel='GUIDING_STATUS')
 
     def _handle_Paused(self, event):
         """Guiding has been paused.
@@ -1060,7 +1066,30 @@ class GuiderPHD2(Base):
         """
         msg = f"Calibration failed ! Reason: {event['Reason']}"
         self.logger.error(msg)
+        self.send_message(self.status(), channel='GUIDING_STATUS')
         raise GuidingError(msg)
+
+    def _handle_LockPositionShiftLimitReached(self, event=None):
+        """
+        The lock position shift is active and the lock position has shifted to the edge of the field of view.
+        :param event: (no event attributes)
+        :return:
+        """
+        msg = f"Lock position shift limit reached"
+        self.logger.error(msg)
+        self.send_message(self.status(), channel='GUIDING_STATUS')
+        raise GuidingError(msg)
+
+    def _handle_LoopingExposuresStopped(self, event=None):
+        """
+        Looping exposures has stopped.
+        :param event: (no event attributes)
+        :return:
+        """
+        msg = f"Looping exposure stopped"
+        self.logger.debug(msg)
+        self.LoopingExposuresStopped()
+        self.send_message(self.status(), channel='GUIDING_STATUS')
 
     def _handle_CalibrationDataFlipped(self, event):
         """Calibration data has been flipped.
@@ -1069,6 +1098,7 @@ class GuiderPHD2(Base):
         """
         self.logger.debug(f"Calibration data flipped for mount "
                           f"{event['Mount']}")
+        self.send_message(self.status(), channel='GUIDING_STATUS')
 
     def _handle_LoopingExposures(self, event):
         """Sent for each exposure frame while looping exposures.
@@ -1095,6 +1125,7 @@ class GuiderPHD2(Base):
         """
         self.logger.debug("Settling begin, waiting for telescope to stabilize")
         self.SettleBegin()
+        self.send_message(self.status(), channel='GUIDING_STATUS')
 
     def _handle_Settling(self, event):
         """Sent for each exposure frame after a dither or guide method
@@ -1114,6 +1145,7 @@ class GuiderPHD2(Base):
             f"is {event['Distance']}, time since settling process started "
             f"{event['Time']}/{event['SettleTime']}. Target guiding "
             f"star status (is found?): {event['StarLocked']}")
+        self.send_message(self.status(), channel='GUIDING_STATUS')
 
     def _handle_SettleDone(self, event):
         """Sent after a dither or guide method invocation indicating whether
@@ -1132,6 +1164,7 @@ class GuiderPHD2(Base):
             f"Dropped frames: {event['DroppedFrames']}/{event['TotalFrames']}. "
             f"Now proper imaging can start")
         self.SettleDone()
+        self.send_message(self.status(), channel='GUIDING_STATUS')
 
     def _handle_StarSelected(self, event):
         """A star has been selected.
@@ -1142,6 +1175,7 @@ class GuiderPHD2(Base):
         self.logger.debug(f"Star has been selected at coordinates "
                           f"x:{event['X']}, y:{event['Y']}")
         self.StarSelected()
+        self.send_message(self.status(), channel='GUIDING_STATUS')
 
     def _handle_StarLost(self, event):
         """A frame has been dropped due to the star being lost.
@@ -1167,12 +1201,15 @@ class GuiderPHD2(Base):
            (no event attributes)
         """
         self.logger.debug(f"Guiding has stopped {event}")
+        self.GuidingStopped()
+        self.send_message(self.status(), channel='GUIDING_STATUS')
 
     def _handle_Resumed(self, event):
         """PHD has been resumed after having been paused.
            (no attributes)
         """
         self.logger.debug(f"Guiding has resumed {event}")
+        self.send_message(self.status(), channel='GUIDING_STATUS')
 
     def _handle_GuideStep(self, event):
         """This event corresponds to a line in the PHD Guide Log. The event is
@@ -1216,14 +1253,15 @@ class GuiderPHD2(Base):
            dx         number  the dither X-offset in pixels
            dy         number  the dither Y-offset in pixels
         """
-        self.logger.debug(f"Dithering from current position by x:{event['dx']} "
-                          f"pix, and y:{event['dy']} pix")
+        self.logger.debug(f"Dithering from current position by x:{event['dx']}px, and y:{event['dy']}px")
+        self.send_message(self.status(), channel='GUIDING_STATUS')
 
     def _handle_LockPositionLost(self, event):
         """The lock position has been lost.
            (no attributes)
         """
         self.logger.warning(f"PHD2: The lock position has been lost")
+        self.send_message(self.status(), channel='GUIDING_STATUS')
 
     def _handle_Alert(self, event):
         """An alert message was displayed in PHD2.
@@ -1241,7 +1279,8 @@ class GuiderPHD2(Base):
         if event["Type"] == "error":
             self.logger.error(msg)
         else:
-            self.logger.info(msg)
+            self.logger.debug(msg)
+        self.send_message(self.status(), channel='GUIDING_STATUS')
 
     def _handle_GuideParamChange(self, event):
         """A guiding parameter has been changed.
@@ -1251,3 +1290,4 @@ class GuiderPHD2(Base):
         """
         self.logger.debug(f"PHD2 parameter {event['Name']} changed: "
                           f"{event['Value']}")
+        self.send_message(self.status(), channel='GUIDING_STATUS')

@@ -14,6 +14,7 @@ def on_enter(event_data):
     If no observable targets are available, park`the unit.
     """
     model = event_data.model
+    model.status()
     model.next_state = "parking"
 
     model.say("Ok, I'm finding something good to look at...")

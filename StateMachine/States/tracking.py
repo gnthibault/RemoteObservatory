@@ -6,6 +6,7 @@ def on_enter(event_data):
 
     """ The unit is tracking the target. Proceed to observations. """
     model = event_data.model
+    model.status()
     model.next_state = 'parking'
 
     # If we came from pointing then don't try to dither

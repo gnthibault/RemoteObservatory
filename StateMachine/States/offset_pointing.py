@@ -51,6 +51,7 @@ def on_enter(event_data):
         then go to next state.
     """
     model = event_data.model
+    model.status()
     model.next_state = 'parking'
 
     if model.manager.adjust_pointing_camera is None:
