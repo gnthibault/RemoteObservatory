@@ -36,8 +36,8 @@ class PanMessagingMQTT(PanMessaging):
         super().__init__(**kwargs)
 
         # Create helper objects
-        self.default_topic = "remoteobservatory"
-        #self.default_cmd_topic = "remoteobservatory/cmd"
+        self.default_topic = "observatory"
+        #self.default_cmd_topic = "observatory/cmd"
         self.client = None
         self.broker = None
         self.client_id = None
