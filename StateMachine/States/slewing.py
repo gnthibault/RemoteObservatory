@@ -1,6 +1,7 @@
 def on_enter(event_data):
     """ Once inside the slewing state, set the mount slewing. """
     model = event_data.model
+    model.status()
     model.next_state = 'parking'
     try:
         model.logger.debug(f"Inside slew state")

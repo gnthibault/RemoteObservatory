@@ -437,6 +437,8 @@ class StateMachine(Machine, Base):
                 event
          """
         self.logger.debug(f"Before calling {event_data.event.name} from {event_data.state.name} state")
+        # record info at the very end of each state, after checking for conditions
+        self.model.status()
 
     def after_state(self, event_data):
         """ Called after each state.
@@ -447,9 +449,9 @@ class StateMachine(Machine, Base):
             event_data(transitions.EventData):  Contains informaton about the
                 event
         """
-
-        self.logger.debug(f"After calling {event_data.event.name}. Now in {event_data.state.name} state")
-
+        self.logger.debug(f"After calling {event_data.event.name}. End of state {event_data.state.name} state")
+        # record info at the end of each state, before checking for conditions
+        self.model.status()
 
 ###############################################################################
 # Class Methods
@@ -613,5 +615,5 @@ class StateMachine(Machine, Base):
         conditions.insert(0, 'check_safety')
         transition['conditions'] = conditions
 
-        self.logger.debug("Returning transition: {}".format(transition))
+        self.logger.debug(f"Returning transition: {transition}")
         return transition

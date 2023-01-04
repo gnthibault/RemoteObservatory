@@ -25,6 +25,7 @@ def on_enter(event_data):
     #return
 
     model = event_data.model
+    model.status()
     model.next_state = 'parking'
 
     # First thing: if we are not at our first exposure, then assume the focus is still ok

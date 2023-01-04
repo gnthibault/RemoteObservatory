@@ -1,6 +1,7 @@
 def on_enter(event_data):
     """ """
     model = event_data.model
+    model.status()
 
     if model.should_retry is False:
         model.say("Weather is good and it is dark. Something must have gone wrong. Stopping loop.")

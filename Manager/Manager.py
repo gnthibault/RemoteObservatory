@@ -168,8 +168,7 @@ class Manager(Base):
             }
 
         except Exception as e:  # pragma: no cover
-            msg = "Can't get observatory status: {}-{}".format(e,
-                traceback.format_exc())
+            msg = f"Can't get observatory status: {e}-{traceback.format_exc()}"
             self.logger.error(msg)
             raise RuntimeError(msg)
         return status
@@ -330,7 +329,6 @@ class Manager(Base):
         """Slew to current target"""
         self.mount.set_slew_rate("3x")
         self.mount.slew_to_target()
-
 
     def update_tracking(self):
         """Update tracking with dithering.
@@ -548,7 +546,6 @@ class Manager(Base):
             self._setup_time_service()
             self._setup_weather_service()
             self._setup_messaging()
-            #self.serv_astrometry = NovaAstrometryService(configFileName='local')
         except Exception:
             raise RuntimeError('Problem setting up services')
 
@@ -558,7 +555,6 @@ class Manager(Base):
             messaging_module = load_module('Service.'+messaging_name)
             self.messaging = getattr(messaging_module, messaging_name)(
                  config=self.config["messaging_publisher"])
-            # self.messaging = PanMessagingZMQ.create_publisher(self.config["messaging_publisher"]["msg_port"])
         except Exception:
             raise RuntimeError('Problem setting up messaging service')
 

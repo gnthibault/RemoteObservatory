@@ -26,6 +26,7 @@ def on_enter(event_data):
     """
 
     model = event_data.model
+    model.status()
     model.say("Starting observing")
     model.next_state = 'parking'
 

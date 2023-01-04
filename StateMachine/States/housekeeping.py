@@ -1,6 +1,7 @@
 def on_enter(event_data):
     """ """
     model = event_data.model
+    model.status()
     model.next_state = 'sleeping'
     model.say("Recording all the data for the night.")
 

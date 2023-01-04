@@ -31,6 +31,7 @@ def on_enter(event_data):
     Take 30 second exposure and plate-solve to get the pointing error
     """
     model = event_data.model
+    model.status()
     model.next_state = 'parking'
 
     try:

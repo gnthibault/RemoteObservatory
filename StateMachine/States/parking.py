@@ -1,6 +1,7 @@
 def on_enter(event_data):
     """ """
     model = event_data.model
+    model.status()
 
     # Clear any current observation
     model.manager.current_observation = None

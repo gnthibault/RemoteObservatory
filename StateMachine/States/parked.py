@@ -2,6 +2,7 @@
 def on_enter(event_data):
     """ """
     model = event_data.model
+    model.status()
     model.logger.debug(f"Entering parking state")
 
     has_valid_observations = model.manager.scheduler.has_valid_observations
