@@ -22,7 +22,7 @@ from Base.Base import Base
 from Service.NTPTimeService import NTPTimeService
 
 # Local stuff : Observatory
-from Observatory.ShedObservatory import ShedObservatory
+from Observatory.Observatory import Observatory
 
 # Local stuff : observation planner
 from ObservationPlanner.ObservationPlanner import ObservationPlanner

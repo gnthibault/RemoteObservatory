@@ -76,6 +76,9 @@ class Manager(Base):
         self.logger.info('\tSetting up observation planner')
         self._setup_scheduler()
 
+        # Setup vizualization service
+        self.logger.info('\tSetting up vizualization service')
+        self._setup_vizualization_service()
         self.logger.info('\t Observatory initialized')
 
 ##########################################################################
@@ -508,8 +511,7 @@ class Manager(Base):
 
             return True
         except Exception as e:
-            self.logger.error(
-                "Problem unparking: {}".format(e))
+            self.logger.error(f"Problem unparking: {e}")
             return False
 
     def park(self):
@@ -605,9 +607,9 @@ class Manager(Base):
             obs_name = self.config['observatory']['module']
             obs_module = load_module('Observatory.'+obs_name)
             self.observatory = getattr(obs_module, obs_name)(
-                config = self.config['observatory'])
+                config=self.config['observatory'])
         except Exception:
-            raise RuntimeError('Problem setting up observatory')
+            raise RuntimeError(f"Problem setting up observatory: {e}")
 
     def _setup_mount(self):
         """
@@ -741,4 +743,23 @@ class Manager(Base):
                     config=load_config(config_files=[scheduler_target_file]))
         except Exception as e:
             raise RuntimeError(f"Problem setting up scheduler: {e}")
+
+    def _setup_vizualization_service(self):
+        """
+            Sets up the vizualization service to be used in the webfrontend
+        """
+
+        try:
+            if 'vizualization_service' in self.config:
+                viz_name = self.config['vizualization_service']['module']
+                viz_module = load_module(f"Service.{viz_name}")
+                self.vizualization_service = getattr(viz_module, viz_name)(
+                    config=self.config['vizualization_service'],
+                    mount_device=self.mount,
+                    observatory_device=self.observatory.dome_controller)
+                self.vizualization_service.start()
+        except Exception as e:
+            # No need to stop everything just for this service
+            self.logger.error(f"Problem setting up vizualization_service: {e}")
+
 

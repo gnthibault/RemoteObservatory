@@ -15,7 +15,7 @@ from astropy.coordinates import SkyCoord
 import meshcat
 import meshcat.geometry as g
 from meshcat.geometry import Geometry
-from meshcat.geometry import SceneElement
+from meshcat.geometry import PerspectiveCamera
 from meshcat.geometry import Sphere
 import meshcat.transformations as tf
 
@@ -70,54 +70,7 @@ class SmoothSphere(Sphere):
             u"heightSegments": self.nb_segment
         }
 
-class PerspectiveCamera(SceneElement):
-    """
-    Checkout https://threejs.org/docs/#api/en/cameras/PerspectiveCamera
-    """
-    def __init__(self, fov, aspect, near, far, zoom):
-        """
-        fov   : Camera frustum vertical field of view, from bottom to top of view, in degrees. Default is 50.
-        aspect: Camera frustum aspect ratio, usually the canvas width / canvas height. Default is 1 (square canvas).
-        near  : Camera frustum near plane. Default is 0.1. The valid range is greater than 0 and less than the current
-                value of the far plane. Note that, unlike for the OrthographicCamera, 0 is not a valid value for a
-                PerspectiveCamera's near plane.
-        far   : Camera frustum far plane. Default is 2000.
-        zoom  : Gets or sets the zoom factor of the camera. Default is 1.
-        filmGauge: Film size used for the larger axis. Default is 35 (millimeters). This parameter does not influence
-                   the projection matrix unless .filmOffset is set to a nonzero value.
-        filmOffset: Horizontal off-center offset in the same unit as .filmGauge. Default is 0.
-        focus: Object distance used for stereoscopy and depth-of-field effects. This parameter does not influence
-               the projection matrix unless a StereoCamera is being used. Default is 10.
-        """
-        #super(PerspectiveCamera, self).__init__()
-        SceneElement.__init__(self)
-        self.aspect = aspect
-        self.far = far
-        self.filmGauge = 35
-        self.filmOffset = 0
-        self.focus = 10
-        self.fov = fov
-        self.near = near
-        self.zoom = zoom
-
-    def lower(self):
-        data = {
-            u"object": {
-                u"uuid": self.uuid,
-                u"type": u"PerspectiveCamera",
-                u"aspect": self.aspect,
-                u"far": self.far,
-                u"filmGauge": self.filmGauge,
-                u"filmOffset": self.filmOffset,
-                u"focus": self.focus,
-                u"fov": self.fov,
-                u"near": self.near,
-                u"zoom": self.zoom,
-            }
-        }
-        return data
-
-class World3D():
+class World3D:
     """
     Frame: x axis pointing North, y axis pointing Zenith/pole, z axis
     pointing East
@@ -550,10 +503,11 @@ class World3D():
            - zenith cardinal is +90deg Dec
            - nadir cardinal is -90 deg Dec
         """
+        return #TODO TN DISABLING THE WHOLE STAR CATALOG LOAD BECAUSE IT IS TOO LONG
         # Loads star catalog and render on the sky parent object
         stars = load_bright_star_5('ScopeSimulator/data/bsc5.dat.gz', True)
         stars = self.j2k_to_jnow(stars)
-        radius_mag = [.2, .14, .10, .08, .05, .03, .02]
+        radius_mag = [.25, .14, .10, .08, .05, .03, .02]
         mag_to_radius = scipy.interpolate.interp1d(
             range(1, 8),
             radius_mag,

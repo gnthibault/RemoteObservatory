@@ -7,7 +7,7 @@ import meshcat
 from ScopeSimulator.World3D import World3D
 
 # Local stuff : Observatory
-from Observatory.ShedObservatory import ShedObservatory
+from Observatory.Observatory import Observatory
 from Service.NTPTimeService import NTPTimeService
 
 
@@ -35,7 +35,7 @@ class WholeSceneVizualizer():
 
 if __name__ == "__main__":
     # Build the observatory
-    obs = ShedObservatory()
+    obs = Observatory()
     serv_time = NTPTimeService()
     gps_coord = obs.get_gps_coordinates()
     main_loop = WholeSceneVizualizer(

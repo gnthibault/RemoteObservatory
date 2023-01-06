@@ -9,7 +9,7 @@ from astropy.coordinates import  SkyCoord, FK5, AltAz, Angle
 from astroplan import FixedTarget
 
 # Local stuff
-from Observatory.ShedObservatory import ShedObservatory
+from Observatory.Observatory import Observatory
 from Service.NTPTimeService import NTPTimeService
 from Spectro.ReferenceStarFinder import best_references
 
@@ -18,7 +18,7 @@ def find_reference(target_name="Shelyak"):
     target = FixedTarget.from_name(target_name)
     maxseparation = 5*u.deg
     maxebv = 5
-    obs = ShedObservatory()
+    obs = Observatory()
     serv_time = NTPTimeService()
 
     #altaz_frame=AltAz(obstime=ATime.now(), location=EarthLocation.from_geodetic(lon=3,lat=40))

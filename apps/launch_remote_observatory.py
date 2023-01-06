@@ -226,7 +226,7 @@ class RemoteObservatoryFSM(StateMachine, Base):
             self.logger.info('Shutting down {}, please be patient and allow '
                              'for exit.', self.name)
 
-            if not self.manager.close_dome():
+            if not self.manager.close_observatory():
                 self.logger.critical('Unable to close dome!')
 
             # Park if needed

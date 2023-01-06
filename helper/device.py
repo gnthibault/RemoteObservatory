@@ -1249,8 +1249,7 @@ class indiswitchvector(indivector):
         for element in self.elements:
             if element.name == element_name:
                 if found:
-                    raise RuntimeError(
-                        f"Element with name {element_name} is present more than once")
+                    raise RuntimeError(f"Element with name {element_name} is present more than once")
                 element.set_active(is_active)
                 found = True
         if not found:
@@ -1428,6 +1427,18 @@ class indimessage(indiobject):
         """
         return self._value != ""
 
+class VectorHandler:
+    def __init__(self, devicename, vectorname, callback):
+        self.devicename = devicename
+        self.vectorname = vectorname
+        self.callback = callback
+
+    def configure(self, vector):
+        pass
+
+    def indi_object_change_notify(self, vector):
+        self.callback(vector)
+
 class device(ABC):
     """
     Horrible mix of various MMTO classes        
@@ -1459,8 +1470,8 @@ class device(ABC):
         self.blob_queue = collections.deque(maxlen=1)
 
         # vector/property handlers
-        self.custom_element_handler_list = []
-        self.custom_vector_handler_list = []
+        self.custom_element_handler_dict = {}
+        self.custom_vector_handler_dict = {}
         self.blob_def_handler = self._default_blob_handler
         self.number_def_handler = self._default_def_handler
         self.switch_def_handler = self._default_def_handler
@@ -1489,9 +1500,9 @@ class device(ABC):
         return self.device_name
 
     def __repr__(self):
-        return f"<{self.name()}>"
+        return f"<{self.name}>"
 
-    def add_custom_vector_handler(self, handler):
+    def register_custom_vector_handler(self, handler_name, handler):
         """
         Adds a custom handler function for an L{indivector}, the handler will be called each time the vector is received.
         Furthermore this method will call the hander once. If the vector has not been received yet, this function will wait
@@ -1503,11 +1514,14 @@ class device(ABC):
         @rtype: L{indi_custom_vector_handler}
         """
         handler.indi = self
-        self.custom_vector_handler_list.append(handler)
-        vector = self.get_vector(handler.devicename, handler.vectorname)
+        self.custom_vector_handler_dict[handler_name] = handler
+        vector = self.get_vector(handler.vectorname)
         handler.configure(vector)
         handler.indi_object_change_notify(vector)
         return handler
+
+    def unregister_custom_vector_handler(self, handler_name):
+        del self.custom_vector_handler_dict[handler_name]
 
     def _default_message_handler(self, message, indi):
         """
@@ -1576,7 +1590,7 @@ class device(ABC):
         @return: B{None}
         @rtype: NoneType
         """
-        for handler in self.custom_element_handler_list:
+        for h_key, handler in self.custom_element_handler_dict.items():
             if ((handler.vectorname == vector.name) and (handler.elementname == element.name) and
                     (handler.devicename == vector.device)):
                 handler.indi_object_change_notify(vector, element)
@@ -1588,7 +1602,7 @@ class device(ABC):
         @return: B{None}
         @rtype: NoneType
         """
-        for handler in self.custom_vector_handler_list:
+        for h_key, handler in self.custom_vector_handler_dict.items():
             if ((handler.vectorname == vector.name) and (handler.devicename == vector.device)):
                 handler.indi_object_change_notify(vector)
 
@@ -1701,11 +1715,10 @@ class device(ABC):
         """
         obj = self._factory.create(name, attrs)
         if obj is None:
-            logging.warning(f"Received new element with name/attr: {name, attrs}")
+            logging.debug(f"Received new element with name/attr: {name, attrs}")
             return
         if 'message' in attrs:
-            logging.warning(
-                f"Legacy type of message received from indi: {name, attrs}")
+            logging.info(f"Message received from indi: {name, attrs}")
         if obj.tag.is_vector():
             if obj.tag.get_transfertype() in (inditransfertypes.idef, inditransfertypes.iset):
                 self.current_vector = obj
@@ -1821,11 +1834,9 @@ class device(ABC):
         while vector is None:
             vector = self._get_vector(vectorname)
             if 0 < timeout < time.time() - started:
-                self.logger.debug(f"device: Timeout while waiting for "
-                                  f"property status {vectorname} for device "
+                self.logger.debug(f"device: Timeout while waiting for property status {vectorname} for device "
                                   f"{self.device_name}")
-                raise RuntimeError(f"Timeout error while waiting for property "
-                                   f"{vectorname}")
+                raise RuntimeError(f"Timeout error while waiting for property {vectorname}")
             time.sleep(0.01)
         return vector
 

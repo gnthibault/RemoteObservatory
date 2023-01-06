@@ -1,7 +1,6 @@
-import time
 import asyncio
 import logging
-
+import threading
 """
     INDIClient runs two tasks that are infinite loops and run 
     in parallel with the asyncio.gather function. These
@@ -34,6 +33,8 @@ import logging
         it would be nice to remove tornado dependencies in this module. 
 
 """
+logger = logging.getLogger(__name__)
+
 MAX_NETWORK_EXCHANCE_TIMEOUT_S = 10
 class INDIClient:
     """This class sends/recvs INDI data to/from the indiserver 
@@ -50,18 +51,18 @@ class INDIClient:
         self.port = port
         self.host = host
         self.read_width = read_width
+        self.communication_over_event = threading.Event()
 
     async def connect(self, timeout):
         """Attempt to connect to the indiserver in a loop.
         """
-        while 1:
+        while True:
             task = None
             try:
-                logging.debug(f"Attempting to connect to indiserver "
-                              f"{self.host}:{self.port}")
-                task = asyncio.open_connection(self.host, self.port)
+                logger.debug(f"Attempting to connect to indiserver {self.host}:{self.port}")
+                task = asyncio.create_task(asyncio.open_connection(self.host, self.port))
                 self.reader, self.writer = await asyncio.wait_for(task, timeout=timeout)
-                logging.debug(f"Connected to indiserver {self.host}:{self.port}")
+                logger.debug(f"Connected to indiserver {self.host}:{self.port}")
                 # Send first "Introductory message" in non blocking fashion
                 await self.to_indiQ.put("<getProperties version='1.7'/>")
                 # Now run main two asynchronous task: consume send queue, and receive
@@ -73,14 +74,16 @@ class INDIClient:
                 task_write = asyncio.create_task(self.write_to_indiserver(timeout=MAX_NETWORK_EXCHANCE_TIMEOUT_S))
                 task_read = asyncio.create_task(self.read_from_indiserver(timeout=MAX_NETWORK_EXCHANCE_TIMEOUT_S))
                 await asyncio.wait([task_read, task_write], return_when=asyncio.ALL_COMPLETED)
-
-                logging.debug("INDI client tasks finished. indiserver crash?")
-                logging.debug("Attempting to connect again")
+                logger.debug("INDI client tasks finished or indiserver crashed ?")
+                # Stopped from the outside on purpose
+                if not self.running:
+                    # self.communication_over_event.set()
+                    break
             except ConnectionRefusedError:
                 self.running = False
-                logging.debug("Can not connect to INDI server\n")
+                logger.debug("Can not connect to INDI server")
             except asyncio.TimeoutError:
-                logging.debug("Lost connection to INDI server\n")
+                logger.debug("Lost connection to INDI server")
             finally:
                 if task is not None:
                     task.cancel()
@@ -102,19 +105,19 @@ class INDIClient:
                 if self.reader.at_eof():
                     raise Exception("INDI server closed")
                 # Read data from indiserver with a timeout, so that we don't block loop
-                data = await asyncio.wait_for(self.read_from_stream(),
-                                              timeout=timeout)
+                data = await asyncio.wait_for(self.read_from_stream(), timeout=timeout)
             except asyncio.TimeoutError:
-                logging.error(f"Timeout in client stream reading process")
+                # Sorry this is just too verbose
+                # logger.debug(f"Timeout in client stream reading process. Expected in loop mode")
                 continue
             except Exception as err:
                 self.running = False
-                logging.error(f"Could not read from INDI server {err}")
+                logger.error(f"Could not read from INDI server {err}")
                 raise
             else:
                 # Makes the data available for the application, and wait for it to be consumed
                 await self.xml_from_indiserver(data)
-        logging.info(f"Finishing read_from_indiserver task")
+        logger.info(f"Finishing read_from_indiserver task")
 
     async def write_to_indiserver(self, timeout):
         """Collect INDI data from the from the to_indiQ.
@@ -128,14 +131,14 @@ class INDIClient:
             # except asyncio.TimeoutError:
             #     continue
             except asyncio.queues.QueueEmpty:
-                await asyncio.sleep(0.01)
+                await asyncio.sleep(0.001)
                 continue
             try:
                 self.writer.write(to_indi.encode())
                 await asyncio.wait_for(self.writer.drain(), timeout=timeout)
             except Exception as err:
                 self.running = False
-                logging.error(f"Could not write to INDI server {err}")
+                logger.error(f"Could not write to INDI server {err}")
         self.writer.close()
         await self.writer.wait_closed()
-        logging.debug("Finishing write_to_indiserver task")
+        logger.debug("Finishing write_to_indiserver task")

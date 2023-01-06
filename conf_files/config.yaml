@@ -1,9 +1,9 @@
 name: Remote observatory
 observatory:
-    module: ShedObservatory
+    module: Observatory
     investigator: gnthibault
-    latitude: 43.56 # Degrees
-    longitude: 5.43 # Degrees
+    latitude: 45.67 # Degrees
+    longitude: 5.67 # Degrees
     elevation: 150.0 # Meters
     timezone: Europe/Paris #This is not mandatory, just speeds up startup
     # UTC+1 CET Central European Time,
@@ -34,8 +34,9 @@ observatory:
             indi_host : localhost
             indi_port : 7624
     dome_controller:
-        module : IndiRorController
-        port : /dev/ttyACM1
+        module : IndiDomeController
+        dome_movement_timeout_s: 300
+        dome_name: Dome Simulator
         indi_client :
             indi_host : localhost
             indi_port : 7624
@@ -262,6 +263,13 @@ weather_service :
     indi_client :
         indi_host : localhost
         indi_port : 7624
+vizualization_service:
+        module: SceneVizualization
+        delay_sky_update_s: 1
+        delay_moving_objects_s: 0.05
+        gps_coord:
+            latitude: 45.67
+            longitude: 5.67
 time_service :
     module : HostTimeService
 messaging_publisher:
