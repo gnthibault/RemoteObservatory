@@ -2,6 +2,8 @@ astroalign==1.0.4
 astroplan==0.7
 astropy==4.1
 astroquery==0.4.1
+influxdb-client==1.35.0
+gcn-kafka==0.3.0
 lxml==4.9.1
 ntplib==0.3.4
 matplotlib==3.3.4

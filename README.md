@@ -107,6 +107,20 @@ pip install Cython setuptools wheel requests pyindi-client requests-cache watchd
 If you want to run the astrometry server locally, use:
 pip install django Pillow
 
+## Kafka GCN stuff
+```console
+  sudo apt-get install libzstd-dev
+  sudo apt-get install libz-dev
+  sudo apt-get install rapidjson-dev
+  sudo apt-get -y install libsasl2-dev
+  sudo apt-get -y install libssl-dev
+  git clone https://github.com/edenhill/librdkafka
+  cd ./librdkafka
+  git checkout v1.9.2-RC3
+  ./configure && make -j8 && sudo make install && ldconfig
+  pip install --no-binary :all: confluent-kafka
+```
+
 ## Arduino stuff
 If you are interested in compiling/using the arduino stuff here, please download the official Arduino IDE, and define the following environment variable: $ARDUINO_SDK_PATH
 

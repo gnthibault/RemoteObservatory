@@ -288,6 +288,19 @@ paws_publisher:
     mqtt_port: 1883
     com_mode: publisher
     msg_port: 6500
+independant_services:
+    -
+        module: NasaGCNService
+        delay_sec: 60
+# If not provided, sourced from env NASA_GCN_CLIENT_ID and NASA_GCN_CLIENT_SECRET
+#        client_info:
+#            client_id:
+#            client_secret:
+        messaging_publisher:
+            module: PanMessagingMQTT
+            mqtt_host: localhost
+            mqtt_port: 1883
+            com_mode: publisher
 
 #Enable to output POCS messages to social accounts
 # social_accounts:
@@ -296,7 +309,4 @@ paws_publisher:
 #         consumer_secret: [your_consumer_secret]
 #         access_token: [your_access_token]
 #         access_token_secret: [your_access_token_secret]
-#     slack:
-#         webhook_url: [your_webhook_url]
-#         output_timestamp: False
 state_machine: simple_state_table.yaml
