@@ -546,17 +546,21 @@ class Manager(Base):
             self._setup_time_service()
             self._setup_weather_service()
             self._setup_messaging()
+            self._setup_independant_services()
         except Exception:
             raise RuntimeError('Problem setting up services')
 
-    def _setup_messaging(self):
+    def _setup_time_service(self):
+        """
+            setup a service that will provide time
+        """
         try:
-            messaging_name = self.config["messaging_publisher"]['module']
-            messaging_module = load_module('Service.'+messaging_name)
-            self.messaging = getattr(messaging_module, messaging_name)(
-                 config=self.config["messaging_publisher"])
+            time_name = self.config['time_service']['module']
+            time_module = load_module('Service.'+time_name)
+            self.serv_time = getattr(time_module, time_name)(
+                config=self.config['time_service'])
         except Exception:
-            raise RuntimeError('Problem setting up messaging service')
+            raise RuntimeError('Problem setting up time service')
 
     def _setup_weather_service(self):
         """
@@ -573,17 +577,25 @@ class Manager(Base):
         except Exception:
             raise RuntimeError('Problem setting up weather service')
 
-    def _setup_time_service(self):
-        """
-            setup a service that will provide time
-        """
+    def _setup_messaging(self):
         try:
-            time_name = self.config['time_service']['module']
-            time_module = load_module('Service.'+time_name)
-            self.serv_time = getattr(time_module, time_name)(
-                config=self.config['time_service'])
+            messaging_name = self.config["messaging_publisher"]['module']
+            messaging_module = load_module('Service.'+messaging_name)
+            self.messaging = getattr(messaging_module, messaging_name)(
+                 config=self.config["messaging_publisher"])
         except Exception:
-            raise RuntimeError('Problem setting up time service')
+            raise RuntimeError('Problem setting up messaging service')
+
+    def _setup_independant_services(self):
+        self.independant_services = []
+        for config in self.config["independant_services"]:
+            try:
+                module_name = config['module']
+                module = load_module('Service.'+module_name)
+                self.independant_services.append(getattr(module, module_name)(
+                     config=config))
+            except Exception:
+                raise RuntimeError('Problem setting up independant services')
 
     def _setup_observatory(self):
         """
