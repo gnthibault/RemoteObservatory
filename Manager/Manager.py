@@ -588,7 +588,7 @@ class Manager(Base):
 
     def _setup_independant_services(self):
         self.independant_services = []
-        for config in self.config["independant_services"]:
+        for config in self.config.get("independant_services", []):
             try:
                 module_name = config['module']
                 module = load_module('Service.'+module_name)

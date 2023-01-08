@@ -288,19 +288,19 @@ paws_publisher:
     mqtt_port: 1883
     com_mode: publisher
     msg_port: 6500
-independant_services:
-    -
-        module: NasaGCNService
-        delay_sec: 60
-# If not provided, sourced from env NASA_GCN_CLIENT_ID and NASA_GCN_CLIENT_SECRET
-#        client_info:
-#            client_id:
-#            client_secret:
-        messaging_publisher:
-            module: PanMessagingMQTT
-            mqtt_host: localhost
-            mqtt_port: 1883
-            com_mode: publisher
+#independant_services:
+#    -
+#        module: NasaGCNService
+#        delay_sec: 60
+## If not provided, sourced from env NASA_GCN_CLIENT_ID and NASA_GCN_CLIENT_SECRET
+##        client_info:
+##            client_id:
+##            client_secret:
+#        messaging_publisher:
+#            module: PanMessagingMQTT
+#            mqtt_host: localhost
+#            mqtt_port: 1883
+#            com_mode: publisher
 
 #Enable to output POCS messages to social accounts
 # social_accounts:
