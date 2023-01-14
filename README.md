@@ -13,6 +13,7 @@ This project either uses, or is directly inspired by:
 * Astroplan: https://github.com/astropy/astroplan (Brett Morris + contributors)
 * Astrometry.net: https://github.com/dstndstn/astrometry.net (Dustin Lang + contributors)
 * PHD2: https://github.com/OpenPHDGuiding/phd2/wiki/EventMonitoring
+* SpectroDB: https://github.com/tlemoult/spectroDb (T. Lemoult)
 * notebooks from ivandga for amateur spectroscopy: https://github.com/ivandga/ArasSpectraNotebooks
 * SpectroStars from Serge Golovanow: https://github.com/serge-golovanow/SpectroStars
 * Astroalign: https://github.com/toros-astro/astroalign
