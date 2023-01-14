@@ -23,9 +23,9 @@ This project either uses, or is directly inspired by:
 
 # Overview, scratching the surface
 Quick overview of what you will be able to see and manage through this project
-![Telescope and observatory 1](/RemoteObservatory/assets/images/orion_leve.png)
-![Telescope mount](/RemoteObservatory/assets/images/mount_view_1.png)
-![Telescope and observatory 2](/RemoteObservatory/assets/images/observatory_view_1.png)
+![Telescope and observatory 1](https://gnthibault.github.io/RemoteObservatory/assets/images/orion_leve.png)
+![Telescope mount](https://gnthibault.github.io/RemoteObservatory/assets/images/mount_view_1.png)
+![Telescope and observatory 2](https://gnthibault.github.io/RemoteObservatory/assets/images/observatory_view_1.png)
 
 # Install
 
