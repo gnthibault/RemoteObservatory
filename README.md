@@ -1,8 +1,6 @@
 # RemoteObservatory
 [![astropy](http://img.shields.io/badge/powered%20by-AstroPy-orange.svg?style=flat)](http://www.astropy.org/)
 
-TODO TN: Currently in ugly debug mode to check for calibration behaviour: #TODO TN DEBUG
-
 Another astronomical observatory manager.
 This project either uses, or is directly inspired by:
 
@@ -21,6 +19,13 @@ This project either uses, or is directly inspired by:
 * Aladin-lite (mostly for PAWS actually): https://github.com/cds-astro/aladin-lite
 * MMTO Observatory indi client: https://github.com/MMTObservatory/indiclient
 * Meshcat: https://github.com/rdeits/meshcat-python but we might want to replace meshcat with scenepic in the future: https://microsoft.github.io/scenepic/python/
+
+
+# Overview, scratching the surface
+Quick overview of what you will be able to see and manage through this project
+![Telescope and observatory 1](/RemoteObservatory/assets/orion_leve.png)
+![Telescope mount](/RemoteObservatory/assets/mount_view_1.png)
+![Telescope and observatory 2](/RemoteObservatory/assets/observatory_view_1.png)
 
 # Install
 
@@ -226,7 +231,7 @@ PYTHONPATH=. python3 ./apps/launch_arduino_capture.py
 * fill-in the class Calibration that mirrors the observation class and make sure  that a new calibration is issued whenever an observation has completed (This should arise in Manager ?)
 * Check why the SITELONG entry in outputed file is wrong
 * ObservationPlanner/Scheduler l232 you NEED to setup proper FixedTarget.from_name
-* ShedObservatory l76: uncomment the raise ScopeControllerError(msg)
+* Observatory l76: uncomment the raise ScopeControllerError(msg)
 * Gast is important: Service/NTPTimeService.py l 137
 * Urgent: fix the hardcoded values in solve-field scripting
 * Urgent fix the max_pointing_error in pointing. Current one might be too low

@@ -5,7 +5,7 @@ import logging
 import time
 
 # Indi stuff
-from helper.device import device
+from helper.device import device, VectorHandler
 
 #Local
 from helper.IndiClient import IndiClient
@@ -80,6 +80,14 @@ class IndiDevice(Base, device):
                                 f"as it doesn't seems registered yet: {e}")
         await asyncio.sleep(0)
 
+    async def registering_custom_vector_handler(self, handler_name, handler):
+        self.register_custom_vector_handler(handler_name, handler)
+        await asyncio.sleep(0)
+
+    async def unregistering_custom_vector_handler(self, handler_name):
+        self.unregister_custom_vector_handler(handler_name)
+        await asyncio.sleep(0)
+
     def register_device_to_client(self):
         self.logger.debug(f"IndiDevice: asking indi_client to listen for device {self.device_name}")
         #self.indi_client.ioloop.call_soon_threadsafe(
@@ -92,6 +100,19 @@ class IndiDevice(Base, device):
         self.logger.debug(f"IndiDevice: asking indi_client to stop listen for device {self.device_name}")
         future = asyncio.run_coroutine_threadsafe(self.unregistering_runner(), self.indi_client.ioloop)
         _ = future.result() # This is just sync
+
+    def register_vector_handler_to_client(self, vector_name, handler_name, callback):
+        vh = VectorHandler(devicename=self.device_name,
+                           vectorname=vector_name,
+                           callback=callback)
+        future = asyncio.run_coroutine_threadsafe(
+            self.registering_custom_vector_handler(handler_name, vh), self.indi_client.ioloop)
+        _ = future.result()  # This is just sync
+
+    def unregister_vector_handler_to_client(self, handler_name):
+        future = asyncio.run_coroutine_threadsafe(
+            self.unregistering_custom_vector_handler(handler_name), self.indi_client.ioloop)
+        _ = future.result()  # This is just sync
 
     def _setup_interfaces(self):
         """

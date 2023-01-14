@@ -12,7 +12,7 @@ from astropy.io import fits
 from Service.NTPTimeService import NTPTimeService
 
 # Local stuff : Observatory
-from Observatory.ShedObservatory import ShedObservatory
+from Observatory.Observatory import Observatory
 
 # Local stuff : IndiClient
 from helper.IndiClient import IndiClient
@@ -42,7 +42,7 @@ if __name__ == '__main__':
     logging.config.fileConfig('logging.ini')
     logger = logging.getLogger('mainLogger')
 
-    obs = ShedObservatory()
+    obs = Observatory()
 
     # ntp time server
     servTime = NTPTimeService()

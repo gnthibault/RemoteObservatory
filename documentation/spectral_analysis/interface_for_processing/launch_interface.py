@@ -201,7 +201,7 @@ if __name__ == "__main__":
     indiCli.connect()
 
     # Build the observatory
-    obs = ShedObservatory()
+    obs = Observatory()
 
     # ntp time server
     serv_time = NTPTimeService()

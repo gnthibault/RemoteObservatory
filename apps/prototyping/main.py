@@ -10,7 +10,7 @@ from astropy.io import fits
 
 # Local stuff : Observatory
 from Observatory.VirtualObservatory import VirtualObservatory
-from Observatory.ShedObservatory import ShedObservatory
+from Observatory.Observatory import Observatory
 
 # Local stuff : Service
 from Service.WUGWeatherService import WUGWeatherService
@@ -50,7 +50,7 @@ if __name__ == '__main__':
     logger = logging.getLogger('mainLogger')
 
     # Instanciate object of interest
-    obs = ShedObservatory()
+    obs = Observatory()
 
     #test ntp time server
     servTime = NTPTimeService()

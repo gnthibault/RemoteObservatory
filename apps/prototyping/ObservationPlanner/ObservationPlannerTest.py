@@ -8,7 +8,7 @@ import threading
 from Service.NTPTimeService import NTPTimeService
 
 # Local stuff : Observatory
-from Observatory.ShedObservatory import ShedObservatory
+from Observatory.Observatory import Observatory
 
 # Local stuff : observation planner
 from ObservationPlanner.ObservationPlanner import ObservationPlanner
@@ -19,7 +19,7 @@ if __name__ == '__main__':
     # load the logging configuration
     logging.config.fileConfig('logging.ini')
 
-    obs = ShedObservatory()
+    obs = Observatory()
 
     # ntp time server
     servTime = NTPTimeService()

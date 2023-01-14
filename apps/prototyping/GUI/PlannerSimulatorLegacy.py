@@ -32,7 +32,7 @@ from helper.Indi3DSimulatorClient import Indi3DSimulatorClient
 from Mount.IndiMount import IndiMount
 
 # Local stuff : Observatory
-from Observatory.ShedObservatory import ShedObservatory
+from Observatory.Observatory import Observatory
 
 # Local stuff: Observation planner Widget
 from ObservationPlanner.PlannerWidget import AltazPlannerWidget
@@ -201,7 +201,7 @@ if __name__ == "__main__":
     indiCli.connect()
 
     # Build the observatory
-    obs = ShedObservatory()
+    obs = Observatory()
 
     # ntp time server
     serv_time = NTPTimeService()

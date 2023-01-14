@@ -4,6 +4,7 @@ import concurrent
 import logging
 import threading
 #from transitions.extensions import LockedMachine
+import weakref
 
 # Indi stuff
 from helper.client import INDIClient
@@ -14,6 +15,8 @@ from astropy.io import fits
 # Local
 from Base.Base import Base
 from utils.error import BLOBError
+
+logger = logging.getLogger(__name__)
 
 class SingletonIndiClientHolder:
     _instances = {}
@@ -66,7 +69,7 @@ class IndiClient(SingletonIndiClientHolder, INDIClient, Base):
         INDIClient.__init__(self,
                             host=config["indi_host"],
                             port=config["indi_port"])
-        self.logger.debug(f"Indi Client, remote host is: {self.host}:{self.port}")
+        logger.debug(f"Indi Client, remote host is: {self.host}:{self.port}")
 
         # Start the main ioloop that will serve all async task in another (single) thread
         self.device_subscriptions = {} # dict of device_name: coroutines
@@ -77,7 +80,24 @@ class IndiClient(SingletonIndiClientHolder, INDIClient, Base):
         self.thread.start()
 
         # Finished configuring
-        self.logger.debug('Configured Indi Client successfully')
+        logger.debug('Configured Indi Client successfully')
+
+    def stop(self):
+        # Inform the task running in the ioloop (itself ran by self.thread) that they can stop looping
+        self.running = False
+        # Now wait until the main connection loop (also running in ioloop) is over
+        #self.communication_over_event.wait()
+        remaining_tasks = asyncio.all_tasks(loop=self.ioloop)
+        while remaining_tasks:
+            future = asyncio.run_coroutine_threadsafe(asyncio.wait(remaining_tasks, return_when=asyncio.ALL_COMPLETED), self.ioloop)
+            _ = future.result()
+            remaining_tasks = asyncio.all_tasks(loop=self.ioloop)
+        # We need to force stop the ioloop that has been started with run_forever
+        self.ioloop.call_soon_threadsafe(self.ioloop.stop)
+        #self.ioloop.run_until_complete(self.ioloop.shutdown_asyncgens())
+        # self.ioloop.close()
+        # The thread whose only work was to run the ioloop forever should properly terminate
+        self.thread.join()
 
     def exception(self, loop, context):
         raise context['exception']
@@ -106,11 +126,11 @@ class IndiClient(SingletonIndiClientHolder, INDIClient, Base):
         try:
             assert (future.result(timeout) is True)
         except concurrent.futures.TimeoutError:
-            self.logger.error(f"Waiting for predicate {predicate_checker} took too long...")
+            logger.error(f"Waiting for predicate {predicate_checker} took too long...")
             future.cancel()
             raise RuntimeError
         except Exception as exc:
-            self.logger.error(f"Error while trying to wait for predicate: {exc!r}")
+            logger.error(f"Error while trying to wait for predicate: {exc!r}")
             raise RuntimeError
 
     def connect_to_server(self, sync=True, timeout=30):
@@ -127,11 +147,11 @@ class IndiClient(SingletonIndiClientHolder, INDIClient, Base):
             try:
                 assert (future.result(timeout) is True)
             except concurrent.futures.TimeoutError:
-                self.logger.error("Setting up running state took too long...")
+                logger.error("Setting up running state took too long...")
                 future.cancel()
                 raise RuntimeError
             except Exception as exc:
-                self.logger.error(f"Error while trying to connect client: {exc!r}")
+                logger.error(f"Error while trying to connect client: {exc!r}")
                 raise RuntimeError
 
     def trigger_get_properties(self):
@@ -162,7 +182,7 @@ class IndiClient(SingletonIndiClientHolder, INDIClient, Base):
         :return:
         """
         # This is way too verbose, even in debug mode
-        #self.logger.debug(f"IndiClient just received data {data}")
+        #logger.debug(f"IndiClient just received data {data}")
         for sub in self.device_subscriptions.values():
             asyncio.run_coroutine_threadsafe(sub(data), self.ioloop)
         await asyncio.sleep(0.01)

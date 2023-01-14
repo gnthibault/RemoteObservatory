@@ -279,8 +279,7 @@ class IndiMount(IndiDevice):
                        dec=rahour_decdeg['DEC']*u.degree,
                        frame='cirs',
                        obstime=Time.now())
-        self.logger.debug(f"Received coordinates in JNOw/CIRS from mount: "
-                          f"{ret}")
+        self.logger.debug(f"Received coordinates in JNOw/CIRS from mount: {ret}")
         return ret
 
 ###############################################################################
