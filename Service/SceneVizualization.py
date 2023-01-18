@@ -96,23 +96,25 @@ class SceneVizualization(threading.Thread):
                 if self.mount_device:
                     self.mount.update_celestial_time()
                 timeout_sky_update.restart()
-            # For most objects update we will rely on callbacks, so no need for active polling
+            # Proper callbacks was unfortunately not possible with meshcat
             if timeout_obj_update.expired():
+                timeout_obj_update.restart()
                 if self.observatory_device:
                     try:
                         while True:
-                            self.observatory.model_update_q.get_nowait()()
+                            self.observatory.model_update_q.get(block=True,
+                                timeout=shortest_update)()
                     except queue.Empty as e:
                         pass
                 if self.mount_device:
                     try:
                         while True:
-                            self.mount.model_update_q.get_nowait()()
+                            self.mount.model_update_q.get(block=True,
+                                timeout=shortest_update)()
                     except queue.Empty as e:
                         pass
-
-                timeout_obj_update.restart()
-            time.sleep(shortest_update)
+            if self.mount_device is None and self.observatory_device is None:
+                time.sleep(shortest_update)
 
 
     def stop(self):
