@@ -345,9 +345,6 @@ class Manager(Base):
         try:
             self.mount.set_track_mode('TRACK_SIDEREAL')
             if self.guider is not None:
-                self.logger.info("Initializing guider before observing")
-                self.guider.connect_server()
-                self.guider.connect_profile()
                 self.logger.info("Start guiding")
                 self.guider.guide()
                 self.logger.info("Guiding successfully started")
@@ -708,8 +705,12 @@ class Manager(Base):
                 guider_module = load_module('Guider.'+guider_name)
                 self.guider = getattr(guider_module, guider_name)(
                     config = self.config['guider'])
+                # Setup and make sure the Guider is not already acquiring frames
+                self.logger.info("Initializing guider")
+                self.guider.connect_server()
+                self.guider.connect_profile()
         except Exception as e:
-            raise RuntimeError('Problem setting up guider: {}'.format(e))
+            raise RuntimeError(f"Problem setting up guider: {e}")
 
     def _get_calibration(self, camera):
         """
