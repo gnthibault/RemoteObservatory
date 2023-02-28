@@ -27,6 +27,8 @@ Quick overview of what you will be able to see and manage through this project
 ![Telescope and observatory 1](https://gnthibault.github.io/RemoteObservatory/assets/images/orion_leve.png)
 ![Telescope mount](https://gnthibault.github.io/RemoteObservatory/assets/images/mount_view_1.png)
 ![Telescope and observatory 2](https://gnthibault.github.io/RemoteObservatory/assets/images/observatory_view_1.png)
+![Monitoring dashboard overview 1](https://gnthibault.github.io/RemoteObservatory/assets/images/dashboard_grafana_1.png)
+![Monitoring dashboard overview 1](https://gnthibault.github.io/RemoteObservatory/assets/images/dashboard_grafana_2.png)
 
 # Install
 
