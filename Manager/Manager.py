@@ -707,6 +707,7 @@ class Manager(Base):
                     config = self.config['guider'])
                 # Setup and make sure the Guider is not already acquiring frames
                 self.logger.info("Initializing guider")
+                self.guider.launch_server()
                 self.guider.connect_server()
                 self.guider.connect_profile()
         except Exception as e:

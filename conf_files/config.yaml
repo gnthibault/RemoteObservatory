@@ -273,25 +273,25 @@ vizualization_service:
 time_service :
     module : HostTimeService
 messaging_publisher:
-    module: PanMessagingZMQ #PanMessagingZMQ, PanMessagingMQTT
+    module: PanMessagingMQTT #PanMessagingZMQ, PanMessagingMQTT
     mqtt_host: localhost
     mqtt_port: 1883
     com_mode: publisher
     msg_port: 6510
 messaging_subscriber:
-    module: PanMessagingZMQ #PanMessagingZMQ, PanMessagingMQTT
+    module: PanMessagingMQTT #PanMessagingZMQ, PanMessagingMQTT
     mqtt_host: localhost
     mqtt_port: 1883
     com_mode: subscriber
     cmd_port: 6500
 paws_subscriber:
-    module: PanMessagingZMQ #PanMessagingZMQ, PanMessagingMQTT
+    module: PanMessagingMQTT #PanMessagingZMQ, PanMessagingMQTT
     mqtt_host: localhost
     mqtt_port: 1883
     com_mode: subscriber
     cmd_port: 6511
 paws_publisher:
-    module: PanMessagingZMQ #PanMessagingZMQ, PanMessagingMQTT
+    module: PanMessagingMQTT #PanMessagingZMQ, PanMessagingMQTT
     mqtt_host: localhost
     mqtt_port: 1883
     com_mode: publisher
