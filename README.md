@@ -205,9 +205,6 @@ PYTHONPATH=. python ./apps/launch_remote_observatory.py
 
 ## If, in addition you want the nice dashboard (might require additional dependencies, scripts are untested)
 ./apps/launch_PAWS.sh
-PYTHONPATH=. python ./apps/launch_qt_dashboard.py
-PYTHONPATH=. python3 ./apps/launch_weather_capture.py (only a stub for now)
-
 
 ## Legacy or optional features
 ### Support for DBus scripting ()
