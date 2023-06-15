@@ -42,7 +42,7 @@ class IndiAAGCloudWatcher(threading.Thread, IndiDevice):
         logger.debug(f"Indi Weather service, name is: {config['service_name']}")
 
         # device related intialization
-        IndiDevice.__init__(self, ,
+        IndiDevice.__init__(self,
                             device_name=config['service_name'],
                             indi_client_config=config["indi_client"])
 

@@ -10,12 +10,10 @@ from utils.error import ScopeControllerError
 
 
 class IndiScopeController(IndiDevice, Base):
-    def __init__(self, config=None, connect_on_create=True,
-                 logger=None):
+    def __init__(self, config=None, connect_on_create=True):
         Base.__init__(self)
 
         self._is_initialized = False
-        logger = logger or logging.getLogger(__name__)
 
         if config is None:
             config = dict(
@@ -39,11 +37,11 @@ class IndiScopeController(IndiDevice, Base):
         self._indi_webserver_host = config["indi_webserver_host"]
         self._indi_webserver_port = config["indi_webserver_port"]
         # Indi stuff
-        logger.debug(f"Indi ScopeController, controller board port is: "
+        logging.debug(f"Indi ScopeController, controller board port is: "
                      f"{self.port}")
       
         # device related intialization
-        IndiDevice.__init__(self, ,
+        IndiDevice.__init__(self,
                             device_name=config["controller_name"],
                             indi_client_config=config["indi_client"])
         if connect_on_create:

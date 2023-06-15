@@ -4,11 +4,11 @@
 import astroalign as aa
 
 class ImageQuality:
-    def ImageQuality():
+    def __init__():
         pass
         
         
-    def generate_quality_report():
+    def generate_quality_report(self, source, target):
         """Abstract from Astroalign (https://github.com/toros-astro/astroalign)
         documentation: If we are only interested in knowing the transformation
         and the correspondence of control points in both images, use
@@ -25,9 +25,7 @@ class ImageQuality:
         render t_list.
 
         Oh, I'm sorry I misunderstood your question. For source detection I basically use sep. I would recommend using sep or photutils instead, because my wrapper is pretty simple and naive, but you can still check the code I use, it's in the private _find_sources method.
-
         SEP does not estimate psf AFAIK, but if you're looking for something like that, you may want to open an issue in properimage. The author there does PSF estimation, I can't remember now what method he uses.
-
         """
 
         transf, (s_list, t_list) = aa.find_transform(source, target)

@@ -48,7 +48,7 @@ class FitsWriter(Base):
 
         self.logger.debug('FitsWriter configured successfully')
 
-    def writeWithTag(self, fits, targetName='frame'):
+    def writeWithTag(self, fits, target_name='frame'):
         '''
           First step: tag with every possible information
           Seconnd step: Write fits to disk
@@ -120,8 +120,8 @@ class FitsWriter(Base):
                                           'RA']), 'NC')
                 hdr['TELESCOPEDEC'] = (str(self.telescope.getCurrentSkyCoord()[
                                            'DEC']), 'NC')
-            if targetName is not None:
-                hdr['TARGETNAME'] = (targetName, 'NC')
+            if target_name is not None:
+                hdr['TARGETNAME'] = (target_name, 'NC')
 
             # Last comment then write everything to disk
             hdr['COMMENT'] = 'No generic comment, life is beautiful'
@@ -129,7 +129,7 @@ class FitsWriter(Base):
             self.logger.error('FitsWriter error while tagging fit with index '
                               ' {} : {}'.format(self.imgIdx,e))
 
-        filename='{}-{}.fits'.format(targetName,self.imgIdx)
+        filename='{}-{}.fits'.format(target_name,self.imgIdx)
         try:
             with open(os.path.join(self.path,filename), "wb") as f:
                 fits.writeto(f, overwrite=True)

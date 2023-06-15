@@ -6,6 +6,7 @@
 # Generic stuff
 import collections
 import copy
+import logging
 import serial
 from serial import serialutil
 import threading
@@ -21,8 +22,7 @@ def auto_detect_arduino_devices(ports=None, logger=None):
     """Returns a list of tuples of (board_name, port)."""
     if ports is None:
         ports = get_arduino_ports()
-    if not logger:
-        logger = get_root_logger()
+    logger = logger or logging.getLogger(__name__)
     result = []
     for port in ports:
         board_name = detect_board_on_port(port, logger)
@@ -46,7 +46,6 @@ def get_arduino_ports():
         if 'arduino' in p.description.lower() or 'arduino' in p.manufacturer.lower()
     ]
 
-
 def detect_board_on_port(port, logger=None):
     """Determine which type of board is attached to the specified port.
 
@@ -54,8 +53,7 @@ def detect_board_on_port(port, logger=None):
         line of JSON from the port, parse it and find a 'name'
         attribute in the top-level object. Else returns None.
     """
-    if not logger:
-        logger = get_root_logger()
+    logger = logger or logging.getLogger(__name__)
     logger.debug('Attempting to connect to serial port: {}'.format(port))
     serial_reader = None
     try:

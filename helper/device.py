@@ -38,10 +38,10 @@ def _sexagesimal(format, r):
     @return: A sexagesimal representation of the float given on input
     @rtype: StringType
     """
-    std = int(math.floor(r))
-    r -= float(math.floor(r))
+    std = int(np.floor(r))
+    r -= float(np.floor(r))
     r *= 60.0
-    min = int(math.floor(r))
+    min = int(np.floor(r))
     r -= float(min)
     r *= 60.0
     sec = r

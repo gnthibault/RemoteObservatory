@@ -19,8 +19,7 @@ class IndiSpectroController:
                 controller_name="dummy",
                 )
 
-        logger.debug(f"Indi Spectro Controller, controller name is: "
-                     f"{config['controller_name']}")
+        logger.debug(f"Indi Spectro Controller, controller name is: {config['controller_name']}")
 
         # Finished configuring
         self.logger.debug('Indi Spectro controller configured successfully')
