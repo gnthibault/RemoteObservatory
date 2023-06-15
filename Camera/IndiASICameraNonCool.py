@@ -1,4 +1,5 @@
 # Basic stuff
+import numpy as np
 
 # Local stuff
 from Camera.IndiAbstractCamera import IndiASICamera
