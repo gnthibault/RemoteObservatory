@@ -43,7 +43,7 @@ class NovaAstrometryService(Base):
     def __init__(self, configFileName=None, logger=None, apiURL=defaultAPIURL):
         Base.__init__(self)
 
-        if configFileName is 'local':
+        if configFileName == 'local':
             apiURL=NovaAstrometryService.defaultLocalAPIURL
             self.key = NovaAstrometryService.defaultLocalKey
         else:

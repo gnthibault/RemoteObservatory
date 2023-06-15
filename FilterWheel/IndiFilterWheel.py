@@ -31,11 +31,12 @@ class IndiFilterWheel(IndiDevice, Base):
         device_name = config['filterwheel_name']
         self.filterList = config['filter_list']
 
-        logger.debug('Indi FilterWheel, filterwheel name is: {}'.format(
+        logging.debug('Indi FilterWheel, filterwheel name is: {}'.format(
                      device_name))
       
         # device related intialization
-        IndiDevice.__init__(self, , device_name=device_name,
+        IndiDevice.__init__(self,
+                            device_name=device_name,
                             indi_client_config=config["indi_client"])
         if connect_on_create:
             self.connect()
@@ -45,7 +46,7 @@ class IndiFilterWheel(IndiDevice, Base):
 
     def on_emergency(self):
         self.logger.debug('on emergency routine started...')
-        set_filter_number(1)
+        self.set_filter_number(1)
         self.logger.debug('on emergency routine finished')
 
     def initFilterWheelConfiguration(self):
@@ -61,8 +62,7 @@ class IndiFilterWheel(IndiDevice, Base):
         self.set_filter_number(self.filters()[name])
 
     def set_filter_number(self, number):
-        self.logger.debug('setting filter number {}'.format(
-                          number)) 
+        self.logger.debug(f"setting filter number {number}")
         self.set_number('FILTER_SLOT', {'FILTER_SLOT_VALUE': number})
 
     def currentFilter(self):

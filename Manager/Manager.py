@@ -505,6 +505,8 @@ class Manager(Base):
             # Launch guider server
             if self.guider is not None:
                 self.guider.launch_server()
+                self.guider.connect_server()
+                self.guider.connect_profile()
 
             return True
         except Exception as e:
@@ -605,7 +607,7 @@ class Manager(Base):
             obs_module = load_module('Observatory.'+obs_name)
             self.observatory = getattr(obs_module, obs_name)(
                 config=self.config['observatory'])
-        except Exception:
+        except Exception as e:
             raise RuntimeError(f"Problem setting up observatory: {e}")
 
     def _setup_mount(self):
