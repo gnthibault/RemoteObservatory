@@ -49,7 +49,7 @@ jobs:
     - name: Build latex reports
       run: |
         python setup.py gen_report
-    - name: Set failure state
+    - name: Set failure state if needed
       if: failure()
       run: |
         echo "FAILURE"
@@ -57,5 +57,5 @@ jobs:
     - name: Publish pdf reports
       uses: actions/upload-artifact@v2
       with:
-        path: reports/latex/*/*.pdf
+        path: documentation/papers/latex/*/*.pdf
 
