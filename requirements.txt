@@ -1,5 +1,5 @@
 astroalign==1.0.4
-astroplan==0.7
+astroplan==0.8
 astropy==4.1
 astroquery==0.4.1
 influxdb-client==1.35.0
