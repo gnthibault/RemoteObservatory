@@ -505,6 +505,8 @@ class Manager(Base):
             # Launch guider server
             if self.guider is not None:
                 self.guider.launch_server()
+                self.guider.connect_server()
+                self.guider.connect_profile()
 
             return True
         except Exception as e:
