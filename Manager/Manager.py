@@ -607,7 +607,7 @@ class Manager(Base):
             obs_module = load_module('Observatory.'+obs_name)
             self.observatory = getattr(obs_module, obs_name)(
                 config=self.config['observatory'])
-        except Exception:
+        except Exception as e:
             raise RuntimeError(f"Problem setting up observatory: {e}")
 
     def _setup_mount(self):

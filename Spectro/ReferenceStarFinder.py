@@ -81,7 +81,7 @@ def stardisplay(num,star): # display a star
     BV = star['B-V']
     if BV=='': BV = '    '
     EBV = star['EB-V']
-    if EBV is '': EBV = '\t'
+    if EBV == '': EBV = '\t'
     sptype = star['Sp']
     if (star['Alt']>=1): 
         decimales = 2

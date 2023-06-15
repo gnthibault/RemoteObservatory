@@ -30,7 +30,7 @@ if __name__ == '__main__':
         autofocus_roi_size=500,
         autofocus_merit_function="half_flux_radius",
         indi_client=dict(
-            indi_host="localhost",
+            indi_host="192.168.144.32",
             indi_port=7624
     ))
 

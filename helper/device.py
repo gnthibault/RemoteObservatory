@@ -14,6 +14,10 @@ import traceback
 import threading
 import xml.parsers.expat
 from xml.parsers.expat import ExpatError
+import zlib
+
+# Numerical tools
+import numpy as np
 
 """
 The Base classes for the pyINDI device. Definitions
@@ -24,6 +28,25 @@ For now we will only by supporting version 1.7
 Naming convention are based on the indilib c++ version:
 http://www.indilib.org/api/index.html
 """
+
+def _sexagesimal(format, r):
+    """
+    @param format: a format string for sexagesimal numbers as defined in the in INDI standard
+    @type format: StringType
+    @param r: A floating point number
+    @type r: FloatType
+    @return: A sexagesimal representation of the float given on input
+    @rtype: StringType
+    """
+    std = int(math.floor(r))
+    r -= float(math.floor(r))
+    r *= 60.0
+    min = int(math.floor(r))
+    r -= float(min)
+    r *= 60.0
+    sec = r
+    output = '' + str(std) + ":" + str(min) + ":" + "%.2f" % sec
+    return output
 
 class _indinameconventions:
     """
