@@ -56,7 +56,7 @@
 </newSwitchVector>
 <newTextVector device='ZWO CCD ASI224MC' name='ACTIVE_DEVICES'>
   <oneText name='ACTIVE_TELESCOPE'>
-      Telescope Simulator
+      Losmandy Gemini
   </oneText>
   <oneText name='ACTIVE_ROTATOR'>
       Rotator Simulator

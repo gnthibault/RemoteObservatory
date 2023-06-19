@@ -1,0 +1,98 @@
+<INDIDriver>
+    <newSwitchVector device="Arduino telescope controller" name="DEBUG">
+        <oneSwitch name="ENABLE">
+Off
+        </oneSwitch>
+        <oneSwitch name="DISABLE">
+On
+        </oneSwitch>
+    </newSwitchVector>
+    <newNumberVector device="Arduino telescope controller" name="POLLING_PERIOD">
+        <oneNumber name="PERIOD_MS">
+1000
+        </oneNumber>
+    </newNumberVector>
+    <newSwitchVector device="Arduino telescope controller" name="CONNECTION_MODE">
+        <oneSwitch name="CONNECTION_SERIAL">
+On
+        </oneSwitch>
+        <oneSwitch name="CONNECTION_TCP">
+Off
+        </oneSwitch>
+    </newSwitchVector>
+    <newTextVector device="Arduino telescope controller" name="DEVICE_PORT">
+        <oneText name="PORT">
+/dev/serial/by-id/usb-FTDI_FT232R_USB_UART_AB0L9VL1-if00-port0
+        </oneText>
+    </newTextVector>
+    <newSwitchVector device="Arduino telescope controller" name="DEVICE_BAUD_RATE">
+        <oneSwitch name="9600">
+      Off
+        </oneSwitch>
+        <oneSwitch name="19200">
+      Off
+        </oneSwitch>
+        <oneSwitch name="38400">
+      Off
+        </oneSwitch>
+        <oneSwitch name="57600">
+      On
+        </oneSwitch>
+        <oneSwitch name="115200">
+      Off
+        </oneSwitch>
+        <oneSwitch name="230400">
+      Off
+        </oneSwitch>
+    </newSwitchVector>
+    <newSwitchVector device="Arduino telescope controller" name="DEVICE_AUTO_SEARCH">
+        <oneSwitch name="INDI_ENABLED">
+Off
+        </oneSwitch>
+        <oneSwitch name="INDI_DISABLED">
+On
+        </oneSwitch>
+    </newSwitchVector>
+    <newSwitchVector device="Arduino telescope controller" name="DEBUG_LEVEL">
+        <oneSwitch name="DBG_ERROR">
+On
+        </oneSwitch>
+        <oneSwitch name="DBG_WARNING">
+On
+        </oneSwitch>
+        <oneSwitch name="DBG_SESSION">
+On
+        </oneSwitch>
+        <oneSwitch name="DBG_DEBUG">
+Off
+        </oneSwitch>
+        <oneSwitch name="DBG_EXTRA_1">
+Off
+        </oneSwitch>
+    </newSwitchVector>
+    <newSwitchVector device="Arduino telescope controller" name="LOGGING_LEVEL">
+        <oneSwitch name="LOG_ERROR">
+On
+        </oneSwitch>
+        <oneSwitch name="LOG_WARNING">
+On
+        </oneSwitch>
+        <oneSwitch name="LOG_SESSION">
+On
+        </oneSwitch>
+        <oneSwitch name="LOG_DEBUG">
+Off
+        </oneSwitch>
+        <oneSwitch name="LOG_EXTRA_1">
+Off
+        </oneSwitch>
+    </newSwitchVector>
+    <newSwitchVector device="Arduino telescope controller" name="LOG_OUTPUT">
+        <oneSwitch name="CLIENT_DEBUG">
+On
+        </oneSwitch>
+        <oneSwitch name="FILE_DEBUG">
+Off
+        </oneSwitch>
+    </newSwitchVector>
+</INDIDriver>

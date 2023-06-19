@@ -36,6 +36,14 @@ Off
 On
         </oneSwitch>
     </newSwitchVector>
+    <newSwitchVector device="Losmandy Gemini" name="DEVICE_LAN_SEARCH">
+        <oneSwitch name="INDI_ENABLED">
+Off
+        </oneSwitch>
+        <oneSwitch name="INDI_DISABLED">
+On
+        </oneSwitch>
+    </newSwitchVector>
     <newSwitchVector device="Losmandy Gemini" name="DEBUG_LEVEL">
         <oneSwitch name="DBG_ERROR">
 On
@@ -110,10 +118,10 @@ Off
 Off
         </oneSwitch>
         <oneSwitch name="2x">
-Off
+On
         </oneSwitch>
         <oneSwitch name="3x">
-On
+Off
         </oneSwitch>
         <oneSwitch name="4x">
 Off

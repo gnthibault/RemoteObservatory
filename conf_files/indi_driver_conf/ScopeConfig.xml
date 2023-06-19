@@ -2,16 +2,16 @@
     <device name="Losmandy Gemini">
         <config1>
             <scopefoc>
-0.000000
+800.000000
             </scopefoc>
             <scopeap>
-0.000000
+200.000000
             </scopeap>
             <gscopefoc>
-0.000000
+800.000000
             </gscopefoc>
             <gscopeap>
-0.000000
+200.000000
             </gscopeap>
             <label/>
         </config1>

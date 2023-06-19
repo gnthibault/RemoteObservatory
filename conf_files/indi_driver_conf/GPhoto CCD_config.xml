@@ -1,0 +1,437 @@
+<INDIDriver>
+<newNumberVector device='GPhoto CCD' name='CCD_INFO'>
+  <oneNumber name='CCD_MAX_X'>
+      5496
+  </oneNumber>
+  <oneNumber name='CCD_MAX_Y'>
+      3670
+  </oneNumber>
+  <oneNumber name='CCD_PIXEL_SIZE'>
+      6.5
+  </oneNumber>
+  <oneNumber name='CCD_PIXEL_SIZE_X'>
+      6.5
+  </oneNumber>
+  <oneNumber name='CCD_PIXEL_SIZE_Y'>
+      6.5
+  </oneNumber>
+  <oneNumber name='CCD_BITSPERPIXEL'>
+      16
+  </oneNumber>
+</newNumberVector>
+<newSwitchVector device='GPhoto CCD' name='DEBUG'>
+  <oneSwitch name='ENABLE'>
+      Off
+  </oneSwitch>
+  <oneSwitch name='DISABLE'>
+      On
+  </oneSwitch>
+</newSwitchVector>
+<newNumberVector device='GPhoto CCD' name='POLLING_PERIOD'>
+  <oneNumber name='PERIOD_MS'>
+      1000
+  </oneNumber>
+</newNumberVector>
+<newSwitchVector device='GPhoto CCD' name='DEBUG_LEVEL'>
+  <oneSwitch name='DBG_ERROR'>
+      On
+  </oneSwitch>
+  <oneSwitch name='DBG_WARNING'>
+      On
+  </oneSwitch>
+  <oneSwitch name='DBG_SESSION'>
+      On
+  </oneSwitch>
+  <oneSwitch name='DBG_DEBUG'>
+      Off
+  </oneSwitch>
+  <oneSwitch name='DBG_EXTRA_1'>
+      Off
+  </oneSwitch>
+</newSwitchVector>
+<newSwitchVector device='GPhoto CCD' name='LOGGING_LEVEL'>
+  <oneSwitch name='LOG_ERROR'>
+      On
+  </oneSwitch>
+  <oneSwitch name='LOG_WARNING'>
+      On
+  </oneSwitch>
+  <oneSwitch name='LOG_SESSION'>
+      On
+  </oneSwitch>
+  <oneSwitch name='LOG_DEBUG'>
+      Off
+  </oneSwitch>
+  <oneSwitch name='LOG_EXTRA_1'>
+      Off
+  </oneSwitch>
+</newSwitchVector>
+<newSwitchVector device='GPhoto CCD' name='LOG_OUTPUT'>
+  <oneSwitch name='CLIENT_DEBUG'>
+      On
+  </oneSwitch>
+  <oneSwitch name='FILE_DEBUG'>
+      Off
+  </oneSwitch>
+</newSwitchVector>
+<newTextVector device='GPhoto CCD' name='ACTIVE_DEVICES'>
+  <oneText name='ACTIVE_TELESCOPE'>
+      Losmandy Gemini
+  </oneText>
+  <oneText name='ACTIVE_ROTATOR'>
+      Rotator Simulator
+  </oneText>
+  <oneText name='ACTIVE_FOCUSER'>
+      Focuser Simulator
+  </oneText>
+  <oneText name='ACTIVE_FILTER'>
+      CCD Simulator
+  </oneText>
+  <oneText name='ACTIVE_SKYQUALITY'>
+      SQM
+  </oneText>
+</newTextVector>
+<newSwitchVector device='GPhoto CCD' name='UPLOAD_MODE'>
+  <oneSwitch name='UPLOAD_CLIENT'>
+      On
+  </oneSwitch>
+  <oneSwitch name='UPLOAD_LOCAL'>
+      Off
+  </oneSwitch>
+  <oneSwitch name='UPLOAD_BOTH'>
+      Off
+  </oneSwitch>
+</newSwitchVector>
+<newTextVector device='GPhoto CCD' name='UPLOAD_SETTINGS'>
+  <oneText name='UPLOAD_DIR'>
+      /home/gnthibault
+  </oneText>
+  <oneText name='UPLOAD_PREFIX'>
+      IMAGE_XXX
+  </oneText>
+</newTextVector>
+<newSwitchVector device='GPhoto CCD' name='TELESCOPE_TYPE'>
+  <oneSwitch name='TELESCOPE_PRIMARY'>
+      Off
+  </oneSwitch>
+  <oneSwitch name='TELESCOPE_GUIDE'>
+      On
+  </oneSwitch>
+</newSwitchVector>
+<newSwitchVector device='GPhoto CCD' name='CCD_FAST_TOGGLE'>
+  <oneSwitch name='INDI_ENABLED'>
+      Off
+  </oneSwitch>
+  <oneSwitch name='INDI_DISABLED'>
+      On
+  </oneSwitch>
+</newSwitchVector>
+<newSwitchVector device='GPhoto CCD' name='CCD_COMPRESSION'>
+  <oneSwitch name='CCD_COMPRESS'>
+      Off
+  </oneSwitch>
+  <oneSwitch name='CCD_RAW'>
+      On
+  </oneSwitch>
+</newSwitchVector>
+<newNumberVector device='GPhoto CCD' name='CCD_FRAME'>
+  <oneNumber name='X'>
+      0
+  </oneNumber>
+  <oneNumber name='Y'>
+      0
+  </oneNumber>
+  <oneNumber name='WIDTH'>
+      5496
+  </oneNumber>
+  <oneNumber name='HEIGHT'>
+      3670
+  </oneNumber>
+</newNumberVector>
+<newNumberVector device='GPhoto CCD' name='CCD_BINNING'>
+  <oneNumber name='HOR_BIN'>
+      1
+  </oneNumber>
+  <oneNumber name='VER_BIN'>
+      1
+  </oneNumber>
+</newNumberVector>
+<newTextVector device='GPhoto CCD' name='CCD_CFA'>
+  <oneText name='CFA_OFFSET_X'>
+      0
+  </oneText>
+  <oneText name='CFA_OFFSET_Y'>
+      0
+  </oneText>
+  <oneText name='CFA_TYPE'>
+      RGGB
+  </oneText>
+</newTextVector>
+<newSwitchVector device='GPhoto CCD' name='CCD_STREAM_ENCODER'>
+  <oneSwitch name='RAW'>
+      On
+  </oneSwitch>
+  <oneSwitch name='MJPEG'>
+      Off
+  </oneSwitch>
+</newSwitchVector>
+<newTextVector device='GPhoto CCD' name='RECORD_FILE'>
+  <oneText name='RECORD_FILE_DIR'>
+      /home/gnthibault/indi__D_
+  </oneText>
+  <oneText name='RECORD_FILE_NAME'>
+      indi_record__T_
+  </oneText>
+</newTextVector>
+<newNumberVector device='GPhoto CCD' name='RECORD_OPTIONS'>
+  <oneNumber name='RECORD_DURATION'>
+      1
+  </oneNumber>
+  <oneNumber name='RECORD_FRAME_TOTAL'>
+      30
+  </oneNumber>
+</newNumberVector>
+<newSwitchVector device='GPhoto CCD' name='CCD_STREAM_RECORDER'>
+  <oneSwitch name='SER'>
+      On
+  </oneSwitch>
+  <oneSwitch name='OGV'>
+      Off
+  </oneSwitch>
+</newSwitchVector>
+<newNumberVector device='GPhoto CCD' name='LIMITS'>
+  <oneNumber name='LIMITS_BUFFER_MAX'>
+      512
+  </oneNumber>
+  <oneNumber name='LIMITS_PREVIEW_FPS'>
+      10
+  </oneNumber>
+</newNumberVector>
+<newNumberVector device='GPhoto CCD' name='MIRROR_LOCK'>
+  <oneNumber name='MIRROR_LOCK_SECONDS'>
+      0
+  </oneNumber>
+</newNumberVector>
+<newSwitchVector device='GPhoto CCD' name='CCD_CAPTURE_TARGET'>
+  <oneSwitch name='RAM'>
+      On
+  </oneSwitch>
+  <oneSwitch name='SD Card'>
+      Off
+  </oneSwitch>
+</newSwitchVector>
+<newSwitchVector device='GPhoto CCD' name='CCD_SD_CARD_ACTION'>
+  <oneSwitch name='Save'>
+      On
+  </oneSwitch>
+  <oneSwitch name='Delete'>
+      Off
+  </oneSwitch>
+  <oneSwitch name='Ignore'>
+      Off
+  </oneSwitch>
+</newSwitchVector>
+<newSwitchVector device='GPhoto CCD' name='CCD_ISO'>
+  <oneSwitch name='ISO0'>
+      Off
+  </oneSwitch>
+  <oneSwitch name='ISO1'>
+      Off
+  </oneSwitch>
+  <oneSwitch name='ISO2'>
+      Off
+  </oneSwitch>
+  <oneSwitch name='ISO3'>
+      Off
+  </oneSwitch>
+  <oneSwitch name='ISO4'>
+      Off
+  </oneSwitch>
+  <oneSwitch name='ISO5'>
+      Off
+  </oneSwitch>
+  <oneSwitch name='ISO6'>
+      Off
+  </oneSwitch>
+  <oneSwitch name='ISO7'>
+      Off
+  </oneSwitch>
+  <oneSwitch name='ISO8'>
+      Off
+  </oneSwitch>
+  <oneSwitch name='ISO9'>
+      Off
+  </oneSwitch>
+  <oneSwitch name='ISO10'>
+      Off
+  </oneSwitch>
+  <oneSwitch name='ISO11'>
+      Off
+  </oneSwitch>
+  <oneSwitch name='ISO12'>
+      Off
+  </oneSwitch>
+  <oneSwitch name='ISO13'>
+      Off
+  </oneSwitch>
+  <oneSwitch name='ISO14'>
+      Off
+  </oneSwitch>
+  <oneSwitch name='ISO15'>
+      Off
+  </oneSwitch>
+  <oneSwitch name='ISO16'>
+      Off
+  </oneSwitch>
+  <oneSwitch name='ISO17'>
+      Off
+  </oneSwitch>
+  <oneSwitch name='ISO18'>
+      Off
+  </oneSwitch>
+  <oneSwitch name='ISO19'>
+      Off
+  </oneSwitch>
+  <oneSwitch name='ISO20'>
+      Off
+  </oneSwitch>
+  <oneSwitch name='ISO21'>
+      Off
+  </oneSwitch>
+  <oneSwitch name='ISO22'>
+      Off
+  </oneSwitch>
+  <oneSwitch name='ISO23'>
+      Off
+  </oneSwitch>
+  <oneSwitch name='ISO24'>
+      On
+  </oneSwitch>
+  <oneSwitch name='ISO25'>
+      Off
+  </oneSwitch>
+</newSwitchVector>
+<newSwitchVector device='GPhoto CCD' name='CAPTURE_FORMAT'>
+  <oneSwitch name='FORMAT0'>
+      Off
+  </oneSwitch>
+  <oneSwitch name='FORMAT1'>
+      Off
+  </oneSwitch>
+  <oneSwitch name='FORMAT2'>
+      Off
+  </oneSwitch>
+  <oneSwitch name='FORMAT3'>
+      Off
+  </oneSwitch>
+  <oneSwitch name='FORMAT4'>
+      Off
+  </oneSwitch>
+  <oneSwitch name='FORMAT5'>
+      Off
+  </oneSwitch>
+  <oneSwitch name='FORMAT6'>
+      Off
+  </oneSwitch>
+  <oneSwitch name='FORMAT7'>
+      Off
+  </oneSwitch>
+  <oneSwitch name='FORMAT8'>
+      Off
+  </oneSwitch>
+  <oneSwitch name='FORMAT9'>
+      Off
+  </oneSwitch>
+  <oneSwitch name='FORMAT10'>
+      Off
+  </oneSwitch>
+  <oneSwitch name='FORMAT11'>
+      Off
+  </oneSwitch>
+  <oneSwitch name='FORMAT12'>
+      Off
+  </oneSwitch>
+  <oneSwitch name='FORMAT13'>
+      Off
+  </oneSwitch>
+  <oneSwitch name='FORMAT14'>
+      Off
+  </oneSwitch>
+  <oneSwitch name='FORMAT15'>
+      Off
+  </oneSwitch>
+  <oneSwitch name='FORMAT16'>
+      Off
+  </oneSwitch>
+  <oneSwitch name='FORMAT17'>
+      Off
+  </oneSwitch>
+  <oneSwitch name='FORMAT18'>
+      Off
+  </oneSwitch>
+  <oneSwitch name='FORMAT19'>
+      Off
+  </oneSwitch>
+  <oneSwitch name='FORMAT20'>
+      Off
+  </oneSwitch>
+  <oneSwitch name='FORMAT21'>
+      Off
+  </oneSwitch>
+  <oneSwitch name='FORMAT22'>
+      Off
+  </oneSwitch>
+  <oneSwitch name='FORMAT23'>
+      Off
+  </oneSwitch>
+  <oneSwitch name='FORMAT24'>
+      Off
+  </oneSwitch>
+  <oneSwitch name='FORMAT25'>
+      Off
+  </oneSwitch>
+  <oneSwitch name='FORMAT26'>
+      Off
+  </oneSwitch>
+  <oneSwitch name='FORMAT27'>
+      Off
+  </oneSwitch>
+  <oneSwitch name='FORMAT28'>
+      Off
+  </oneSwitch>
+  <oneSwitch name='FORMAT29'>
+      Off
+  </oneSwitch>
+  <oneSwitch name='FORMAT30'>
+      Off
+  </oneSwitch>
+  <oneSwitch name='FORMAT31'>
+      Off
+  </oneSwitch>
+  <oneSwitch name='FORMAT32'>
+      On
+  </oneSwitch>
+  <oneSwitch name='FORMAT33'>
+      Off
+  </oneSwitch>
+  <oneSwitch name='FORMAT34'>
+      Off
+  </oneSwitch>
+</newSwitchVector>
+<newSwitchVector device='GPhoto CCD' name='CCD_TRANSFER_FORMAT'>
+  <oneSwitch name='FORMAT_FITS'>
+      On
+  </oneSwitch>
+  <oneSwitch name='FORMAT_NATIVE'>
+      Off
+  </oneSwitch>
+</newSwitchVector>
+<newSwitchVector device='GPhoto CCD' name='CCD_FORCE_BLOB'>
+  <oneSwitch name='On'>
+      On
+  </oneSwitch>
+  <oneSwitch name='Off'>
+      Off
+  </oneSwitch>
+</newSwitchVector>
+</INDIDriver>

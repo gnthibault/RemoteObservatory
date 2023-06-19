@@ -9,7 +9,7 @@
 </newSwitchVector>
 <newNumberVector device='Pegasus UPB' name='POLLING_PERIOD'>
   <oneNumber name='PERIOD_MS'>
-      950
+      1000
   </oneNumber>
 </newNumberVector>
 <newSwitchVector device='Pegasus UPB' name='CONNECTION_MODE'>
@@ -93,10 +93,10 @@
 </newNumberVector>
 <newSwitchVector device='Pegasus UPB' name='FOCUS_REVERSE_MOTION'>
   <oneSwitch name='INDI_ENABLED'>
-      Off
+      On
   </oneSwitch>
   <oneSwitch name='INDI_DISABLED'>
-      On
+      Off
   </oneSwitch>
 </newSwitchVector>
 <newSwitchVector device='Pegasus UPB' name='FOCUS_BACKLASH_TOGGLE'>
@@ -110,6 +110,11 @@
 <newNumberVector device='Pegasus UPB' name='FOCUS_BACKLASH_STEPS'>
   <oneNumber name='FOCUS_BACKLASH_VALUE'>
       0
+  </oneNumber>
+</newNumberVector>
+<newNumberVector device='Pegasus UPB' name='WEATHER_UPDATE'>
+  <oneNumber name='PERIOD'>
+      60
   </oneNumber>
 </newNumberVector>
 <newNumberVector device='Pegasus UPB' name='WEATHER_TEMPERATURE'>
@@ -163,7 +168,7 @@
 </newSwitchVector>
 <newNumberVector device='Pegasus UPB' name='AUTO_DEW_AGG'>
   <oneNumber name='AUTO_DEW_AGG_VALUE'>
-      200
+      50
   </oneNumber>
 </newNumberVector>
 <newNumberVector device='Pegasus UPB' name='FOCUSER_SETTINGS'>
@@ -176,10 +181,10 @@
       MAIN_TELESCOPE_DUSTCAP_CONTROL
   </oneText>
   <oneText name='POWER_LABEL_2'>
-      TELESCOPE_LEVEL_POWER
+      SPOX_N_DUSTCAP
   </oneText>
   <oneText name='POWER_LABEL_3'>
-      FOCUSER_LEVEL_POWER
+      MAIN_CAMERA_POWER
   </oneText>
   <oneText name='POWER_LABEL_4'>
       MOUNT_POWER
@@ -198,22 +203,22 @@
 </newTextVector>
 <newTextVector device='Pegasus UPB' name='USB_CONTROL_LABEL'>
   <oneText name='USB_LABEL_1'>
-      PRIMARY_CAMERA
+      FIELD_CAMERA
   </oneText>
   <oneText name='USB_LABEL_2'>
-      ARDUINO_CONTROL_BOX
+      PRIMARY_CAMERA
   </oneText>
   <oneText name='USB_LABEL_3'>
-      GUIDE_CAMERA
+      SPECTRO_CONTROL_BOX
   </oneText>
   <oneText name='USB_LABEL_4'>
-      PRIMARY_FOCUSER_CONTROL_BOX
+      GUIDE_CAMERA
   </oneText>
   <oneText name='USB_LABEL_5'>
       WIFI_ROUTER
   </oneText>
   <oneText name='USB_LABEL_6'>
-      SPECTRO_CONTROL_BOX
+      ARDUINO_CONTROL_BOX
   </oneText>
 </newTextVector>
 </INDIDriver>
