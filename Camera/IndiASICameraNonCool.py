@@ -2,7 +2,7 @@
 import numpy as np
 
 # Local stuff
-from Camera.IndiAbstractCamera import IndiASICamera
+from Camera.IndiASICamera import IndiASICamera
 
 class IndiASICameraNonCool(IndiASICamera):
     def __init__(self, serv_time, config=None,
