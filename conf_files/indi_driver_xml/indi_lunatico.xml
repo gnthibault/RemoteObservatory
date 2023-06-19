@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<driversList>
+    <devGroup group="Focusers">
+        <device label="Armadillo focuser" manufacturer="Lunatico">
+            <driver name="Armadillo focuser">indi_armadillo_focus</driver>
+            <version>2.1</version>
+        </device>
+        <device label="Platypus focuser" manufacturer="Lunatico">
+            <driver name="Platypus focuser">indi_platypus_focus</driver>
+            <version>2.1</version>
+        </device>
+    </devGroup>
+    <devGroup group="Auxiliary">
+        <device label="Seletek Rotator" manufacturer="Lunatico">
+            <driver name="Seletek Rotator">indi_seletek_rotator</driver>
+            <version>2.1</version>
+        </device>
+    </devGroup>
+    <devGroup group="Domes">
+        <device label="DragonFly Dome" manufacturer="Lunatico">
+            <driver name="DragonFly Dome">indi_dragonfly_dome</driver>
+            <version>2.1</version>
+        </device>
+        <device label="Beaver Dome" manufacturer="Lunatico">
+            <driver name="Beaver Dome">indi_beaver_dome</driver>
+            <version>2.1</version>
+        </device>
+    </devGroup>
+</driversList>

@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<driversList>
+<devGroup group="CCDs">
+        <device label="Pentax DSLR Native" mdpd="true" manufacturer="DSLRs">
+                <driver name="Pentax DSLR">indi_pentax</driver>
+                <version>1.1</version>
+        </device>
+</devGroup>
+</driversList>

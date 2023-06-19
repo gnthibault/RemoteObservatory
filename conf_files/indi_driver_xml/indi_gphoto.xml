@@ -3,27 +3,27 @@
 <devGroup group="CCDs">
         <device label="Canon DSLR" mdpd="true" manufacturer="DSLRs">
                 <driver name="Canon DSLR">indi_canon_ccd</driver>
-                <version>3.0</version>
+                <version>3.2</version>
         </device>
         <device label="Nikon DSLR" mdpd="true" manufacturer="DSLRs">
                 <driver name="Nikon DSLR">indi_nikon_ccd</driver>
-                <version>3.0</version>
+                <version>3.2</version>
         </device>
         <device label="Pentax DSLR Legacy" mdpd="true" manufacturer="DSLRs">
                 <driver name="Pentax DSLR">indi_pentax_ccd</driver>
-                <version>3.0</version>
+                <version>3.2</version>
         </device>
         <device label="Sony DSLR" mdpd="true" manufacturer="DSLRs">
                 <driver name="Sony DSLR">indi_sony_ccd</driver>
-                <version>3.0</version>
+                <version>3.2</version>
         </device>
         <device label="Fuji DSLR" mdpd="true" manufacturer="DSLRs">
                 <driver name="Fuji DSLR">indi_fuji_ccd</driver>
-                <version>3.0</version>
+                <version>3.2</version>
         </device>
         <device label="GPhoto CCD" manufacturer="DSLRs">
                 <driver name="GPhoto CCD">indi_gphoto_ccd</driver>
-                <version>3.0</version>
+                <version>3.2</version>
         </device>
 </devGroup>
 </driversList>

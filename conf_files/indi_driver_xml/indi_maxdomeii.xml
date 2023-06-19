@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<driversList>
+<devGroup group="Domes">
+	<device label="MaxDome II" manufacturer="Diffraction Limited">
+                <driver name="MaxDome II">indi_maxdomeii</driver>
+                <version>1.3</version>
+	</device>
+</devGroup>
+</driversList>

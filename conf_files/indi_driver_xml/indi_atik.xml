@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<driversList>
+<devGroup group="CCDs">
+        <device label="Atik CCD" mdpd="true" manufacturer="Atik">
+                <driver name="Atik">indi_atik_ccd</driver>
+                <version>2.8</version>
+	</device>
+</devGroup>
+<devGroup group="Filter Wheels">
+        <device label="Atik EFW" mdpd="true" manufacturer="Atik">
+                <driver name="Atik">indi_atik_wheel</driver>
+                <version>2.8</version>
+        </device>
+</devGroup>
+</driversList>
