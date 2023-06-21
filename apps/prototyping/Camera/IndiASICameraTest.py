@@ -26,13 +26,34 @@ if __name__ == '__main__':
     config = dict(
         camera_name='ZWO CCD ASI183MM Pro',
         pointing_seconds=30,
+        adjust_center_x=400,
+        adjust_center_y=400,
+        adjust_roi_search_size=50,
+        adjust_pointing_seconds=5,
         autofocus_seconds=5,
         autofocus_roi_size=500,
         autofocus_merit_function="half_flux_radius",
         indi_client=dict(
             indi_host="192.168.144.32",
-            indi_port=7624
-    ))
+            indi_port=7624),
+        # focuser=dict(
+        #     module="IndiFocuser",
+        #     focuser_name="Focuser Simulator",
+        #     port="/dev/ttyUSB0",
+        #     focus_range=dict(
+        #         min=30000,
+        #         max=50000),
+        #     autofocus_step=dict(
+        #         fine=750,
+        #         coarse=2500),
+        #     autofocus_range=dict(
+        #         fine=15000,
+        #         coarse=30000),
+        #     indi_client=dict(
+        #         indi_host="192.168.144.32",
+        #         indi_port="7624"),
+        # )
+    )
 
     # test indi virtual camera class
     cam = IndiASICamera(config=config,
