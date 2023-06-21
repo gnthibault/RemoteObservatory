@@ -10,7 +10,7 @@ from helper.IndiClient import IndiClient
 
 # Local stuff : Camera
 from Camera.IndiASICamera import IndiASICamera
-
+from Service.NTPTimeService import HostTimeService
 
 if __name__ == '__main__':
     # test indi client
@@ -36,6 +36,7 @@ if __name__ == '__main__':
 
     # test indi virtual camera class
     cam = IndiASICamera(config=config,
+                        serv_time=HostTimeService(),
                         connect_on_create=False)
     cam.connect()
 
