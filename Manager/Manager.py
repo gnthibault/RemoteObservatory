@@ -426,9 +426,9 @@ class Manager(Base):
         if camera_list:
             # Have been passed a list of camera names, extract dictionary
             # containing only cameras named in the list
-            cameras = {cam_name: self.autofocus_cameras[
-                cam_name] for cam_name in camera_list if cam_name in
-                self.acquisition_cameras.keys()}
+            cameras = {cam_name: cam
+                       for cam_name, cam in self.autofocus_cameras.items()
+                        if cam_name in camera_list}
             if cameras == {}:
                 self.logger.warning(f"Passed a list of camera names ({camera_list}) but no matches found")
         else:

@@ -193,8 +193,8 @@ class IndiCamera(IndiDevice):
             2.5-1.5 = 1 ok
         """
         sensor_size = self.get_sensor_size()
-        assert (thumbnail_size < sensor_size["CCD_MAX_X"])
-        assert (thumbnail_size < sensor_size["CCD_MAX_Y"])
+        thumbnail_size = min(thumbnail_size, sensor_size["CCD_MAX_X"])
+        thumbnail_size = min(thumbnail_size, sensor_size["CCD_MAX_Y"])
         center_x = sensor_size["CCD_MAX_X"] / 2
         center_y = sensor_size["CCD_MAX_Y"] / 2
         left_most = np.floor(center_x - thumbnail_size / 2)

@@ -295,7 +295,8 @@ class AutoFocuser(Base):
         fits = self.camera.get_thumbnail(seconds, thumbnail_size)
         try:
             image = fits.data
-        except:
+        except AttributeError as e:
+            self.logger.debug(f"Fits blob is most likely an array of length: {len(fits)}")
             image = fits[0].data
         return image.astype(np.float32)
 
@@ -317,18 +318,18 @@ class AutoFocuser(Base):
                    **kwargs):
         try:
             initial_focus, final_focus = self.do_autofocus(
-                seconds,
-                focus_range,
-                focus_step,
-                thumbnail_size,
-                keep_files,
-                take_dark,
-                merit_function,
-                merit_function_kwargs,
-                structuring_element,
-                make_plots,
-                coarse,
-                focus_event,
+                seconds=seconds,
+                focus_range=focus_range,
+                focus_step=focus_step,
+                thumbnail_size=thumbnail_size,
+                keep_files=keep_files,
+                take_dark=take_dark,
+                merit_function=merit_function,
+                merit_function_kwargs=merit_function_kwargs,
+                structuring_element=structuring_element,
+                make_plots=make_plots,
+                coarse=coarse,
+                focus_event=focus_event,
                 *args,
                 **kwargs)
             assert np.isfinite(initial_focus)
