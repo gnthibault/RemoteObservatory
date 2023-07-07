@@ -231,6 +231,12 @@ cameras:
         indi_client :
             indi_host : localhost
             indi_port : 7624
+pointer:
+    module: IterativeSync # DifferentialPointer
+    gen_hips: False
+    timeout_seconds: 150
+    max_iterations: 5
+    max_pointing_error_seconds: 3
 guider:
     module : GuiderPHD2
     host : localhost

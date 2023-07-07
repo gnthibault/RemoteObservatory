@@ -72,6 +72,10 @@ class Manager(Base):
         self.logger.info('\tSetting up guider')
         self._setup_guider()
 
+        # setup pointing strategy
+        self.logger.info('\tSetting up pointing strategy')
+        self._setup_pointer()
+
         # Setup observation planner
         self.logger.info('\tSetting up observation planner')
         self._setup_scheduler()
@@ -339,6 +343,11 @@ class Manager(Base):
         self.mount.set_track_mode('TRACK_SIDEREAL')
         if self.guider is not None:
             self.guider.dither(**self.config['guider']['dither'])
+
+    def points(self):
+        """Points precisely to the target
+        """
+        self.pointer.points()
 
     def initialize_tracking(self):
         # start each observation by setting up the guider
@@ -712,6 +721,19 @@ class Manager(Base):
                 self.guider.launch_server()
                 self.guider.connect_server()
                 self.guider.connect_profile()
+        except Exception as e:
+            raise RuntimeError(f"Problem setting up guider: {e}")
+
+    def _setup_pointer(self):
+        """
+            Setup a pointing strategy.
+        """
+        try:
+            if 'pointer' in self.config:
+                pointer_name = self.config['pointer']['module']
+                pointer_module = load_module('Guider.'+pointer_name)
+                self.pointer = getattr(pointer_module, pointer_name)(
+                    config=self.config['pointer'])
         except Exception as e:
             raise RuntimeError(f"Problem setting up guider: {e}")
 

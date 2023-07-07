@@ -67,7 +67,7 @@ def on_enter(event_data):
         pointing_image = acquire_pointing(model, observation, img_num)
         try:
             # Attempt to solve field
-            pointing_image.solve_field(verbose=True, gen_hips=True, remove_extras=False, skip_solved=False)
+            pointing_image.solve_field(verbose=True, gen_hips=False, remove_extras=False, skip_solved=False)
             # update mount with the actual position
             if not model.manager.mount.is_simulator:
                 model.manager.mount.sync_to_coord(pointing_image.pointing)
