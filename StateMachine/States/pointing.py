@@ -11,8 +11,8 @@ from utils import Timeout
 
 SLEEP_SECONDS = 1.0
 STATUS_INTERVAL = 10. * u.second
-WAITING_MSG_INTERVAL = 5. * u.second
-MAX_POINTING_TIME = 150.
+WAITING_MSG_INTERVAL = 15. * u.second
+MAX_POINTING_TIME = 300.
 
 
 def on_enter(event_data):

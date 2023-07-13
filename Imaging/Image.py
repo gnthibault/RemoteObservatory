@@ -28,6 +28,9 @@ class OffsetError:
                 dec=self.delta_dec,
                 frame='icrs', equinox='J2000.0')
 
+    def __str__(self):
+        return f"ra:{self.delta_ra}: ,dec:{self.delta_dec}, mag:{self.magnitude}"
+
 
 class Image(Base):
 
