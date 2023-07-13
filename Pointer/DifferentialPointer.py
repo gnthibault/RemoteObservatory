@@ -95,7 +95,7 @@ class DifferentialPointer(Base):
                 self.logger.debug(msg)
                 self.logger.info(msg)
                 # adjust by slewing again to correct the delta
-                target = mount.get_target_coordinates()
+                target = mount.get_current_coordinates()
                 delta = pointing_error.to_delta()
                 target = SkyCoord(
                     ra=target.ra-delta.ra,
