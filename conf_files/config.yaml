@@ -232,7 +232,7 @@ cameras:
             indi_host : localhost
             indi_port : 7624
 pointer:
-    module: IterativeSync # DifferentialPointer
+    module: DifferentialPointer #IterativeSync
     gen_hips: False
     timeout_seconds: 150
     max_iterations: 5

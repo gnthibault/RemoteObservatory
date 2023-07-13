@@ -344,10 +344,14 @@ class Manager(Base):
         if self.guider is not None:
             self.guider.dither(**self.config['guider']['dither'])
 
-    def points(self):
+    def points(self, mount, camera, observation, fits_headers):
         """Points precisely to the target
         """
-        self.pointer.points()
+        return self.pointer.points(
+            mount=mount,
+            camera=camera,
+            observation=observation,
+            fits_headers=fits_headers)
 
     def initialize_tracking(self):
         # start each observation by setting up the guider
@@ -731,11 +735,11 @@ class Manager(Base):
         try:
             if 'pointer' in self.config:
                 pointer_name = self.config['pointer']['module']
-                pointer_module = load_module('Guider.'+pointer_name)
+                pointer_module = load_module('Pointer.'+pointer_name)
                 self.pointer = getattr(pointer_module, pointer_name)(
                     config=self.config['pointer'])
         except Exception as e:
-            raise RuntimeError(f"Problem setting up guider: {e}")
+            raise RuntimeError(f"Problem setting up pointer: {e}")
 
     def _get_calibration(self, camera):
         """

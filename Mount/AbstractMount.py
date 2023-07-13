@@ -225,6 +225,9 @@ class AbstractMount(Base):
         self.logger.debug("Park Coordinates RA-Dec: {}".format(
             self._park_coordinates))
 
+    def get_current_coordinates(self):
+        raise NotImplementedError
+
     def get_target_coordinates(self):
         """ Gets the RA and Dec for the mount's current target. This does NOT
             necessarily
@@ -262,8 +265,7 @@ class AbstractMount(Base):
         target = self.get_target_coordinates().coord
         separation = self.get_current_coordinates().separation(target)
 
-        self.logger.debug("Current separation from target: {}".format(
-            separation))
+        self.logger.debug(f"Current separation from target: {separation}")
 
         return separation
 
@@ -292,6 +294,9 @@ class AbstractMount(Base):
                 self.logger.debug("Slewing to park, sleeping for 5 seconds")
 
         self.logger.debug("Mount parked")
+
+    def slew_to_coord(self, coord):
+        raise NotImplementedError
 
     def slew_to_target(self):
         """ Slews to the current _target_coordinates

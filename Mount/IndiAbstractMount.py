@@ -126,6 +126,12 @@ class IndiAbstractMount(IndiMount, AbstractMount):
         IndiMount.unpark(self)
         self._is_parked = False
 
+    def slew_to_coord(self, coord):
+        IndiMount.slew_to_coord_and_track(self, coord)
+
+    def get_current_coordinates(self):
+        return IndiMount.get_current_coordinates(self)
+
     def slew_to_target(self):
         """ Slews to the current _target_coordinates
 
