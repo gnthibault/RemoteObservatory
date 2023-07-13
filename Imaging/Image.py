@@ -16,6 +16,17 @@ from Base.Base import Base
 from Imaging import fits as fits_utils
 
 OffsetError = namedtuple('OffsetError', ['delta_ra', 'delta_dec', 'magnitude'])
+class OffsetError:
+    def __init__(self, delta_ra, delta_dec, magnitude):
+        self.delta_ra = delta_ra
+        self.delta_dec = delta_dec
+        self.magnitude = magnitude
+
+    def to_delta(self):
+        return SkyCoord(
+                ra=self.delta_ra,
+                dec=self.delta_dec,
+                frame='icrs', equinox='J2000.0')
 
 
 class Image(Base):
@@ -108,8 +119,7 @@ class Image(Base):
             except Exception:
                 pass
 
-    @property
-    def pointing_error(self):
+    def pointing_error(self, pointing_reference_coord=None):
         """Pointing error namedtuple (delta_ra, delta_dec, magnitude)
 
         Returns pointing error information. The first time this is accessed
@@ -125,12 +135,13 @@ class Image(Base):
             if self.wcs is None:
                 self.solve_field()
 
-            # First, make sure both coordinates are in the same coordinate system
+            # TODO First, make sure both coordinates are in the same coordinate system
+            if pointing_reference_coord is None:
+                pointing_reference_coord = self.header_pointing
 
-
-            mag = self.pointing.separation(self.header_pointing)
-            d_ra = self.pointing.ra - self.header_pointing.ra
-            d_dec = self.pointing.dec - self.header_pointing.dec
+            mag = self.pointing.separation(pointing_reference_coord)
+            d_ra = self.pointing.ra - pointing_reference_coord.ra
+            d_dec = self.pointing.dec - pointing_reference_coord.dec
 
             self._pointing_error = OffsetError(
                 d_ra.to(u.arcsec),
@@ -196,7 +207,7 @@ class Image(Base):
             self.fits_file,
             ra=self.header_pointing.ra.value,
             dec=self.header_pointing.dec.value,
-            radius=5,
+            radius=1,
             config=self.config,
             **kwargs)
         self.wcs_file = solve_info['solved_fits_file']

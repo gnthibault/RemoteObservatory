@@ -43,7 +43,6 @@ def solve_field(fname, timeout=180, solve_opts=None, **kwargs):
     else:
         #'--no-fits2fits',
         options = [
-            '--guess-scale',
             '--cpulimit', str(timeout),
             '--no-verify',
             '--crpix-center',
@@ -52,11 +51,6 @@ def solve_field(fname, timeout=180, solve_opts=None, **kwargs):
             '--wcs', 'none',
             '--downsample', '1',
         ]
-        #'-L', '1.55',
-        #'-H', '1.7',
-        #'-u', 'arcsecperpix'
-        #]
-        #--no-plots
 
         if kwargs.get('overwrite', True):
             options.append('--overwrite')

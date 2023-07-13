@@ -1,23 +1,19 @@
 # Generic
-from time import sleep
+import time
 import traceback
 
-# Numerical stuff
-import numpy as np
-
 # Astropy
-import astropy.units as u
+from astropy import units as u
 
 # Local
-from Imaging.Image import Image
-from Imaging.Image import OffsetError
-from utils.error import PointingError
+from utils import error
+from utils import Timeout
 
-SLEEP_SECONDS = 5.
-TIMEOUT_SECONDS = 150.
-MAX_NUM_POINTING_IMAGES = 5
+SLEEP_SECONDS = 1.0
+STATUS_INTERVAL = 10. * u.second
+WAITING_MSG_INTERVAL = 5. * u.second
+MAX_POINTING_TIME = 150.
 
-max_pointing_error = OffsetError(20*u.arcsec, 20*u.arcsec, 30*u.arcsec)
 
 def on_enter(event_data):
     #TODO TN DEBUG
@@ -31,97 +27,64 @@ def on_enter(event_data):
     model.status()
     model.next_state = 'parking'
 
+    model.logger.debug("About to starts fine pointing")
     try:
+        observation = model.manager.current_observation
+        # Before each observation, we make sure we point at the right target
+        model.say(f"Starts pointing to observation: {observation}")
+        fits_headers = model.manager.get_standard_headers(observation=observation)
+        fits_headers["POINTING"] = "True"
+        start_time = model.manager.serv_time.get_astropy_time_from_utc()
+        pointing_event, pointing_status = model.manager.points(
+            mount=model.manager.mount,
+            camera=model.manager.pointing_camera,
+            observation=observation,
+            fits_headers=fits_headers
+        )
 
-        img_num = 0
-        pointing_error = OffsetError(*(np.inf*u.arcsec,)*3)
-        pointing_error_stack = {}
+        timeout = Timeout(MAX_POINTING_TIME)
+        next_status_time = start_time + STATUS_INTERVAL
+        next_msg_time = start_time + WAITING_MSG_INTERVAL
 
-        while (img_num < MAX_NUM_POINTING_IMAGES and
-               pointing_error.magnitude > max_pointing_error.magnitude):
+        while not pointing_event.is_set():
 
-            # Eventually adjust by slewing again to the target
-            if (img_num > 0 and
-                 pointing_error.magnitude > max_pointing_error.magnitude):
-                model.manager.mount.slew_to_target()
+            # check for important message in mq
+            model.check_messages()
+            if model.interrupted:
+                model.say("Pre-observation pointing interrupted!")
+                break
 
-            model.say("Taking pointing picture.")
-            observation = model.manager.current_observation
-            fits_headers = model.manager.get_standard_headers(
-                observation=observation
-            )
-            fits_headers["POINTING"] = "True"
-            model.logger.debug(f"Pointing headers: {fits_headers}")
-            camera_events = dict()
+            now = model.manager.serv_time.get_astropy_time_from_utc()
+            if now >= next_msg_time:
+                elapsed_secs = (now - start_time).to(u.second).value
+                model.logger.debug(f"State: pointing, elapsed {round(elapsed_secs)}")
+                next_msg_time += WAITING_MSG_INTERVAL
+                now = model.manager.serv_time.get_astropy_time_from_utc()
 
-            camera = model.manager.pointing_camera
-            model.logger.debug(f"Exposing for camera: {camera.name}")
-            try:
-                # Start the exposures
-                camera_event = camera.take_observation(
-                    observation=observation,
-                    headers=fits_headers,
-                    filename='pointing{:02d}'.format(img_num),
-                    exp_time=camera.pointing_seconds*u.second,
-                )
-                camera_events[camera.name] = camera_event
-
-            except Exception as e:
-                model.logger.error(f"Problem waiting for images: "
-                                   f"{e}:{traceback.format_exc()}")
-
-            wait_time = 0.
-            while not all([event.is_set() for event in camera_events.values()]):
-                model.check_messages()
-                if model.interrupted:
-                    model.say("Observation interrupted!")
-                    break
-
-                model.logger.debug(f"State: pointing, waiting for images: "
-                                   f'{wait_time} seconds')
+            if now >= next_status_time:
                 model.status()
+                next_status_time += STATUS_INTERVAL
+                now = model.manager.serv_time.get_astropy_time_from_utc()
 
-                if wait_time > TIMEOUT_SECONDS:
-                    raise RuntimeError("Timeout waiting for pointing image")
+            if timeout.expired():
+                raise error.Timeout
 
-                sleep(SLEEP_SECONDS)
-                wait_time += SLEEP_SECONDS
+            # Sleep for a little bit.
+            time.sleep(SLEEP_SECONDS)
 
-            if model.manager.current_observation is not None:
-                #TODO Integrate this feature with our own solver class
-                pointing_id, pointing_path = (
-                    model.manager.current_observation.last_pointing)
-                pointing_image = Image(
-                    pointing_path,
-                    location=model.manager.earth_location
-                )
+        if not pointing_status:
+            raise Exception("Pointing has failed")
 
-                pointing_image.solve_field(verbose=True, gen_hips=True)
-                observation.pointing_image = pointing_image
-                model.logger.debug(f"Pointing file: {pointing_image}")
-                pointing_error = pointing_image.pointing_error
-                model.say("Ok, I have the pointing picture, let's see how close we are.")
-                model.logger.debug(f"Pointing Coords: {pointing_image.pointing}")
-                msg = f"Pointing Error: {pointing_error}"
-                model.logger.debug(msg)
-                model.say(msg)
-                # update mount with the actual position
-                model.manager.mount.sync_to_coord(pointing_image.pointing)
-                # update pointing process tracking information
-                pointing_error_stack[img_num] = pointing_error
-                img_num = img_num + 1
-                
-        if pointing_error.magnitude > max_pointing_error.magnitude:
-            raise PointingError(f"Pointing accuracy was not good enough after "
-                                f"{img_num} iterations, pointing error stack was: "
-                                f"{pointing_error_stack}")
-
-        # Inform that we have changed field
-        model.send_message({"name": model.manager.current_observation.name}, channel='FIELD')
-        model.next_state = 'tracking'
-
+    except error.Timeout as e:
+        msg = f"Timeout while waiting for pointing: {e}. Something is wrong, going to park"
+        model.logger.warning(msg)
+        model.say(msg)
     except Exception as e:
-        msg = (f"Hmm, I had a problem checking the pointing error. "
-               f"Going to park. {e}:{traceback.format_exc()}")
+        msg = (f"Problem with pointing: {e}:{traceback.format_exc()}")
         model.logger.error(msg)
         model.say(msg)
+    else:
+        msg = f"Done with pointing"
+        model.logger.debug(msg)
+        model.say(msg)
+        model.next_state = 'focusing'
