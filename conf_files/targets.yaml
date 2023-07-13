@@ -28,7 +28,7 @@ targets :
             temperature :
             gain : 1
             exp_time_sec : 10
-    HD3360:
+    Deneb:
         Luminance:
             count: 3
             temperature:

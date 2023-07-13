@@ -103,15 +103,22 @@ class IndiMount(IndiDevice):
 
         As our software only manipulates J2000. we decided to convert to jnow
         for the generic case
+
+        EDIT: I am tired that nobody actually properly implements the standard:
+        https://indilib.org/develop/developer-manual/101-standard-properties.html
+        Hence I use J2k everywhere now (Even though I now that the simulator is the only component that expects JNow
+        coordinates)
         """
         # fk5_j2k = FK5(equinox=Time('J2000'))
         # coord_j2k = coord.transform_to(fk5_j2k)
         # rahour_decdeg = {'RA': coord_j2k.ra.hour,
         #                  'DEC': coord_j2k.dec.degree}
-        fk5_now = FK5(equinox=Time.now())
-        coord_jnow = coord.transform_to(fk5_now)
-        rahour_decdeg = {'RA': coord_jnow.ra.hour,
-                        'DEC': coord_jnow.dec.degree}
+        #fk5_now = FK5(equinox=Time.now())
+        #coord_jnow = coord.transform_to(fk5_now)
+        #rahour_decdeg = {'RA': coord_jnow.ra.hour,
+        #                'DEC': coord_jnow.dec.degree}
+        rahour_decdeg = {'RA': coord.ra.hour,
+                         'DEC': coord.dec.degree}
         if self.is_parked:
             self.logger.warning(f"Cannot set coord: {rahour_decdeg} because "
                                 f"mount is parked")

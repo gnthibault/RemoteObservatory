@@ -22,13 +22,10 @@ class OffsetError:
         self.delta_dec = delta_dec
         self.magnitude = magnitude
 
-    def to_delta(self):
-        return SkyCoord(
-                ra=self.delta_ra,
-                dec=self.delta_dec,
-                frame='icrs', equinox='J2000.0')
-
     def __str__(self):
+        return f"ra:{self.delta_ra}: ,dec:{self.delta_dec}, mag:{self.magnitude}"
+
+    def __repr__(self):
         return f"ra:{self.delta_ra}: ,dec:{self.delta_dec}, mag:{self.magnitude}"
 
 
