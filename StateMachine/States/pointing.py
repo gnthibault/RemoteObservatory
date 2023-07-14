@@ -87,4 +87,4 @@ def on_enter(event_data):
         msg = f"Done with pointing"
         model.logger.debug(msg)
         model.say(msg)
-        model.next_state = 'focusing'
+        model.next_state = 'tracking'

@@ -136,7 +136,7 @@ class ObservationPlanner(Base):
         obs_blocks = []
 
         for target_name, config in self.targetList["targets"].items():
-            target = FixedTarget.from_name(target_name)
+            target = FixedTarget.from_name(target_name, frame="icrs")
             #target = FixedTarget(SkyCoord(239*AU.deg, 49*AU.deg))
             for filter_name, acq_config in config.items():
                 # We split big observing blocks into smaller blocks for better
@@ -356,7 +356,7 @@ class ObservationPlanner(Base):
 
         for (target_name, imaging_program), color in zip(
                 self.targetList.items(), colors):
-            #target_coord = SkyCoord.from_name(target_name)
+            #target_coord = SkyCoord.from_name(target_name, frame="icrs")
             target_coord = SkyCoord(239*AU.deg, 49*AU.deg)
 
             # Compute altazs for target

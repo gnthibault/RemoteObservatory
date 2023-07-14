@@ -139,9 +139,10 @@ class Image(Base):
             if pointing_reference_coord is None:
                 pointing_reference_coord = self.header_pointing
 
-            mag = self.pointing.separation(pointing_reference_coord)
-            d_ra = self.pointing.ra - pointing_reference_coord.ra
-            d_dec = self.pointing.dec - pointing_reference_coord.dec
+            ref_pointing = pointing_reference_coord.transform_to(self.pointing.frame)
+            mag = self.pointing.separation(ref_pointing)
+            d_ra = self.pointing.ra - ref_pointing.ra
+            d_dec = self.pointing.dec - ref_pointing.dec
 
             self._pointing_error = OffsetError(
                 d_ra.to(u.arcsec),
@@ -226,9 +227,11 @@ class Image(Base):
         assert isinstance(ref_image, Image), self.logger.warning(
             "Must pass an Image class for reference")
 
-        mag = self.pointing.separation(ref_image.pointing)
-        d_dec = self.pointing.dec - ref_image.pointing.dec
-        d_ra = self.pointing.ra - ref_image.pointing.ra
+        # Make sure we are in the same frame/equinox
+        ref_pointing = ref_image.pointing.transform_to(self.pointing.frame)
+        mag = self.pointing.separation(ref_pointing)
+        d_dec = self.pointing.dec - ref_pointing.dec
+        d_ra = self.pointing.ra - ref_pointing.ra
 
         return OffsetError(d_ra.to(u.arcsec), d_dec.to(u.arcsec), mag.to(u.arcsec))
 

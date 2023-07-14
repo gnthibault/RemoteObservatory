@@ -31,7 +31,7 @@ class IterativeSync(Base):
         self.gen_hips        = config["gen_hips"]
         self.timeout_seconds = config["timeout_seconds"]
         self.max_iterations  = config["max_iterations"]
-        self.max_pointing_error = OffsetError(config["max_pointing_error_seconds"])
+        self.max_pointing_error = OffsetError(*(config["max_pointing_error_seconds"]*u.arcsec,)*3)
 
     def points(self, mount, camera, observation, fits_headers):
         pointing_event = threading.Event()
@@ -93,9 +93,7 @@ class IterativeSync(Base):
                 pointing_error = pointing_image.pointing_error()
                 self.logger.info("Ok, I have the pointing picture, let's see how close we are.")
                 self.logger.debug(f"Pointing Coords: {pointing_image.pointing}")
-                msg = f"Pointing Error: {pointing_error}"
-                self.logger.debug(msg)
-                self.logger.info(msg)
+                self.logger.debug(f"Pointing Error: {pointing_error}")
                 # update mount with the actual position
                 mount.sync_to_coord(pointing_image.pointing)
                 # update pointing process tracking information

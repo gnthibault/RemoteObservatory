@@ -15,7 +15,7 @@ from Spectro.ReferenceStarFinder import best_references
 
 
 def find_reference(target_name="Shelyak"):
-    target = FixedTarget.from_name(target_name)
+    target = FixedTarget.from_name(target_name, frame="icrs")
     maxseparation = 5*u.deg
     maxebv = 5
     obs = Observatory()

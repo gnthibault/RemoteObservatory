@@ -98,27 +98,24 @@ class IndiMount(IndiDevice):
 
     def set_coord(self, coord):
         """
-        Subtleties here: coord should be given as Equatorial astrometric epoch
+        Subtleties here for INDILIB: coord should be given as FK% frame with Equatorial astrometric epoch
         of date coordinate (eod):  RA JNow RA, hours,  DEC JNow Dec, degrees +N
 
-        As our software only manipulates J2000. we decided to convert to jnow
-        for the generic case
+        As our software only manipulates ICRS J2000. We decided to convert to FK5 jnow for the generic case
 
         EDIT: I am tired that nobody actually properly implements the standard:
         https://indilib.org/develop/developer-manual/101-standard-properties.html
-        Hence I use J2k everywhere now (Even though I now that the simulator is the only component that expects JNow
-        coordinates)
         """
         # fk5_j2k = FK5(equinox=Time('J2000'))
         # coord_j2k = coord.transform_to(fk5_j2k)
         # rahour_decdeg = {'RA': coord_j2k.ra.hour,
         #                  'DEC': coord_j2k.dec.degree}
-        #fk5_now = FK5(equinox=Time.now())
-        #coord_jnow = coord.transform_to(fk5_now)
-        #rahour_decdeg = {'RA': coord_jnow.ra.hour,
-        #                'DEC': coord_jnow.dec.degree}
-        rahour_decdeg = {'RA': coord.ra.hour,
-                         'DEC': coord.dec.degree}
+        fk5_now = FK5(equinox=Time.now())
+        coord_jnow = coord.transform_to(fk5_now)
+        rahour_decdeg = {'RA': coord_jnow.ra.hour,
+                        'DEC': coord_jnow.dec.degree}
+        # rahour_decdeg = {'RA': coord.ra.hour,
+        #                  'DEC': coord.dec.degree}
         if self.is_parked:
             self.logger.warning(f"Cannot set coord: {rahour_decdeg} because "
                                 f"mount is parked")
@@ -280,14 +277,32 @@ class IndiMount(IndiDevice):
         return ret
 
     def get_current_coordinates(self):
+        """
+        Subtleties here for INDILIB: coord are retrieved as FK5 frame with Equatorial astrometric epoch
+        of date coordinate (eod):  RA JNow RA, hours,  DEC JNow Dec, degrees +N
+
+        As our software only manipulates ICRS J2000. We decided to convert FROM FK5 jnow for the generic case
+
+        EDIT: I am tired that nobody actually properly implements the standard:
+        https://indilib.org/develop/developer-manual/101-standard-properties.html
+
+        """
         self.logger.debug(f"Asking mount {self.device_name} for its current coordinates")
         rahour_decdeg = self.get_number('EQUATORIAL_EOD_COORD')
         self.logger.debug(f"Received current JNOW coordinates {rahour_decdeg}")
+        fk5_now = FK5(equinox=Time.now())
         ret = SkyCoord(ra=rahour_decdeg['RA']*u.hourangle,
                        dec=rahour_decdeg['DEC']*u.degree,
-                       frame='cirs',
+                       frame=fk5_now,
                        obstime=Time.now())
+        icrs_j2k = ICRS()
         self.logger.debug(f"Received coordinates in JNOw/CIRS from mount: {ret}")
+        ret = ret.transform_to(icrs_j2k)
+
+        # ret = SkyCoord(ra=rahour_decdeg['RA'] * u.hourangle,
+        #                dec=rahour_decdeg['DEC'] * u.degree,
+        #                frame='icrs',
+        #                equinox='J2000.0')
         return ret
 
 ###############################################################################

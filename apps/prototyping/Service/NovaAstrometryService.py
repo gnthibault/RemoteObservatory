@@ -24,7 +24,7 @@ if __name__ == '__main__':
     logger = logging.getLogger('mainLogger')
 
     # First get a sky image from astropy
-    coord = SkyCoord.from_name("M1")
+    coord = SkyCoord.from_name("M1", frame="icrs")
     position = coord.icrs
     coordinates = 'icrs'
     hdu = SkyView.get_images(position=position, coordinates=coordinates,

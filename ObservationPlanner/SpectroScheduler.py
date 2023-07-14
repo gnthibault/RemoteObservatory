@@ -122,7 +122,7 @@ class SpectroScheduler(Scheduler):
             spinfo["RVZ_TYPE"] = str(CDS['RVZ_TYPE'][0])
         if CDS is None:
             try:
-                coord = SkyCoord.from_name(target_name, parse=True)
+                coord = SkyCoord.from_name(target_name, parse=True, frame="icrs")
                 target = FixedTarget(name=target_name.replace(" ", ""),
                                      coord=coord)
             except:

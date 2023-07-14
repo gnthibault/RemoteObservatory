@@ -264,7 +264,7 @@ class Scheduler(Base):
 
     def define_target(self, target_name):
         try:
-            target = FixedTarget.from_name(target_name)
+            target = FixedTarget.from_name(target_name, frame="icrs")
         except:
             try:
                 #"5h12m43.2s +31d12m43s" is perfectly valid

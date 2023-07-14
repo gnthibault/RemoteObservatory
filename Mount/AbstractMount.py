@@ -249,9 +249,8 @@ class AbstractMount(Base):
         Returns:
             bool:  Boolean indicating success
         """
-
         # Save the skycoord coordinates
-        self.logger.debug("Setting target coordinates: {}".format(coords))
+        self.logger.debug(f"Setting target coordinates: {coords}")
         self._target_coordinates = coords
         return True
 
