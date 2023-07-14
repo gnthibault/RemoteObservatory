@@ -69,8 +69,8 @@ def on_enter(event_data):
             # Attempt to solve field
             pointing_image.solve_field(verbose=True, gen_hips=False, remove_extras=False, skip_solved=False)
             # update mount with the actual position
-            if not model.manager.mount.is_simulator:
-                model.manager.mount.sync_to_coord(pointing_image.pointing)
+            #if not model.manager.mount.is_simulator:
+            #    model.manager.mount.sync_to_coord(pointing_image.pointing)
 
             # Now analyse the solved image
             px_identified_target = find_best_candidate_star(pointing_image,
