@@ -234,9 +234,13 @@ cameras:
 pointer:
     module: DifferentialPointer #DifferentialPointer #IterativeSync
     gen_hips: False
-    timeout_seconds: 150
+    timeout_seconds: 300
     max_iterations: 5
     max_pointing_error_seconds: 3
+offset_pointer:
+    module: StarOffsetPointer #StarOffsetPointer #NoOffsetPointer
+    timeout_seconds: 300
+    max_identification_error_seconds: 3
 guider:
     module : GuiderPHD2
     host : localhost

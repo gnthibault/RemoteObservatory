@@ -741,6 +741,20 @@ class Manager(Base):
         except Exception as e:
             raise RuntimeError(f"Problem setting up pointer: {e}")
 
+    def _setup_offset_pointer(self):
+        """
+            Setup an offset pointing strategy.
+        """
+        try:
+            if 'offset_pointer' in self.config:
+                pointer_name = self.config['offset_pointer']['module']
+                pointer_module = load_module('Pointer.'+pointer_name)
+                self.offset_pointer = getattr(pointer_module, pointer_name)(
+                    config=self.config['offset_pointer'])
+        except Exception as e:
+            raise RuntimeError(f"Problem setting up offset pointer: {e}")
+
+
     def _get_calibration(self, camera):
         """
             Sets up the calibration / calibration acquisition procedure
