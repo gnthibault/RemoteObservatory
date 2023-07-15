@@ -10,6 +10,7 @@ import matplotlib.pyplot as plt
 from astropy import units as u
 from astropy.coordinates import SkyCoord
 from astropy.io import fits
+from astropy.time import Time
 
 #Astroquery stuff
 from astroquery.skyview import SkyView
@@ -24,7 +25,7 @@ if __name__ == '__main__':
     logger = logging.getLogger('mainLogger')
 
     # First get a sky image from astropy
-    coord = SkyCoord.from_name("M1", frame="icrs")
+    coord = SkyCoord(SkyCoord.from_name("M1", frame="icrs"), equinox=Time('J2000'))
     position = coord.icrs
     coordinates = 'icrs'
     hdu = SkyView.get_images(position=position, coordinates=coordinates,

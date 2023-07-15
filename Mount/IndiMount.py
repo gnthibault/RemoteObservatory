@@ -111,10 +111,10 @@ class IndiMount(IndiDevice):
         # coord_j2k = coord.transform_to(fk5_j2k)
         # rahour_decdeg = {'RA': coord_j2k.ra.hour,
         #                  'DEC': coord_j2k.dec.degree}
-        # fk5_now = FK5(equinox=Time.now())
-        # coord_now = coord.transform_to(fk5_now)
-        gcrs_now = GCRS(obstime=Time.now())
-        coord_now = coord.transform_to(gcrs_now)
+        fk5_now = FK5(equinox=Time.now())
+        coord_now = coord.transform_to(fk5_now)
+        # gcrs_now = GCRS(obstime=Time.now())
+        # coord_now = coord.transform_to(gcrs_now)
         rahour_decdeg = {'RA': coord_now.ra.hour,
                          'DEC': coord_now.dec.degree}
         # rahour_decdeg = {'RA': coord.ra.hour,
@@ -123,7 +123,8 @@ class IndiMount(IndiDevice):
             self.logger.warning(f"Cannot set coord: {rahour_decdeg} because "
                                 f"mount is parked")
         else:
-            self.logger.info(f"Now setting JNow coord: {rahour_decdeg}")
+            coord_formatted = coord_now.to_string(style="hmsdms", sep=":", precision=1)
+            self.logger.info(f"Now setting JNow coord: {rahour_decdeg} = {coord_formatted}")
             self.set_number('EQUATORIAL_EOD_COORD', rahour_decdeg, sync=True,
                             timeout=180)
 
@@ -293,12 +294,12 @@ class IndiMount(IndiDevice):
         self.logger.debug(f"Asking mount {self.device_name} for its current coordinates")
         rahour_decdeg = self.get_number('EQUATORIAL_EOD_COORD')
         self.logger.debug(f"Received current JNOW coordinates {rahour_decdeg}")
-        #fk5_now = FK5(equinox=Time.now())
-        gcrs_now = GCRS(obstime=Time.now())
+        fk5_now = FK5(equinox=Time.now())
+        # gcrs_now = GCRS(obstime=Time.now())
         ret = SkyCoord(ra=rahour_decdeg['RA']*u.hourangle,
                        dec=rahour_decdeg['DEC']*u.degree,
-                       frame=gcrs_now)
-        #               obstime=Time.now())
+                       frame=fk5_now,
+                       obstime=Time.now())
         icrs_j2k = ICRS()
         self.logger.debug(f"Received coordinates in JNOw/CIRS from mount: {ret}")
         ret = ret.transform_to(icrs_j2k)

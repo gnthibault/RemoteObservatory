@@ -5,7 +5,6 @@ import os.path
 import pickle
 import yaml
 
-
 # Numerical stuff
 import numpy as np
 
@@ -16,7 +15,7 @@ from astropy import units as AU
 from astropy.coordinates import AltAz
 from astropy.coordinates import EarthLocation
 from astropy.coordinates import SkyCoord
-from astropy.time import Time as ATime
+from astropy.time import Time
 
 # Astroplan stuff
 from astroplan import FixedTarget
@@ -136,7 +135,11 @@ class ObservationPlanner(Base):
         obs_blocks = []
 
         for target_name, config in self.targetList["targets"].items():
-            target = FixedTarget.from_name(target_name, frame="icrs")
+            target = FixedTarget(
+                SkyCoord(
+                    SkyCoord.from_name(target_name,
+                                       frame="icrs"),
+                    equinox=Time('J2000')))
             #target = FixedTarget(SkyCoord(239*AU.deg, 49*AU.deg))
             for filter_name, acq_config in config.items():
                 # We split big observing blocks into smaller blocks for better
@@ -188,10 +191,10 @@ class ObservationPlanner(Base):
             else:
                 target_date = start_time
             midnight = self.ntpServ.get_next_local_midnight_in_utc(target_date)
-            midnight = ATime(midnight)
+            midnight = Time(midnight)
             start_time = midnight - duration_hour / 2
         else:
-            start_time = ATime(start_time)
+            start_time = Time(start_time)
 
         stop_time = start_time + duration_hour
         priority_schedule = Schedule(start_time, stop_time)
@@ -234,7 +237,7 @@ class ObservationPlanner(Base):
         local_tmh_range = [self.ntpServ.convert_to_local_time(i) for i in
                            utc_tmh_range]
         #Astropy ranges (everything in UTC)
-        start_time = ATime(start_time)
+        start_time = Time(start_time)
         relative_time_frame = np.linspace(0, tmh_range,
                                           resolution) * AU.hour
         absolute_time_frame = start_time + relative_time_frame
@@ -356,8 +359,8 @@ class ObservationPlanner(Base):
 
         for (target_name, imaging_program), color in zip(
                 self.targetList.items(), colors):
-            #target_coord = SkyCoord.from_name(target_name, frame="icrs")
-            target_coord = SkyCoord(239*AU.deg, 49*AU.deg)
+            target_coord = SkyCoord(SkyCoord.from_name(target_name, frame="icrs"), equinox=Time('J2000'))
+            #target_coord = SkyCoord(239*AU.deg, 49*AU.deg)
 
             # Compute altazs for target
             target_altazs = target_coord.transform_to(altaz_frame)

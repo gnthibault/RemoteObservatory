@@ -3,6 +3,7 @@ import logging
 
 # Astropy stuff
 from astropy.coordinates import SkyCoord
+from astropy.time import Time
 
 # Local Stuff, import Sequence related objects
 from Sequencer.AutoDarkStep import AutoDarkCalculator, AutoDarkSequence
@@ -34,7 +35,7 @@ class SequenceBuilder:
 
     def add_telescope_target_slewing(self, target):
         if not (self.mount is None):
-            #coord = SkyCoord.from_name(target, frame="icrs")
+            #coord = SkyCoord(SkyCoord.from_name(target, frame="icrs"), equinox=Time('J2000'))
             coord = SkyCoord('19h50m47.6s', '+08d52m12.0s', frame='icrs')
             self.__append(TelescopeSlewingStep(self.mount, coord))
 
