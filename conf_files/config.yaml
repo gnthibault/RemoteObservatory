@@ -240,7 +240,10 @@ pointer:
 offset_pointer:
     module: StarOffsetPointer #StarOffsetPointer #NoOffsetPointer
     timeout_seconds: 300
-    max_identification_error_seconds: 3
+    max_identification_error_seconds: 5
+    sync_mount_upon_solve: False
+    use_guider_adjust: True
+    on_star_identification_failure: trust_astrometry # get_brightest or trust_astrometry
 guider:
     module : GuiderPHD2
     host : localhost

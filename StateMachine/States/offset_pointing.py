@@ -17,7 +17,7 @@ MAX_POINTING_TIME = 300.
 
 def on_enter(event_data):
     #TODO TN DEBUG
-    #event_data.model.next_state = 'tracking'
+    #event_data.model.next_state = 'observing'
     #return
     """ Offset Pointing State
     Make sure the proper target is set on the expected position on the sensor
@@ -34,9 +34,11 @@ def on_enter(event_data):
         fits_headers = model.manager.get_standard_headers(observation=observation)
         fits_headers["POINTING"] = "True"
         start_time = model.manager.serv_time.get_astropy_time_from_utc()
-        offset_pointing_event, offset_pointing_status = model.manager.points(
+        offset_pointing_event, offset_pointing_status = model.manager.offset_points(
             mount=model.manager.mount,
-            camera=model.manager.offset_pointing_camera,
+            camera=model.manager.adjust_pointing_camera,
+            guiding_camera=model.manager.guiding_camera,
+            guider=model.manager.guider,
             observation=observation,
             fits_headers=fits_headers
         )
@@ -45,18 +47,18 @@ def on_enter(event_data):
         next_status_time = start_time + STATUS_INTERVAL
         next_msg_time = start_time + WAITING_MSG_INTERVAL
 
-        while not pointing_event.is_set():
+        while not offset_pointing_event.is_set():
 
             # check for important message in mq
             model.check_messages()
             if model.interrupted:
-                model.say("Pre-observation pointing interrupted!")
+                model.say("Pre-observation offset_pointing interrupted!")
                 break
 
             now = model.manager.serv_time.get_astropy_time_from_utc()
             if now >= next_msg_time:
                 elapsed_secs = (now - start_time).to(u.second).value
-                model.logger.debug(f"State: pointing, elapsed {round(elapsed_secs)}")
+                model.logger.debug(f"State: offset_pointing, elapsed {round(elapsed_secs)}")
                 next_msg_time += WAITING_MSG_INTERVAL
                 now = model.manager.serv_time.get_astropy_time_from_utc()
 
@@ -71,11 +73,11 @@ def on_enter(event_data):
             # Sleep for a little bit.
             time.sleep(SLEEP_SECONDS)
 
-        if not pointing_status[0]:
-            raise Exception("Pointing has failed")
+        if not offset_pointing_status[0]:
+            raise Exception("Offset Pointing has failed")
 
     except error.Timeout as e:
-        msg = f"Timeout while waiting for pointing: {e}. Something is wrong, going to park"
+        msg = f"Timeout while waiting for offset_pointing: {e}. Something is wrong, going to park"
         model.logger.warning(msg)
         model.say(msg)
     except Exception as e:
@@ -86,4 +88,4 @@ def on_enter(event_data):
         msg = f"Done with offset_pointing"
         model.logger.debug(msg)
         model.say(msg)
-        model.next_state = 'tracking'
+        model.next_state = 'observing'

@@ -353,6 +353,17 @@ class Manager(Base):
             observation=observation,
             fits_headers=fits_headers)
 
+    def offset_points(self, mount, camera, guiding_camera, guider, observation, fits_headers):
+        """Points precisely object to specific area on the sensor
+        """
+        return self.offset_pointer.points(
+            mount=mount,
+            camera=camera,
+            guiding_camera=guiding_camera,
+            guider=guider,
+            observation=observation,
+            fits_headers=fits_headers)
+
     def initialize_tracking(self):
         # start each observation by setting up the guider
         try:

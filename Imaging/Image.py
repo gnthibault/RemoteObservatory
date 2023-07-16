@@ -152,6 +152,10 @@ class Image(Base):
 
         return self._pointing_error
 
+    def get_center_coordinates(self):
+        return (self.header["NAXIS1"]/2,
+                self.header["NAXIS2"]/2)
+
     def get_header_pointing(self):
         """Get the pointing information from the header
 
