@@ -15,7 +15,6 @@ from Imaging.Image import Image
 from Imaging.SolvedImageAnalysis import find_best_candidate_star, get_brightest_detection
 from utils.error import AstrometrySolverError
 
-
 # Numerical stuff
 import numpy as np
 
@@ -30,6 +29,7 @@ from utils.error import PointingError
 
 SLEEP_SECONDS = 5.
 
+
 class StarOffsetPointer(Base):
     def __init__(self, config=None):
         super().__init__()
@@ -43,7 +43,7 @@ class StarOffsetPointer(Base):
             )
 
         self.timeout_seconds = config["timeout_seconds"]
-        self.max_identification_error_seconds = config["max_identification_error_seconds"]
+        self.max_identification_error = config["max_identification_error_seconds"]*u.arcsec
         self.sync_mount_upon_solve = config["sync_mount_upon_solve"]
         self.use_guider_adjust = config["use_guider_adjust"]
         self.on_star_identification_failure = config["on_star_identification_failure"]
@@ -51,7 +51,7 @@ class StarOffsetPointer(Base):
     def offset_points(self, mount, camera, guiding_camera, guider, observation, fits_headers):
         pointing_event = threading.Event()
         pointing_status = [False]
-        w = threading.Thread(target=self.points_async,
+        w = threading.Thread(target=self.offset_points_async,
                              kwargs={
                                  "mount": mount,
                                  "camera": camera,
@@ -60,7 +60,8 @@ class StarOffsetPointer(Base):
                                  "observation": observation,
                                  "fits_headers": fits_headers,
                                  "pointing_event": pointing_event,
-                                 "pointing_status": pointing_status})
+                                 "pointing_status": pointing_status
+                             })
         w.start()
         return pointing_event, pointing_status
 
@@ -110,7 +111,7 @@ class StarOffsetPointer(Base):
                                                                 observation.target.coord,
                                                                 self.max_identification_error)
                 if px_identified_target is None:
-                    msg = f"Cannot identify a star from {pointing_image.fits_file} while in offset_pointing state, will "\
+                    msg = f"Cannot identify a star from {pointing_image.fits_file} while in offset_pointing state, will " \
                           f"only rely on brightest detected star"
                     self.logger.warning(msg)
                     px_identified_target = self.get_default_star_strategy(pointing_image)
@@ -123,12 +124,12 @@ class StarOffsetPointer(Base):
             if self.use_guider_adjust:
                 # If guider was locked on another star, then restart guiding
                 if not guider.is_lock_position_close_to(px_target=px_identified_target,
-                                                        max_angle_sep=3*u.arcsec):
+                                                        max_angle_sep=3 * u.arcsec):
                     guider.stop_capture()
                     guider.loop()
-                    half_search_size = camera.adjust_roi_search_size/2
-                    guider.find_star(x=max(0, int(round(px_identified_target[0]-half_search_size))),
-                                     y=max(0, int(round(px_identified_target[1]-half_search_size))),
+                    half_search_size = camera.adjust_roi_search_size / 2
+                    guider.find_star(x=max(0, int(round(px_identified_target[0] - half_search_size))),
+                                     y=max(0, int(round(px_identified_target[1] - half_search_size))),
                                      width=camera.adjust_roi_search_size,
                                      height=camera.adjust_roi_search_size)
                     guider.guide(recalibrate=False,
@@ -140,40 +141,66 @@ class StarOffsetPointer(Base):
                                          camera.adjust_center_y,
                                          exact=True,
                                          wait_reached=True,
-                                         angle_sep_reached=2*u.arcsec)
+                                         angle_sep_reached=2 * u.arcsec)
                 # TODO TN we would need a concept of uncertainty based on seeing and sampling here
             else:
-                # # compute offseted coordinates
-                current_pointing_center = pointing_image.pointing
-                current_wcs = pointing_image.wcs
-                # Pointing adjust must be 0-based
-                pointing_adjust = [camera.adjust_center_x, camera.adjust_center_y]
                 # There are some subteleties here: https://astropy-cjhang.readthedocs.io/en/latest/wcs/
-                radecdeg = pointing_image.wcs.all_pix2world([pointing_adjust], 0, ra_dec_order=True)
+                radeg, decdeg = pointing_image.wcs.all_pix2world(
+                    camera.adjust_center_x,
+                    camera.adjust_center_y,
+                    0,  # 0-based indexing
+                    ra_dec_order=True)
+                current_sky_coord_of_target_sensor_position = SkyCoord(
+                    ra=float(radeg) * u.degree,
+                    dec=float(decdeg) * u.degree,
+                    frame='icrs',
+                    equinox='J2000.0')
+                radeg, decdeg = pointing_image.wcs.all_pix2world(
+                    px_identified_target[0],
+                    px_identified_target[1],
+                    0,  # 0-based indexing
+                    ra_dec_order=True)
+                current_sky_coord_of_target_star = SkyCoord(
+                    ra=float(radeg) * u.degree,
+                    dec=float(decdeg) * u.degree,
+                    frame='icrs',
+                    equinox='J2000.0')
 
-
-                # adjust by slewing again to correct the delta
-                target = mount.get_current_coordinates().transform_to(ICRS)
+                pointing_error = pointing_image.pointing_error(
+                    pointing_reference_coord=current_sky_coord_of_target_star
+                )
+                offset_delta_ra = current_sky_coord_of_target_sensor_position.ra-current_sky_coord_of_target_star.ra
+                offset_delta_dec = current_sky_coord_of_target_sensor_position.dec-current_sky_coord_of_target_star.dec
+                # adjust by slewing to the opposite of the delta
+                target = mount.get_current_coordinates()
                 target = SkyCoord(
-                    ra=target.ra - pointing_error.delta_ra,
-                    dec=target.dec - pointing_error.delta_dec,
+                    ra=target.ra - pointing_error.delta_ra + offset_delta_ra,
+                    dec=target.dec - pointing_error.delta_dec + offset_delta_dec,
                     frame='icrs', equinox='J2000.0')
-                mount.slew_to_coord(target)
-                # coordinate_to_be_centered = compute_coordinate_to_be_centered(
-                #     pointing_image.pointing,
-                #     pointing_image.wcs,
-                #     model.manager.adjust_pointing_camera.adjust_center_x,
-                #     model.manager.adjust_pointing_camera.adjust_center_y,
-                #     px_identified_target)
                 # Now adjust by slewing to the specified counter-offseted coordinates
                 if guider is not None:
                     msg = f"Going to adjust pointing, need to pause guiding, and restart later"
                     self.logger.debug(msg)
-                    guider.set_paused(paused=True)
-                    guider.wait_for_state(one_of_states=["Paused"])
-                # mount.slew_to_target()
+                    guider.stop_capture()
+                    # guider.set_paused(paused=True)
+                    # guider.wait_for_state(one_of_states=["Paused"])
+                mount.slew_to_coord(target)
                 if guider is not None:
-                    guider.guide()
+                    guider.loop()
+                    half_search_size = camera.adjust_roi_search_size / 2
+                    guider.find_star(x=max(0, int(round(px_identified_target[0] - half_search_size))),
+                                     y=max(0, int(round(px_identified_target[1] - half_search_size))),
+                                     width=camera.adjust_roi_search_size,
+                                     height=camera.adjust_roi_search_size)
+                    guider.guide(recalibrate=False,
+                                 roi=[int(round(camera.adjust_center_x)),
+                                      int(round(camera.adjust_center_y)),
+                                      int(round(camera.adjust_roi_search_size)),
+                                      int(round(camera.adjust_roi_search_size))])
+                    # msg = f"Done with moving telescope for adjust pointing, going to resume guiding"
+                    # self.logger.debug(msg)
+                    # guider.set_paused(paused=False)
+                    # guider.wait_for_state(one_of_states=["Guiding", "SteadyGuiding"])
             pointing_status[0] = True
         except Exception as e:
             self.logger.error(f"Problem shooting image: {e}:{traceback.format_exc()}")
@@ -190,7 +217,6 @@ class StarOffsetPointer(Base):
         self.logger.debug("Taking pointing picture.")
         external_trigger = (camera is guiding_camera)
 
-        camera_events = dict()
         self.logger.debug(f"Exposing for camera: {camera.name}")
         try:
             # Start the exposures
@@ -201,21 +227,18 @@ class StarOffsetPointer(Base):
                 exp_time=camera.adjust_pointing_seconds * u.second,
                 external_trigger=external_trigger
             )
-            camera_events[camera.name] = camera_event
+            status = camera_event.wait(timeout=self.timeout_seconds)
+            if not status:
+                msg = f"Problem waiting for images: {e}:{traceback.format_exc()}"
+                self.logger.error(msg)
+                raise RuntimeError(msg)
         except Exception as e:
             self.logger.error(f"Problem waiting for images: {e}:{traceback.format_exc()}")
-        pointing_id, pointing_path = model.manager.current_observation.last_pointing
+        pointing_id, pointing_path = observation.last_pointing
         pointing_image = Image(
-            pointing_path,
-            location=model.manager.earth_location
+            pointing_path
         )
         observation.adjust_pointing_image = pointing_image
         self.logger.debug(f"Adjust pointing file: {pointing_image}")
-
-        # if guider is not None:
-        #     msg = f"Done with acquisitions for adjust pointing, going to resume guiding"
-        #     self.logger.debug(msg)
-        #     guider.set_paused(paused=False)
-        #     guider.wait_for_state(one_of_states=["Guiding", "SteadyGuiding"])
 
         return pointing_image

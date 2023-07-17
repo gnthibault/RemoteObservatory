@@ -39,8 +39,7 @@ class Image(Base):
             wcs_file (str, optional): Name of FITS file to use for WCS
         """
         super().__init__()
-        assert os.path.exists(fits_file), self.logger.warning(
-            'File does not exist: {}'.format(fits_file))
+        assert os.path.exists(fits_file), f"File does not exist: {fits_file}"
 
         if fits_file.endswith('.fz'):
             fits_file = fits_utils.fpack(fits_file, unpack=True)
@@ -153,8 +152,12 @@ class Image(Base):
         return self._pointing_error
 
     def get_center_coordinates(self):
-        return (self.header["NAXIS1"]/2,
-                self.header["NAXIS2"]/2)
+        """
+        Those are 0-based indexing
+        :return:
+        """
+        return (self.header["NAXIS1"]/2-0.5,
+                self.header["NAXIS2"]/2-0.5)
 
     def get_header_pointing(self):
         """Get the pointing information from the header
@@ -189,11 +192,20 @@ class Image(Base):
         One should notice that Astrometry.net uses J2000 equinox
         """
         if self.wcs is not None:
+            # This was wrong because crval coord relates to crpix reference pixels
             ra = self.wcs.celestial.wcs.crval[0]
             dec = self.wcs.celestial.wcs.crval[1]
 
-            self.pointing = SkyCoord(ra=ra*u.degree,
-                                     dec=dec*u.degree,
+            # TODO TN trying alternative definition
+            cx, cy = self.get_center_coordinates()
+            radeg, decdeg = self.wcs.all_pix2world(
+                cx,
+                cy,
+                0,  # 0-based indexing
+                ra_dec_order=True)
+
+            self.pointing = SkyCoord(ra=radeg*u.degree,
+                                     dec=decdeg*u.degree,
                                      frame='icrs', equinox='J2000.0')
             self.ra = self.pointing.ra.to(u.hourangle)
             self.dec = self.pointing.dec.to(u.degree)

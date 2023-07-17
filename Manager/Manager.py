@@ -76,6 +76,10 @@ class Manager(Base):
         self.logger.info('\tSetting up pointing strategy')
         self._setup_pointer()
 
+        # setup pointing strategy
+        self.logger.info('\tSetting up offset pointing strategy')
+        self._setup_offset_pointer()
+
         # Setup observation planner
         self.logger.info('\tSetting up observation planner')
         self._setup_scheduler()
@@ -356,7 +360,7 @@ class Manager(Base):
     def offset_points(self, mount, camera, guiding_camera, guider, observation, fits_headers):
         """Points precisely object to specific area on the sensor
         """
-        return self.offset_pointer.points(
+        return self.offset_pointer.offset_points(
             mount=mount,
             camera=camera,
             guiding_camera=guiding_camera,

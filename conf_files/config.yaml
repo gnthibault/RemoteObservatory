@@ -242,7 +242,7 @@ offset_pointer:
     timeout_seconds: 300
     max_identification_error_seconds: 5
     sync_mount_upon_solve: False
-    use_guider_adjust: True
+    use_guider_adjust: False
     on_star_identification_failure: trust_astrometry # get_brightest or trust_astrometry
 guider:
     module : GuiderPHD2
