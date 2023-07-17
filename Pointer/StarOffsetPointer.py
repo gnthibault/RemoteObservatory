@@ -48,13 +48,14 @@ class StarOffsetPointer(Base):
         self.use_guider_adjust = config["use_guider_adjust"]
         self.on_star_identification_failure = config["on_star_identification_failure"]
 
-    def offset_points(self, mount, camera, guider, observation, fits_headers):
+    def offset_points(self, mount, camera, guiding_camera, guider, observation, fits_headers):
         pointing_event = threading.Event()
         pointing_status = [False]
         w = threading.Thread(target=self.points_async,
                              kwargs={
                                  "mount": mount,
                                  "camera": camera,
+                                 "guiding_camera": guiding_camera,
                                  "guider": guider,
                                  "observation": observation,
                                  "fits_headers": fits_headers,
@@ -122,7 +123,7 @@ class StarOffsetPointer(Base):
             if self.use_guider_adjust:
                 # If guider was locked on another star, then restart guiding
                 if not guider.is_lock_position_close_to(px_target=px_identified_target,
-                                                        max_angle_sep=1*u.arcsec):
+                                                        max_angle_sep=3*u.arcsec):
                     guider.stop_capture()
                     guider.loop()
                     half_search_size = camera.adjust_roi_search_size/2
@@ -143,6 +144,21 @@ class StarOffsetPointer(Base):
                 # TODO TN we would need a concept of uncertainty based on seeing and sampling here
             else:
                 # # compute offseted coordinates
+                current_pointing_center = pointing_image.pointing
+                current_wcs = pointing_image.wcs
+                # Pointing adjust must be 0-based
+                pointing_adjust = [camera.adjust_center_x, camera.adjust_center_y]
+                # There are some subteleties here: https://astropy-cjhang.readthedocs.io/en/latest/wcs/
+                radecdeg = pointing_image.wcs.all_pix2world([pointing_adjust], 0, ra_dec_order=True)
+
+
+                # adjust by slewing again to correct the delta
+                target = mount.get_current_coordinates().transform_to(ICRS)
+                target = SkyCoord(
+                    ra=target.ra - pointing_error.delta_ra,
+                    dec=target.dec - pointing_error.delta_dec,
+                    frame='icrs', equinox='J2000.0')
+                mount.slew_to_coord(target)
                 # coordinate_to_be_centered = compute_coordinate_to_be_centered(
                 #     pointing_image.pointing,
                 #     pointing_image.wcs,

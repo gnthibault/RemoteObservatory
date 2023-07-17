@@ -266,7 +266,8 @@ class Scheduler(Base):
     def define_target(self, target_name):
         try:
             target = FixedTarget(
-                SkyCoord(
+                name=target_name,
+                coord=SkyCoord(
                     SkyCoord.from_name(target_name,
                                        frame="icrs"),
                     equinox=Time('J2000')))
