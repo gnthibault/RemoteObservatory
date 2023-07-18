@@ -78,7 +78,7 @@ class DifferentialPointer(Base):
 
                 status = camera_event.wait(timeout=self.timeout_seconds)
                 if not status:
-                    self.logger.error(f"Problem waiting for images: {e}:{traceback.format_exc()}")
+                    self.logger.error(f"Problem waiting for images: {traceback.format_exc()}")
                     break
 
                 # TODO Integrate this feature with our own solver class

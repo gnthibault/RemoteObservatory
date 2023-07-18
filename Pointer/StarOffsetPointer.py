@@ -229,11 +229,11 @@ class StarOffsetPointer(Base):
             )
             status = camera_event.wait(timeout=self.timeout_seconds)
             if not status:
-                msg = f"Problem waiting for images: {e}:{traceback.format_exc()}"
+                msg = f"Problem waiting for images: {traceback.format_exc()}"
                 self.logger.error(msg)
                 raise RuntimeError(msg)
         except Exception as e:
-            self.logger.error(f"Problem waiting for images: {e}:{traceback.format_exc()}")
+            self.logger.error(f"Problem waiting for images: {e}")
         pointing_id, pointing_path = observation.last_pointing
         pointing_image = Image(
             pointing_path
