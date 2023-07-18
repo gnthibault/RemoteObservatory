@@ -172,10 +172,10 @@ class StarOffsetPointer(Base):
                 offset_delta_ra = current_sky_coord_of_target_sensor_position.ra-current_sky_coord_of_target_star.ra
                 offset_delta_dec = current_sky_coord_of_target_sensor_position.dec-current_sky_coord_of_target_star.dec
                 # adjust by slewing to the opposite of the delta
-                target = mount.get_current_coordinates()
+                current = mount.get_current_coordinates()
                 target = SkyCoord(
-                    ra=target.ra - pointing_error.delta_ra + offset_delta_ra,
-                    dec=target.dec - pointing_error.delta_dec + offset_delta_dec,
+                    ra=current.ra + pointing_error.delta_ra - offset_delta_ra,
+                    dec=current.dec + pointing_error.delta_dec - offset_delta_dec,
                     frame='icrs', equinox='J2000.0')
                 # Now adjust by slewing to the specified counter-offseted coordinates
                 if guider is not None:
