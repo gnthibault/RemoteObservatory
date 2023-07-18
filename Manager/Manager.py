@@ -76,6 +76,10 @@ class Manager(Base):
         self.logger.info('\tSetting up pointing strategy')
         self._setup_pointer()
 
+        # setup pointing strategy
+        self.logger.info('\tSetting up offset pointing strategy')
+        self._setup_offset_pointer()
+
         # Setup observation planner
         self.logger.info('\tSetting up observation planner')
         self._setup_scheduler()
@@ -350,6 +354,17 @@ class Manager(Base):
         return self.pointer.points(
             mount=mount,
             camera=camera,
+            observation=observation,
+            fits_headers=fits_headers)
+
+    def offset_points(self, mount, camera, guiding_camera, guider, observation, fits_headers):
+        """Points precisely object to specific area on the sensor
+        """
+        return self.offset_pointer.offset_points(
+            mount=mount,
+            camera=camera,
+            guiding_camera=guiding_camera,
+            guider=guider,
             observation=observation,
             fits_headers=fits_headers)
 
@@ -740,6 +755,20 @@ class Manager(Base):
                     config=self.config['pointer'])
         except Exception as e:
             raise RuntimeError(f"Problem setting up pointer: {e}")
+
+    def _setup_offset_pointer(self):
+        """
+            Setup an offset pointing strategy.
+        """
+        try:
+            if 'offset_pointer' in self.config:
+                pointer_name = self.config['offset_pointer']['module']
+                pointer_module = load_module('Pointer.'+pointer_name)
+                self.offset_pointer = getattr(pointer_module, pointer_name)(
+                    config=self.config['offset_pointer'])
+        except Exception as e:
+            raise RuntimeError(f"Problem setting up offset pointer: {e}")
+
 
     def _get_calibration(self, camera):
         """

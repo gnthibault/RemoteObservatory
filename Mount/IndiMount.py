@@ -177,11 +177,11 @@ class IndiMount(IndiDevice):
              'state': 'OK'}
         """
         guide_dict = self.get_number('GUIDE_RATE')
-        self.logger.debug(f"Got mount guidinging rate: {guide_dict}")
+        #self.logger.debug(f"Got mount guidinging rate: {guide_dict}")
         guide_rate = {}
         guide_rate['NS'] = guide_dict['GUIDE_RATE_NS']
         guide_rate['WE'] = guide_dict['GUIDE_RATE_WE']
-        self.logger.debug(f"Got mount guiding rate: {guide_rate}")
+        #self.logger.debug(f"Got mount guiding rate: {guide_rate}")
         return guide_rate
 
     def set_guide_rate(self, guide_rate={'NS':0.5,'WE':0.5}):
@@ -203,7 +203,7 @@ class IndiMount(IndiDevice):
              'state': 'IDLE'}
         """
         slew_dict = self.get_switch('TELESCOPE_SLEW_RATE')
-        self.logger.debug(f"Got mount slewing rate dict: {slew_dict}")
+        #self.logger.debug(f"Got mount slewing rate dict: {slew_dict}")
         if len(slew_dict) > 0:
             return [k for k, v in slew_dict.items() if v == "On"][0]
         else:
@@ -233,7 +233,7 @@ class IndiMount(IndiDevice):
             PIER_WEST Mount on the West side of pier (Pointing East).
         '''
         pier_side = self.get_switch('TELESCOPE_PIER_SIDE')
-        self.logger.debug(f"Got mount pier side: {pier_side}")
+        #self.logger.debug(f"Got mount pier side: {pier_side}")
         return pier_side
 
     def get_track_mode(self):
@@ -245,7 +245,7 @@ class IndiMount(IndiDevice):
           'state': 'OK'}
         '''
         track_dict = self.get_switch('TELESCOPE_TRACK_MODE')
-        self.logger.debug(f"Got mount tracking rate dict: {track_dict}")
+        #self.logger.debug(f"Got mount tracking rate dict: {track_dict}")
         if len(track_dict) > 0:
             return [k for k, v in track_dict.items() if v == "On"][0]
         else:
@@ -261,8 +261,8 @@ class IndiMount(IndiDevice):
                 TRACK_CUSTOM: custom
         '''
         track_dict = self.get_switch('TELESCOPE_TRACK_MODE')
-        self.logger.debug(f"Setting mount tracking rate: {track_mode} while "
-                          f"dictionary is {track_dict}")
+        #self.logger.debug(f"Setting mount tracking rate: {track_mode} while "
+        #                  f"dictionary is {track_dict}")
         if track_mode in track_dict:
             self.set_switch('TELESCOPE_TRACK_MODE', [track_mode])
         else:
@@ -291,9 +291,9 @@ class IndiMount(IndiDevice):
         https://indilib.org/develop/developer-manual/101-standard-properties.html
 
         """
-        self.logger.debug(f"Asking mount {self.device_name} for its current coordinates")
+        #self.logger.debug(f"Asking mount {self.device_name} for its current coordinates")
         rahour_decdeg = self.get_number('EQUATORIAL_EOD_COORD')
-        self.logger.debug(f"Received current JNOW coordinates {rahour_decdeg}")
+        #self.logger.debug(f"Received current JNOW coordinates {rahour_decdeg}")
         fk5_now = FK5(equinox=Time.now())
         # gcrs_now = GCRS(obstime=Time.now())
         ret = SkyCoord(ra=rahour_decdeg['RA']*u.hourangle,
