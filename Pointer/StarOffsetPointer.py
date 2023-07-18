@@ -188,8 +188,8 @@ class StarOffsetPointer(Base):
                 if guider is not None:
                     guider.loop()
                     half_search_size = camera.adjust_roi_search_size / 2
-                    guider.find_star(x=max(0, int(round(px_identified_target[0] - half_search_size))),
-                                     y=max(0, int(round(px_identified_target[1] - half_search_size))),
+                    guider.find_star(x=max(0, int(round(camera.adjust_center_x - half_search_size))),
+                                     y=max(0, int(round(camera.adjust_center_y - half_search_size))),
                                      width=camera.adjust_roi_search_size,
                                      height=camera.adjust_roi_search_size)
                     guider.guide(recalibrate=False,
