@@ -45,8 +45,6 @@ def on_enter(event_data):
         model.logger.debug(msg)
         model.say(msg)
         model.manager.guider.set_paused(paused=True)
-        model.manager.guider.wait_for_state(one_of_states=["Paused"])
-
     try:
         model.say("Starting focusing")
         # Before each observation, we should refocus

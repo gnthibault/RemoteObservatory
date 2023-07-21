@@ -126,7 +126,7 @@ def find_best_candidate_star(pointing_image,
         dec.set_major_formatter('dd:mm:ss')
 
         fig.set_tight_layout(True)
-        plot_path = f"{img_directory}/pointing_detection.jpg"
+        plot_path = f"{img_directory}/adjust_pointing_detection.jpg"
         fig.savefig(plot_path, transparent=False)
 
         # explicitly close and delete figure

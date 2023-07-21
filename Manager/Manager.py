@@ -374,6 +374,8 @@ class Manager(Base):
             self.mount.set_track_mode('TRACK_SIDEREAL')
             if self.guider is not None:
                 self.logger.info("Start guiding")
+                if self.guiding_camera is not None:
+                    self.guiding_camera.disable_shoot()
                 self.guider.guide()
                 self.logger.info("Guiding successfully started")
             return True

@@ -47,6 +47,7 @@ class GuiderPHD2(Base):
         SteadyGuiding PHD is guiding, and settle conditions are met
         LostLock      PHD is guiding, but the frame was dropped
         Paused        PHD is paused
+        Resuming      PHD is resuming
         Looping       PHD is looping exposures
     """
     states = ['NotConnected', 'Connected', 'Guiding', 'Settling',
@@ -60,6 +61,7 @@ class GuiderPHD2(Base):
         # Note that only the first matching transition will execute
         {'trigger': 'GuideStep', 'source': '*', 'dest': 'Guiding'},
         {'trigger': 'Paused', 'source': '*', 'dest': 'Paused'},
+        {'trigger': 'Resumed', 'source': '*', 'dest': 'Resuming'},
         {'trigger': 'StartCalibration', 'source': '*', 'dest': 'Calibrating'},
         {'trigger': 'LoopingExposures', 'source': '*', 'dest': 'Looping'},
         {'trigger': 'LoopingExposuresStopped', 'source': '*', 'dest': 'Stopped'},
@@ -365,6 +367,10 @@ class GuiderPHD2(Base):
             msg = f"PHD2 error setting paused status: {e}"
             self.logger.error(msg)
             raise GuidingError(msg)
+        if paused:
+            self.wait_for_state(one_of_states=["Paused"])
+        else:
+            self.wait_for_state(one_of_states=["Resuming"])
 
     def capture_single_frame(self, exp_time_sec=None):
         """
@@ -389,7 +395,7 @@ class GuiderPHD2(Base):
                 raise GuidingError(f"Wrong answer to capture_single_frame "
                                    f"request: {data}")
         except Exception as e:
-            msg = "PHD2 error capturing frame: {e}"
+            msg = f"PHD2 error capturing frame: {e}"
             self.logger.error(msg)
             raise GuidingError(msg)
 
@@ -413,7 +419,7 @@ class GuiderPHD2(Base):
                 raise GuidingError("Wrong answer to clear_calibration request: "
                                    "{}".format(data))
         except Exception as e:
-            msg = "PHD2 error clearing calibration: {}".format(e)
+            msg = f"PHD2 error clearing calibration: {e}"
             self.logger.error(msg)
             raise GuidingError(msg)
 
@@ -445,7 +451,7 @@ class GuiderPHD2(Base):
                 raise GuidingError(f"Wrong answer to dither request: {data}")
             self._receive({"Event": "SettleDone"}, timeout=MAXIMUM_DITHER_TIMEOUT)
         except Exception as e:
-            msg = "PHD2 error dithering: {e}"
+            msg = f"PHD2 error dithering: {e}"
             self.logger.error(msg)
             raise GuidingError(msg)
         
@@ -496,7 +502,7 @@ class GuiderPHD2(Base):
                 raise GuidingError(f"Wrong answer to set_dec_guide_mode "
                                    f"request: {data}")
         except Exception as e:
-            msg = "PHD2 error setting dec guide mode: {e}"
+            msg = f"PHD2 error setting dec guide mode: {e}"
             self.logger.error(msg)
             raise GuidingError(msg)
 
@@ -1160,6 +1166,10 @@ class GuiderPHD2(Base):
            DroppedFrames number  the number of dropped camera frames (guide
                                  star not found) while settling
         """
+        if "Error" in event:
+            msg = f"Cannot properly Settle: error {event['ErrorCode']}: {event['Status']}."
+            self.logger.error(msg)
+            raise RuntimeError(msg)
         self.logger.debug(f"Done with settling, status: {event['Status']}. "
             f"Dropped frames: {event['DroppedFrames']}/{event['TotalFrames']}. "
             f"Now proper imaging can start")
@@ -1209,6 +1219,7 @@ class GuiderPHD2(Base):
            (no attributes)
         """
         self.logger.debug(f"Guiding has resumed {event}")
+        self.Resumed()
         self.send_message(self.status(), channel='GUIDING_STATUS')
 
     def _handle_GuideStep(self, event):

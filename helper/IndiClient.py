@@ -26,6 +26,10 @@ class SingletonIndiClientHolder:
             config = kwargs["config"]
         else:
             config = args[0]
+        if "use_unique_client" in config:
+            if config["use_unique_client"] is True:
+                return object.__new__(cls)
+
         key = f"{config['indi_host']}:{config['indi_port']}"
         if key not in cls._instances:
             cls._instances[key] = object.__new__(cls)
@@ -166,6 +170,14 @@ class IndiClient(SingletonIndiClientHolder, INDIClient, Base):
         @rtype: NoneType
         """
         self.xml_to_indiserver("<enableBLOB>Also</enableBLOB>")
+
+    def disable_blob(self):
+        """
+        Sends a signal to the server that tells it, that this client doesn't want to receive L{indiblob} objects.
+        @return: B{None}
+        @rtype: NoneType
+        """
+        self.xml_to_indiserver("<enableBLOB>Never</enableBLOB>")
 
     def xml_to_indiserver(self, xml):
         """
