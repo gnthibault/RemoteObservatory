@@ -154,6 +154,8 @@ class GuiderPHD2(Base):
         self.disconnect_profile()
         self.set_profile_from_name(profile_name)
         self.set_connected(True)
+        # We prefere to use auto exposure
+        #self.set_exposure(self.exposure_time_sec)
 
     def is_server_connected(self):
         return self.state != 'NotConnected'

@@ -45,6 +45,8 @@ def on_enter(event_data):
         model.logger.debug(msg)
         model.say(msg)
         model.manager.guider.set_paused(paused=True)
+        time.sleep(5)
+        # TODO TN URGENT: ASK Guiding camera if it is still waiting for an image, and wait for that amount of time
     try:
         model.say("Starting focusing")
         # Before each observation, we should refocus

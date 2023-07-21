@@ -34,8 +34,7 @@ def solve_field(fname, timeout=180, solve_opts=None, **kwargs):
     solve_field_script = "{}/scripts/solve_field.sh".format(os.getcwd())
 
     if not os.path.exists(solve_field_script):  # pragma: no cover
-        raise error.InvalidSystemCommand(
-            "Can't find solve-field: {}".format(solve_field_script))
+        raise error.InvalidSystemCommand(f"Can't find solve-field: {solve_field_script}")
 
     # Add the options for solving the field
     if solve_opts is not None:
@@ -54,7 +53,7 @@ def solve_field(fname, timeout=180, solve_opts=None, **kwargs):
 
         if kwargs.get('overwrite', True):
             options.append('--overwrite')
-        if kwargs.get('skip_solved', True):
+        if kwargs.get('skip_solved', False):
             options.append('--skip-solved')
 
         if 'ra' in kwargs:
@@ -133,13 +132,13 @@ def get_solve_field(fname, replace=True, remove_extras=True, **kwargs):
     errs = None
 
     # Check for solved file
-    if kwargs.get('skip_solved', True) and \
-            (os.path.exists(fname.replace('.fits', '.solved')) or WCS(fname).is_celestial):
-        if verbose:
-            print(f"Solved file exists, skipping (pass skip_solved=False to solve again): {fname}")
-
-        out_dict['solved_fits_file'] = fname
-        return out_dict
+    # if kwargs.get('skip_solved', True) and \
+    #         (os.path.exists(fname.replace('.fits', '.solved')) or WCS(fname).is_celestial):
+    #     if verbose:
+    #         print(f"Solved file exists, skipping (pass skip-solved=False to solve again): {fname}")
+    #
+    #     out_dict['solved_fits_file'] = fname
+    #     return out_dict
 
     if verbose:
         print("Entering get_solve_field:", fname)
