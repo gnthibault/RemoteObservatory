@@ -51,7 +51,7 @@ class GuiderPHD2(Base):
         Looping       PHD is looping exposures
     """
     states = ['NotConnected', 'Connected', 'Guiding', 'Settling',
-              'SteadyGuiding', 'Paused', 'Calibrating',
+              'SteadyGuiding', 'Paused', 'Resuming', 'Calibrating',
               'StarSelected', 'LostLock', 'Looping', 'Stopped']
     transitions = [
         {'trigger': 'connection_trig', 'source': '*', 'dest': 'Connected'},
