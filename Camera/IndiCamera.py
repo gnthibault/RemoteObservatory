@@ -19,6 +19,7 @@ import astropy.units as u
 # Local stuff: Focuser
 from Imaging.IndiAutoFocuser import IndiAutoFocuser
 from utils import load_module
+from utils.error import ImageAcquisitionError
 
 class IndiCamera(IndiDevice):
     """ Indi Camera """
@@ -150,14 +151,18 @@ class IndiCamera(IndiDevice):
                           'receive blob CCD1 when it is ready')
         self.indi_client.enable_blob()
 
-    def synchronize_with_image_reception(self):
+    def synchronize_with_image_reception(self, exp_time_sec=None):
         try:
+            if exp_time_sec is None:
+                exp_time_sec = self.exp_time_sec
+            if exp_time_sec == 0:
+                return
             self.logger.debug(f"synchronize_with_image_reception: Start waiting for " \
-                              f"{self.exp_time_sec}s with margin {self.READOUT_TIME_MARGIN}s")
-            self.wait_for_incoming_blob_vector(timeout=self.exp_time_sec + self.READOUT_TIME_MARGIN)
+                              f"{exp_time_sec}s with margin {self.READOUT_TIME_MARGIN}s")
+            self.wait_for_incoming_blob_vector(timeout=exp_time_sec + self.READOUT_TIME_MARGIN)
             self.logger.debug('synchronize_with_image_reception: Done')
         except Exception as e:
-            self.logger.error(f"Indi Camera Error in synchronize_with_image_reception: {e}")
+            raise ImageAcquisitionError(f"Indi Camera Error in synchronize_with_image_reception: {e}")
 
     def get_received_image(self):
         try:
@@ -178,6 +183,9 @@ class IndiCamera(IndiDevice):
                             sync=False)
         except Exception as e:
             self.logger.error(f"Indi Camera Error in shoot: {e}")
+
+    def is_remaining_exposure_time(self):
+        return self.get_number('CCD_EXPOSURE')['CCD_EXPOSURE_VALUE']
 
     def get_thumbnail(self, exp_time_sec, thumbnail_size):
         """

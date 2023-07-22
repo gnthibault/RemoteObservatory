@@ -71,6 +71,7 @@ def solve_field(fname, timeout=180, solve_opts=None, **kwargs):
         print("Cmd:", cmd)
 
     try:
+        os.system('rm -f /tmp/*.wcs.*')
         proc = subprocess.Popen(cmd, universal_newlines=True,
                                 stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
     except OSError as e:

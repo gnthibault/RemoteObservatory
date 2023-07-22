@@ -121,7 +121,7 @@ cameras:
         do_pointing: true
         pointing_seconds: 5
         do_adjust_pointing: true
-        adjust_center_x: 400
+        adjust_center_x: 580
         adjust_center_y: 400
         adjust_roi_search_size: 50
         adjust_pointing_seconds: 5
@@ -193,7 +193,7 @@ cameras:
         adjust_center_y: 400
         adjust_roi_search_size: 50
         adjust_pointing_seconds: 5
-        do_autofocus: true
+        do_autofocus: false
         autofocus_seconds: 5
         autofocus_roi_size : 750
         autofocus_merit_function : half_flux_radius #vollath_F4

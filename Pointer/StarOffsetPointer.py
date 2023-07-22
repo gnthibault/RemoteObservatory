@@ -13,7 +13,7 @@ import astropy.units as u
 # Local
 from Imaging.Image import Image
 from Imaging.SolvedImageAnalysis import find_best_candidate_star, get_brightest_detection
-from utils.error import AstrometrySolverError
+from utils.error import AstrometrySolverError, ImageAcquisitionError
 
 # Numerical stuff
 import numpy as np
@@ -95,6 +95,17 @@ class StarOffsetPointer(Base):
         """
         try:
             try:
+                # Our first action is to stop guiding
+                if guider is not None:
+                    msg = f"Going to adjust pointing, need to stop guiding"
+                    self.logger.debug(msg)
+                    guider.stop_capture()
+                    try:
+                        exp_time_sec = guiding_camera.is_remaining_exposure_time()
+                        guiding_camera.synchronize_with_image_reception(exp_time_sec=exp_time_sec)
+                    except ImageAcquisitionError as e:
+                        pass
+
                 img_num = 0
                 pointing_image = self.acquire_pointing(camera, guiding_camera, observation, fits_headers, img_num)
                 if camera is None:
@@ -111,8 +122,7 @@ class StarOffsetPointer(Base):
                                                                 observation.target.coord,
                                                                 self.max_identification_error)
                 if px_identified_target is None:
-                    msg = f"Cannot identify a star from {pointing_image.fits_file} while in offset_pointing state, will " \
-                          f"only rely on brightest detected star"
+                    msg = f"Cannot identify a star from {pointing_image.fits_file} while in offset_pointing state"
                     self.logger.warning(msg)
                     px_identified_target = self.get_default_star_strategy(pointing_image)
 
@@ -123,20 +133,20 @@ class StarOffsetPointer(Base):
 
             if self.use_guider_adjust:
                 # If guider was locked on another star, then restart guiding
-                if not guider.is_lock_position_close_to(px_target=px_identified_target,
-                                                        max_angle_sep=3 * u.arcsec):
-                    guider.stop_capture()
-                    guider.loop()
-                    half_search_size = camera.adjust_roi_search_size / 2
-                    guider.find_star(x=max(0, int(round(px_identified_target[0] - half_search_size))),
-                                     y=max(0, int(round(px_identified_target[1] - half_search_size))),
-                                     width=camera.adjust_roi_search_size,
-                                     height=camera.adjust_roi_search_size)
-                    guider.guide(recalibrate=False,
-                                 roi=[int(round(camera.adjust_center_x)),
-                                      int(round(camera.adjust_center_y)),
-                                      int(round(camera.adjust_roi_search_size)),
-                                      int(round(camera.adjust_roi_search_size))])
+                # if not guider.is_lock_position_close_to(px_target=px_identified_target,
+                #                                         max_angle_sep=3 * u.arcsec):
+                #     guider.stop_capture()
+                guider.loop()
+                half_search_size = camera.adjust_roi_search_size / 2
+                guider.find_star(x=max(0, int(round(px_identified_target[0] - half_search_size))),
+                                 y=max(0, int(round(px_identified_target[1] - half_search_size))),
+                                 width=camera.adjust_roi_search_size,
+                                 height=camera.adjust_roi_search_size)
+                guider.guide(recalibrate=False,
+                             roi=[int(round(camera.adjust_center_x)),
+                                  int(round(camera.adjust_center_y)),
+                                  int(round(camera.adjust_roi_search_size)),
+                                  int(round(camera.adjust_roi_search_size))])
                 guider.set_lock_position(camera.adjust_center_x,
                                          camera.adjust_center_y,
                                          exact=True,
@@ -178,12 +188,6 @@ class StarOffsetPointer(Base):
                     dec=current.dec + pointing_error.delta_dec - offset_delta_dec,
                     frame='icrs', equinox='J2000.0')
                 # Now adjust by slewing to the specified counter-offseted coordinates
-                if guider is not None:
-                    msg = f"Going to adjust pointing, need to pause guiding, and restart later"
-                    self.logger.debug(msg)
-                    guider.stop_capture()
-                    # guider.set_paused(paused=True)
-                    # guider.wait_for_state(one_of_states=["Paused"])
                 mount.slew_to_coord(target)
                 if guider is not None:
                     guider.loop()
@@ -215,7 +219,7 @@ class StarOffsetPointer(Base):
 
     def acquire_pointing(self, camera, guiding_camera, observation, fits_headers, img_num):
         self.logger.debug("Taking pointing picture.")
-        external_trigger = (camera is guiding_camera)
+        #external_trigger = (camera is guiding_camera)
 
         self.logger.debug(f"Exposing for camera: {camera.name}")
         try:
@@ -225,7 +229,7 @@ class StarOffsetPointer(Base):
                 headers=fits_headers,
                 filename='adjust_pointing{:02d}'.format(img_num),
                 exp_time=camera.adjust_pointing_seconds * u.second,
-                external_trigger=external_trigger
+                #external_trigger=external_trigger
             )
             status = camera_event.wait(timeout=self.timeout_seconds)
             if not status:

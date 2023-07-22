@@ -8,6 +8,7 @@ from astropy import units as u
 # Local
 from utils import error
 from utils import Timeout
+from utils.error import ImageAcquisitionError
 
 SLEEP_SECONDS = 1.0
 STATUS_INTERVAL = 10. * u.second
@@ -45,8 +46,13 @@ def on_enter(event_data):
         model.logger.debug(msg)
         model.say(msg)
         model.manager.guider.set_paused(paused=True)
-        time.sleep(5)
-        # TODO TN URGENT: ASK Guiding camera if it is still waiting for an image, and wait for that amount of time
+        guiding_camera = model.manager.guiding_camera
+        if guiding_camera is not None:
+            try:
+                exp_time_sec = guiding_camera.is_remaining_exposure_time()
+                guiding_camera.synchronize_with_image_reception(exp_time_sec=exp_time_sec)
+            except ImageAcquisitionError as e:
+                pass
     try:
         model.say("Starting focusing")
         # Before each observation, we should refocus

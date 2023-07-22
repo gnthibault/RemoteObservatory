@@ -464,7 +464,7 @@ class GuiderPHD2(Base):
                    otherwise returns an error object
            desc. : Select a star
         """
-        params = [x, y, width, height]
+        params = [int(x), int(y), int(width), int(height)]
         if all(map(lambda x: x is None, params)):
             params = []
         else:
