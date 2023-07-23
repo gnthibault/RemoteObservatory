@@ -127,11 +127,14 @@ class Scheduler(Base):
         else:
             # If no new observation, simply reset the current
             if new_observation is None:
-                self.current_observation.reset()
+                pass
+                # TODO TN Urgent, we do not reset observations anymore, so that they stay as is
+                # self.current_observation.reset()
             else:
                 # If we have a new observation, check if same as old observation
                 if self.current_observation.id != new_observation.id:
-                    self.current_observation.reset()
+                    # TODO TN Urgent, we do not reset observations anymore, so that they stay as is
+                    #self.current_observation.reset()
                     new_observation.seq_time = self.serv_time.flat_time()
 
                     # Add the new observation to the list

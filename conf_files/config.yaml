@@ -240,7 +240,7 @@ pointer:
     max_pointing_error_seconds: 3
 offset_pointer:
     module: StarOffsetPointer #StarOffsetPointer #NoOffsetPointer
-    timeout_seconds: 3000
+    timeout_seconds: 300
     max_identification_error_seconds: 1
     sync_mount_upon_solve: False
     use_guider_adjust: False
