@@ -10,10 +10,10 @@ observatory:
     # UTC +2  CEST Central European Summer Time
     utc_offset: 1 # Hours
     horizon: # Degrees
-        0 : 30
-        90 : 30
-        180 : 30
-        270 : 30
+        0 : 0
+        90 : 0
+        180 : 0
+        270 : 0
     twilight_horizon: -18 # Degrees
     timezone: Europe/Paris
     # Paris is in the Central European Time Zone ( CET ) is 1 hours ahead of
@@ -240,7 +240,7 @@ pointer:
     max_pointing_error_seconds: 3
 offset_pointer:
     module: StarOffsetPointer #StarOffsetPointer #NoOffsetPointer
-    timeout_seconds: 300
+    timeout_seconds: 3000
     max_identification_error_seconds: 1
     sync_mount_upon_solve: False
     use_guider_adjust: False

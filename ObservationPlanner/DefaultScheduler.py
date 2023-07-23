@@ -58,14 +58,15 @@ class DefaultScheduler(Scheduler):
         # self.current_observation.observing_block
         # if self.current_observation in self.observations.values()
         # self.current_observation.observing_block.number_exposures
-        valid_obs = {obs: 1.0 for obs in self.observations}
+        #valid_obs = {obs: 1.0 for obs in self.observations}
+        valid_obs = {obs: 1.0 for obs, obs_def in self.observations.items() if not obs_def.is_done}
         best_obs = []
         
         observer = self.obs.getAstroplanObserver()
 
         for constraint in self.constraints:
             self.logger.info(f"Checking Constraint: {constraint}")
-            for obs_key, observation in {k:v for k,v in self.observations.items() if not v.is_done}:
+            for obs_key, observation in self.observations.items():
                 if obs_key in valid_obs:
                     self.logger.debug(f"\tObservation: {obs_key}")
                     score = constraint.compute_constraint(time, observer,
@@ -94,20 +95,20 @@ class DefaultScheduler(Scheduler):
             best_obs = sorted(valid_obs.items(), key=lambda x: x[1])[::-1]
 
             # Check new best against current_observation
-            if (self.current_observation is not None and
-                best_obs[0][0] != self.current_observation.id):
-
-                # Favor the current observation if still doable
-                end_of_next_set = time + self.current_observation.set_duration
-                if self.observation_available(
-                        self.current_observation, 
-                        Time([time, end_of_next_set])):
-
-                    # If current is better or equal to top, add it to best
-                    # but no need to update current_observation
-                    if self.current_observation.merit >= best_obs[0][1]:
-                        best_obs.insert(0, (self.current_observation.id,
-                                            self.current_observation.merit))
+            # if (self.current_observation is not None and
+            #     best_obs[0][0] != self.current_observation.id):
+            #
+            #     # Favor the current observation if still doable
+            #     end_of_next_set = time + self.current_observation.set_duration
+            #     if self.observation_available(
+            #             self.current_observation,
+            #             Time([time, end_of_next_set])):
+            #
+            #         # If current is better or equal to top, add it to best
+            #         # but no need to update current_observation
+            #         if self.current_observation.merit >= best_obs[0][1]:
+            #             best_obs.insert(0, (self.current_observation.id,
+            #                                 self.current_observation.merit))
 
             self.current_observation = self.observations[best_obs[0][0]]
             self.current_observation.merit = best_obs[0][1]

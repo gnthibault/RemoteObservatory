@@ -36,7 +36,8 @@ def on_enter(event_data):
         if existing_observation and (observation.id == 
                                      existing_observation.id):
             model.say(f"I am sticking with observation {observation.id}")
-            model.next_state = 'tracking'
+            model.next_state = 'observing' # TODO TN URGENT, the same logic as for the analyze/update tracking
+            # applied here
         else:
             model.say(f"Got it! I am going to check out: {observation.name}")
 

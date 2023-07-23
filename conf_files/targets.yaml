@@ -1,6 +1,6 @@
 constraints :
     #atnight : astronomical
-    maxairmass : 17 #for testing, normally use 2
+    maxairmass : 100 # for testing, normally use 2
     minmoonseparationdeg : 2 # normally put 45
 targets :
 #    "15h12m43.2s +31d12m43s" :
@@ -64,24 +64,24 @@ targets :
             temperature:
             gain: 10
             exp_time_sec: 10
-    Merak:
-        Luminance:
-            count: 3
-            temperature:
-            gain: 10
-            exp_time_sec: 10
+#    Merak: Fails damn solve
+#        Luminance:
+#            count: 3
+#            temperature:
+#            gain: 10
+#            exp_time_sec: 10
     Mizar:
         Luminance:
             count: 3
             temperature:
             gain: 10
             exp_time_sec: 10
-    Phecda:
-        Luminance:
-            count: 3
-            temperature:
-            gain: 10
-            exp_time_sec: 10
+#    Phecda: Fails damn solve
+#        Luminance:
+#            count: 3
+#            temperature:
+#            gain: 10
+#            exp_time_sec: 10
 #    M51 :
 #        Luminance :
 #           count : 10
