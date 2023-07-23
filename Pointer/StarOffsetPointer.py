@@ -207,7 +207,7 @@ class StarOffsetPointer(Base):
                     # guider.wait_for_state(one_of_states=["Guiding", "SteadyGuiding"])
             pointing_status[0] = True
         except Exception as e:
-            self.logger.error(f"Problem shooting image: {e}:{traceback.format_exc()}")
+            self.logger.error(f"Problem adjusting image: {e}:{traceback.format_exc()}")
         finally:
             pointing_event.set()
 

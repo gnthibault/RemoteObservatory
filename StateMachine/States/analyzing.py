@@ -7,7 +7,8 @@ def on_enter(event_data):
 
     model.say(f"Analyzing image {observation.current_exp} / {observation.number_exposures}")
 
-    model.next_state = 'tracking'
+    model.next_state = 'observing'
+
     try:
 
         model.manager.analyze_recent()

@@ -113,3 +113,8 @@ transitions:
         dest: tracking
         trigger: adjust_tracking
         conditions: mount_is_tracking
+    -
+        source: analyzing
+        dest: observing
+        trigger: loop_imaging
+        conditions: mount_is_tracking

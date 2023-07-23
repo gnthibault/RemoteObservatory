@@ -52,7 +52,7 @@ class GuiderPHD2(Base):
     """
     states = ['NotConnected', 'Connected', 'Guiding', 'Settling',
               'SteadyGuiding', 'Paused', 'Resuming', 'Calibrating',
-              'StarSelected', 'LostLock', 'Looping', 'Stopped']
+              'StarSelected', 'LostLock', 'Looping', 'GuidingStopped', 'Stopped']
     transitions = [
         {'trigger': 'connection_trig', 'source': '*', 'dest': 'Connected'},
         {'trigger': 'disconnection_trig', 'source': '*', 'dest': 'NotConnected'},
@@ -65,7 +65,7 @@ class GuiderPHD2(Base):
         {'trigger': 'StartCalibration', 'source': '*', 'dest': 'Calibrating'},
         {'trigger': 'LoopingExposures', 'source': '*', 'dest': 'Looping'},
         {'trigger': 'LoopingExposuresStopped', 'source': '*', 'dest': 'Stopped'},
-        {'trigger': 'GuidingStopped', 'source': '*', 'dest': 'Stopped'},
+        {'trigger': 'GuidingStopped', 'source': '*', 'dest': 'GuidingStopped'},
         {'trigger': 'SettleBegin', 'source': '*', 'dest': 'Settling'},
         {'trigger': 'SettleDone', 'source': '*', 'dest': 'SteadyGuiding'},
         {'trigger': 'StarLost', 'source': '*', 'dest': 'LostLock'},
@@ -154,8 +154,8 @@ class GuiderPHD2(Base):
         self.disconnect_profile()
         self.set_profile_from_name(profile_name)
         self.set_connected(True)
-        # We prefere to use auto exposure
-        #self.set_exposure(self.exposure_time_sec)
+        # TODO TN: Wouldn't we prefere to use auto exposure ?
+        self.set_exposure(self.exposure_time_sec)
 
     def is_server_connected(self):
         return self.state != 'NotConnected'
@@ -440,6 +440,9 @@ class GuiderPHD2(Base):
                    events to indicate when guiding has stabilized after the
                    dither.
         """
+        # No dither if no pixel shift is expected, 0 valued dither can actually cause error in PHD2
+        if pixels <= 0:
+            return
         params = [pixels, ra_only, self.settle]
         req={"method": "dither",
              "params": params,

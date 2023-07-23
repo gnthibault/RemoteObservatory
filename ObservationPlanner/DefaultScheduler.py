@@ -65,7 +65,7 @@ class DefaultScheduler(Scheduler):
 
         for constraint in self.constraints:
             self.logger.info(f"Checking Constraint: {constraint}")
-            for obs_key, observation in self.observations.items():
+            for obs_key, observation in {k:v for k,v in self.observations.items() if not v.is_done}:
                 if obs_key in valid_obs:
                     self.logger.debug(f"\tObservation: {obs_key}")
                     score = constraint.compute_constraint(time, observer,

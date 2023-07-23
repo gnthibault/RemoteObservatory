@@ -20,7 +20,7 @@ def on_enter(event_data):
             model.say(msg)
             model.next_state = 'focusing'
         except Exception as e:
-            model.logger.warning("Problem adjusting tracking: {}".format(e))
+            model.logger.warning(f"Problem adjusting tracking: {e}")
     else:
         try:
             if model.manager.initialize_tracking():

@@ -251,13 +251,13 @@ guider:
     port : 4400
     do_calibration : False
     profile_name : Simulator
-    exposure_time_sec : 2
+    exposure_time_sec : 4
     settle :
         pixels : 1.5
         time : 10
         timeout : 60
     dither :
-        pixels : 3.0
+        pixels : 0.0
         ra_only : False
 weather_service :
     #module : IndiOpenWeatherMap

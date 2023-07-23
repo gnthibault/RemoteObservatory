@@ -30,6 +30,15 @@ def on_enter(event_data):
     model.say("Starting observing")
     model.next_state = 'parking'
 
+    # If we came from pointing then don't try to dither
+    if event_data.transition.source != 'offset_pointing':
+        model.logger.debug("Checking our tracking")
+        try:
+            # most likely setup dithering
+            model.manager.update_tracking()
+        except Exception as e:
+            model.logger.warning(f"Problem adjusting tracking: {e}")
+
     try:
         # Now manage actual acquisition
         maximum_duration = (model.manager.current_observation.time_per_exposure
