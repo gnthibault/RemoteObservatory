@@ -737,7 +737,7 @@ class Manager(Base):
                 guider_name = self.config['guider']['module']
                 guider_module = load_module('Guider.'+guider_name)
                 self.guider = getattr(guider_module, guider_name)(
-                    config = self.config['guider'])
+                    config=self.config['guider'])
                 # Setup and make sure the Guider is not already acquiring frames
                 self.logger.info("Initializing guider")
                 self.guider.launch_server()

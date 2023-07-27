@@ -79,7 +79,7 @@ class GuiderPHD2(Base):
             config = dict(
                 host="localhost",
                 port=4400,
-                do_calibration=True,
+                do_calibration=False,
                 profile_name="",
                 exposure_time_sec='3',
                 settle={

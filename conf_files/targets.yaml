@@ -76,7 +76,19 @@ targets :
             temperature:
             gain: 10
             exp_time_sec: 10
-    Mizar:
+    Sarin:
+        Luminance:
+            count: 3
+            temperature:
+            gain: 10
+            exp_time_sec: 10
+    Kornephoros:
+        Luminance:
+            count: 3
+            temperature:
+            gain: 10
+            exp_time_sec: 10
+    Alphecca:
         Luminance:
             count: 3
             temperature:

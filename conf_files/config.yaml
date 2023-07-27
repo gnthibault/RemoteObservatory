@@ -96,10 +96,10 @@ cameras:
         camera_name : Guide Simulator
         do_acquisition: false
         SIMULATOR_SETTINGS: # 290MM
-            SIM_XRES: 1936
-            SIM_YRES: 1096
-            SIM_XSIZE: 2.9
-            SIM_YSIZE: 2.9
+            SIM_XRES: 1936 #
+            SIM_YRES: 1096 #
+            SIM_XSIZE: 2.9 #2.9
+            SIM_YSIZE: 2.9 #2.9
             SIM_MAXVAL: 65000
             SIM_SATURATION: 1
             SIM_LIMITINGMAG: 17
@@ -193,7 +193,7 @@ cameras:
         adjust_center_y: 400
         adjust_roi_search_size: 50
         adjust_pointing_seconds: 5
-        do_autofocus: false
+        do_autofocus: true
         autofocus_seconds: 5
         autofocus_roi_size : 750
         autofocus_merit_function : half_flux_radius #vollath_F4
@@ -235,7 +235,7 @@ cameras:
 pointer:
     module: DifferentialPointer #DifferentialPointer #IterativeSync
     gen_hips: False
-    timeout_seconds: 300
+    timeout_seconds: 450
     max_iterations: 5
     max_pointing_error_seconds: 3
 offset_pointer:

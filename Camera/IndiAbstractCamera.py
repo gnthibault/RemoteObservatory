@@ -59,6 +59,7 @@ class IndiAbstractCamera(IndiCamera, AbstractCamera):
         """
         Should return an event
         """
+        self.set_frame_type('FRAME_LIGHT')
         exposure_event = threading.Event()
         w = threading.Thread(target=self.shoot_asyncWithEvent,
                              args=(exposure_time.to(u.second).value,
