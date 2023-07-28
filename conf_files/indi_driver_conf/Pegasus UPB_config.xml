@@ -212,13 +212,13 @@
       SPECTRO_CONTROL_BOX
   </oneText>
   <oneText name='USB_LABEL_4'>
-      GUIDE_CAMERA
+      ARDUINO_CONTROL_BOX
   </oneText>
   <oneText name='USB_LABEL_5'>
       WIFI_ROUTER
   </oneText>
   <oneText name='USB_LABEL_6'>
-      ARDUINO_CONTROL_BOX
+     GUIDE_CAMERA 
   </oneText>
 </newTextVector>
 </INDIDriver>
