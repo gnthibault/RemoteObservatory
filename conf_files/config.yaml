@@ -22,20 +22,20 @@ observatory:
 #    webcam:
 #        rtsp_url: rtsp://user:password@192.168.0.16
     scope_controller:
-        module: AggregatedCustomScopeController #DummyScopeController
+        module: DummyScopeController #AggregatedCustomScopeController #DummyScopeController
         port: /dev/serial/by-id/usb-Pegasus_Astro_UPBv2_revD_UPB25S4VWV-if00-port0
-        indi_webserver_host: 192.168.0.176
+        indi_webserver_host: localhost
         indi_webserver_port: 8624
         indi_client :
-            indi_host : 192.168.0.176
-            indi_port : 7624
+            indi_host : localhost
+            indi_port : 7625
     dome_controller:
         module : IndiDomeController
         dome_movement_timeout_s: 300
         dome_name: Dome Simulator
         indi_client :
             indi_host : localhost
-            indi_port : 7624
+            indi_port : 7625
 directories:
     base: /var/RemoteObservatory
     images: images
@@ -81,8 +81,8 @@ mount:
     mount_name: Losmandy Gemini
     equatorial_eod: J2000 # JNOW
     indi_client :
-        indi_host : 192.168.0.176
-        indi_port : 7624
+        indi_host : localhost
+        indi_port : 7625
 cameras:
     -
         module: IndiASICamera
@@ -118,14 +118,14 @@ cameras:
 #                coarse: 30000
 #            indi_client:
 #                indi_host: localhost
-#                indi_port: 7624
+#                indi_port: 7625
         indi_client :
-            indi_host : 192.168.0.176
-            indi_port : 7624
+            indi_host : localhost
+            indi_port : 7625
             #use_unique_client: True
     -
-        module: IndiAbstractCameraSimulator
-        camera_name : TODO TN URGENT
+        module: IndiAbstractCamera
+        camera_name : PlayerOne CCD Ares-M PRO
         do_acquisition: true
     #    CCD_INFO :
     #        CCD_MAX_X : 5496
@@ -164,7 +164,7 @@ cameras:
         #        coarse: 30000
         #    indi_client:
         #        indi_host: localhost
-        #        indi_port: 7624
+        #        indi_port: 7625
         #do_filter_wheel: false
         #filter_wheel:
         #    module: IndiFilterWheel
@@ -180,10 +180,10 @@ cameras:
         #        LPR: 8
         #    indi_client:
         #        indi_host: localhost
-        #        indi_port: 7624
+        #        indi_port: 7625
         indi_client :
-            indi_host : 192.168.0.176
-            indi_port : 7624
+            indi_host : localhost
+            indi_port : 7625
 pointer:
     module: DifferentialPointer #DifferentialPointer #IterativeSync
     gen_hips: False
@@ -199,10 +199,10 @@ offset_pointer:
     on_star_identification_failure: trust_astrometry # get_brightest or trust_astrometry
 guider:
     module : GuiderPHD2
-    host : localhost
+    host : 127.0.0.1
     port : 4400
     do_calibration : False
-    profile_name : TODO TN URGENT
+    profile_name : backyard
     exposure_time_sec : 4
     settle :
         pixels : 1.5
@@ -228,7 +228,7 @@ weather_service :
         MAX_WEATHER_CLOUD_COVER : 5
     indi_client :
         indi_host : localhost
-        indi_port : 7624
+        indi_port : 7625
 vizualization_service:
         module: SceneVizualization
         delay_sky_update_s: 1
