@@ -22,16 +22,12 @@ observatory:
 #    webcam:
 #        rtsp_url: rtsp://user:password@192.168.0.16
     scope_controller:
-        module: DummyScopeController #IndiArduiScopeController
-        port: /dev/ttyACM0
-        controller_name: Arduino
-        indi_driver_connect_delay_s: 5
-        indi_camera_driver_name: Canon DSLR
-        indi_mount_driver_name: Losmandy Gemini
-        indi_webserver_host: 192.168.0.33
+        module: AggregatedCustomScopeController #DummyScopeController
+        port: /dev/serial/by-id/usb-Pegasus_Astro_UPBv2_revD_UPB25S4VWV-if00-port0
+        indi_webserver_host: 192.168.0.176
         indi_webserver_port: 8624
         indi_client :
-            indi_host : localhost
+            indi_host : 192.168.0.176
             indi_port : 7624
     dome_controller:
         module : IndiDomeController
@@ -81,39 +77,17 @@ calibration:
         #module: IndiSpectroController
         #controller_name: spox
 mount:
-    #module: IndiG11
-    #mount_name: Losmandy Gemini
-    module: IndiAbstractMount
-    mount_name : Telescope Simulator
+    module: IndiG11
+    mount_name: Losmandy Gemini
     equatorial_eod: J2000 # JNOW
-    is_simulator: true
     indi_client :
-        indi_host : localhost
+        indi_host : 192.168.0.176
         indi_port : 7624
 cameras:
     -
-        module: IndiAbstractCameraSimulator
-        camera_name : Guide Simulator
+        module: IndiASICamera
+        camera_name : ZWO CCD ASI290MM Mini
         do_acquisition: false
-        SIMULATOR_SETTINGS: # 290MM
-            SIM_XRES: 1936 #
-            SIM_YRES: 1096 #
-            SIM_XSIZE: 2.9 #2.9
-            SIM_YSIZE: 2.9 #2.9
-            SIM_MAXVAL: 65000
-            SIM_SATURATION: 1
-            SIM_LIMITINGMAG: 17
-            SIM_NOISE: 0
-            SIM_SKYGLOW: 19.5
-            SIM_OAGOFFSET: 0
-            SIM_POLAR: 0
-            SIM_POLARDRIFT: 0
-            SIM_ROTATION: 0
-            SIM_KING_GAMMA: 0
-            SIM_KING_THETA: 0
-    #        SIM_PEPERIOD: 0
-    #        SIM_PEMAX: 0
-            SIM_TIME_FACTOR: 1
         SCOPE_INFO: # 200/800 newtonian
             FOCAL_LENGTH: 800
             APERTURE: 200
@@ -128,7 +102,7 @@ cameras:
         do_autofocus: false
         autofocus_seconds: 4
         autofocus_roi_size : 750
-        autofocus_merit_function: half_flux_radius #vollath_F4
+        autofocus_merit_function: half_flux_radius
 #        focuser:
 #            module: IndiFocuser
 #            focuser_name: Focuser Simulator
@@ -146,16 +120,13 @@ cameras:
 #                indi_host: localhost
 #                indi_port: 7624
         indi_client :
-            indi_host : localhost
+            indi_host : 192.168.0.176
             indi_port : 7624
             #use_unique_client: True
     -
         module: IndiAbstractCameraSimulator
-        camera_name : CCD Simulator
+        camera_name : TODO TN URGENT
         do_acquisition: true
-        #module: IndiEos6DCamera
-        #camera_name: Canon DSLR EOS 6D
-        #camera_name: GPhoto CCD
     #    CCD_INFO :
     #        CCD_MAX_X : 5496
     #        CCD_MAX_Y : 3672
@@ -163,25 +134,6 @@ cameras:
     #        CCD_PIXEL_SIZE_X : 2.4
     #        CCD_PIXEL_SIZE_Y : 2.4
     #        CCD_BITSPERPIXEL : 12
-        SIMULATOR_SETTINGS: # 180mm
-            SIM_XRES: 1500 #5496
-            SIM_YRES: 1500 #3672
-            SIM_XSIZE: 4.8 #2.4
-            SIM_YSIZE: 4.8 #2.4
-            SIM_MAXVAL: 65000
-            SIM_SATURATION: 1
-            SIM_LIMITINGMAG: 17
-            SIM_NOISE: 0
-            SIM_SKYGLOW: 19.5
-            SIM_OAGOFFSET: 0
-            SIM_POLAR: 0
-            SIM_POLARDRIFT: 0
-            SIM_ROTATION: 0
-    #        SIM_KING_GAMMA: 0
-    #        SIM_KING_THETA: 0
-            SIM_PEPERIOD: 0
-            SIM_PEMAX: 0
-            SIM_TIME_FACTOR: 1
         SCOPE_INFO: # 200/800 newtonian
             FOCAL_LENGTH: 800
             APERTURE: 200
@@ -197,40 +149,40 @@ cameras:
         autofocus_seconds: 5
         autofocus_roi_size : 750
         autofocus_merit_function : half_flux_radius #vollath_F4
-        focuser:
-            module: IndiFocuser
-            focuser_name: Focuser Simulator
-            port: /dev/ttyUSB0
-            focus_range:
-                min: 32500
-                max: 40000
-            autofocus_step:
-                fine: 750
-                coarse: 2500
-            autofocus_range:
-                fine: 10000
-                coarse: 30000
-            indi_client:
-                indi_host: localhost
-                indi_port: 7624
-        do_filter_wheel: false
-        filter_wheel:
-            module: IndiFilterWheel
-            filterwheel_name: Filter Simulator
-            filter_list:
-                Luminance: 1
-                Red: 2
-                Green: 3
-                Blue: 4
-                H_Alpha: 5
-                OIII: 6
-                SII: 7
-                LPR: 8
-            indi_client:
-                indi_host: localhost
-                indi_port: 7624
+        #focuser:
+        #    module: IndiFocuser
+        #    focuser_name: Focuser Simulator
+        #    port: /dev/ttyUSB0
+        #    focus_range:
+        #        min: 32500
+        #        max: 40000
+        #    autofocus_step:
+        #        fine: 750
+        #        coarse: 2500
+        #    autofocus_range:
+        #        fine: 10000
+        #        coarse: 30000
+        #    indi_client:
+        #        indi_host: localhost
+        #        indi_port: 7624
+        #do_filter_wheel: false
+        #filter_wheel:
+        #    module: IndiFilterWheel
+        #    filterwheel_name: Filter Simulator
+        #    filter_list:
+        #        Luminance: 1
+        #        Red: 2
+        #        Green: 3
+        #        Blue: 4
+        #        H_Alpha: 5
+        #        OIII: 6
+        #        SII: 7
+        #        LPR: 8
+        #    indi_client:
+        #        indi_host: localhost
+        #        indi_port: 7624
         indi_client :
-            indi_host : localhost
+            indi_host : 192.168.0.176
             indi_port : 7624
 pointer:
     module: DifferentialPointer #DifferentialPointer #IterativeSync
@@ -250,7 +202,7 @@ guider:
     host : localhost
     port : 4400
     do_calibration : False
-    profile_name : Simulator
+    profile_name : TODO TN URGENT
     exposure_time_sec : 4
     settle :
         pixels : 1.5
