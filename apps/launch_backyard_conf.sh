@@ -3,3 +3,8 @@
 # edit, only udp conf works
 # you can also play with canon dslr / do a check with rm -rf ./test.cr2 && gphoto2 --capture-image-and-download --filename "test.cr2"
 indiserver indi_lx200gemini indi_canon_ccd indi_asi_ccd
+
+
+# To tunnel connections to remote host
+# ssh -L 8624:192.168.8.247:8624 192.168.0.176
+# ssh -L 7624:192.168.8.247:7624 192.168.0.176
