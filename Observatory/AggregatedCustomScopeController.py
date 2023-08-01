@@ -108,7 +108,7 @@ class UPBV2(IndiDevice, Base):
                     FINDER_DEW_HEATER=True),
                 auto_dew_aggressivity=200, # Number between 50 and 250
                 indi_client=dict(indi_host="localhost",
-                                 indi_port=7624))
+                                 indi_port=7625))
 
         # Communication config
         self.device_port = config["device_port"]
@@ -227,12 +227,13 @@ class UPBV2(IndiDevice, Base):
         self.set_switch("USB_PORT_CONTROL", on_switches=on_switches, off_switches=off_switches)
 
     def initialize_usb_hub(self):
-        #self.logger.warning("initialize_usb_hub doesn't seems to be currently supported by indi driver")
-        self.set_switch("USB_HUB_CONTROL", on_switches=["INDI_ENABLED"])
+        self.logger.warning("initialize_usb_hub doesn't seems to be currently supported by indi driver")
+        #self.set_switch("USB_HUB_CONTROL", on_switches=["INDI_ENABLED"])
 
     def power_on_all_telescope_equipments(self):
         # Power telescope level equipments
-        on_switches = [f"POWER_CONTROL_{i}" for i in range(1, 5) if self.power_labels[f"POWER_LABEL_{i}"] in ['TELESCOPE_LEVEL_POWER', 'FOCUSER_LEVEL_POWER']]
+        on_switches = [f"POWER_CONTROL_{i}" for i in range(1, 5) if self.power_labels[f"POWER_LABEL_{i}"] in
+                       ['SPOX_AND_DUSTCAP_POWER', 'MAIN_CAMERA_POWER']]
         self.set_switch("POWER_CONTROL", on_switches=on_switches)
 
         # 5V adjustable power source
@@ -240,17 +241,18 @@ class UPBV2(IndiDevice, Base):
 
         # USB
         on_switches = [f"PORT_{i}" for i in range(1, 7) if self.usb_labels[f"USB_LABEL_{i}"] in
-                       ["PRIMARY_CAMERA", "GUIDE_CAMERA", "FIELD_CAMERA", "SPECTRO_CONTROL_BOX"]]
+                       ["FIELD_CAMERA", "PRIMARY_CAMERA", "SPECTRO_CONTROL_BOX", "ARDUINO_CONTROL_BOX", "GUIDE_CAMERA"]]
         self.set_switch("USB_PORT_CONTROL", on_switches=on_switches)
 
     def power_off_all_telescope_equipments(self):
         # Power off telescope level equipments
-        off_switches = [f"POWER_CONTROL_{i}" for i in range(1, 5) if self.power_labels[f"POWER_LABEL_{i}"] in ['TELESCOPE_LEVEL_POWER', 'FOCUSER_LEVEL_POWER']]
+        off_switches = [f"POWER_CONTROL_{i}" for i in range(1, 5) if self.power_labels[f"POWER_LABEL_{i}"] in
+                        ['SPOX_AND_DUSTCAP_POWER', 'MAIN_CAMERA_POWER']]
         self.set_switch("POWER_CONTROL", off_switches=off_switches)
 
         # USB
         off_switches = [f"PORT_{i}" for i in range(1, 7) if self.usb_labels[f"USB_LABEL_{i}"] in
-                       ["PRIMARY_CAMERA", "GUIDE_CAMERA", "FIELD_CAMERA", "SPECTRO_CONTROL_BOX"]]
+                       ["FIELD_CAMERA", "PRIMARY_CAMERA", "SPECTRO_CONTROL_BOX", "ARDUINO_CONTROL_BOX", "GUIDE_CAMERA"]]
         self.set_switch("USB_PORT_CONTROL", off_switches=off_switches)
 
     def power_on_mount(self):
@@ -371,16 +373,19 @@ class UPBV2(IndiDevice, Base):
         """ blocking call: open up main scope dustcap
         """
         on_switches = [f"POWER_CONTROL_{i}" for i in range(1, 5) if (self.power_labels[f"POWER_LABEL_{i}"] in
-                                                                     ["MAIN_TELESCOPE_DUSTCAP_CONTROL", "TELESCOPE_LEVEL_POWER"])]
-        self.set_switch("POWER_CONTROL", on_switches=on_switches)
+                                                                     ["SPOX_AND_DUSTCAP_POWER"])]
+        off_switches = [f"POWER_CONTROL_{i}" for i in range(1, 5) if (self.power_labels[f"POWER_LABEL_{i}"] in
+                                                                     ["MAIN_TELESCOPE_DUSTCAP_CONTROL"])]
+        self.set_switch("POWER_CONTROL", on_switches=on_switches, off_switches=off_switches)
         self.wait_dustcap_delay()
 
     def close_scope_dustcap(self):
         """ blocking call: close main scope dustcap
         """
-        on_switches = [f"POWER_CONTROL_{i}" for i in range(1, 5) if (self.power_labels[f"POWER_LABEL_{i}"] == "TELESCOPE_LEVEL_POWER")]
-        off_switches = [f"POWER_CONTROL_{i}" for i in range(1, 5) if (self.power_labels[f"POWER_LABEL_{i}"] == "MAIN_TELESCOPE_DUSTCAP_CONTROL")]
-        self.set_switch("POWER_CONTROL", on_switches=on_switches, off_switches=off_switches)
+        on_switches = [f"POWER_CONTROL_{i}" for i in range(1, 5) if (self.power_labels[f"POWER_LABEL_{i}"] in
+                                                                     ["SPOX_AND_DUSTCAP_POWER",
+                                                                      "MAIN_TELESCOPE_DUSTCAP_CONTROL"])]
+        self.set_switch("POWER_CONTROL", on_switches=on_switches)
         self.wait_dustcap_delay()
 
 class ArduinoServoController(IndiDevice, Base):
@@ -439,13 +444,12 @@ class ArduinoServoController(IndiDevice, Base):
           * connect server to actual physical device
         :return:
         """
-        self.connect(connect_device=False)
+        self.connect(connect_device=False) #TODO TN Urgent check if this is ok
         self.set_device_communication_options()
         self.connect_device()
         # We set the polling period only after the connection
         #('setNumberVector', {'device': 'Arduino', 'name': 'POLLING_PERIOD', 'state': 'Alert', 'timeout': '0', 'timestamp': '2021-12-28T17:47:21',
         #'message': 'Cannot change property while device is disconnected.'})
-        self.set_polling_ms(polling_ms=self.polling_ms)
         self.initialize_servo()
         self._is_initialized = True
 
@@ -470,16 +474,18 @@ class ArduinoServoController(IndiDevice, Base):
     def open_finder_dustcap(self):
         """ blocking call: open up finder dustcap
         """
-        self.logger.debug("Opening up finder dustcap")
+        self.logger.debug("Opening up finder dustcap -- For some reason we had to remove the greenlight synchronization on indi_duino driver")
         self.set_switch("FINDER_SERVO_DUSTCAP_SWITCH",
-                        on_switches=['SERVO_SWITCH'])
+                        on_switches=['SERVO_SWITCH'],
+                        sync=False)
 
     def close_finder_dustcap(self):
         """ blocking call: close finder dustcap
         """
-        self.logger.debug("close finder dustcap")
+        self.logger.debug("close finder dustcap -- For some reason we had to remove the greenlight synchronization on indi_duino driver")
         self.set_switch("FINDER_SERVO_DUSTCAP_SWITCH",
-                        off_switches=['SERVO_SWITCH'])
+                        off_switches=['SERVO_SWITCH'],
+                        sync=False)
 
 
 
@@ -555,6 +561,7 @@ class AggregatedCustomScopeController(Base):
         # initialize upbv2
         self.upbv2.initialize()
 
+        self.upbv2.power_on_arduino_control_box()
         # Wait for the arduino os serial port to be created
         time.sleep(self._indi_driver_connect_delay_s)
         self.arduino_servo_controller.initialize()
@@ -607,7 +614,7 @@ class AggregatedCustomScopeController(Base):
             req = f"{base_url}/api/drivers/restart/"\
                   f"{urllib.parse.quote(driver_name)}"
             response = requests.post(req)
-            self.logger.debug(f"start_driver {driver_name} - url {req} - response: {response}")
+            self.logger.debug(f"restart_driver {driver_name} - url {req} - response: {response.text}")
             assert response.status_code == 200
         except Exception as e:
             self.logger.warning(f"Cannot restart indi driver : {e}")
@@ -624,7 +631,7 @@ class AggregatedCustomScopeController(Base):
             req = f"{base_url}/api/drivers/start/"\
                   f"{urllib.parse.quote(driver_name)}"
             response = requests.post(req)
-            self.logger.debug(f"start_driver {driver_name} - url {req} - response: {response}")
+            self.logger.debug(f"start_driver {driver_name} - url {req} - response: {response.text}")
             assert response.status_code == 200
         except Exception as e:
             self.logger.warning(f"Cannot start indi driver : {e}")
@@ -645,10 +652,12 @@ class AggregatedCustomScopeController(Base):
             #self.logger.setLevel("DEBUG")
 
             #self.logger.warning(f"stop_driver {driver_name} DISABLED for now as it was randomly breaking indiserver")
-            self.logger.debug(f"stop_driver {driver_name} - post on url {req}")
             response = requests.post(req)
-            self.logger.debug(f"stop_driver {driver_name} - response: {response}")
-            assert response.status_code == 200
+            self.logger.debug(f"stop_driver {driver_name} - url {req} - response: {response.text}")
+            assert response.status_code in [200, 500]
+            if response.status_code == 500:
+                self.logger.debug(f"stop_driver {driver_name} - url {req} - response: {response.text}, "
+                                  f"might be expected in case the driver was not started or already stopped")
         except Exception as e:
             self.logger.warning(f"Cannot stop indi driver : {e}")
 
@@ -662,7 +671,7 @@ class AggregatedCustomScopeController(Base):
         # Now we need to wait a bit before trying to connect driver
         # but _indi_driver_connect_delay_s was already waited for at previous step
         for driver_name in self._indi_resetable_instruments_driver_name_list.values():
-            self.start_driver(driver_name)
+            self.restart_driver(driver_name)
 
     def switch_off_instruments(self):
         """ blocking call: switch off camera

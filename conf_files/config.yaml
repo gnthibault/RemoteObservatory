@@ -23,7 +23,7 @@ observatory:
 #        rtsp_url: rtsp://user:password@192.168.0.16
     scope_controller:
         config_arduino:
-            device_name: Arduino telescope controller
+            device_name: Arduino
             device_port: /dev/serial/by-id/usb-FTDI_FT232R_USB_UART_AB0L9VL1-if00-port0
             connection_type: CONNECTION_SERIAL
             baud_rate: 57600
@@ -77,11 +77,11 @@ observatory:
                 indi_port: 7625
         indi_driver_connect_delay_s: 10
         indi_resetable_instruments_driver_name_list:
-            driver_1: ZWO CCD ASI290MM Mini
-            driver_2: Altair AA183MPRO
+            driver_1: ZWO CCD
+            driver_2: Altair
             driver_3: Shelyak SPOX
-            driver_4: PlayerOne CCD Ares-M PRO
-            driver_5: Arduino
+            driver_4: PlayerOne CCD
+            driver_5: Arduino telescope controller
         indi_mount_driver_name: Losmandy Gemini
         indi_webserver_host: localhost
         indi_webserver_port: 8624

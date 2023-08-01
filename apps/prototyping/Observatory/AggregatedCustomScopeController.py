@@ -14,6 +14,7 @@ from Observatory.AggregatedCustomScopeController import AggregatedCustomScopeCon
 #Astropy stuff
 from astropy import units as u
 from astropy.coordinates import SkyCoord
+logging.getLogger().setLevel(logging.DEBUG)
 
 if __name__ == '__main__':
 
@@ -74,13 +75,17 @@ if __name__ == '__main__':
 
     # config for simple arduino
     config_arduino = dict(
-                device_name="Arduino telescope controller",
+                device_name="Arduino",
                 device_port="/dev/serial/by-id/usb-FTDI_FT232R_USB_UART_AB0L9VL1-if00-port0",
                 connection_type="CONNECTION_SERIAL",
                 baud_rate=57600,
                 polling_ms=1000,
                 indi_client=dict(indi_host="localhost",
-                                 indi_port=7624))
+                                 indi_port=7625))
+    # One need to enable usb power for arduino controller beforehand
+    upbv2.power_on_arduino_control_box()
+    indi_driver_connect_delay_s = 10
+    time.sleep(indi_driver_connect_delay_s)
     arduino = ArduinoServoController(
         config=config_arduino,
         connect_on_create=True)
@@ -93,11 +98,11 @@ if __name__ == '__main__':
         config_arduino=config_arduino,
         indi_driver_connect_delay_s=10,
         indi_resetable_instruments_driver_name_list=dict(
-            driver_1="ZWO CCD ASI290MM Mini",
-            driver_2="Altair AA183MPRO",
+            driver_1="ZWO CCD",
+            driver_2="Altair",
             driver_3="Shelyak SPOX",
-            driver_4="PlayerOne CCD Ares-M PRO",
-            driver_5="Arduino",
+            driver_4="PlayerOne CCD",
+            driver_5="Arduino telescope controller"
         ),
         indi_mount_driver_name="Losmandy Gemini",
         indi_webserver_host="localhost",
