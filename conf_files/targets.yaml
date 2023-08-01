@@ -34,66 +34,6 @@ targets :
             temperature:
             gain: 10
             exp_time_sec: 10
-    Polaris:
-        Luminance:
-            count: 3
-            temperature:
-            gain: 10
-            exp_time_sec: 10
-    Alioth:
-        Luminance:
-            count: 3
-            temperature:
-            gain: 10
-            exp_time_sec: 10
-    Alkaid:
-        Luminance:
-            count: 3
-            temperature:
-            gain: 10
-            exp_time_sec: 10
-    Dubhe:
-        Luminance:
-            count: 3
-            temperature:
-            gain: 10
-            exp_time_sec: 10
-    Vega:
-        Luminance:
-            count: 3
-            temperature:
-            gain: 10
-            exp_time_sec: 10
-    Sheliak:
-        Luminance:
-            count: 3
-            temperature:
-            gain: 10
-            exp_time_sec: 10
-    Altair:
-        Luminance:
-            count: 3
-            temperature:
-            gain: 10
-            exp_time_sec: 10
-    Sarin:
-        Luminance:
-            count: 3
-            temperature:
-            gain: 10
-            exp_time_sec: 10
-    Kornephoros:
-        Luminance:
-            count: 3
-            temperature:
-            gain: 10
-            exp_time_sec: 10
-    Alphecca:
-        Luminance:
-            count: 3
-            temperature:
-            gain: 10
-            exp_time_sec: 10
 #    M51 :
 #        Luminance :
 #           count : 10

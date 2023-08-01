@@ -2,6 +2,7 @@
 import logging
 import requests
 import time
+import urllib.parse
 
 # Local
 from Base.Base import Base
@@ -60,11 +61,9 @@ class UPBV2(IndiDevice, Base):
     """
     def __init__(self,
                  config=None,
-                 connect_on_create=True,
-                 logger=None):
+                 connect_on_create=True):
 
         self._is_initialized = False
-        logger = logger or logging.getLogger(__name__)
 
         if config is None:
             config = dict(
@@ -132,9 +131,6 @@ class UPBV2(IndiDevice, Base):
         self.auto_dew_identifiers = config["auto_dew_identifiers"]
         self.auto_dew_aggressivity = str(config["auto_dew_aggressivity"])
 
-        # Indi stuff
-        logger.debug(f"UPBV2, controller board port is on port: {self.device_port}")
-
         # device related intialization
         IndiDevice.__init__(self,
                             device_name=config["device_name"],
@@ -176,7 +172,7 @@ class UPBV2(IndiDevice, Base):
         self.switch_off_scope_fan()
         self.switch_off_dew_heater()
         self.power_off_all_telescope_equipments()
-        self.switch_off_mount()
+        self.power_off_mount()
 
         self.disconnect()
 
@@ -231,8 +227,8 @@ class UPBV2(IndiDevice, Base):
         self.set_switch("USB_PORT_CONTROL", on_switches=on_switches, off_switches=off_switches)
 
     def initialize_usb_hub(self):
-        logging.warning("initialize_usb_hub doesn't seems to be currently supported by indi driver")
-        #self.set_switch("USB_HUB_CONTROL", on_switches=["INDI_ENABLED"])
+        #self.logger.warning("initialize_usb_hub doesn't seems to be currently supported by indi driver")
+        self.set_switch("USB_HUB_CONTROL", on_switches=["INDI_ENABLED"])
 
     def power_on_all_telescope_equipments(self):
         # Power telescope level equipments
@@ -359,13 +355,13 @@ class UPBV2(IndiDevice, Base):
         self.set_auto_dew_eligibility_off()
         self.logger.debug("Switching off automatic dew heater")
 
-    def switch_on_mount(self):
+    def power_on_mount(self):
         """ blocking call: switch on main mount
         """
         on_switches = [f"POWER_CONTROL_{i}" for i in range(1, 5) if (self.power_labels[f"POWER_LABEL_{i}"] == "MOUNT_POWER")]
         self.set_switch("POWER_CONTROL", on_switches=on_switches)
 
-    def switch_off_mount(self):
+    def power_off_mount(self):
         """ blocking call: switch off main mount
         """
         off_switches = [f"POWER_CONTROL_{i}" for i in range(1, 5) if (self.power_labels[f"POWER_LABEL_{i}"] == "MOUNT_POWER")]
@@ -405,11 +401,9 @@ class ArduinoServoController(IndiDevice, Base):
     """
     def __init__(self,
                  config=None,
-                 connect_on_create=True,
-                 logger=None):
+                 connect_on_create=True):
 
         self._is_initialized = False
-        logger = logger or logging.getLogger(__name__)
 
         if config is None:
             config = dict(
@@ -426,9 +420,6 @@ class ArduinoServoController(IndiDevice, Base):
         self.connection_type = config["connection_type"]
         self.baud_rate = str(config["baud_rate"])
         self.polling_ms = float(config["polling_ms"])
-
-        # Indi stuff
-        logger.debug(f"Arduino, controller board port is on port: {self.device_port}")
 
         # device related intialization
         IndiDevice.__init__(self,
@@ -500,12 +491,10 @@ class AggregatedCustomScopeController(Base):
     /dev/serial/by-id/usb-FTDI_FT232R_USB_UART_AD0JE0ID-if00-port0 ->  Shelyak arduino SPOX (ttyUSB1 at the time of the test)
     /dev/serial/by-id/usb-Pegasus_Astro_UPBv2_revD_UPB25S4VWV-if00-port0 -> PEGASUS (ttyUSB2 at the time of the test)
     """
-    def __init__(self, config=None, connect_on_create=True,
-                 logger=None):
+    def __init__(self, config=None, connect_on_create=True):
         Base.__init__(self)
 
         self._is_initialized = False
-        logger = logger or logging.getLogger(__name__)
 
         if config is None:
             config = dict(
@@ -513,10 +502,12 @@ class AggregatedCustomScopeController(Base):
                 config_arduino=None,
                 indi_driver_connect_delay_s=10,
                 indi_resetable_instruments_driver_name_list=dict(
-                    driver_1="ZWO CCD",
-                    driver_2="Altair",
+                    driver_1="ZWO CCD ASI290MM Mini",
+                    driver_2="Altair AA183MPRO",
                     driver_3="Shelyak SPOX",
-                    driver_4="ASI EAF"
+                    driver_4="PlayerOne CCD Ares-M PRO",
+                    driver_5="Arduino",
+                    driver_6="Losmandy Gemini"
                 ),
                 indi_mount_driver_name="Losmandy Gemini",
                 indi_webserver_host="localhost",
@@ -558,6 +549,9 @@ class AggregatedCustomScopeController(Base):
         self.logger.debug('configured successfully')
 
     def initialize(self):
+        # Restart all driver related to the aggregated devices
+        self.restart_all_drivers()
+
         # initialize upbv2
         self.upbv2.initialize()
 
@@ -574,14 +568,14 @@ class AggregatedCustomScopeController(Base):
         """
         self.logger.debug("Deinitializing AggregatedCustomScopeController")
 
-        # stop all drivers that relies on device being on
-        self.stop_all_drivers()
-
         # Deinitialize arduino servo first (as it relies on upb power)
         self.arduino_servo_controller.deinitialize()
 
         # Deinitialize upbv2
         self.upbv2.deinitialize()
+
+        # stop all drivers that relies on device being on
+        self.stop_all_drivers()
 
         self._is_initialized = False
 
@@ -601,35 +595,62 @@ class AggregatedCustomScopeController(Base):
         self.close_finder_dustcap()
         self.close_scope_dustcap()
 
-    def start_driver(self, driver_name):
+    def restart_driver(self, driver_name):
+        """
+            See documentation for the API here: https://github.com/knro/indiwebmanager
+        :param driver_name:
+        :return:
+        """
         try:
             base_url = f"http://{self._indi_webserver_host}:"\
                        f"{self._indi_webserver_port}"
-            req = f"{base_url}/api/drivers/start/"\
-                  f"{driver_name.replace(' ', '%20')}"
+            req = f"{base_url}/api/drivers/restart/"\
+                  f"{urllib.parse.quote(driver_name)}"
             response = requests.post(req)
             self.logger.debug(f"start_driver {driver_name} - url {req} - response: {response}")
             assert response.status_code == 200
         except Exception as e:
-            self.logger.warning(f"Cannot load indi driver : {e}")
+            self.logger.warning(f"Cannot restart indi driver : {e}")
+
+    def start_driver(self, driver_name):
+        """
+            See documentation for the API here: https://github.com/knro/indiwebmanager
+        :param driver_name:
+        :return:
+        """
+        try:
+            base_url = f"http://{self._indi_webserver_host}:"\
+                       f"{self._indi_webserver_port}"
+            req = f"{base_url}/api/drivers/start/"\
+                  f"{urllib.parse.quote(driver_name)}"
+            response = requests.post(req)
+            self.logger.debug(f"start_driver {driver_name} - url {req} - response: {response}")
+            assert response.status_code == 200
+        except Exception as e:
+            self.logger.warning(f"Cannot start indi driver : {e}")
 
     def stop_driver(self, driver_name):
+        """
+            See documentation for the API here: https://github.com/knro/indiwebmanager
+        :param driver_name:
+        :return:
+        """
         try:
             #if driver_name not in ["ZWO CCD"]: #"Shelyak SPOX", "Arduino telescope controller", "ASI EAF", "Altair", "ZWO CCD"
             #    return
             base_url = f"http://{self._indi_webserver_host}:"\
                        f"{self._indi_webserver_port}"
             req = f"{base_url}/api/drivers/stop/"\
-                  f"{driver_name.replace(' ', '%20')}"
+                  f"{urllib.parse.quote(driver_name)}"
             #self.logger.setLevel("DEBUG")
 
-            self.logger.warning(f"stop_driver {driver_name} DISABLED for now as it was randomly breaking indiserver")
-            ###self.logger.debug(f"stop_driver {driver_name} - post on url {req}")
-            ###response = requests.post(req)
-            ###self.logger.debug(f"stop_driver {driver_name} - response: {response}")
-            ###assert response.status_code == 200
+            #self.logger.warning(f"stop_driver {driver_name} DISABLED for now as it was randomly breaking indiserver")
+            self.logger.debug(f"stop_driver {driver_name} - post on url {req}")
+            response = requests.post(req)
+            self.logger.debug(f"stop_driver {driver_name} - response: {response}")
+            assert response.status_code == 200
         except Exception as e:
-            self.logger.warning(f"Cannot load indi driver : {e}")
+            self.logger.warning(f"Cannot stop indi driver : {e}")
 
     def switch_on_instruments(self):
         """ blocking call: switch on cameras, calibration tools, finderscopes, etc...
@@ -651,6 +672,11 @@ class AggregatedCustomScopeController(Base):
         self.upbv2.power_off_all_telescope_equipments()
         for driver_name in self._indi_resetable_instruments_driver_name_list.values():
             self.stop_driver(driver_name)
+
+    def restart_all_drivers(self):
+        for driver_name in self._indi_resetable_instruments_driver_name_list.values():
+            self.restart_driver(driver_name)
+        self.restart_driver(self._indi_mount_driver_name)
 
     def stop_all_drivers(self):
         for driver_name in self._indi_resetable_instruments_driver_name_list.values():
@@ -693,15 +719,15 @@ class AggregatedCustomScopeController(Base):
         self.upbv2.power_on_mount()
         # Now we need to wait a bit before trying to connect driver
         time.sleep(self._indi_driver_connect_delay_s)
-        self.start_driver(self._indi_mount_driver_name)
+        self.restart_driver(self._indi_mount_driver_name)
         self.statuses["mount_relay"] = True
 
     def switch_off_mount(self):
         """ blocking call: switch off main mount
         """
         self.logger.debug("Switching off main mount")
-        self.upbv2.power_off_mount()
         self.stop_driver(self._indi_mount_driver_name)
+        self.upbv2.power_off_mount()
         self.statuses["mount_relay"] = False
 
     def open_scope_dustcap(self):

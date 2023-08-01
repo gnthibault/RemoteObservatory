@@ -22,13 +22,69 @@ observatory:
 #    webcam:
 #        rtsp_url: rtsp://user:password@192.168.0.16
     scope_controller:
-        module: DummyScopeController #AggregatedCustomScopeController #DummyScopeController
-        port: /dev/serial/by-id/usb-Pegasus_Astro_UPBv2_revD_UPB25S4VWV-if00-port0
+        config_arduino:
+            device_name: Arduino telescope controller
+            device_port: /dev/serial/by-id/usb-FTDI_FT232R_USB_UART_AB0L9VL1-if00-port0
+            connection_type: CONNECTION_SERIAL
+            baud_rate: 57600
+            polling_ms: 1000
+            indi_client:
+                indi_host: localhost
+                indi_port: 7624
+        config_upbv2:
+            device_name: Pegasus UPB
+            device_port: /dev/serial/by-id/usb-Pegasus_Astro_UPBv2_revD_UPB25S4VWV-if00-port0
+            connection_type: CONNECTION_SERIAL
+            baud_rate: 9600
+            polling_ms: 1000
+            dustcap_travel_delay_s: 10
+            adjustable_voltage_value: 5
+            power_labels:
+                POWER_LABEL_1: MAIN_TELESCOPE_DUSTCAP_CONTROL
+                POWER_LABEL_2: SPOX_AND_DUSTCAP_POWER
+                POWER_LABEL_3: MAIN_CAMERA_POWER
+                POWER_LABEL_4: MOUNT_POWER
+            always_on_power_identifiers:
+                MAIN_TELESCOPE_DUSTCAP_CONTROL: True
+                SPOX_AND_DUSTCAP_POWER: True
+                MAIN_CAMERA_POWER: False
+                MOUNT_POWER: False
+            usb_labels:
+                USB_LABEL_1: FIELD_CAMERA
+                USB_LABEL_2: PRIMARY_CAMERA
+                USB_LABEL_3: SPECTRO_CONTROL_BOX
+                USB_LABEL_4: ARDUINO_CONTROL_BOX
+                USB_LABEL_5: WIFI_ROUTER
+                USB_LABEL_6: GUIDE_CAMERA
+            always_on_usb_identifiers:
+                FIELD_CAMERA: False
+                PRIMARY_CAMERA: False
+                SPECTRO_CONTROL_BOX: False
+                ARDUINO_CONTROL_BOX: False
+                WIFI_ROUTER: True,
+                GUIDE_CAMERA: False
+            dew_labels:
+                DEW_LABEL_1: PRIMARY_FAN
+                DEW_LABEL_2: SECONDARY_DEW_HEATER
+                DEW_LABEL_3: FINDER_DEW_HEATER
+            auto_dew_identifiers:
+                PRIMARY_FAN: False
+                SECONDARY_DEW_HEATER: True
+                FINDER_DEW_HEATER: True
+            auto_dew_aggressivity: 150 # Number between 50 and 250
+            indi_client:
+                indi_host: localhost
+                indi_port: 7625
+        indi_driver_connect_delay_s: 10
+        indi_resetable_instruments_driver_name_list:
+            driver_1: ZWO CCD ASI290MM Mini
+            driver_2: Altair AA183MPRO
+            driver_3: Shelyak SPOX
+            driver_4: PlayerOne CCD Ares-M PRO
+            driver_5: Arduino
+        indi_mount_driver_name: Losmandy Gemini
         indi_webserver_host: localhost
         indi_webserver_port: 8624
-        indi_client :
-            indi_host : localhost
-            indi_port : 7625
     dome_controller:
         module : IndiDomeController
         dome_movement_timeout_s: 300
@@ -185,7 +241,7 @@ cameras:
             indi_host : localhost
             indi_port : 7625
 pointer:
-    module: DifferentialPointer #DifferentialPointer #IterativeSync
+    module: IterativeSync #DifferentialPointer #IterativeSync
     gen_hips: False
     timeout_seconds: 450
     max_iterations: 5
