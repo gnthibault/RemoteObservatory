@@ -145,11 +145,13 @@ If you are interested in compiling/using the arduino stuff here, please download
 
 ## Setup indiweb on the machine that will host drivers
 check installation information on: https://github.com/knro/indiwebmanager
+```console
 pip install indiweb
 sudo cp indiwebmanager.service /etc/systemd/system/
 sudo chmod 644 /etc/systemd/system/indiwebmanager.service
 sudo systemctl daemon-reload
 sudo systemctl enable indiwebmanager.service
+```
 
 content of indiwebmanager.service
 ```bash
@@ -198,13 +200,21 @@ Then edit CMakeFiles/3.7.2/CMakeSystem.cmake
 replace aarch64 by armv8
 
 # How to launch the full stuff
+First, if you have a custom configuration for your own setup, set the proper variable in you console:
+```console
+export REMOTE_OBSERVATORY_CONFIG=backyard_config
+```
 
 ## If you want to try the software with simulators:
+```console
 ./apps/launch_indi_simu.sh
 PYTHONPATH=. python ./apps/launch_remote_observatory.py
+```
 
 ## If, in addition you want the nice dashboard (might require additional dependencies, scripts are untested)
+```console
 ./apps/launch_PAWS.sh
+```
 
 ## Legacy or optional features
 ### Support for DBus scripting ()

@@ -164,10 +164,10 @@ cameras:
     #        CCD_PIXEL_SIZE_Y : 2.4
     #        CCD_BITSPERPIXEL : 12
         SIMULATOR_SETTINGS: # 180mm
-            SIM_XRES: 1500 #5496
-            SIM_YRES: 1500 #3672
-            SIM_XSIZE: 4.8 #2.4
-            SIM_YSIZE: 4.8 #2.4
+            SIM_XRES: 3006 #5496
+            SIM_YRES: 3006 #3672
+            SIM_XSIZE: 3.76 #2.4
+            SIM_YSIZE: 3.76 #2.4
             SIM_MAXVAL: 65000
             SIM_SATURATION: 1
             SIM_LIMITINGMAG: 17

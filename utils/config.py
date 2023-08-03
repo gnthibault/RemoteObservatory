@@ -52,7 +52,7 @@ def load_config(config_files=None, parse=True, ignore_local=False):
 
     # Default to the pocs.yaml file
     if config_files is None:
-        config_files = [os.environ.get("REMOTE_OBSERVATORY_CONFIG", 'config')]
+        config_files = [os.environ.get("REMOTE_OBSERVATORY_CONFIG", "config")]
     config_files = listify(config_files)
 
     config = dict()
