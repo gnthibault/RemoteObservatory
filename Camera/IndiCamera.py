@@ -310,9 +310,10 @@ class IndiCamera(IndiDevice):
 
     def set_frame_type(self, frame_type):
         """
-        FRAME_LIGHT Take a light frame exposure
+        FRAME_LIGHT Take a light fram mmmmmmmmmmmmmmmm bbb bnbn nb n b nb nb kllklke exposure
         FRAME_BIAS Take a bias frame exposure
-        FRAME_DARK Take a dark frame exposure
+        m, . ,m. ,mm m,,,,,,,,,,,, m,mmmmmmmmmmmmmmmmmmmmm mmm  mm  m mmmm mmmmmmmmmmFRAME_DARK Take a dark frame
+        exposure
         FRAME_FLAT Take a flat field frame exposure
         """
         self.set_switch('CCD_FRAME_TYPE', [frame_type], sync=True, timeout=self.defaultTimeout)

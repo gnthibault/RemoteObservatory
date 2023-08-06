@@ -14,6 +14,7 @@ from Observatory.AggregatedCustomScopeController import AggregatedCustomScopeCon
 #Astropy stuff
 from astropy import units as u
 from astropy.coordinates import SkyCoord
+logging.getLogger().setLevel(logging.DEBUG)
 
 if __name__ == '__main__':
 
@@ -28,28 +29,28 @@ if __name__ == '__main__':
                 adjustable_voltage_value=5,
                 power_labels=dict(
                     POWER_LABEL_1="MAIN_TELESCOPE_DUSTCAP_CONTROL",
-                    POWER_LABEL_2="TELESCOPE_LEVEL_POWER", #SPOX_AND_DUSTCAP_POWER
-                    POWER_LABEL_3="FOCUSER_LEVEL_POWER", #PRIMARY_FOCUSER_POWER
+                    POWER_LABEL_2="SPOX_AND_DUSTCAP_POWER",
+                    POWER_LABEL_3="MAIN_CAMERA_POWER",
                     POWER_LABEL_4="MOUNT_POWER"),
                 always_on_power_identifiers=dict(
-                    MAIN_TELESCOPE_DUSTCAP_CONTROL=False,
-                    TELESCOPE_LEVEL_POWER=False, #SPOX_AND_DUSTCAP_POWER
-                    FOCUSER_LEVEL_POWER=False, #PRIMARY_FOCUSER_POWER
+                    MAIN_TELESCOPE_DUSTCAP_CONTROL=True,
+                    SPOX_AND_DUSTCAP_POWER=True,
+                    MAIN_CAMERA_POWER=False,
                     MOUNT_POWER=False),
                 usb_labels=dict(
-                    USB_LABEL_1="PRIMARY_CAMERA",
-                    USB_LABEL_2="ARDUINO_CONTROL_BOX",
-                    USB_LABEL_3="GUIDE_CAMERA",
-                    USB_LABEL_4="FIELD_CAMERA",
+                    USB_LABEL_1="FIELD_CAMERA",
+                    USB_LABEL_2="PRIMARY_CAMERA",
+                    USB_LABEL_3="SPECTRO_CONTROL_BOX",
+                    USB_LABEL_4="ARDUINO_CONTROL_BOX",
                     USB_LABEL_5="WIFI_ROUTER",
-                    USB_LABEL_6="SPECTRO_CONTROL_BOX"),
+                    USB_LABEL_6="GUIDE_CAMERA"),
                 always_on_usb_identifiers=dict(
-                    PRIMARY_CAMERA=False,
-                    ARDUINO_CONTROL_BOX=True,
-                    GUIDE_CAMERA=False,
                     FIELD_CAMERA=False,
+                    PRIMARY_CAMERA=False,
+                    SPECTRO_CONTROL_BOX=False,
+                    ARDUINO_CONTROL_BOX=False,
                     WIFI_ROUTER=True,
-                    SPECTRO_CONTROL_BOX=False),
+                    GUIDE_CAMERA=False),
                 dew_labels=dict(
                     DEW_LABEL_1="PRIMARY_FAN",
                     DEW_LABEL_2="SECONDARY_DEW_HEATER",
@@ -58,35 +59,39 @@ if __name__ == '__main__':
                     PRIMARY_FAN=False,
                     SECONDARY_DEW_HEATER=True,
                     FINDER_DEW_HEATER=True),
-                auto_dew_aggressivity=200, # Number between 50 and 250
+                auto_dew_aggressivity=150, # Number between 50 and 250
                 indi_client=dict(indi_host="localhost",
-                                 indi_port=7624))
+                                 indi_port=7625))
 
     # Now test UPBV2
-    #upbv2 = UPBV2(
-    #    config=config_upbv2,
-    #    connect_on_create=True)
-    #print(upbv2.get_power_info())
-    #print(upbv2.get_weather_info())
+    upbv2 = UPBV2(
+        config=config_upbv2,
+        connect_on_create=True)
+    print(upbv2.get_power_info())
+    print(upbv2.get_weather_info())
 
     # Now test Arduino controller
-    #upbv2.open_scope_dustcap()
+    upbv2.open_scope_dustcap()
 
     # config for simple arduino
     config_arduino = dict(
-                device_name="Arduino telescope controller",
-                device_port="/dev/serial/by-id/usb-1a86_USB2.0-Serial-if00-port0",
+                device_name="Arduino",
+                device_port="/dev/serial/by-id/usb-FTDI_FT232R_USB_UART_AB0L9VL1-if00-port0",
                 connection_type="CONNECTION_SERIAL",
                 baud_rate=57600,
                 polling_ms=1000,
                 indi_client=dict(indi_host="localhost",
-                                 indi_port=7624))
-    #arduino = ArduinoServoController(
-    #    config=config_arduino,
-    #    connect_on_create=True)
+                                 indi_port=7625))
+    # One need to enable usb power for arduino controller beforehand
+    upbv2.power_on_arduino_control_box()
+    indi_driver_connect_delay_s = 10
+    time.sleep(indi_driver_connect_delay_s)
+    arduino = ArduinoServoController(
+        config=config_arduino,
+        connect_on_create=True)
 
-    #arduino.open_finder_dustcap()
-    #arduino.close_finder_dustcap()
+    arduino.open_finder_dustcap()
+    arduino.close_finder_dustcap()
 
     config_aggregated = dict(
         config_upbv2=config_upbv2,
@@ -96,7 +101,8 @@ if __name__ == '__main__':
             driver_1="ZWO CCD",
             driver_2="Altair",
             driver_3="Shelyak SPOX",
-            driver_4="ASI EAF"
+            driver_4="PlayerOne CCD",
+            driver_5="Arduino telescope controller"
         ),
         indi_mount_driver_name="Losmandy Gemini",
         indi_webserver_host="localhost",

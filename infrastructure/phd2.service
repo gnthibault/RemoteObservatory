@@ -2,6 +2,7 @@
 # Should be put in /etc/systemd/system/
 # Then run
 # sudo systemctl daemon-reload
+# sudo systemctl enable phd2.service
 # sudo systemctl restart phd2.service
 # sudo systemctl status phd2.service
 
@@ -15,7 +16,7 @@ After=multi-user.target
 Type=idle
 User=gnthibault
 Environment=LD_LIBRARY_PATH=/usr/local/lib:/usr/lib
-Environment="DISPLAY=:0"
+Environment="DISPLAY=:10"
 # "XAUTHORITY=/home/gnthibault/.Xauthority"
 ExecStartPre=rm -f /home/gnthibault/phd2.1
 ExecStart=/usr/bin/phd2
