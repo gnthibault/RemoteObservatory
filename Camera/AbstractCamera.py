@@ -125,7 +125,7 @@ class AbstractCamera(Base):
         image_dir = os.path.join(
             self._image_dir,
             "targets",
-            observation.name,
+            observation.name.replace(" ", "_"),
             self.uid,
             observation.seq_time
         )

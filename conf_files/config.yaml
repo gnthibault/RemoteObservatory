@@ -2,9 +2,9 @@ name: Remote observatory
 observatory:
     module: Observatory
     investigator: gnthibault
-    latitude: 45.67 # Degrees
-    longitude: 5.67 # Degrees
-    elevation: 150.0 # Meters
+    latitude: 43.93447527626349  # Degrees
+    longitude: 5.710523353974106 # Degrees
+    elevation: 650.0 # Meters
     timezone: Europe/Paris #This is not mandatory, just speeds up startup
     # UTC+1 CET Central European Time,
     # UTC +2  CEST Central European Summer Time
@@ -118,7 +118,7 @@ cameras:
             FOCAL_LENGTH: 800
             APERTURE: 200
         do_guiding: true
-        do_pointing: true
+        do_pointing: false
         pointing_seconds: 5
         do_adjust_pointing: true
         adjust_center_x: 580
@@ -153,21 +153,11 @@ cameras:
         module: IndiAbstractCameraSimulator
         camera_name : CCD Simulator
         do_acquisition: true
-        #module: IndiEos6DCamera
-        #camera_name: Canon DSLR EOS 6D
-        #camera_name: GPhoto CCD
-    #    CCD_INFO :
-    #        CCD_MAX_X : 5496
-    #        CCD_MAX_Y : 3672
-    #        CCD_PIXEL_SIZE : 2.4
-    #        CCD_PIXEL_SIZE_X : 2.4
-    #        CCD_PIXEL_SIZE_Y : 2.4
-    #        CCD_BITSPERPIXEL : 12
         SIMULATOR_SETTINGS: # 180mm
-            SIM_XRES: 3006 #5496
-            SIM_YRES: 3006 #3672
-            SIM_XSIZE: 3.76 #2.4
-            SIM_YSIZE: 3.76 #2.4
+            SIM_XRES: 5496
+            SIM_YRES: 3672
+            SIM_XSIZE: 2.4
+            SIM_YSIZE: 2.4
             SIM_MAXVAL: 65000
             SIM_SATURATION: 1
             SIM_LIMITINGMAG: 17
@@ -183,17 +173,17 @@ cameras:
             SIM_PEMAX: 0
             SIM_TIME_FACTOR: 1
         SCOPE_INFO: # 200/800 newtonian
-            FOCAL_LENGTH: 800
-            APERTURE: 200
+            FOCAL_LENGTH: 242
+            APERTURE: 50
         do_guiding: false
-        do_pointing: false
+        do_pointing: true
         pointing_seconds: 5
         do_adjust_pointing: true
         adjust_center_x: 400
         adjust_center_y: 400
         adjust_roi_search_size: 50
         adjust_pointing_seconds: 5
-        do_autofocus: true
+        do_autofocus: false
         autofocus_seconds: 5
         autofocus_roi_size : 750
         autofocus_merit_function : half_flux_radius #vollath_F4
@@ -239,7 +229,7 @@ pointer:
     max_iterations: 5
     max_pointing_error_seconds: 3
 offset_pointer:
-    module: StarOffsetPointer #StarOffsetPointer #NoOffsetPointer
+    module: InvisibleObjectOffsetPointer #StarOffsetPointer #NoOffsetPointer #InvisibleObjectOffsetPointer
     timeout_seconds: 300
     max_identification_error_seconds: 1
     sync_mount_upon_solve: False

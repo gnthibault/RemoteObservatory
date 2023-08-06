@@ -3,6 +3,33 @@ constraints :
     maxairmass : 100 # for testing, normally use 2
     minmoonseparationdeg : 2 # normally put 45
 targets :
+
+#    "T CrB" :
+#        Luminance :
+#            count : 60
+#            temperature :
+#            gain : 100
+#            exp_time_sec : 60
+#    "GK Per" :
+#        Luminance :
+#            count : 60
+#            temperature :
+#            gain : 100
+#            exp_time_sec : 60
+    "PKS 2145+067" :
+        Luminance :
+            count : 10
+            temperature :
+            gain : 100
+            exp_time_sec : 360
+#    "QSO J1824+1044" :
+#        Luminance :
+#            count : 10
+#            temperature :
+#            gain : 100
+#            exp_time_sec : 360
+
+
 #    "15h12m43.2s +31d12m43s" :
 #        Luminance :
 #            count : 2+ (you can put a + if you want to acquire minimum 2, and, more if possible
@@ -28,72 +55,72 @@ targets :
 #            temperature :
 #            gain : 1
 #            exp_time_sec : 10
-    Deneb:
-        Luminance:
-            count: 3
-            temperature:
-            gain: 10
-            exp_time_sec: 10
-    Polaris:
-        Luminance:
-            count: 3
-            temperature:
-            gain: 10
-            exp_time_sec: 10
-    Alioth:
-        Luminance:
-            count: 3
-            temperature:
-            gain: 10
-            exp_time_sec: 10
-    Alkaid:
-        Luminance:
-            count: 3
-            temperature:
-            gain: 10
-            exp_time_sec: 10
-    Dubhe:
-        Luminance:
-            count: 3
-            temperature:
-            gain: 10
-            exp_time_sec: 10
-    Vega:
-        Luminance:
-            count: 3
-            temperature:
-            gain: 10
-            exp_time_sec: 10
-    Sheliak:
-        Luminance:
-            count: 3
-            temperature:
-            gain: 10
-            exp_time_sec: 10
-    Altair:
-        Luminance:
-            count: 3
-            temperature:
-            gain: 10
-            exp_time_sec: 10
-    Sarin:
-        Luminance:
-            count: 3
-            temperature:
-            gain: 10
-            exp_time_sec: 10
-    Kornephoros:
-        Luminance:
-            count: 3
-            temperature:
-            gain: 10
-            exp_time_sec: 10
-    Alphecca:
-        Luminance:
-            count: 3
-            temperature:
-            gain: 10
-            exp_time_sec: 10
+#    Deneb:
+#        Luminance:
+#            count: 3
+#            temperature:
+#            gain: 10
+#            exp_time_sec: 10
+#    Polaris:
+#        Luminance:
+#            count: 3
+#            temperature:
+#            gain: 10
+#            exp_time_sec: 10
+#    Alioth:
+#        Luminance:
+#            count: 3
+#            temperature:
+#            gain: 10
+#            exp_time_sec: 10
+#    Alkaid:
+#        Luminance:
+#            count: 3
+#            temperature:
+#            gain: 10
+#            exp_time_sec: 10
+#    Dubhe:
+#        Luminance:
+#            count: 3
+#            temperature:
+#            gain: 10
+#            exp_time_sec: 10
+#    Vega:
+#        Luminance:
+#            count: 3
+#            temperature:
+#            gain: 10
+#            exp_time_sec: 10
+#    Sheliak:
+#        Luminance:
+#            count: 3
+#            temperature:
+#            gain: 10
+#            exp_time_sec: 10
+#    Altair:
+#        Luminance:
+#            count: 3
+#            temperature:
+#            gain: 10
+#            exp_time_sec: 10
+#    Sarin:
+#        Luminance:
+#            count: 3
+#            temperature:
+#            gain: 10
+#            exp_time_sec: 10
+#    Kornephoros:
+#        Luminance:
+#            count: 3
+#            temperature:
+#            gain: 10
+#            exp_time_sec: 10
+#    Alphecca:
+#        Luminance:
+#            count: 3
+#            temperature:
+#            gain: 10
+#            exp_time_sec: 10
 #    M51 :
 #        Luminance :
 #           count : 10
