@@ -25,3 +25,7 @@ def on_enter(event_data):
     except Exception as e:
         model.logger.error(f"Problem in analyzing: {e}")
         model.next_state = 'parking'
+    finally:
+        if model.next_state not in ["observing"]:
+            model.manager.stop_tracking()
+

@@ -23,7 +23,7 @@ def on_enter(event_data):
     # Get the next observation
     try:
         observation = model.manager.get_observation()
-        model.logger.info("Observation: {observation}")
+        model.logger.info(f"Observation: {observation}")
     except error.NoObservation as e:
         model.say("No valid observations found. Cannot schedule. "
                   "Going to park.")

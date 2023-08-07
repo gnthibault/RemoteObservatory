@@ -10,7 +10,7 @@ def on_enter(event_data):
     model.next_state = 'parking'
 
     # If we came from pointing then don't try to dither
-    if event_data.transition.source != 'pointing':
+    if event_data.transition.source not in ['pointing']:
         model.logger.debug("Checking our tracking")
         try:
             # most likely setup dithering

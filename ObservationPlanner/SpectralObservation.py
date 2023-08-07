@@ -29,8 +29,7 @@ class SpectralObservation(Observation):
 
         Keyword Arguments:
         """
-        super().__init__(observing_block=observing_block,
-                         exp_set_size=exp_set_size)
+        super().__init__(observing_block=observing_block)
 
         # Important to know if corresponds to a reference acquisition or not
         self.is_reference_observation = is_reference_observation

@@ -3,23 +3,25 @@ import io
 import json
 import logging
 
-# Numerical stuff
-import numpy as np
+# Local utilities
+from Base import Base
 
-class IndiSpectroController:
+class DummySpectroController:
     """
 
     """
-    def __init__(self, logger=None, config=None):
-        logger = logger or logging.getLogger(__name__)
+    def __init__(self,
+                 config=None,
+                 connect_on_create=True):
 
         if config is None:
             config = dict(
                 module="DummypectroController",
-                controller_name="dummy",
+                device_name="dummy",
                 )
 
-        logger.debug(f"Indi Spectro Controller, controller name is: {config['controller_name']}")
+        super().__init__()
+
 
         # Finished configuring
         self.logger.debug('Indi Spectro controller configured successfully')

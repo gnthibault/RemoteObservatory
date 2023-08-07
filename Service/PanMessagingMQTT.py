@@ -170,7 +170,7 @@ class PanMessagingMQTT(PanMessaging):
             message = self.scrub_message(message)
 
         msg_object = json.dumps(message, skipkeys=True)
-        self.logger.debug(f"PanMessaging - sending - {channel}: {message}")
+        # self.logger.debug(f"PanMessaging - sending - {channel}: {message}")
 
         # Send the message
         self.client.publish(

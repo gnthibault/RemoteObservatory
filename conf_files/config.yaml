@@ -54,15 +54,15 @@ db:
 ntp:
     ntpserver: time.google.com
 scheduler:
-    module: DefaultScheduler
-    # module: SpectroScheduler
-    target_file: targets.yaml
-    #target_file: spectral_targets.yaml
+    #module: DefaultScheduler
+    module: SpectroScheduler
+    #target_file: targets.yaml
+    target_file: spectral_targets.yaml
 spectroscope_controller:
     module: IndiSpectroController
 calibration:
-    module: ImagingCalibration
-    #module: SpectralCalibration
+    #module: ImagingCalibration
+    module: SpectralCalibration
     spectral_calib:
         nb: 11
         sec: 30
@@ -77,9 +77,9 @@ calibration:
         dark_nb: 1
     controller:
         module: DummySpectroController
-        controller_name: dummy
+        device_name: dummy
         #module: IndiSpectroController
-        #controller_name: spox
+        #device_name: spox
 mount:
     #module: IndiG11
     #mount_name: Losmandy Gemini

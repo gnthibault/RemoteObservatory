@@ -9,7 +9,6 @@ from astropy.coordinates import SkyCoord
 
 # Astrophysical informations
 from astroquery.simbad import Simbad
-from astroquery.mpc import MPC
 
 # Astroplan stuff
 from astroplan import FixedTarget
@@ -140,7 +139,7 @@ class SpectroScheduler(Scheduler):
 
     def get_best_reference_target(self, observation):
         ob = observation.observing_block
-        maxseparation = 5 * u.deg
+        maxseparation = 15 * u.deg
         maxebv = 1
         altaz_frame = AltAz(obstime=self.serv_time.get_astropy_time_from_utc(),
                             location=self.obs.getAstropyEarthLocation())
@@ -244,7 +243,6 @@ class SpectroScheduler(Scheduler):
         try:
             observation = SpectralObservation(
                 observing_block=observing_block,
-                exp_set_size=exp_set_size,
                 is_reference_observation=is_reference_observation)
         except Exception as e:
             self.logger.warning(f"Cannot add  observing_block: "
@@ -289,7 +287,7 @@ class SpectroScheduler(Scheduler):
             time = self.serv_time.get_astropy_time_from_utc()  # get_utc()
 
         # dictionary where key is obs key and value is priority (aka merit)
-        valid_obs = {obs: 1.0 for obs in self.observations}
+        valid_obs = {obs: 1.0 for obs, obs_def in self.observations.items() if not obs_def.is_done}
         best_obs = []
 
         observer = self.obs.getAstroplanObserver()
@@ -324,21 +322,21 @@ class SpectroScheduler(Scheduler):
             # Sort the list by highest score (reverse puts in correct order)
             best_obs = sorted(valid_obs.items(), key=lambda x: x[1])[::-1]
 
-            # Check new best against current_observation
-            if (self.current_observation is not None and
-                    best_obs[0][0] != self.current_observation.id):
-
-                # Favor the current observation if still doable
-                end_of_next_set = time + self.current_observation.set_duration
-                if self.observation_available(
-                        self.current_observation,
-                        Time([time, end_of_next_set])):
-
-                    # If current is better or equal to top, add it to bestof
-                    # but no need to update current_observation
-                    if self.current_observation.merit >= best_obs[0][1]:
-                        best_obs.insert(0, (self.current_observation.id,
-                                            self.current_observation.merit))
+            # # Check new best against current_observation
+            # if (self.current_observation is not None and
+            #         best_obs[0][0] != self.current_observation.id):
+            #
+            #     # Favor the current observation if still doable
+            #     end_of_next_set = time + self.current_observation.set_duration
+            #     if self.observation_available(
+            #             self.current_observation,
+            #             Time([time, end_of_next_set])):
+            #
+            #         # If current is better or equal to top, add it to bestof
+            #         # but no need to update current_observation
+            #         if self.current_observation.merit >= best_obs[0][1]:
+            #             best_obs.insert(0, (self.current_observation.id,
+            #                                 self.current_observation.merit))
 
             self.current_observation = self.observations[best_obs[0][0]]
             self.current_observation.merit = best_obs[0][1]

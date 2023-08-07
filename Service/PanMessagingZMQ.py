@@ -183,7 +183,7 @@ class PanMessagingZMQ(PanMessaging):
 
         msg_object = json.dumps(message, skipkeys=True)
         full_message = f"{channel} {msg_object}"
-        self.logger.debug(f"PanMessaging - sending - {channel}: {message}")
+        # self.logger.debug(f"PanMessaging - sending - {channel}: {message}")
         # Send the message
         self.socket.send_string(full_message, flags=zmq.NOBLOCK)
 

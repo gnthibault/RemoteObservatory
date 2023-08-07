@@ -14,14 +14,14 @@ class IndiSpectroController(IndiDevice):
     """
 
     """
-    def __init__(self, logger=None, config=None,
+    def __init__(self,
+                 config=None,
                  connect_on_create=True):
-        logger = logger or logging.getLogger(__name__)
 
         if config is None:
             config = dict(
                 module="IndiSpectroController",
-                controller_name="spox",
+                device_name="spox",
                 port="/dev/ttyUSB0",
                 indi_client=dict(
                     indi_host="localhost",
@@ -30,12 +30,9 @@ class IndiSpectroController(IndiDevice):
 
         self.port = config['port']
 
-        logger.debug(f"Indi Spectro Controller, controller name is: "
-                     f"{config['controller_name']}")
-
         # device related intialization
         IndiDevice.__init__(self,
-                            device_name=config['controller_name'],
+                            device_name=config['device_name'],
                             indi_client_config=config["indi_client"])
         if connect_on_create:
             self.initialize()
@@ -53,12 +50,10 @@ class IndiSpectroController(IndiDevice):
         self.set_text("DEVICE_PORT", {"PORT": self.port})
 
     def on_emergency(self):
-        self.logger.debug("Indi spectro controller: on emergency routine "
-                          "started...")
+        self.logger.debug("Indi spectro controller: on emergency routine started...")
         self.switch_off_spectro_light()
         self.switch_off_flat_light()
-        self.logger.debug("Indi spectro controller: on emergency routine "
-                          "finished")
+        self.logger.debug("Indi spectro controller: on emergency routine finished")
 
     def switch_on_spectro_light(self):
         self.logger("Switching-on spectro light")

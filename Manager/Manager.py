@@ -27,9 +27,6 @@ from Base.Base import Base
 from helper.IndiClient import IndiClient
 
 # Local stuff: Service
-from Service.NovaAstrometryService import NovaAstrometryService
-#TODO TN TO BE FIXED
-from Service.PanMessagingZMQ import PanMessagingZMQ
 
 # Local stuff: Utils
 from utils import error
@@ -368,6 +365,11 @@ class Manager(Base):
             observation=observation,
             fits_headers=fits_headers)
 
+    def stop_tracking(self):
+        # Stop guiding
+        if self.guider is not None:
+            self.guider.disconnect_profile()
+
     def initialize_tracking(self):
         # start each observation by setting up the guider
         try:
@@ -377,6 +379,7 @@ class Manager(Base):
                 # TODO TN
                 # if self.guiding_camera is not None:
                 #     self.guiding_camera.disable_shoot()
+                self.guider.connect_profile()
                 self.guider.guide()
                 self.logger.info("Guiding successfully started")
             return True
@@ -537,7 +540,7 @@ class Manager(Base):
             if self.guider is not None:
                 self.guider.launch_server()
                 self.guider.connect_server()
-                self.guider.connect_profile()
+                # self.guider.connect_profile()
 
             return True
         except Exception as e:
@@ -742,7 +745,7 @@ class Manager(Base):
                 self.logger.info("Initializing guider")
                 self.guider.launch_server()
                 self.guider.connect_server()
-                self.guider.connect_profile()
+                # self.guider.connect_profile()
         except Exception as e:
             raise RuntimeError(f"Problem setting up guider: {e}")
 

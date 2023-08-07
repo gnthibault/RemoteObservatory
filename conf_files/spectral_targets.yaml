@@ -3,35 +3,21 @@ constraints :
     maxairmass : 17 #for testing, normally use 2
     minmoonseparationdeg : 2 # normally put 45
 targets :
-    "Sheliak" :
-        priority : 10
-        count : 2
+    "T CrB" :
+        priority : 0
+        count : 1
         temperature :
-        gain : 1
-        exp_time_sec : 100
-    "R Coronae Borealis" :
-        priority : 10
-        count : 2
-        temperature :
-        gain : 1
-        exp_time_sec : 100
-    "Alderamin":
-        priority: 10
-        count: 2
-        temperature:
-        gain: 1
-        exp_time_sec: 100
-    "HD31398":
-        priority: 10
-        count: 2
-        temperature:
-        gain: 1
-        exp_time_sec: 100
-
-
+        gain : 100
+        exp_time_sec : 20
+#    "GK Per" :
+#        priority : 0
+#        count : 2
+#        temperature :
+#        gain : 100
+#        exp_time_sec : 5
 reference_observation:
-    count : 5
+    count : 1
     temperature :
     gain : 1
-    exp_time_sec : 100
+    exp_time_sec : 20
 
