@@ -219,7 +219,14 @@ class IndiG11(IndiAbstractMount):
     def __init__(self, location, serv_time, config, connect_on_create=False):
 
         if config is None:
-            config = dict(mount_name="Losmandy Gemini")
+            config = dict(
+                module="IndiG11",
+                mount_name="Losmandy Gemini",
+                equatorial_eod="J2000",  # JNOW
+                indi_client=dict(
+                    indi_host="localhost",
+                    indi_port=7625)
+            )
 
         super().__init__(location=location,
                          serv_time=serv_time,
