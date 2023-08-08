@@ -8,6 +8,7 @@ import weakref
 
 # Indi stuff
 from helper.client import INDIClient
+from utils.error import IndiClientPredicateTimeoutError
 
 # Imaging and Fits stuff
 from astropy.io import fits
@@ -130,9 +131,10 @@ class IndiClient(SingletonIndiClientHolder, INDIClient, Base):
         try:
             assert (future.result(timeout) is True)
         except concurrent.futures.TimeoutError:
-            logger.error(f"Waiting for predicate {predicate_checker} took too long...")
+            msg = f"Waiting for predicate {predicate_checker} took too long..."
+            logger.error(msg)
             future.cancel()
-            raise RuntimeError
+            raise IndiClientPredicateTimeoutError(msg)
         except Exception as exc:
             logger.error(f"Error while trying to wait for predicate: {exc!r}")
             raise RuntimeError

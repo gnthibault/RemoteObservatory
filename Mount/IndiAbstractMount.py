@@ -109,6 +109,7 @@ class IndiAbstractMount(IndiMount, AbstractMount):
         try:
             IndiMount.park(self)
             self._is_parked = True
+            self.disconnect() # Disconnect indi server
         except Exception as e:
             self.logger.warning('Problem with park')
             # by default, we assume that mount is in the "worst" situation
@@ -125,6 +126,7 @@ class IndiAbstractMount(IndiMount, AbstractMount):
         """
         IndiMount.unpark(self)
         self._is_parked = False
+        self.connect(connect_device=True) #
 
     def slew_to_coord(self, coord):
         IndiMount.slew_to_coord_and_track(self, coord)

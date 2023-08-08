@@ -531,10 +531,15 @@ class Manager(Base):
     def unpark(self):
         try:
             # unpark the observatory
+            self.observatory.power_all_equipments()
             self.observatory.unpark()
 
             # unpark the mount
             self.mount.unpark()
+
+            # unpark cameras
+            for camera_name, camera in self.cameras.items():
+                camera.unpark()
 
             # Launch guider server
             if self.guider is not None:
@@ -554,11 +559,16 @@ class Manager(Base):
                 self.guider.disconnect_profile()
                 self.guider.disconnect_server()
 
+            # unpark cameras
+            for camera_name, camera in self.cameras.items():
+                camera.unpark()
+
             # park the mount
             self.mount.park()
 
             # park the observatory
             self.observatory.park()
+            self.observatory.shutdown_equipments()
 
             return True
         except Exception as e:
@@ -654,7 +664,9 @@ class Manager(Base):
             self.mount = getattr(mount_module, mount_name)(
                 location=self.earth_location,
                 serv_time=self.serv_time,
-                config=self.config['mount'])
+                config=self.config['mount'],
+                connect_on_create=False
+            )
         except Exception as e:
             self.logger.error(f"Cannot load mount module: {e}")
             raise error.MountNotFound(f"Problem setting up mount")
@@ -717,8 +729,8 @@ class Manager(Base):
                     cam = getattr(cam_module, cam_name)(
                         serv_time=self.serv_time,
                         config=cam_config,
-                        connect_on_create=True)
-                    cam.prepare_shoot()
+                        connect_on_create=False)
+                    #cam.prepare_shoot()
                     self.cameras[cam.name] = cam
             except Exception as e:
                 raise RuntimeError(f"Problem setting up camera: {e}")

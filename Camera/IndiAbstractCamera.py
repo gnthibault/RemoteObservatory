@@ -23,6 +23,14 @@ class IndiAbstractCamera(IndiCamera, AbstractCamera):
         self.indi_camera_config = config
 
 
+    def park(self):
+        self.logger.debug(f"Parking camera {self.camera_name}")
+        self.disconnect()
+
+    def unpark(self):
+        self.logger.debug(f"Unparking camera {self.camera_name}")
+        self.connect(connect_device=True)
+
     # TODO TN: setup event based acquisition properly
     def shoot_asyncWithEvent(self, exp_time_sec, filename, exposure_event,
                              **kwargs):

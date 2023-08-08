@@ -9,7 +9,7 @@ import urllib.parse
 from Base.Base import Base
 from helper.IndiDevice import IndiDevice
 from utils.error import ScopeControllerError
-
+from utils.error import IndiClientPredicateTimeoutError
 
 class UPBV2(IndiDevice, Base):
     """
@@ -516,24 +516,23 @@ class AggregatedCustomScopeController(Base):
                 config_upbv2=None,
                 config_arduino=None,
                 indi_driver_connect_delay_s=10,
-                indi_resetable_instruments_driver_name_list=dict(
-                    driver_1="ZWO CCD ASI290MM Mini",
-                    driver_2="Altair AA183MPRO",
-                    driver_3="Shelyak SPOX",
-                    driver_4="PlayerOne CCD Ares-M PRO",
-                    driver_5="Arduino",
-                    driver_6="Losmandy Gemini"
-                ),
+                indi_resetable_instruments_driver_map={
+                    "ZWO CCD": "ZWO CCD ASI290MM Mini",
+                    "Altair": "Altair AA183MPRO",
+                    "Shelyak SPOX": "Shelyak SPOX",
+                    "PlayerOne CCD": "PlayerOne CCD Ares-M PRO",
+                    "Arduino telescope controller": "Arduino"
+                },
                 indi_mount_driver_name="Losmandy Gemini",
                 indi_webserver_host="localhost",
-                indi_webserver_port="8624",)
+                indi_webserver_port="8624")
 
         # Actual device config
         self.config_upbv2 = config["config_upbv2"]
         self.config_arduino = config["config_arduino"]
 
         # Local features
-        self._indi_resetable_instruments_driver_name_list = config["indi_resetable_instruments_driver_name_list"]
+        self._indi_resetable_instruments_driver_map = config["indi_resetable_instruments_driver_map"]
         self._indi_driver_connect_delay_s = config["indi_driver_connect_delay_s"]
         self._indi_mount_driver_name = config["indi_mount_driver_name"]
         self._indi_webserver_host = config["indi_webserver_host"]
@@ -554,7 +553,7 @@ class AggregatedCustomScopeController(Base):
         # Finished configuring
         self.logger.debug('configured successfully')
 
-    def initialize(self):
+    def power_all_equipments(self):
         # Restart all driver related to the aggregated devices
         self.start_all_drivers()
 
@@ -571,7 +570,7 @@ class AggregatedCustomScopeController(Base):
 
         self._is_initialized = True
 
-    def deinitialize(self):
+    def power_off_all_equipments(self):
         """
 
         :return:
@@ -607,7 +606,20 @@ class AggregatedCustomScopeController(Base):
         self.logger.debug("Closing AggregatedCustomScopeController")
         self.close_finder_dustcap()
         self.close_scope_dustcap()
-        
+
+    def probe_device_driver_connection(self, driver_name, device_name):
+        probe = IndiDevice(
+            device_name=device_name,
+            indi_client_config=self.config["indi_client"])
+        # setup indi client
+        probe.connect(connect_device=False)
+        try:
+            probe.wait_for_any_property_vectors(timeout=5)
+        except IndiClientPredicateTimeoutError as e:
+            return False
+        else:
+            return True
+
     def is_driver_started(self, driver_name):
         return driver_name in self.get_running_driver_list()
 
@@ -714,13 +726,16 @@ class AggregatedCustomScopeController(Base):
         """ blocking call: switch on cameras, calibration tools, finderscopes, etc...
             We also need to load the corresponding indi driver
         """
+        if not self._is_initialized:
+            self.initialize()
         self.logger.debug("Switching on all instruments")
         self.upbv2.power_on_all_telescope_equipments()
 
         # Now we need to wait a bit before trying to connect driver
         # but _indi_driver_connect_delay_s was already waited for at previous step
-        for driver_name in self._indi_resetable_instruments_driver_name_list.values():
-            self.restart_driver(driver_name)
+        for driver_name, device_name in self._indi_resetable_instruments_driver_map.items():
+            if not self.probe_device_driver_connection(driver_name=driver_name, device_name=device_name):
+                self.restart_driver(driver_name)
 
     def switch_off_instruments(self):
         """ blocking call: switch off camera
@@ -728,16 +743,16 @@ class AggregatedCustomScopeController(Base):
         self.logger.debug("Switching off all equipments connected to upbv2")
 
         self.upbv2.power_off_all_telescope_equipments()
-        for driver_name in self._indi_resetable_instruments_driver_name_list.values():
+        for driver_name, device_name in self._indi_resetable_instruments_driver_map.items():
             self.stop_driver(driver_name)
 
     def start_all_drivers(self):
-        for driver_name in self._indi_resetable_instruments_driver_name_list.values():
+        for driver_name, device_name in self._indi_resetable_instruments_driver_map.items():
             self.start_driver(driver_name, check_started=True)
         self.start_driver(self._indi_mount_driver_name, check_started=True)
 
     def stop_all_drivers(self):
-        for driver_name in self._indi_resetable_instruments_driver_name_list.values():
+        for driver_name, device_name in self._indi_resetable_instruments_driver_map.items():
             self.stop_driver(driver_name)
         self.stop_driver(self._indi_mount_driver_name)
 

@@ -12,6 +12,9 @@ from helper.IndiClient import IndiClient
 from Camera.IndiASICamera import IndiASICamera
 from Service.NTPTimeService import HostTimeService
 
+# Local
+from utils.error import IndiClientPredicateTimeoutError
+
 if __name__ == '__main__':
     config = dict(
         camera_name='ZWO CCD ASI120MC',
@@ -50,7 +53,26 @@ if __name__ == '__main__':
     probe = IndiDevice(
         device_name=config["camera_name"],
         indi_client_config=config["indi_client"])
-    pass
+    # setup indi client
+    probe.connect(connect_device=False)
+    try:
+        probe.wait_for_any_property_vectors(timeout=5)
+    except IndiClientPredicateTimeoutError as e:
+        print(f"There was an error: {e}")
+    assert bool(probe.property_vectors)
+    print("test")
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

@@ -60,6 +60,12 @@ class AbstractCamera(Base):
 # Methods
 ###############################################################################
 
+    def park(self):
+        self.logger.debug(f"Parking camera {self.camera_name}")
+
+    def unpark(self):
+        self.logger.debug(f"Unparking camera {self.camera_name}")
+
     def take_observation(self, observation, headers=None, filename=None,
                          *args, **kwargs):
         """Take an observation

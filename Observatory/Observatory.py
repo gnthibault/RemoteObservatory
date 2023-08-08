@@ -136,13 +136,21 @@ class Observatory(Base):
 
     def park(self):
         self.logger.debug('Observatory: parking scope')
+        self.open_everything()
+
+    def shutdown_equipments(self):
+        self.logger.debug('Observatory: shutting down all scope equipments')
         if self.has_scope:
-            self.scope_controller.close()
+            self.scope_controller.power_off_all_equipments()
 
     def unpark(self):
         self.logger.debug('Observatory: unparking scope')
+        self.close_everything()
+
+    def power_all_equipments(self):
+        self.logger.debug('Observatory: powering all scope equipments')
         if self.has_scope:
-            self.scope_controller.open()
+            self.scope_controller.power_all_equipments()
 
     def open_everything(self):
         try:

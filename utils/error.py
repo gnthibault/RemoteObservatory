@@ -31,6 +31,11 @@ class ImageAcquisitionError(Error):
     def __init(self, message="Error while camera is trying to acquire an image"):
         super().__init__(message)
 
+class IndiClientPredicateTimeoutError(Error):
+    """ Error while trying to acquire image """
+    def __init(self, message="Error while camwaiting a predicate"):
+        super().__init__(message)
+
 class BLOBError(Error):
     """ Error for Indi Blob communication problem """
     def __init(self, message="Indi BLOB Error"):

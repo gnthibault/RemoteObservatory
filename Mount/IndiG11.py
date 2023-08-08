@@ -215,7 +215,7 @@ class IndiG11(IndiAbstractMount):
     Losmandy Gemini.STARTUP_MODE.WARM_RESTART=Off
     """
     
-    def __init__(self, location, serv_time, config):
+    def __init__(self, location, serv_time, config, connect_on_create=False):
 
         if config is None:
             config = dict(mount_name="Losmandy Gemini")
@@ -223,7 +223,7 @@ class IndiG11(IndiAbstractMount):
         super().__init__(location=location,
                          serv_time=serv_time,
                          config=config,
-                         connect_on_create=False)
+                         connect_on_create=connect_on_create)
 
     def unpark(self):
         if not self.is_connected():

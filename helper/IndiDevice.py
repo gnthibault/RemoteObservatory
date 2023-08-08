@@ -259,3 +259,13 @@ class IndiDevice(Base, device):
         blob_checker = lambda: self.check_blob_vector(blob_vector_name)
         self.indi_client.sync_with_predicate(blob_checker, timeout=timeout)
         return
+
+    def wait_for_any_property_vectors(self, timeout=5):
+        """
+            Wait until property vector is non-empty
+        :param timeout:
+        :return:
+        """
+        light_checker = lambda: bool(self.property_vectors)
+        self.indi_client.sync_with_predicate(light_checker, timeout=timeout)
+        return
