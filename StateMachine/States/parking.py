@@ -18,8 +18,8 @@ def on_enter(event_data):
         model.logger.critical(msg)
         model.say(msg)
 
-    if not model.manager.close_observatory():
-        msg = f"Unable to close observatory!"
-        model.logger.critical(msg)
-        model.say(msg)
+    # if not model.manager.close_observatory():
+    #     msg = f"Unable to close observatory!"
+    #     model.logger.critical(msg)
+    #     model.say(msg)
 

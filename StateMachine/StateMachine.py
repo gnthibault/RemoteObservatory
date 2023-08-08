@@ -414,13 +414,13 @@ class StateMachine(Machine, Base):
         """
         return self.manager.mount.is_tracking
 
-    def mount_is_initialized(self, event_data):
+    def observatory_is_initialized(self, event_data):
         """ Transitional check for mount.
 
         This is used as a conditional check when transitioning between certain
         states.
         """
-        return self.manager.mount.is_initialized
+        return self.manager.is_initialized
 
 ###############################################################################
 # Callback Methods

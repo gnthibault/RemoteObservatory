@@ -29,6 +29,7 @@ transitions:
             - observing
             - analyzing
             - calib_acq
+            - sleeping
         dest: parking
         trigger: park
     -
@@ -55,12 +56,12 @@ transitions:
         source: parked
         dest: ready
         trigger: get_ready
-        conditions: mount_is_initialized
+        conditions: observatory_is_initialized
     -
         source: sleeping
         dest: ready
         trigger: get_ready
-        conditions: mount_is_initialized
+        conditions: observatory_is_initialized
     -
         source: ready
         dest: scheduling

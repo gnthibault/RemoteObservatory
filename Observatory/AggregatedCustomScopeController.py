@@ -64,7 +64,7 @@ class UPBV2(IndiDevice, Base):
                  config=None,
                  connect_on_create=True):
 
-        self._is_initialized = False
+        self.is_initialized = False
 
         if config is None:
             config = dict(
@@ -165,7 +165,7 @@ class UPBV2(IndiDevice, Base):
         self.initialize_all_usb()
         self.initialize_usb_hub()
 
-        self._is_initialized = True
+        self.is_initialized = True
 
     def deinitialize(self):
         # Then switch off all electronic devices
@@ -177,7 +177,7 @@ class UPBV2(IndiDevice, Base):
 
         self.disconnect()
 
-        self._is_initialized = False
+        self.is_initialized = False
 
     def set_device_communication_options(self):
         self.set_text("DEVICE_PORT", {"PORT": self.device_port})
@@ -409,7 +409,7 @@ class ArduinoServoController(IndiDevice, Base):
                  config=None,
                  connect_on_create=True):
 
-        self._is_initialized = False
+        self.is_initialized = False
 
         if config is None:
             config = dict(
@@ -452,12 +452,12 @@ class ArduinoServoController(IndiDevice, Base):
         #('setNumberVector', {'device': 'Arduino', 'name': 'POLLING_PERIOD', 'state': 'Alert', 'timeout': '0', 'timestamp': '2021-12-28T17:47:21',
         #'message': 'Cannot change property while device is disconnected.'})
         self.initialize_servo()
-        self._is_initialized = True
+        self.is_initialized = True
 
     def deinitialize(self):
         self.close_finder_dustcap()
         self.disconnect()
-        self._is_initialized = False
+        self.is_initialized = False
 
     def set_device_communication_options(self):
         self.set_text("DEVICE_PORT", {"PORT": self.device_port})
@@ -498,10 +498,10 @@ class AggregatedCustomScopeController(Base):
     /dev/serial/by-id/usb-FTDI_FT232R_USB_UART_AD0JE0ID-if00-port0 ->  Shelyak arduino SPOX (ttyUSB1 at the time of the test)
     /dev/serial/by-id/usb-Pegasus_Astro_UPBv2_revD_UPB25S4VWV-if00-port0 -> PEGASUS (ttyUSB2 at the time of the test)
     """
-    def __init__(self, config=None, connect_on_create=True):
+    def __init__(self, config=None, connect_on_create=False):
         Base.__init__(self)
 
-        self._is_initialized = False
+        self.is_initialized = False
         # pin on arduino need to be configured either as input or ouput
         # it means that we need to keep track of pin status internally
         self.statuses = {
@@ -530,11 +530,13 @@ class AggregatedCustomScopeController(Base):
         # Actual device config
         self.config_upbv2 = config["config_upbv2"]
         self.config_arduino = config["config_arduino"]
+        self.default_indi_client_config = config["indi_client"]
 
         # Local features
         self._indi_resetable_instruments_driver_map = config["indi_resetable_instruments_driver_map"]
         self._indi_driver_connect_delay_s = config["indi_driver_connect_delay_s"]
         self._indi_mount_driver_name = config["indi_mount_driver_name"]
+        self._indi_mount_device_name = config["indi_mount_device_name"]
         self._indi_webserver_host = config["indi_webserver_host"]
         self._indi_webserver_port = config["indi_webserver_port"]
 
@@ -548,12 +550,12 @@ class AggregatedCustomScopeController(Base):
             connect_on_create=False)
 
         if connect_on_create:
-            self.initialize()
+            self.power_on_all_equipments()
 
         # Finished configuring
         self.logger.debug('configured successfully')
 
-    def power_all_equipments(self):
+    def power_on_all_equipments(self):
         # Restart all driver related to the aggregated devices
         self.start_all_drivers()
 
@@ -568,7 +570,7 @@ class AggregatedCustomScopeController(Base):
         self.switch_on_instruments()
         self.switch_on_mount()
 
-        self._is_initialized = True
+        self.is_initialized = True
 
     def power_off_all_equipments(self):
         """
@@ -589,14 +591,14 @@ class AggregatedCustomScopeController(Base):
         # stop all drivers that relies on device being on
         self.stop_all_drivers()
 
-        self._is_initialized = False
+        self.is_initialized = False
 
     def open(self):
         """ blocking call: opens both main telescope and guiding scope dustcap
         """
         self.logger.debug("Opening AggregatedCustomScopeController")
-        if not self._is_initialized:
-            self.initialize()
+        if not self.is_initialized:
+            self.power_on_all_equipments()
         self.open_finder_dustcap()
         self.open_scope_dustcap()
 
@@ -610,7 +612,7 @@ class AggregatedCustomScopeController(Base):
     def probe_device_driver_connection(self, driver_name, device_name):
         probe = IndiDevice(
             device_name=device_name,
-            indi_client_config=self.config["indi_client"])
+            indi_client_config=self.default_indi_client_config)
         # setup indi client
         probe.connect(connect_device=False)
         try:
@@ -638,7 +640,7 @@ class AggregatedCustomScopeController(Base):
                        f"{self._indi_webserver_port}"
             req = f"{base_url}/api/server/drivers"
             response = requests.get(req)
-            self.logger.debug(f"get_running_driver_list - url {req} - code {response.status_code} - response:{response.text}")
+            self.logger.debug(f"get_running_driver - url {req} - code {response.status_code} - response:{response.text}")
             assert response.status_code == 200
             running_driver_list = json.loads(response.text)
         except json.JSONDecodeError as e:
@@ -726,8 +728,9 @@ class AggregatedCustomScopeController(Base):
         """ blocking call: switch on cameras, calibration tools, finderscopes, etc...
             We also need to load the corresponding indi driver
         """
-        if not self._is_initialized:
-            self.initialize()
+        # assert self.is_initialized
+        # if not self.is_initialized:
+        #     self.power_on_all_equipments()
         self.logger.debug("Switching on all instruments")
         self.upbv2.power_on_all_telescope_equipments()
 
@@ -792,7 +795,10 @@ class AggregatedCustomScopeController(Base):
         self.upbv2.power_on_mount()
         # Now we need to wait a bit before trying to connect driver
         time.sleep(self._indi_driver_connect_delay_s)
-        self.restart_driver(self._indi_mount_driver_name)
+        # Now we need to wait a bit before trying to connect driver
+        if not self.probe_device_driver_connection(driver_name=self._indi_mount_driver_name,
+                                                   device_name=self._indi_mount_device_name):
+            self.restart_driver(self._indi_mount_driver_name)
         self.statuses["mount_relay"] = True
 
     def switch_off_mount(self):
@@ -828,12 +834,14 @@ class AggregatedCustomScopeController(Base):
         self.arduino_servo_controller.close_finder_dustcap()
    
     def status(self):
-        if self.is_connected:
+        if self.is_initialized:
             status = self.statuses.copy()
-            status["finder_dustcap_open"] = self.get_switch(
+            status["finder_dustcap_open"] = self.arduino_servo_controller.get_switch(
                 'FINDER_SERVO_DUSTCAP_SWITCH')['SERVO_SWITCH']
-            status["scope_dustcap_open"] = self.get_switch(
-                'SCOPE_SERVO_DUSTCAP_SWITCH')['SERVO_SWITCH']
+            switch_name = [f"POWER_CONTROL_{i}" for i in range(1, 5) if
+                self.upbv2.power_labels[f"POWER_LABEL_{i}"]=="MAIN_TELESCOPE_DUSTCAP_CONTROL"][0]
+            status["scope_dustcap_closed"] = self.upbv2.get_switch(
+                'POWER_CONTROL')[switch_name]
             return status
         else:
             return self.statuses

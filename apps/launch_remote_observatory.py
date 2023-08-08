@@ -237,21 +237,21 @@ class RemoteObservatoryFSM(StateMachine, Base):
                 # TODO(jamessynge): Figure out how to handle the situation
                 # where we have both mount and dome, but this code is only
                 # checking for a mount.
-                if self.manager.mount.is_connected:
-                    if not self.manager.mount.is_parked:
-                        self.logger.info("Parking mount")
-                        self.park() #FSM trigger
+                # if self.manager.mount.is_connected:
+                #     if not self.manager.mount.is_parked:
+                #         self.logger.info("Parking mount")
+                self.park() #FSM trigger
 
             if self.state == 'parking':
-                if self.manager.mount.is_connected:
-                    if self.manager.mount.is_parked:
-                        self.logger.info('Mount is parked, setting Parked '
-                                         'state')
-                        self.set_park() #FSM trigger
+                # if self.manager.mount.is_connected:
+                #     if self.manager.mount.is_parked:
+                #         self.logger.info('Mount is parked, setting Parked '
+                #                          'state')
+                self.set_park() #FSM trigger
 
-            if not self.manager.mount.is_parked:
-                self.logger.info('Mount not parked, parking')
-                self.manager.mount.park()
+            # if not self.manager.mount.is_parked:
+            #     self.logger.info('Mount not parked, parking')
+            #     self.manager.mount.park()
 
             # Manager shut down
             self.manager.power_down()

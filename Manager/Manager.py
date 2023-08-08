@@ -43,49 +43,8 @@ class Manager(Base):
         dates, mount, cameras, and weather station
         """
         Base.__init__(self)
-        self.logger.info('Initializing observatory manager')
 
-        # Image directory and other ios
-        self.logger.info('\tSetting up main image directory')
-        self._setup_image_directory()
-
-        # setup web services
-        self.logger.info('\tSetting up web services')
-        self._setup_services()
-
-        # Setup physical obervatory related informations
-        self.logger.info('\tSetting up observatory')
-        self._setup_observatory()
-
-        # Setup telescope mount
-        self.logger.info('\tSetting up mount')
-        self._setup_mount()
-
-        # Setup camera(s)
-        self.logger.info('\tSetting up cameras')
-        self._setup_cameras()
-
-        # setup guider
-        self.logger.info('\tSetting up guider')
-        self._setup_guider()
-
-        # setup pointing strategy
-        self.logger.info('\tSetting up pointing strategy')
-        self._setup_pointer()
-
-        # setup pointing strategy
-        self.logger.info('\tSetting up offset pointing strategy')
-        self._setup_offset_pointer()
-
-        # Setup observation planner
-        self.logger.info('\tSetting up observation planner')
-        self._setup_scheduler()
-
-        # Setup vizualization service
-        self.logger.info('\tSetting up vizualization service')
-        self._setup_vizualization_service()
-        self.logger.info('\t Observatory initialized')
-
+        self.is_initialized = False
 ##########################################################################
 # Properties
 ##########################################################################
@@ -129,17 +88,60 @@ class Manager(Base):
         self.messaging.send_message(channel, {"data": data})
 
     def initialize(self):
-        """Initialize the observatory and connected hardware """
-        self.logger.debug("Initializing mount")
-        self.mount.initialize()
-        self.observatory.initialize()
+        """Initialize the whole system, but not necessarily to start observing """
+        self.logger.info('Initializing observatory manager')
 
-    def power_down(self):
-        """Power down the observatory. Currently does nothing
-        """
-        self.logger.debug("Shutting down observatory")
-        self.mount.deinitialize()
-        self.observatory.deinitialize()
+        # Image directory and other ios
+        self.logger.info('\tSetting up main image directory')
+        self._setup_image_directory()
+
+        # setup web services
+        self.logger.info('\tSetting up web services')
+        self._setup_services()
+
+        # Setup physical obervatory related informations
+        self.logger.info('\tSetting up observatory')
+        self._setup_observatory()
+
+        # Setup telescope mount
+        self.logger.info('\tSetting up mount')
+        self._setup_mount()
+
+        # Setup camera(s)
+        self.logger.info('\tSetting up cameras')
+        self._setup_cameras()
+
+        # setup guider
+        self.logger.info('\tSetting up guider')
+        self._setup_guider()
+
+        # setup pointing strategy
+        self.logger.info('\tSetting up pointing strategy')
+        self._setup_pointer()
+
+        # setup pointing strategy
+        self.logger.info('\tSetting up offset pointing strategy')
+        self._setup_offset_pointer()
+
+        # Setup observation planner
+        self.logger.info('\tSetting up observation planner')
+        self._setup_scheduler()
+
+        # Setup vizualization service
+        self.logger.info('\tSetting up vizualization service')
+        self._setup_vizualization_service()
+        self.logger.info('\t Observatory initialized')
+        self.is_initialized = True
+    #     self.logger.debug("Initializing mount")
+    #     self.mount.initialize()
+    #     self.observatory.initialize()
+
+    # def power_down(self):
+    #     """Power down the observatory. Currently does nothing
+    #     """
+    #     self.logger.debug("Shutting down observatory")
+    #     self.mount.deinitialize()
+    #     self.observatory.deinitialize()
 
     def status(self):
         """Get status information for various parts of the observatory
@@ -177,8 +179,7 @@ class Manager(Base):
 
         except Exception as e:  # pragma: no cover
             msg = f"Can't get observatory status: {e}-{traceback.format_exc()}"
-            self.logger.error(msg)
-            raise RuntimeError(msg)
+            self.logger.warning(msg)
         return status
 
     def get_observation(self, *args, **kwargs):
@@ -531,7 +532,7 @@ class Manager(Base):
     def unpark(self):
         try:
             # unpark the observatory
-            self.observatory.power_all_equipments()
+            self.observatory.power_on_all_equipments()
             self.observatory.unpark()
 
             # unpark the mount
@@ -546,7 +547,6 @@ class Manager(Base):
                 self.guider.launch_server()
                 self.guider.connect_server()
                 # self.guider.connect_profile()
-
             return True
         except Exception as e:
             self.logger.error(f"Problem unparking: {e}")

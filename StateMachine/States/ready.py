@@ -9,11 +9,11 @@ def on_enter(event_data):
     model.next_state = 'parking'
 
     # First open physical builing if applicable
-    if not model.manager.open_observatory():
-        model.logger.error('Failed to open observatory while entering state'
-                           'ready')
-        model.next_state = 'parking'
-        return
+    # if not model.manager.open_observatory():
+    #     model.logger.error('Failed to open observatory while entering state'
+    #                        'ready')
+    #     model.next_state = 'parking'
+    #     return
 
     # Then unpark / initialize everything if applicable
     if not model.manager.unpark():

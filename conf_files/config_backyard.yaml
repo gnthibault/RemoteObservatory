@@ -84,8 +84,12 @@ observatory:
             PlayerOne CCD: PlayerOne CCD Ares-M PRO
             Arduino telescope controller: Arduino
         indi_mount_driver_name: Losmandy Gemini
+        indi_mount_device_name: Losmandy Gemini
         indi_webserver_host: localhost
         indi_webserver_port: 8624
+        indi_client: #TODO TN urgent
+            indi_host: localhost
+            indi_port: 7625
     dome_controller:
         module : IndiDomeController
         dome_movement_timeout_s: 300

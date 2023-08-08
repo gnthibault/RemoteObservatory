@@ -1,4 +1,5 @@
 #local
+from Mount.IndiMount import IndiMount
 from Mount.IndiAbstractMount import IndiAbstractMount
 
 class IndiG11(IndiAbstractMount):
@@ -226,7 +227,7 @@ class IndiG11(IndiAbstractMount):
                          connect_on_create=connect_on_create)
 
     def unpark(self):
-        if not self.is_connected():
+        if not self.is_connected:
             self.initialize()
         IndiAbstractMount.unpark(self)
 
@@ -237,7 +238,7 @@ class IndiG11(IndiAbstractMount):
         #TODO TN URGENT as a temporary fix. we decided to park at startup but
         # the proper behaviour for the mount should be parked status by default
         # at startup, see https://indilib.org/forum/general/5497-indi-losmandy-driver-impossible-to-get-proper-park-status.html#41664
-        self.park()
+        IndiMount.park(self)
 
     def set_startup_mode(self, mode='WARM_RESTART'):
         """

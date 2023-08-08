@@ -95,21 +95,21 @@ class Observatory(Base):
         # Finished configuring
         self.logger.debug('Configured Observatory successfully')
     
-    def initialize(self):
-        self.logger.debug("Initializing observatory")
-        if self.has_dome:
-            self.dome_controller.initialize()
-        if self.has_scope:
-            self.scope_controller.initialize()
-        self.logger.debug("Successfully initialized observatory")
+    # def initialize(self):
+    #     self.logger.debug("Initializing observatory")
+    #     if self.has_dome:
+    #         self.dome_controller.initialize()
+    #     if self.has_scope:
+    #         self.scope_controller.initialize()
+    #     self.logger.debug("Successfully initialized observatory")
 
-    def deinitialize(self):
-        self.logger.debug("Deinitializing observatory")
-        if self.has_dome:
-            self.dome_controller.deinitialize()
-        if self.has_scope:
-            self.scope_controller.deinitialize()
-        self.logger.debug("Successfully deinitialized observatory")
+    # def deinitialize(self):
+    #     self.logger.debug("Deinitializing observatory")
+    #     if self.has_dome:
+    #         self.dome_controller.deinitialize()
+    #     if self.has_scope:
+    #         self.scope_controller.deinitialize()
+    #     self.logger.debug("Successfully deinitialized observatory")
 
     def get_gps_coordinates(self):
         return self.gps_coordinates
@@ -134,9 +134,18 @@ class Observatory(Base):
     def has_scope(self):
         return not (self.scope_controller is None)
 
+    @property
+    def is_initialized(self):
+        ret = True
+        if self.has_dome and self.dome_controller.is_initialized:
+            ret = ret and self.dome_controller.is_initialized
+        if self.has_scope and self.scope_controller.is_initialized:
+            ret = ret and self.scope_controller.is_initialized
+
+
     def park(self):
         self.logger.debug('Observatory: parking scope')
-        self.open_everything()
+        self.close_everything()
 
     def shutdown_equipments(self):
         self.logger.debug('Observatory: shutting down all scope equipments')
@@ -144,13 +153,13 @@ class Observatory(Base):
             self.scope_controller.power_off_all_equipments()
 
     def unpark(self):
-        self.logger.debug('Observatory: unparking scope')
-        self.close_everything()
+        self.logger.debug('Observatory: unparking')
+        self.open_everything()
 
-    def power_all_equipments(self):
+    def power_on_all_equipments(self):
         self.logger.debug('Observatory: powering all scope equipments')
         if self.has_scope:
-            self.scope_controller.power_all_equipments()
+            self.scope_controller.power_on_all_equipments()
 
     def open_everything(self):
         try:

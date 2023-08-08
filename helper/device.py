@@ -1741,7 +1741,8 @@ class device(ABC):
             logging.debug(f"Received new element with name/attr: {name, attrs}")
             return
         if 'message' in attrs:
-            logging.debug(f"Message received from indi: {name, attrs}")
+            #logging.debug(f"Message received from indi: {name, attrs}")
+            pass # It was too verbose
         if obj.tag.is_vector():
             if obj.tag.get_transfertype() in (inditransfertypes.idef, inditransfertypes.iset):
                 self.current_vector = obj

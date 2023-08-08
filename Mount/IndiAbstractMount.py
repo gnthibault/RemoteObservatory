@@ -86,8 +86,8 @@ class IndiAbstractMount(IndiMount, AbstractMount):
 ###############################################################################
 # Mandatory overriden methods
 ###############################################################################
-    def connect(self):  # pragma: no cover
-        IndiMount.connect(self)
+    def connect(self, connect_device=True):  # pragma: no cover
+        IndiMount.connect(self, connect_device=connect_device)
 
     def disconnect(self):
         if not self.is_parked:
@@ -124,9 +124,9 @@ class IndiAbstractMount(IndiMount, AbstractMount):
         Returns:
             bool: indicating success
         """
-        IndiMount.unpark(self)
-        self._is_parked = False
         self.connect(connect_device=True) #
+        self._is_parked = False
+        IndiMount.unpark(self)
 
     def slew_to_coord(self, coord):
         IndiMount.slew_to_coord_and_track(self, coord)

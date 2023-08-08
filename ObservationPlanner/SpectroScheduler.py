@@ -115,7 +115,10 @@ class SpectroScheduler(Scheduler):
             spinfo["MAIN_ID"] = CDS['MAIN_ID'][0]
             spinfo["OTYPE"] = CDS['OTYPE'][0]
             spinfo["OTYPES"] = CDS['OTYPES'][0]
-            spinfo["OTYPE_COMMENT"] = otypes[spinfo["OTYPE"]]
+            try:
+                spinfo["OTYPE_COMMENT"] = otypes[spinfo["OTYPE"]]
+            except KeyError:
+                spinfo["OTYPE_COMMENT"] = ""
             spinfo["SP_TYPE"] = CDS['SP_TYPE'][0]
             spinfo["RVZ_RADVEL"] = float(CDS['RVZ_RADVEL'][0])
             spinfo["RVZ_TYPE"] = str(CDS['RVZ_TYPE'][0])
