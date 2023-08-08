@@ -145,18 +145,19 @@ class IndiClient(SingletonIndiClientHolder, INDIClient, Base):
         if (not self.client_connecting) and (not self.running):
             self.client_connecting = True
             asyncio.run_coroutine_threadsafe(self.connect(timeout=timeout), self.ioloop)
-
         if sync:
             future = asyncio.run_coroutine_threadsafe(self.wait_running(), self.ioloop)
             try:
                 assert (future.result(timeout) is True)
             except concurrent.futures.TimeoutError:
-                logger.error("Setting up running state took too long...")
+                msg = "Setting up running state took too long..."
+                logger.error(msg)
                 future.cancel()
-                raise RuntimeError
+                raise RuntimeError(msg)
             except Exception as exc:
-                logger.error(f"Error while trying to connect client: {exc!r}")
-                raise RuntimeError
+                msg = f"Error while trying to connect client: {exc!r}"
+                logger.error(msg)
+                raise RuntimeError(msg)
 
     def trigger_get_properties(self):
         self.xml_to_indiserver("<getProperties version='1.7'/>")

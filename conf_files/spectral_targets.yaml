@@ -3,12 +3,18 @@ constraints :
     maxairmass : 17 #for testing, normally use 2
     minmoonseparationdeg : 2 # normally put 45
 targets :
-    "T CrB" :
+    "Vega" :
         priority : 0
         count : 1
         temperature :
         gain : 100
         exp_time_sec : 20
+#    "T CrB" :
+#        priority : 0
+#        count : 1
+#        temperature :
+#        gain : 100
+#        exp_time_sec : 20
 #    "GK Per" :
 #        priority : 0
 #        count : 2

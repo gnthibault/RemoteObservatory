@@ -530,11 +530,11 @@ class Manager(Base):
 
     def unpark(self):
         try:
-            # unpark the mount
-            self.mount.unpark()
-
             # unpark the observatory
             self.observatory.unpark()
+
+            # unpark the mount
+            self.mount.unpark()
 
             # Launch guider server
             if self.guider is not None:
@@ -711,6 +711,7 @@ class Manager(Base):
         def setup_cameras():
             try:
                 for cam_config in self.config["cameras"]:
+                    self.logger.debug(f"Setting up camera with config {cam_config}")
                     cam_name = cam_config['module']
                     cam_module = load_module('Camera.'+cam_name)
                     cam = getattr(cam_module, cam_name)(

@@ -225,6 +225,12 @@ class IndiG11(IndiAbstractMount):
                          config=config,
                          connect_on_create=False)
 
+    def unpark(self):
+        if not self.is_connected():
+            self.initialize()
+        IndiAbstractMount.unpark(self)
+
+    def initialize(self):
         self.connect()
         self.set_startup_mode(mode='WARM_RESTART')
         self.set_park_settings(mode='HOME')

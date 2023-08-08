@@ -22,6 +22,7 @@ observatory:
 #    webcam:
 #        rtsp_url: rtsp://user:password@192.168.0.16
     scope_controller:
+        module: AggregatedCustomScopeController
         config_arduino:
             device_name: Arduino
             device_port: /dev/serial/by-id/usb-FTDI_FT232R_USB_UART_AB0L9VL1-if00-port0
@@ -30,7 +31,7 @@ observatory:
             polling_ms: 1000
             indi_client:
                 indi_host: localhost
-                indi_port: 7624
+                indi_port: 7625
         config_upbv2:
             device_name: Pegasus UPB
             device_port: /dev/serial/by-id/usb-Pegasus_Astro_UPBv2_revD_UPB25S4VWV-if00-port0
@@ -106,15 +107,15 @@ db:
 ntp:
     ntpserver: time.google.com
 scheduler:
-    module: DefaultScheduler
-    # module: SpectroScheduler
-    target_file: targets.yaml
-    #target_file: spectral_targets.yaml
+    # module: DefaultScheduler
+    module: SpectroScheduler
+    # target_file: targets.yaml
+    target_file: spectral_targets.yaml
 spectroscope_controller:
     module: IndiSpectroController
 calibration:
-    module: ImagingCalibration
-    #module: SpectralCalibration
+    #module: ImagingCalibration
+    module: SpectralCalibration
     spectral_calib:
         nb: 11
         sec: 30
@@ -129,12 +130,11 @@ calibration:
         dark_nb: 1
     controller:
         module: IndiSpectroController
-        device_name: spox
+        device_name: Shelyak Spox
         port: /dev/serial/by-id/usb-FTDI_FT232R_USB_UART_AD0JE0ID-if00-port0
         indi_client :
             indi_host : localhost
             indi_port : 7625
-
 mount:
     module: IndiG11
     mount_name: Losmandy Gemini

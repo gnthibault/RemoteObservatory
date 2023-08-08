@@ -1,4 +1,5 @@
 # Basic stuff
+import json
 import logging
 import requests
 import time
@@ -501,6 +502,14 @@ class AggregatedCustomScopeController(Base):
         Base.__init__(self)
 
         self._is_initialized = False
+        # pin on arduino need to be configured either as input or ouput
+        # it means that we need to keep track of pin status internally
+        self.statuses = {
+            "scope_fan": False,
+            "scope_dew": False,
+            "finder_dew": False,
+            "mount_relay": False,
+        }
 
         if config is None:
             config = dict(
@@ -542,21 +551,12 @@ class AggregatedCustomScopeController(Base):
         if connect_on_create:
             self.initialize()
 
-        # pin on arduino need to be configured either as input or ouput
-        # it means that we need to keep track of pin status internally
-        self.statuses = {
-            "scope_fan": False,
-            "scope_dew": False,
-            "finder_dew": False,
-            "mount_relay": False,
-        }
-
         # Finished configuring
         self.logger.debug('configured successfully')
 
     def initialize(self):
         # Restart all driver related to the aggregated devices
-        self.restart_all_drivers()
+        self.start_all_drivers()
 
         # initialize upbv2
         self.upbv2.initialize()
@@ -566,6 +566,9 @@ class AggregatedCustomScopeController(Base):
         time.sleep(self._indi_driver_connect_delay_s)
         self.arduino_servo_controller.initialize()
 
+        self.switch_on_instruments()
+        self.switch_on_mount()
+
         self._is_initialized = True
 
     def deinitialize(self):
@@ -574,6 +577,9 @@ class AggregatedCustomScopeController(Base):
         :return:
         """
         self.logger.debug("Deinitializing AggregatedCustomScopeController")
+
+        self.switch_off_mount()
+        self.switch_off_instruments()
 
         # Deinitialize arduino servo first (as it relies on upb power)
         self.arduino_servo_controller.deinitialize()
@@ -601,6 +607,38 @@ class AggregatedCustomScopeController(Base):
         self.logger.debug("Closing AggregatedCustomScopeController")
         self.close_finder_dustcap()
         self.close_scope_dustcap()
+        
+    def is_driver_started(self, driver_name):
+        return driver_name in self.get_running_driver_list()
+
+    def get_running_driver_list(self):
+        running_driver_list = self.get_running_driver()
+        return [driver["name"] for driver in running_driver_list]
+    
+    def get_running_driver(self):
+        """
+            See documentation for the API here: https://github.com/knro/indiwebmanager
+        :param driver_name:
+        :return:
+        """
+        try:
+            base_url = f"http://{self._indi_webserver_host}:"\
+                       f"{self._indi_webserver_port}"
+            req = f"{base_url}/api/server/drivers"
+            response = requests.get(req)
+            self.logger.debug(f"get_running_driver_list - url {req} - code {response.status_code} - response:{response.text}")
+            assert response.status_code == 200
+            running_driver_list = json.loads(response.text)
+        except json.JSONDecodeError as e:
+            msg = f"Cannot properly parse list of running indi driver from {response.text} : {e}"
+            self.logger.error(msg)
+            raise RuntimeError(msg)
+        except Exception as e:
+            msg = f"Cannot get list of running indi driver : {e}"
+            self.logger.error(msg)
+            raise RuntimeError(msg)
+        else:
+            return running_driver_list
 
     def restart_driver(self, driver_name):
         """
@@ -608,33 +646,42 @@ class AggregatedCustomScopeController(Base):
         :param driver_name:
         :return:
         """
-        try:
-            base_url = f"http://{self._indi_webserver_host}:"\
-                       f"{self._indi_webserver_port}"
-            req = f"{base_url}/api/drivers/restart/"\
-                  f"{urllib.parse.quote(driver_name)}"
-            response = requests.post(req)
-            self.logger.debug(f"restart_driver {driver_name} - url {req} - response: {response.text}")
-            assert response.status_code == 200
-        except Exception as e:
-            self.logger.warning(f"Cannot restart indi driver : {e}")
-
-    def start_driver(self, driver_name):
+        if self.is_driver_started(driver_name):
+            try:
+                base_url = f"http://{self._indi_webserver_host}:"\
+                           f"{self._indi_webserver_port}"
+                req = f"{base_url}/api/drivers/restart/"\
+                      f"{urllib.parse.quote(driver_name)}"
+                response = requests.post(req)
+                self.logger.debug(f"restart_driver {driver_name} - url {req} - code {response.status_code} - response:{response.text}")
+                assert response.status_code == 200
+            except Exception as e:
+                msg = f"Cannot restart indi driver : {e}"
+                self.logger.error(msg)
+                raise RuntimeError(msg)
+        else:
+            self.start_driver(driver_name, check_started=False)
+            
+    def start_driver(self, driver_name, check_started=True):
         """
             See documentation for the API here: https://github.com/knro/indiwebmanager
         :param driver_name:
         :return:
         """
+        if check_started and self.is_driver_started(driver_name):
+            return
         try:
             base_url = f"http://{self._indi_webserver_host}:"\
                        f"{self._indi_webserver_port}"
             req = f"{base_url}/api/drivers/start/"\
                   f"{urllib.parse.quote(driver_name)}"
             response = requests.post(req)
-            self.logger.debug(f"start_driver {driver_name} - url {req} - response: {response.text}")
+            self.logger.debug(f"start_driver {driver_name} - url {req} - code {response.status_code} - response:{response.text}")
             assert response.status_code == 200
         except Exception as e:
-            self.logger.warning(f"Cannot start indi driver : {e}")
+            msg = f"Cannot start indi driver : {e}"
+            self.logger.error(msg)
+            raise RuntimeError(msg)
 
     def stop_driver(self, driver_name):
         """
@@ -642,6 +689,10 @@ class AggregatedCustomScopeController(Base):
         :param driver_name:
         :return:
         """
+        # No need to stop a driver that is not started
+        if not self.is_driver_started(driver_name):
+            self.logger.debug(f"No need to stop driver {driver_name} because it doesn't seems to be started")
+            return
         try:
             #if driver_name not in ["ZWO CCD"]: #"Shelyak SPOX", "Arduino telescope controller", "ASI EAF", "Altair", "ZWO CCD"
             #    return
@@ -650,16 +701,14 @@ class AggregatedCustomScopeController(Base):
             req = f"{base_url}/api/drivers/stop/"\
                   f"{urllib.parse.quote(driver_name)}"
             #self.logger.setLevel("DEBUG")
-
             #self.logger.warning(f"stop_driver {driver_name} DISABLED for now as it was randomly breaking indiserver")
             response = requests.post(req)
-            self.logger.debug(f"stop_driver {driver_name} - url {req} - response: {response.text}")
-            assert response.status_code in [200, 500]
-            if response.status_code == 500:
-                self.logger.debug(f"stop_driver {driver_name} - url {req} - response: {response.text}, "
-                                  f"might be expected in case the driver was not started or already stopped")
+            self.logger.debug(f"stop_driver {driver_name} - url {req} - code {response.status_code} - response: {response.text}")
+            assert response.status_code == 200
         except Exception as e:
-            self.logger.warning(f"Cannot stop indi driver : {e}")
+            msg = f"Cannot stop indi driver : {e}"
+            self.logger.error(msg)
+            raise RuntimeError(msg)
 
     def switch_on_instruments(self):
         """ blocking call: switch on cameras, calibration tools, finderscopes, etc...
@@ -682,10 +731,10 @@ class AggregatedCustomScopeController(Base):
         for driver_name in self._indi_resetable_instruments_driver_name_list.values():
             self.stop_driver(driver_name)
 
-    def restart_all_drivers(self):
+    def start_all_drivers(self):
         for driver_name in self._indi_resetable_instruments_driver_name_list.values():
-            self.restart_driver(driver_name)
-        self.restart_driver(self._indi_mount_driver_name)
+            self.start_driver(driver_name, check_started=True)
+        self.start_driver(self._indi_mount_driver_name, check_started=True)
 
     def stop_all_drivers(self):
         for driver_name in self._indi_resetable_instruments_driver_name_list.values():
