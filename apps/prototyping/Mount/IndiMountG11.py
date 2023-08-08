@@ -46,6 +46,7 @@ if __name__ == '__main__':
     dec = 45
     c = SkyCoord(ra=ra*u.hourangle, dec=dec*u.degree, frame='icrs')
     print("BEFORE SLEWING --------------------------")
+    mount.set_slew_rate('3x')
     mount.slew_to_coord_and_track(c)
     print("After SLEWING --------------------------")
 

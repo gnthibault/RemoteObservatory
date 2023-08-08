@@ -129,7 +129,7 @@ class IndiAbstractMount(IndiMount, AbstractMount):
         IndiMount.unpark(self)
 
     def slew_to_coord(self, coord):
-        IndiMount.slew_to_coord_and_track(self, coord)
+        self.slew_to_coord_and_track(self, coord)
 
     def get_current_coordinates(self):
         return IndiMount.get_current_coordinates(self)
@@ -158,13 +158,12 @@ class IndiAbstractMount(IndiMount, AbstractMount):
                 self._is_slewing = True
 
                 target = self.get_target_coordinates()
-                IndiMount.slew_to_coord_and_track(self, target)
+                self.slew_to_coord_and_track(target)
                 success = True
                 self._is_slewing = False
                 self._is_tracking = True
             except Exception as e:
-                self.logger.error("Error in slewing to target: {}, {}"
-                    "".format(e, traceback.format_exc()))
+                self.logger.error(f"Error in slewing to target: {e}, {traceback.format_exc()}")
                 self._is_slewing = was_slewing
                 self._is_tracking = was_tracking
                 success = False
