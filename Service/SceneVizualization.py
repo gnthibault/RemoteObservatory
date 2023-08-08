@@ -33,6 +33,7 @@ class SceneVizualization(threading.Thread):
                 module="SceneVizualization",
                 delay_sky_update_s=1,
                 delay_moving_objects_s=0.1,
+                show_stars=True,
                 gps_coord=dict(
                     latitude=45.0,
                     longitude=35.0
@@ -52,6 +53,7 @@ class SceneVizualization(threading.Thread):
         # parametrize what is shown
         self.gps_coord = config["gps_coord"]
         self.serv_time = HostTimeService(self.gps_coord)
+        self.show_stars = config["show_stars"]
 
         # Actual Indi device
         self.mount_device = mount_device
@@ -72,7 +74,8 @@ class SceneVizualization(threading.Thread):
         self.world3D = World3D(
             view3D=self.view3D,
             gps_coordinates=self.gps_coord,
-            serv_time=self.serv_time)
+            serv_time=self.serv_time,
+            show_stars=self.show_stars)
         if self.observatory_device is not None:
             self.observatory = Observatory3D(
                 view3D=self.view3D,

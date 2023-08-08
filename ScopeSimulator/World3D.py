@@ -122,7 +122,8 @@ class World3D:
                        "zenith": 0xffffff,
                        "nadir": 0xffffff}
 
-    def __init__(self, view3D, gps_coordinates, serv_time=None):
+    def __init__(self, view3D, gps_coordinates, serv_time=None, show_stars=False):
+        self.show_stars = show_stars
         # serv time encapsulate various time utilities
         self.serv_time = serv_time
 
@@ -159,7 +160,8 @@ class World3D:
 
         # Attach sky frame related elements to sky entity
         self.make_equatorial_grid()
-        self.make_stars()
+        if self.show_stars:
+            self.make_stars()
 
         # Helps define sky frame relative to ground frame (root entity)
         #self.time=QQuaternion()
@@ -503,7 +505,6 @@ class World3D:
            - zenith cardinal is +90deg Dec
            - nadir cardinal is -90 deg Dec
         """
-        return #TODO TN DISABLING THE WHOLE STAR CATALOG LOAD BECAUSE IT IS TOO LONG
         # Loads star catalog and render on the sky parent object
         stars = load_bright_star_5('ScopeSimulator/data/bsc5.dat.gz', True)
         stars = self.j2k_to_jnow(stars)

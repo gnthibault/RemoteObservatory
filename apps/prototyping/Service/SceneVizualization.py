@@ -50,6 +50,7 @@ if __name__ == '__main__':
         module="SceneVizualization",
         delay_sky_update_s=1,
         delay_moving_objects_s=0.05,
+        show_stars=True,
         gps_coord=dict(
             latitude=45.67,
             longitude=5.67
