@@ -3,7 +3,7 @@ constraints :
     maxairmass : 17 #for testing, normally use 2
     minmoonseparationdeg : 2 # normally put 45
 targets :
-    "Vega" :
+    "Altair" : #HD214680
         priority : 0
         count : 1
         temperature :

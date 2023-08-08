@@ -155,48 +155,25 @@ cameras:
             FOCAL_LENGTH: 800
             APERTURE: 200
         do_guiding: true
-        do_pointing: true
-        pointing_seconds: 5
+        do_pointing: false
+        pointing_seconds: 40
         do_adjust_pointing: true
-        adjust_center_x: 580
-        adjust_center_y: 400
+        adjust_center_x: 936
+        adjust_center_y: 664
         adjust_roi_search_size: 50
-        adjust_pointing_seconds: 5
+        adjust_pointing_seconds: 40
         do_autofocus: false
         autofocus_seconds: 4
         autofocus_roi_size : 750
         autofocus_merit_function: half_flux_radius
-#        focuser:
-#            module: IndiFocuser
-#            focuser_name: Focuser Simulator
-#            port: /dev/ttyUSB0
-#            focus_range:
-#                min: 32500
-#                max: 40000
-#            autofocus_step:
-#                fine: 750
-#                coarse: 2500
-#            autofocus_range:
-#                fine: 10000
-#                coarse: 30000
-#            indi_client:
-#                indi_host: localhost
-#                indi_port: 7625
         indi_client :
             indi_host : localhost
             indi_port : 7625
             #use_unique_client: True
     -
-        module: IndiAbstractCamera
+        module: IndiPlayerOneCamera
         camera_name : PlayerOne CCD Ares-M PRO
         do_acquisition: true
-    #    CCD_INFO :
-    #        CCD_MAX_X : 5496
-    #        CCD_MAX_Y : 3672
-    #        CCD_PIXEL_SIZE : 2.4
-    #        CCD_PIXEL_SIZE_X : 2.4
-    #        CCD_PIXEL_SIZE_Y : 2.4
-    #        CCD_BITSPERPIXEL : 12
         SCOPE_INFO: # 200/800 newtonian
             FOCAL_LENGTH: 800
             APERTURE: 200
@@ -247,6 +224,28 @@ cameras:
         indi_client :
             indi_host : localhost
             indi_port : 7625
+    - module: IndiAltairCamera
+      camera_name: Altair AA183MPRO
+      do_acquisition: true
+      SCOPE_INFO: # 200/800 newtonian
+          FOCAL_LENGTH: 800
+          APERTURE: 200
+      do_guiding: false
+      do_pointing: true
+      pointing_seconds: 10
+      do_adjust_pointing: false
+      adjust_center_x: 400
+      adjust_center_y: 400
+      adjust_roi_search_size: 50
+      adjust_pointing_seconds: 5
+      do_autofocus: false
+      autofocus_seconds: 5
+      autofocus_roi_size: 750
+      autofocus_merit_function: half_flux_radius #vollath_F4
+      indi_client:
+          indi_host: localhost
+          indi_port: 7625
+
 pointer:
     module: IterativeSync #DifferentialPointer #IterativeSync
     gen_hips: False
