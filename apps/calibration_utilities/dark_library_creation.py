@@ -33,7 +33,7 @@ from utils import load_module
 
 class DarkLibraryBuilder():
 
-    def __init__(self, camera, exp_time_list, gain_list, temp_list=[np.NaN],
+    def __init__(self, camera, exp_time_list, gain_list, offset_list, temp_list=[np.NaN],
                  outdir=None, nb_image=100):
         #super(self).__init__()
         
@@ -41,6 +41,7 @@ class DarkLibraryBuilder():
         self.cam = camera
         self.exp_time_list = exp_time_list
         self.gain_list = gain_list
+        self.offset_list = offset_list
         self.temp_list = temp_list
         self.outdir = outdir or './dark_calibration' #TODO TN replace
         self.nb_image = nb_image
@@ -72,42 +73,43 @@ class DarkLibraryBuilder():
                          temperature.to(u.Celsius).value,
                          gain
                   ))
-    def gen_calib_basedirname(self, temperature, gain, exp_time):
+    def gen_calib_basedirname(self, temperature, gain, offset, exp_time):
         return ("{}/calibration/{}/camera_{}/temperature_{}/gain_{}/exp_time_{}"
                "".format(self.outdir,
                          'dark',
                          self.cam.name,
                          temperature.to(u.Celsius).value,
                          gain,
+                         offset,
                          exp_time.to(u.second).value
                   ))
 
-    def gen_calib_filename(self, temperature, gain, exp_time, index):
-        image_dir = self.gen_calib_basedirname(temperature, gain, exp_time)
+    def gen_calib_filename(self, temperature, gain, offset, exp_time, index):
+        image_dir = self.gen_calib_basedirname(temperature, gain, offset, exp_time)
         os.makedirs(image_dir, exist_ok=True)
         image_name = os.path.join(image_dir,str(index)+'.fits')
         return image_name
 
-    def gen_calib_mastername(self, temperature, gain, exp_time):
-        image_dir = self.gen_calib_basedirname(temperature, gain, exp_time)
+    def gen_calib_mastername(self, temperature, gain, offset, exp_time):
+        image_dir = self.gen_calib_basedirname(temperature, gain, offset, exp_time)
         os.makedirs(image_dir, exist_ok=True)
         master_name = os.path.join(image_dir, 'master.tif')
         return master_name
 
-    def gen_calib_masterstdname(self, temperature, gain, exp_time):
-        image_dir = self.gen_calib_basedirname(temperature, gain, exp_time)
+    def gen_calib_masterstdname(self, temperature, gain, offset, exp_time):
+        image_dir = self.gen_calib_basedirname(temperature, gain, offset, exp_time)
         os.makedirs(image_dir, exist_ok=True)
         master_std_name = os.path.join(image_dir, 'master_std.tif')
         return master_std_name
 
-    def gen_calib_masterpsnrname(self, temperature, gain, exp_time):
-        image_dir = self.gen_calib_basedirname(temperature, gain, exp_time)
+    def gen_calib_masterpsnrname(self, temperature, gain, offset, exp_time):
+        image_dir = self.gen_calib_basedirname(temperature, gain, offset, exp_time)
         os.makedirs(image_dir, exist_ok=True)
         master_psnr_name = os.path.join(image_dir, 'master_psnr.tif')
         return master_psnr_name
 
-    def gen_NLF_figname(self, temperature, gain, exp_time):
-        base_dir = self.gen_calib_basedirname(temperature, gain, exp_time)
+    def gen_NLF_figname(self, temperature, gain, offset, exp_time):
+        base_dir = self.gen_calib_basedirname(temperature, gain, offset, exp_time)
         os.makedirs(base_dir, exist_ok=True)
         conv_check = os.path.join(base_dir, 'NLF_conv_check.png')
         regression = os.path.join(base_dir, 'NLF_regression.png')
@@ -483,26 +485,27 @@ class DarkLibraryBuilder():
         self.cam.prepare_shoot()
         for temperature in self.temp_list:
             self.set_temperature(temperature)
-            for gain in self.gain_list:
-                self.cam.set_gain(gain)
-                for exp_time in self.exp_time_list:
-                    for i in range(self.nb_image):
-                        print('Temperature {}, gain {}, exp time {}, Acquiring'
-                              ' image {}'.format(temperature,gain,exp_time,i))
-                        fname = self.gen_calib_filename(temperature, gain,
-                                                        exp_time,i)
-                        if not os.path.exists(fname):
-                            print('before set exp time')
-                            self.cam.setExpTimeSec(exp_time)
-                            print('before shoot')
-                            self.cam.shoot_async()
-                            print('After shoot_async, going to sync')
-                            self.cam.synchronize_with_image_reception()
-                            print('After sync')
-                            fits = self.cam.get_received_image()
-                            print('Image received')
-                            with open(fname, "wb") as f:
-                                fits.writeto(f)
+            for offset in self.offset_list:
+                self.set_offset(offset)
+                for gain in self.gain_list:
+                    self.cam.set_gain(gain)
+                    for exp_time in self.exp_time_list:
+                        for i in range(self.nb_image):
+                            print('Temperature {}, gain {}, offset {}, exp time {}, Acquiring'
+                                  ' image {}'.format(temperature, gain, offset, exp_time, i))
+                            fname = self.gen_calib_filename(temperature, gain, offset, exp_time, i)
+                            if not os.path.exists(fname):
+                                print('before set exp time')
+                                self.cam.setExpTimeSec(exp_time)
+                                print('before shoot')
+                                self.cam.shoot_async()
+                                print('After shoot_async, going to sync')
+                                self.cam.synchronize_with_image_reception()
+                                print('After sync')
+                                fits = self.cam.get_received_image()
+                                print('Image received')
+                                with open(fname, "wb") as f:
+                                    fits.writeto(f)
         self.cleanup_device()
 
     def compute_statistics(self):
@@ -626,10 +629,12 @@ def main(config_file='./jsonModel/IndiCCDSimulatorCamera.json',
 #    exp_time_list = np.linspace(1, 30, 8)*u.second
     exp_time_list = np.array([1,5,10,30,60,120])*u.second
 #    gain_list = np.linspace(0,100,10, dtype=np.int32).tolist()
-    gain_list = [0,25,50,75,100]
+    gain_list = [120, 150]
+    offset_list = [20, 30]
     temp_list = [np.NaN*u.Celsius]
     b = DarkLibraryBuilder(cam, exp_time_list, temp_list=temp_list,
                            gain_list=gain_list,
+                           offset_list=offset_list,
                            outdir='./dark_calibration',
                            nb_image=19)
     b.show_plot = show_plot

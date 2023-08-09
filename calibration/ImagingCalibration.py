@@ -34,6 +34,7 @@ class ImagingCalibration(Base):
         self.flat_exp_sec = config["flat"]["sec"]*u.second
         self.flat_nb = config["flat"]["nb"]
         self.flat_gain = config["flat"]["gain"]
+        self.flat_offset = config["flat"]["offset"]
         self.flat_temperature = config["flat"]["temperature"]
         self.dark_nb = config["dark"]["dark_nb"]
 
@@ -65,6 +66,7 @@ class ImagingCalibration(Base):
                 event = self.camera.take_calibration(
                     temperature=self.flat_temperature,
                     gain=self.flat_gain,
+                    offset=self.flat_offset,
                     exp_time=self.flat_exp_sec,
                     headers={"filter": filter_name},
                     calibration_name="flat",
@@ -83,21 +85,23 @@ class ImagingCalibration(Base):
         for seq_time, observation in observed_list.items():
             temp_deg = observation.configuration['temperature']
             conf = (observation.time_per_exposure,
-                    observation.configuration['gain'])
+                    observation.configuration['gain'],
+                    observation.configuration['offset'])
             if temp_deg in dark_config_dict:
                 dark_config_dict[temp_deg].add(conf)
             else:
                 dark_config_dict[temp_deg] = set((conf,))
 
         self.controller.close_optical_path_for_dark()
-        for temp_deg, times_gains in dark_config_dict.items():
+        for temp_deg, times_gains_offsets in dark_config_dict.items():
             if temp_deg:
                 self.camera.set_temperature(temp_deg)
-            for (exp_time, gain) in times_gains:
+            for (exp_time, gain, offset) in times_gains_offsets:
                 for i in range(self.dark_nb):
                     event = self.camera.take_calibration(
                         temperature=temp_deg,
                         gain=gain,
+                        offset=offset,
                         exp_time=exp_time,
                         headers={},
                         calibration_name="dark",

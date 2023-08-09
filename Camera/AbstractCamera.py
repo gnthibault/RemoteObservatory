@@ -94,13 +94,14 @@ class AbstractCamera(Base):
         # (see `process_exposure`)
         observation_event = Event()
 
-        (exp_time, gain, temperature, file_path, image_id, metadata,
+        (exp_time, gain, offset, temperature, file_path, image_id, metadata,
             is_pointing) = self._setup_observation(observation,
                                                    headers,
                                                    filename,
                                                    *args,
                                                    **kwargs)
         kwargs["gain"] = gain
+        kwargs["offset"] = offset
         kwargs["temperature"] = temperature
         exposure_event = self.take_exposure(
             exposure_time=exp_time,
@@ -163,6 +164,7 @@ class AbstractCamera(Base):
         # get values
         exp_time = kwargs.get('exp_time', observation.time_per_exposure)
         gain = observation.configuration["gain"]
+        offset = observation.configuration["offset"]
         temperature = observation.configuration["temperature"]
         filter_name = observation.configuration.get("filter", "no-filter")
 
@@ -181,12 +183,12 @@ class AbstractCamera(Base):
             'temperature_degC': temperature
         }
         metadata.update(headers)
-        return (exp_time, gain, temperature, file_path, image_id, metadata,
-            is_pointing)
+        return (exp_time, gain, offset, temperature, file_path, image_id, metadata, is_pointing)
 
     def take_calibration(self,
                          temperature,
                          gain,
+                         offset,
                          exp_time,
                          headers=None,
                          calibration_seq_id=None,
@@ -201,6 +203,7 @@ class AbstractCamera(Base):
         file_path, metadata = self._setup_calibration(
             temperature=temperature,
             gain=gain,
+            offset=offset,
             exp_time=exp_time,
             headers=headers,
             calibration_seq_id=calibration_seq_id,
@@ -213,6 +216,7 @@ class AbstractCamera(Base):
             filename=file_path,
             temperature=temperature,
             gain=gain,
+            offset=offset,
             exposure_time=exp_time,
             headers=headers,
             calibration_seq_id=calibration_seq_id,
@@ -231,6 +235,7 @@ class AbstractCamera(Base):
     def get_calibration_directory(self,
                                   temperature,
                                   gain,
+                                  offset,
                                   exp_time,
                                   headers,
                                   calibration_seq_id=None,
@@ -252,6 +257,7 @@ class AbstractCamera(Base):
                 image_dir,
                 f"temp_deg_{temperature}",
                 f"gain_{gain}",
+                f"offset_{offset}",
                 f"exp_time_sec_{exp_time.to(u.second).value}")
         if calibration_seq_id is not None:
             image_dir = os.path.join(
@@ -276,6 +282,7 @@ class AbstractCamera(Base):
     def _setup_calibration(self,
                            temperature,
                            gain,
+                           offset,
                            exp_time,
                            headers=None,
                            calibration_seq_id=None,
@@ -293,6 +300,7 @@ class AbstractCamera(Base):
         file_path = self.get_calibration_directory(
             temperature=temperature,
             gain=gain,
+            offset=offset,
             exp_time=exp_time,
             headers=headers,
             calibration_seq_id=calibration_seq_id,
@@ -319,6 +327,7 @@ class AbstractCamera(Base):
             'start_time': start_time,
             'exp_time': exp_time.to(u.second).value,
             'gain': gain,
+            'offset': offset,
             'temperature_degC': temperature.to(u.Celsius).value if temperature else "no_target",
             'observation_ids': [o.id for o in observations]
         }

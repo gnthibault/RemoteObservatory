@@ -92,7 +92,8 @@ class IndiCamera(IndiDevice):
 
         # Default exposureTime, gain
         self.exp_time_sec = 5
-        self.gain = 400
+        self.gain = 150
+        self.offset = 30
 
         # Finished configuring
         self.logger.debug('Configured Indi Camera successfully')
@@ -304,6 +305,13 @@ class IndiCamera(IndiDevice):
     def get_gain(self):
         gain = self.get_number('CCD_GAIN')
         return gain["GAIN"]
+
+    def set_offset(self, value):
+        self.set_number('CCD_OFFSET', {'OFFSET': value}, sync=True, timeout=self.defaultTimeout)
+
+    def get_offset(self):
+        offset = self.get_number('CCD_OFFSET')
+        return offset["OFFSET"]
 
     def get_frame_type(self):
         return self.get_switch('CCD_FRAME_TYPE')

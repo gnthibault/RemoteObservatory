@@ -39,3 +39,11 @@ class IndiPlayerOneCamera(IndiAbstractCamera):
     def get_gain(self):
         gain = self.get_number('CCD_CONTROLS')
         return gain["Gain"]
+
+    def set_offset(self, value):
+        self.set_number('CCD_CONTROLS', {'Offset': value}, sync=True, timeout=self.defaultTimeout)
+
+    def get_offset(self):
+        offset = self.get_number('CCD_CONTROLS')
+        return offset["Offset"]
+

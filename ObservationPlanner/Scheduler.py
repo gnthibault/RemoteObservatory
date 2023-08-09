@@ -306,11 +306,13 @@ class Scheduler(Base):
                 count = config["count"]
                 temperature = config["temperature"]
                 gain = config["gain"]
+                offset = config["offset"]
                 exp_time_sec = config["exp_time_sec"]*u.second
                 configuration={
                     'filter': filter_name,
                     'temperature': temperature,
-                    'gain': gain
+                    'gain': gain,
+                    'offset': offset
                 }
                 #TODO TN retrieve priority from the file ?
                 priority = 0 if (filter_name == 'Luminance') else 1

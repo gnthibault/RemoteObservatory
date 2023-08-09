@@ -46,6 +46,9 @@ class IndiAbstractCamera(IndiCamera, AbstractCamera):
             # set gain
             gain = kwargs.get("gain", self.gain)
             self.set_gain(gain)
+            # set offset
+            offset = kwargs.get("offset", self.offset)
+            self.set_offset(offset)
             # set temperature
             temperature = kwargs.get("temperature", None)
             if temperature is not None:

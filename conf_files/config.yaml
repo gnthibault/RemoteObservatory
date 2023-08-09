@@ -64,17 +64,19 @@ calibration:
     #module: ImagingCalibration
     module: SpectralCalibration
     spectral_calib:
-        nb: 11
+        nb: 10
         sec: 30
-        gain: 1
-        temperature:
+        gain: 150
+        offset: 30
+        temperature: -10
     flat:
-        nb: 1
+        nb: 10
         sec: 5
-        gain: 1
-        temperature:
+        gain: 150
+        offset: 30
+        temperature: -10
     dark:
-        dark_nb: 1
+        dark_nb: 10
     controller:
         module: DummySpectroController
         device_name: dummy

@@ -3,27 +3,31 @@ constraints :
     maxairmass : 17 #for testing, normally use 2
     minmoonseparationdeg : 2 # normally put 45
 targets :
-    "HD222404" : #HD214680
+    "Arcturus" : #HD214680 #HD222404
         priority : 0
         count : 1
-        temperature :
+        temperature : 15
         gain: 150
+        offset: 30
         exp_time_sec : 20
 #    "T CrB" :
 #        priority : 0
 #        count : 1
-#        temperature :
+#        temperature : 15
 #        gain: 150
+#        offset: 30
 #        exp_time_sec : 20
 #    "GK Per" :
 #        priority : 0
 #        count : 2
-#        temperature :
+#        temperature : 15
 #        gain: 150
+#        offset: 30
 #        exp_time_sec : 5
 reference_observation:
-    count : 1
-    temperature :
-    gain : 1
+    count : 10
+    temperature : 15
+    gain : 150
+    offset: 30
     exp_time_sec : 20
 
