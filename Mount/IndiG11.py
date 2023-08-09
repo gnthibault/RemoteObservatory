@@ -223,10 +223,14 @@ class IndiG11(IndiAbstractMount):
                 module="IndiG11",
                 mount_name="Losmandy Gemini",
                 equatorial_eod="J2000",  # JNOW
+                tcp_host="192.168.8.63",
+                tcp_port="11110",
                 indi_client=dict(
                     indi_host="localhost",
                     indi_port=7625)
             )
+        self.tcp_host = config["tcp_host"]
+        self.tcp_port = config["tcp_port"]
 
         super().__init__(location=location,
                          serv_time=serv_time,
@@ -239,9 +243,12 @@ class IndiG11(IndiAbstractMount):
         IndiAbstractMount.unpark(self)
 
     def initialize(self):
-        self.connect()
+        self.connect(connect_device=False)
+        self.set_connectivity_config()
+        self.connect_device()
         self.set_startup_mode(mode='WARM_RESTART')
         self.set_park_settings(mode='HOME')
+        self.set_geographic_config()
         self.set_time_config()
         #TODO TN URGENT as a temporary fix. we decided to park at startup but
         # the proper behaviour for the mount should be parked status by default
@@ -260,7 +267,23 @@ class IndiG11(IndiAbstractMount):
         self.set_text("TIME_UTC", {"UTC": utc_time_str}, sync=True)
         self.set_number('TIME_UTC', {'OFFSET': utc_offset_value}, sync=True)
 
+    def set_geographic_config(self):
+        self.set_number('GEOGRAPHIC_COORD', {
+                'LAT': self.location.lat.to(u.deg).value,
+                'LONG': self.location.lon.to(u.deg).value,
+                'ELEV': self.location.height.to(u.meter).value},
+            sync=True)
 
+    def set_connectivity_config(self):
+        """
+        In fact it's not tcp but udp, but ok ...
+        :return:
+        """
+        self.set_switch('CONNECTION_MODE', ["CONNECTION_TCP"], sync=True)
+        self.set_switch('CONNECTION_TYPE', ["UDP"], sync=True)
+        self.set_text("DEVICE_ADDRESS",
+                      {"ADDRESS": self.tcp_host,
+                       "PORT":    self.tcp_port}, sync=True)
 
     def set_startup_mode(self, mode='WARM_RESTART'):
         """
@@ -300,17 +323,3 @@ class IndiG11(IndiAbstractMount):
     #         self.logger.info(f"Now setting J2k coord: {rahour_decdeg}")
     #         self.set_number('EQUATORIAL_EOD_COORD', rahour_decdeg, sync=True,
     #                        timeout=180)
-#set_numberVector Losmandy Gemini GEOGRAPHIC_COORD Ok
-#        LAT='51.466666666666668561'
-#               LONG='5.7166666666666401397'
-#                      ELEV='0'
-
-#Dispatch command error(-1):
-#<set_switchVector device="Losmandy Gemini" name="TELESCOPE_PARK" state="Ok" timeout="60" timestamp="2019-08-05T00:03:43">
-#    <oneSwitch name="PARK">
-#On
-#    </oneSwitch>
-#    <oneSwitch name="UNPARK">
-#Off
-#    </oneSwitch>
-#</set_switchVector>

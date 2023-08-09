@@ -4,7 +4,7 @@ observatory:
     investigator: gnthibault
     latitude: 45.67 # Degrees
     longitude: 5.67 # Degrees
-    elevation: 150.0 # Meters
+    elevation: 650.0 # Meters
     timezone: Europe/Paris #This is not mandatory, just speeds up startup
     # UTC+1 CET Central European Time,
     # UTC +2  CEST Central European Summer Time
@@ -143,6 +143,8 @@ mount:
     module: IndiG11
     mount_name: Losmandy Gemini
     equatorial_eod: J2000 # JNOW
+    tcp_host: 192.168.8.63
+    tcp_port: 11110
     indi_client :
         indi_host : localhost
         indi_port : 7625
