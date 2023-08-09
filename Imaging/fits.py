@@ -17,7 +17,7 @@ from astropy import units as u
 from utils import error
 
 
-def solve_field(fname, timeout=180, solve_opts=None, **kwargs):
+def solve_field(fname, timeout=360, solve_opts=None, **kwargs):
     """ Plate solves an image.
 
     Args:
@@ -65,6 +65,14 @@ def solve_field(fname, timeout=180, solve_opts=None, **kwargs):
         if 'radius' in kwargs:
             options.append('--radius')
             options.append(str(kwargs.get('radius')))
+        if 'sampling_arcsec' in kwargs:
+            if kwargs["sampling_arcsec"] is not None:
+                options.append('--scale-low')
+                options.append(str(kwargs.get("sampling_arcsec")*0.95))
+                options.append('--scale-high')
+                options.append(str(kwargs.get("sampling_arcsec")*1.05))
+                options.append('--scale-units')
+                options.append("arcsecperpix")
 
     cmd = [solve_field_script] + options + [fname]
     if verbose:
@@ -151,7 +159,7 @@ def get_solve_field(fname, replace=True, remove_extras=True, **kwargs):
     #print("#############################################################################")
     proc = solve_field(fname, **kwargs)
     try:
-        output, errs = proc.communicate(timeout=kwargs.get('timeout', 180))
+        output, errs = proc.communicate(timeout=kwargs.get('timeout', 360))
     except subprocess.TimeoutExpired:
         proc.kill()
         raise error.AstrometrySolverError("Timeout while solving")

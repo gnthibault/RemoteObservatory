@@ -8,25 +8,25 @@ targets :
         Luminance :
             count : 60
             temperature :
-            gain : 100
+            gain: 150
             exp_time_sec : 60
     "GK Per" :
         Luminance :
             count : 60
             temperature :
-            gain : 100
+            gain: 150
             exp_time_sec : 60
 #    "PKS 2145+067" :
 #        Luminance :
 #            count : 10
 #            temperature :
-#            gain : 100
+#            gain: 150
 #            exp_time_sec : 360
 #    "QSO J1824+1044" :
 #        Luminance :
 #            count : 10
 #            temperature :
-#            gain : 100
+#            gain: 150
 #            exp_time_sec : 360
 
 

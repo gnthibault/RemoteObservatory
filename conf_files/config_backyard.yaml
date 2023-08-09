@@ -154,8 +154,9 @@ cameras:
         SCOPE_INFO: # 200/800 newtonian
             FOCAL_LENGTH: 800
             APERTURE: 200
+        sampling_arcsec: 0.75
         do_guiding: true
-        do_pointing: false
+        do_pointing: true
         pointing_seconds: 40
         do_adjust_pointing: true
         adjust_center_x: 936
@@ -177,6 +178,7 @@ cameras:
         SCOPE_INFO: # 200/800 newtonian
             FOCAL_LENGTH: 800
             APERTURE: 200
+        sampling_arcsec: 0.97
         do_guiding: false
         do_pointing: false
         pointing_seconds: 5
@@ -227,11 +229,12 @@ cameras:
     - module: IndiAltairCamera
       camera_name: Altair AA183MPRO
       do_acquisition: true
-      SCOPE_INFO: # 200/800 newtonian
-          FOCAL_LENGTH: 800
-          APERTURE: 200
+      SCOPE_INFO: # 50/242 evoguide
+          FOCAL_LENGTH: 242
+          APERTURE: 50
+      sampling_arcsec: 2.05
       do_guiding: false
-      do_pointing: true
+      do_pointing: false
       pointing_seconds: 10
       do_adjust_pointing: false
       adjust_center_x: 400

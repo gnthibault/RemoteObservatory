@@ -180,7 +180,8 @@ class IndiClient(SingletonIndiClientHolder, INDIClient, Base):
         @return: B{None}
         @rtype: NoneType
         """
-        self.xml_to_indiserver("<enableBLOB>Never</enableBLOB>")
+        pass
+        # self.xml_to_indiserver("<enableBLOB>Never</enableBLOB>")
 
     def xml_to_indiserver(self, xml):
         """
@@ -197,7 +198,7 @@ class IndiClient(SingletonIndiClientHolder, INDIClient, Base):
         :return:
         """
         # This is way too verbose, even in debug mode
-        #logger.debug(f"IndiClient just received data {data}")
+        # print(f"IndiClient just received data {data}")
         for sub in self.device_subscriptions.values():
             asyncio.run_coroutine_threadsafe(sub(data), self.ioloop)
         await asyncio.sleep(0.01)

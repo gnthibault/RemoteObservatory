@@ -247,6 +247,7 @@ class IndiG11(IndiAbstractMount):
         # the proper behaviour for the mount should be parked status by default
         # at startup, see https://indilib.org/forum/general/5497-indi-losmandy-driver-impossible-to-get-proper-park-status.html#41664
         IndiMount.park(self)
+        self._is_parked = True
 
     def set_time_config(self):
         """

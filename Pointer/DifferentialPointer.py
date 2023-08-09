@@ -86,7 +86,9 @@ class DifferentialPointer(Base):
                     observation.last_pointing)
                 pointing_image = Image(pointing_path)
 
-                pointing_image.solve_field(verbose=True, gen_hips=self.gen_hips)
+                pointing_image.solve_field(verbose=True,
+                                           gen_hips=self.gen_hips,
+                                           sampling_arcsec=camera.sampling_arcsec)
                 observation.pointing_image = pointing_image
                 self.logger.debug(f"Pointing file: {pointing_image}")
                 pointing_error = pointing_image.pointing_error()

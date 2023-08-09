@@ -59,7 +59,7 @@ class IndiAbstractMount(IndiMount, AbstractMount):
     def is_parked(self):
         ret = IndiMount.is_parked.fget(self)
         if ret != AbstractMount.is_parked.fget(self):
-            self.logger.error('It looks like the software maintained stated is'
+            self.logger.error('It looks like the software maintained state is'
                               ' different from the Indi maintained state')
         return ret
 
@@ -91,7 +91,14 @@ class IndiAbstractMount(IndiMount, AbstractMount):
 
     def disconnect(self):
         if not self.is_parked:
-            self.park()
+            try:
+                IndiMount.park(self)
+                self._is_parked = True
+                self.disconnect()  # Disconnect indi server
+            except Exception as e:
+                self.logger.warning('Problem with park')
+                # by default, we assume that mount is in the "worst" situation
+
         IndiMount.disconnect(self)
 
     def initialize(self, *arg, **kwargs):  # pragma: no cover
@@ -125,8 +132,8 @@ class IndiAbstractMount(IndiMount, AbstractMount):
             bool: indicating success
         """
         self.connect(connect_device=True) #
-        self._is_parked = False
         IndiMount.unpark(self)
+        self._is_parked = False
 
     def slew_to_coord(self, coord):
         self.slew_to_coord_and_track(self, coord)

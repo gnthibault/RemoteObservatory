@@ -35,7 +35,7 @@ import threading
 """
 logger = logging.getLogger(__name__)
 
-MAX_NETWORK_EXCHANCE_TIMEOUT_S = 10
+MAX_NETWORK_EXCHANCE_TIMEOUT_S = 60
 class INDIClient:
     """This class sends/recvs INDI data to/from the indiserver 
     tcp/ip socket. See the above diagram for help understanding
@@ -108,7 +108,7 @@ class INDIClient:
                 data = await asyncio.wait_for(self.read_from_stream(), timeout=timeout)
             except asyncio.TimeoutError:
                 # Sorry this is just too verbose
-                # logger.debug(f"Timeout in client stream reading process. Expected in loop mode")
+                logger.error(f"Timeout in client stream reading process. Expected in loop mode")
                 continue
             except Exception as err:
                 self.running = False

@@ -93,11 +93,14 @@ class StarOffsetPointer(OffsetPointer):
 
                 img_num = 0
                 pointing_image = self.acquire_pointing(camera, guiding_camera, observation, fits_headers, img_num)
-                if camera is None:
-                    self.logger.error(f"No adjust camera settings are set, skipping offset_pointing")
 
                 # Attempt to solve field
-                pointing_image.solve_field(verbose=True, gen_hips=False, remove_extras=False, skip_solved=False)
+                pointing_image.solve_field(verbose=True,
+                                           gen_hips=False,
+                                           remove_extras=False,
+                                           skip_solved=False,
+                                           sampling_arcsec=camera.sampling_arcsec)
+
                 # update mount with the actual position
                 if self.sync_mount_upon_solve:
                     mount.sync_to_coord(pointing_image.pointing)

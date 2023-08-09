@@ -224,7 +224,6 @@ class Image(Base):
             self.fits_file,
             ra=self.header_pointing.ra.value,
             dec=self.header_pointing.dec.value,
-            radius=1,
             config=self.config,
             **kwargs)
         self.wcs_file = solve_info['solved_fits_file']

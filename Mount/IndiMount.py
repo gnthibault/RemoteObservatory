@@ -273,7 +273,7 @@ class IndiMount(IndiDevice):
     @property
     def is_parked(self):
         status = self.get_switch('TELESCOPE_PARK')
-        self.logger.debug('Got TELESCOPE_PARK status: {}'.format(status))
+        self.logger.debug(f'Got TELESCOPE_PARK status: {status}')
         if status['PARK'] == 'On':
             ret = True
         else:

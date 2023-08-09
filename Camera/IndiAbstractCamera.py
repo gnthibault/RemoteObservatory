@@ -21,7 +21,10 @@ class IndiAbstractCamera(IndiCamera, AbstractCamera):
         IndiCamera.__init__(self, logger=self.logger, config=config,
                            connect_on_create=connect_on_create)
         self.indi_camera_config = config
-
+        try:
+            self.sampling_arcsec = config["sampling_arcsec"]
+        except KeyError as e:
+            self.sampling_arcsec = None
 
     def park(self):
         self.logger.debug(f"Parking camera {self.camera_name}")
@@ -48,6 +51,7 @@ class IndiAbstractCamera(IndiCamera, AbstractCamera):
             if temperature is not None:
                 self.set_cooling_on()
                 self.set_temperature(temperature)
+            self.indi_client.enable_blob()
             # Now shoot
             self.setExpTimeSec(exp_time_sec)
             self.logger.debug(f"Camera {self.camera_name}, about to shoot for {self.exp_time_sec}")

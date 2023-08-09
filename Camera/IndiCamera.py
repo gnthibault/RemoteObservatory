@@ -30,7 +30,7 @@ class IndiCamera(IndiDevice):
         'both': 'UPLOAD_BOTH'}
     DEFAULT_EXP_TIME_SEC = 5
     MAXIMUM_EXP_TIME_SEC = 3601
-    READOUT_TIME_MARGIN = 30
+    READOUT_TIME_MARGIN = 300
 
     def __init__(self, logger=None, config=None, connect_on_create=True):
         logger = logger or logging.getLogger(__name__)
