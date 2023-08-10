@@ -239,7 +239,7 @@ cameras:
       sampling_arcsec: 1.88
       subsample_astrometry: 4
       do_guiding: false
-      do_pointing: false
+      do_pointing: true
       pointing_seconds: 10
       do_adjust_pointing: false
       adjust_center_x: 400
