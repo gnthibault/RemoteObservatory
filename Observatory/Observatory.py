@@ -147,7 +147,7 @@ class Observatory(Base):
         self.logger.debug('Observatory: parking scope')
         self.close_everything()
 
-    def shutdown_equipments(self):
+    def power_off_all_equipments(self):
         self.logger.debug('Observatory: shutting down all scope equipments')
         if self.has_scope:
             self.scope_controller.power_off_all_equipments()

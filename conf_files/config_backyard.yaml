@@ -76,7 +76,7 @@ observatory:
             indi_client:
                 indi_host: localhost
                 indi_port: 7625
-        indi_driver_connect_delay_s: 10
+        indi_driver_connect_delay_s: 5
         indi_resetable_instruments_driver_map:
             ZWO CCD: ZWO CCD ASI290MM Mini
             Altair: Altair AA183MPRO

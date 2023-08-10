@@ -137,9 +137,6 @@ class IndiCamera(IndiDevice):
         self.abort_shoot(sync=False)
         self.logger.debug('on emergency routine finished')
 
-    def disable_shoot(self):
-        self.indi_client.disable_blob()
-
     '''
       Indi CCD related stuff
     '''

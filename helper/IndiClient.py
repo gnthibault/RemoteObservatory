@@ -180,8 +180,7 @@ class IndiClient(SingletonIndiClientHolder, INDIClient, Base):
         @return: B{None}
         @rtype: NoneType
         """
-        pass
-        # self.xml_to_indiserver("<enableBLOB>Never</enableBLOB>")
+        self.xml_to_indiserver("<enableBLOB>Never</enableBLOB>")
 
     def xml_to_indiserver(self, xml):
         """

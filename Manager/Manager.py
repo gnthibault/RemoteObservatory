@@ -377,9 +377,9 @@ class Manager(Base):
             self.mount.set_track_mode('TRACK_SIDEREAL')
             if self.guider is not None:
                 self.logger.info("Start guiding")
-                # TODO TN
                 # if self.guiding_camera is not None:
                 #     self.guiding_camera.disable_shoot()
+                # unfortunately disable_blob is client-wide, not device wide
                 self.guider.connect_profile()
                 self.guider.guide()
                 self.logger.info("Guiding successfully started")
@@ -568,7 +568,7 @@ class Manager(Base):
 
             # park the observatory
             self.observatory.park()
-            self.observatory.shutdown_equipments()
+            self.observatory.power_off_all_equipments()
 
             return True
         except Exception as e:
