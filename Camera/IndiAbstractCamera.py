@@ -21,10 +21,8 @@ class IndiAbstractCamera(IndiCamera, AbstractCamera):
         IndiCamera.__init__(self, logger=self.logger, config=config,
                            connect_on_create=connect_on_create)
         self.indi_camera_config = config
-        try:
-            self.sampling_arcsec = config["sampling_arcsec"]
-        except KeyError as e:
-            self.sampling_arcsec = None
+        self.sampling_arcsec = config.get("sampling_arcsec", None)
+        self.subsample_astrometry = config.get("subsample_astrometry", 1)
 
     def park(self):
         self.logger.debug(f"Parking camera {self.camera_name}")

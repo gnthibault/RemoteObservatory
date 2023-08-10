@@ -220,10 +220,15 @@ class Image(Base):
         Args:
             **kwargs (dict): Options to be passed to `get_solve_field`
         """
+        if kwargs.get("use_header_position", False):
+            kwargs.update(dict(
+                ra=self.header_pointing.ra.value,
+                dec=self.header_pointing.dec.value,
+            ))
+            if "radius" not in kwargs:
+                kwargs["radius"] = 1
         solve_info = fits_utils.get_solve_field(
             self.fits_file,
-            ra=self.header_pointing.ra.value,
-            dec=self.header_pointing.dec.value,
             config=self.config,
             **kwargs)
         self.wcs_file = solve_info['solved_fits_file']

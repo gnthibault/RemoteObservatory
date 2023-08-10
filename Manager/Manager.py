@@ -95,7 +95,7 @@ class Manager(Base):
         self.logger.info('\tSetting up main image directory')
         self._setup_image_directory()
 
-        # setup web services
+        # setup various services
         self.logger.info('\tSetting up web services')
         self._setup_services()
 
@@ -559,9 +559,9 @@ class Manager(Base):
                 self.guider.disconnect_profile()
                 self.guider.disconnect_server()
 
-            # unpark cameras
+            # parking cameras
             for camera_name, camera in self.cameras.items():
-                camera.unpark()
+                camera.park()
 
             # park the mount
             self.mount.park()
@@ -572,8 +572,7 @@ class Manager(Base):
 
             return True
         except Exception as e:
-            self.logger.error(
-                "Problem parking: {}".format(e))
+            self.logger.error(f"Problem parking: {e}")
             return False
 
 ##########################################################################
@@ -588,6 +587,7 @@ class Manager(Base):
             setup various services that are supposed to provide infos/data
         """
         try:
+            self._setup_indi_web_manager_client()
             self._setup_time_service()
             self._setup_weather_service()
             self._setup_messaging()
@@ -604,8 +604,19 @@ class Manager(Base):
             time_module = load_module('Service.'+time_name)
             self.serv_time = getattr(time_module, time_name)(
                 config=self.config['time_service'])
-        except Exception:
-            raise RuntimeError('Problem setting up time service')
+        except Exception as e:
+            raise RuntimeError(f'Problem setting up time service: {e}')
+
+    def _setup_indi_web_manager_client(self):
+        self.webmanager_client = None
+        try:
+            client_name = self.config['indi_webmanager']['module']
+            client_module = load_module('Service.'+client_name)
+            self.webmanager_client = getattr(client_module, client_name)(
+                config=self.config['indi_webmanager'])
+            self.webmanager_client.reset_server()
+        except Exception as e:
+            self.logger.warning(f'Problem setting up indi webmanager service {e}')
 
     def _setup_weather_service(self):
         """

@@ -1,4 +1,9 @@
-#local
+# Astropy
+import time
+
+import astropy.units as u
+
+# local
 from Mount.IndiMount import IndiMount
 from Mount.IndiAbstractMount import IndiAbstractMount
 
@@ -304,22 +309,7 @@ class IndiG11(IndiAbstractMount):
         """
         self.set_switch('PARK_SETTINGS', [mode])
 
-    # def set_coord(self, coord):
-    #     """
-    #     Subtleties here: coord should be given as Equatorial astrometric epoch
-    #     of date coordinate (eod):  RA JNow RA, hours,  DEC JNow Dec, degrees +N
-    #
-    #     As our software only manipulates J2000. we decided to convert to jnow
-    #     for the generic case
-    #     """
-    #     fk5_j2k = FK5(equinox=Time('J2000'))
-    #     coord_j2k = coord.transform_to(fk5_j2k)
-    #     rahour_decdeg = {'RA': coord_j2k.ra.hour,
-    #                      'DEC': coord_j2k.dec.degree}
-    #     if self.is_parked:
-    #         self.logger.warning(f"Cannot set coord: {rahour_decdeg} because "
-    #                             f"mount is parked")
-    #     else:
-    #         self.logger.info(f"Now setting J2k coord: {rahour_decdeg}")
-    #         self.set_number('EQUATORIAL_EOD_COORD', rahour_decdeg, sync=True,
-    #                        timeout=180)
+    def set_coord(self, coord):
+        IndiMount.set_coord(self, coord)
+        # Wait for the mount/tube to damper vibrations
+        time.sleep(2)

@@ -303,6 +303,7 @@ paws_publisher:
     mqtt_port: 1883
     com_mode: publisher
     msg_port: 6500
+
 #independant_services:
 #    -
 #        module: NasaGCNService

@@ -1,0 +1,12 @@
+http://astrometry.net/downloads/
+tar -xvf XXX.tar.gz
+cd XXX
+sudo apt-get install libnetpbm10-dev
+export NETPBM_LIB="-L/usr/lib -lnetpbm"
+export NETPBM_INC="-I/usr/include"
+./configure --prefix=/usr
+make reconfig # Check that netpbm is well detected
+make all -j8
+sudo make install
+sudo ln -s /usr/local/astrometry/bin/an-fitstopnm /usr/local/bin/an-fitstopnm
+wget -r --no-parent -nc https://portal.nersc.gov/project/cosmo/temp/dstn/index-5200/LITE/

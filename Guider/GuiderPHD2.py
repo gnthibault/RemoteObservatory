@@ -18,7 +18,7 @@ from utils import error
 from utils.error import GuidingError
 from utils import load_module
 
-MAXIMUM_CALIBRATION_TIMEOUT = 6 * 60 * u.second
+MAXIMUM_CALIBRATION_TIMEOUT = 15 * 60 * u.second
 FIND_STAR_TIMEOUT           = 60 * u.second
 POSITION_LOCKING_TIMEOUT    = 5 * 60 * u.second
 MAXIMUM_DITHER_TIMEOUT      = 45 * u.second

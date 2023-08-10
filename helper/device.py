@@ -1737,7 +1737,7 @@ class device(ABC):
         """
         obj = self._factory.create(name, attrs)
         if obj is None:
-            logging.debug(f"Received new element with name/attr: {name, attrs}")
+            #logging.debug(f"Received new element with name/attr: {name, attrs}") # This was too verbose
             return
         if 'message' in attrs:
             #logging.debug(f"Message received from indi: {name, attrs}")

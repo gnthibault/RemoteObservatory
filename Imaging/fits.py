@@ -73,6 +73,11 @@ def solve_field(fname, timeout=360, solve_opts=None, **kwargs):
                 options.append(str(kwargs.get("sampling_arcsec")*1.05))
                 options.append('--scale-units')
                 options.append("arcsecperpix")
+        if kwargs.get("downsample", 1) > 1:
+            options.append('--downsample')
+            options.append(kwargs.get('downsample'))
+            options.append('--plot-scale')
+            options.append(1/kwargs.get('downsample'))
 
     cmd = [solve_field_script] + options + [fname]
     if verbose:
@@ -152,11 +157,6 @@ def get_solve_field(fname, replace=True, remove_extras=True, **kwargs):
     if verbose:
         print("Entering get_solve_field:", fname)
 
-    # Set a default radius of 15
-    kwargs.setdefault('radius', 15)
-    #print("#############################################################################")
-    #print(f"SOLVING {fname} with kwargs {kwargs}")
-    #print("#############################################################################")
     proc = solve_field(fname, **kwargs)
     try:
         output, errs = proc.communicate(timeout=kwargs.get('timeout', 360))

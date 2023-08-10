@@ -162,10 +162,12 @@ class SpectroScheduler(Scheduler):
         count = config["count"]
         temperature = config["temperature"]
         gain = config["gain"]
+        offset = config["offset"]
         exp_time_sec = config["exp_time_sec"] * u.second
         configuration = {
             'temperature': temperature,
             'gain': gain,
+            'offset': offset,
             'spinfo': spinfo
         }
         exp_set_size = count
@@ -204,10 +206,12 @@ class SpectroScheduler(Scheduler):
             count = config["count"]
             temperature = config["temperature"]
             gain = config["gain"]
+            offset = config["offset"]
             exp_time_sec = config["exp_time_sec"] * u.second
             configuration = {
                 'temperature': temperature,
                 'gain': gain,
+                'offset': offset,
                 'spinfo': spinfo
             }
             # TODO TN retrieve priority from the file ?

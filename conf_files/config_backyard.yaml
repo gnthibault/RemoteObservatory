@@ -47,7 +47,7 @@ observatory:
                 POWER_LABEL_4: MOUNT_POWER
             always_on_power_identifiers:
                 MAIN_TELESCOPE_DUSTCAP_CONTROL: True
-                SPOX_AND_DUSTCAP_POWER: True
+                SPOX_AND_DUSTCAP_POWER: False
                 MAIN_CAMERA_POWER: False
                 MOUNT_POWER: False
             usb_labels:
@@ -152,19 +152,19 @@ mount:
         indi_port : 7625
 cameras:
     -
-        module: IndiASICamera
+        module: IndiASICameraNonCool
         camera_name : ZWO CCD ASI290MM Mini
         do_acquisition: false
         SCOPE_INFO: # 200/800 newtonian
             FOCAL_LENGTH: 800
             APERTURE: 200
-        sampling_arcsec: 0.75
+        sampling_arcsec: 0.88
         do_guiding: true
-        do_pointing: true
+        do_pointing: false
         pointing_seconds: 40
         do_adjust_pointing: true
-        adjust_center_x: 936
-        adjust_center_y: 664
+        adjust_center_x: 894
+        adjust_center_y: 653
         adjust_roi_search_size: 50
         adjust_pointing_seconds: 40
         do_autofocus: false
@@ -236,7 +236,8 @@ cameras:
       SCOPE_INFO: # 50/242 evoguide
           FOCAL_LENGTH: 242
           APERTURE: 50
-      sampling_arcsec: 2.05
+      sampling_arcsec: 1.88
+      subsample_astrometry: 4
       do_guiding: false
       do_pointing: false
       pointing_seconds: 10
@@ -256,9 +257,9 @@ cameras:
 pointer:
     module: IterativeSync #DifferentialPointer #IterativeSync
     gen_hips: False
-    timeout_seconds: 450
-    max_iterations: 5
-    max_pointing_error_seconds: 3
+    timeout_seconds: 900
+    max_iterations: 10
+    max_pointing_error_seconds: 5
 offset_pointer:
     module: StarOffsetPointer #StarOffsetPointer #NoOffsetPointer
     timeout_seconds: 300
@@ -332,6 +333,11 @@ paws_publisher:
     mqtt_port: 1883
     com_mode: publisher
     msg_port: 6500
+indi_webmanager:
+    module: IndiWebManagerClient
+    host: localhost
+    port: 8624
+    profile_name: full_setup
 #independant_services:
 #    -
 #        module: NasaGCNService

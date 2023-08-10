@@ -51,7 +51,7 @@ class AbstractMount(Base):
         #self.logger.debug("Mount config: {}".format(self.mount_config))
 
         # Set the initial location
-        #self._location = location
+        self._location = location
 
         # Initial states
         self._is_initialized = False

@@ -3,7 +3,7 @@ constraints :
     maxairmass : 17 #for testing, normally use 2
     minmoonseparationdeg : 2 # normally put 45
 targets :
-    "Arcturus" : #HD214680 #HD222404
+    "Vega" : #HD214680 #HD222404
         priority : 0
         count : 1
         temperature : 15
