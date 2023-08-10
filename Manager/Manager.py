@@ -531,6 +531,10 @@ class Manager(Base):
 
     def unpark(self):
         try:
+            # Reset indi server
+            self.webmanager_client.reset_server()
+            self._setup_weather_service()
+
             # unpark the observatory
             self.observatory.power_on_all_equipments()
             self.observatory.unpark()
