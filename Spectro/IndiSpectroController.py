@@ -48,6 +48,7 @@ class IndiSpectroController(IndiDevice):
         # device related intialization
         IndiDevice.__init__(self,
                             device_name=config['device_name'],
+                            indi_driver_name=config.get('indi_driver_name', None),
                             indi_client_config=config["indi_client"])
         if connect_on_create:
             self.initialize()

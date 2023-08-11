@@ -230,6 +230,18 @@ class IndiDevice(Base, device):
         except Exception as e:
             return False
 
+    def stop_indi_server(self):
+        self.indi_client.indi_webmanager_client.stop_server()
+
+    def start_indi_server(self):
+        self.indi_client.indi_webmanager_client.start_server()
+
+    def start_indi_driver(self):
+        self.indi_client.indi_webmanager_client.start_driver(
+            driver_name=self.indi_driver_name,
+            check_started=True)
+
+
     def get_switch(self, name):
         return self.get_vector_dict(name)
 

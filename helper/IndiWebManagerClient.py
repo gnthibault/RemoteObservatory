@@ -4,9 +4,6 @@ import logging
 import requests
 import urllib.parse
 
-# Local
-from helper.IndiDevice import  IndiDevice
-
 class IndiWebManagerDummy:
     def __init__(self):
         pass

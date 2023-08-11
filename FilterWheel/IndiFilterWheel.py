@@ -29,6 +29,8 @@ class IndiFilterWheel(IndiDevice, Base):
                 ))
 
         device_name = config['filterwheel_name']
+        indi_driver_name = config.get('indi_driver_name', None)
+
         self.filterList = config['filter_list']
 
         logging.debug('Indi FilterWheel, filterwheel name is: {}'.format(
@@ -37,6 +39,7 @@ class IndiFilterWheel(IndiDevice, Base):
         # device related intialization
         IndiDevice.__init__(self,
                             device_name=device_name,
+                            indi_driver_name=indi_driver_name,
                             indi_client_config=config["indi_client"])
         if connect_on_create:
             self.connect()

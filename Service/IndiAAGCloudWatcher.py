@@ -44,6 +44,7 @@ class IndiAAGCloudWatcher(threading.Thread, IndiDevice):
         # device related intialization
         IndiDevice.__init__(self,
                             device_name=config['service_name'],
+                            indi_driver_name=config.get('indi_driver_name', None),
                             indi_client_config=config["indi_client"])
 
         # Init parent thread

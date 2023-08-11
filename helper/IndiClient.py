@@ -4,7 +4,7 @@ import concurrent
 import logging
 import threading
 #from transitions.extensions import LockedMachine
-import weakref
+#import weakref
 
 # Indi stuff
 from helper.client import INDIClient

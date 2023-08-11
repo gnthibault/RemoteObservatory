@@ -20,6 +20,7 @@ class IndiDomeController(IndiDevice):
 
         # device related intialization
         IndiDevice.__init__(self, device_name=device_name,
+                            indi_driver_name=config.get('indi_driver_name', None),
                             indi_client_config=config["indi_client"])
 
         if connect_on_create:
@@ -51,7 +52,7 @@ class IndiDomeController(IndiDevice):
         self.logger.debug("Parking")
         self.set_switch("DOME_PARK", on_switches=["PARK"], sync=True, timeout=self.dome_movement_timeout_s)
         self.disconnect()
-        self.shutdown_indi_server()
+        self.stop_indi_server()
 
     def open(self):
         self.logger.debug("Opening")

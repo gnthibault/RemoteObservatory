@@ -27,7 +27,7 @@ class IndiAbstractCamera(IndiCamera, AbstractCamera):
     def park(self):
         self.logger.debug(f"Parking camera {self.camera_name}")
         self.disconnect()
-        self.shutdown_indi_server()
+        self.stop_indi_server()
 
     def unpark(self):
         self.logger.debug(f"Unparking camera {self.camera_name}")

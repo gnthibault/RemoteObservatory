@@ -52,6 +52,8 @@ class Manager(Base):
         self.serv_weather          = None
         self.vizualization_service = None
 
+        self._setup_services()
+
 ##########################################################################
 # Properties
 ##########################################################################

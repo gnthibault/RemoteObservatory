@@ -68,10 +68,12 @@ class IndiCamera(IndiDevice):
                     indi_port="7624"
                 ))
         device_name = config['camera_name']
+        indi_driver_name = config.get('indi_driver_name', None)
 
         # device related intialization
         IndiDevice.__init__(self,
                             device_name=device_name,
+                            indi_driver_name=indi_driver_name,
                             indi_client_config=config["indi_client"])
         if connect_on_create:
             self.connect()
@@ -378,17 +380,6 @@ class IndiCamera(IndiDevice):
         self.logger.info(f"Camera {self.device_name} just launched async "
                          f"autofocus with focuser {self.focuser.device_name}")
         return autofocus_event
-
-    def shutdown_indi_server(self):
-        self.indi_client.indi_webmanager_client.stop_server()
-
-    def start_indi_server(self):
-        self.indi_client.indi_webmanager_client.start_server()
-
-    def start_indi_driver(self):
-        self.indi_client.indi_webmanager_client.start_driver(
-            driver_name=self.indi_driver_name,
-            check_started=True)
 
     def __str__(self):
         return f"INDI Camera {self.device_name}"

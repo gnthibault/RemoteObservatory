@@ -117,7 +117,7 @@ class IndiAbstractMount(IndiMount, AbstractMount):
             IndiMount.park(self)
             self._is_parked = True
             self.disconnect() # Disconnect indi server
-            self.shutdown_indi_server()
+            self.stop_indi_server()
         except Exception as e:
             self.logger.warning('Problem with park')
             # by default, we assume that mount is in the "worst" situation
