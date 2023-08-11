@@ -48,6 +48,8 @@ class Manager(Base):
         self.guider                = None
         self.independant_services  = None
         self.is_initialized        = False
+        self.mount                 = None
+        self.observatory           = None
         self.serv_time             = None
         self.serv_weather          = None
         self.vizualization_service = None
@@ -538,7 +540,8 @@ class Manager(Base):
             self.mount.unpark()
 
             # Mount and observatory are ready, we can vizualize
-            self.vizualization_service.start()
+            if self.vizualization_service:
+                self.vizualization_service.start()
 
             # unpark cameras
             for camera_name, camera in self.cameras.items():
@@ -657,6 +660,8 @@ class Manager(Base):
             obs_module = load_module('Observatory.'+obs_name)
             self.observatory = getattr(obs_module, obs_name)(
                 config=self.config['observatory'])
+            if self.vizualization_service:
+                self.vizualization_service.set_observatory(self.observatory.dome_controller)
         except Exception as e:
             raise RuntimeError(f"Problem setting up observatory: {e}")
 
@@ -673,6 +678,8 @@ class Manager(Base):
                 config=self.config['mount'],
                 connect_on_create=False
             )
+            if self.vizualization_service:
+                self.vizualization_service.set_mount(self.mount)
         except Exception as e:
             self.logger.error(f"Cannot load mount module: {e}")
             raise error.MountNotFound(f"Problem setting up mount")
@@ -834,13 +841,19 @@ class Manager(Base):
         """
 
         try:
+            mount_device = self.mount
+            try:
+                observatory_device = self.observatory.dome_controller
+            except Exception as e:
+                observatory_device = None
+
             if 'vizualization_service' in self.config:
                 viz_name = self.config['vizualization_service']['module']
                 viz_module = load_module(f"Service.{viz_name}")
                 self.vizualization_service = getattr(viz_module, viz_name)(
                     config=self.config['vizualization_service'],
-                    mount_device=self.mount,
-                    observatory_device=self.observatory.dome_controller)
+                    mount_device=mount_device,
+                    observatory_device=observatory_device)
         except Exception as e:
             # No need to stop everything just for this service
             self.logger.error(f"Problem setting up vizualization_service: {e}")

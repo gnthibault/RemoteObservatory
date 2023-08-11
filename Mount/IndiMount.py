@@ -68,7 +68,7 @@ class IndiMount(IndiDevice):
             self.gps = None
 
         if connect_on_create:
-            self.connect()
+            self.connect(connect_device=True)
 
         # Finished configuring
         self.logger.debug('Indi Mount configured successfully')

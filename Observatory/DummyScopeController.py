@@ -4,14 +4,18 @@ import time
 
 # Local
 from Base.Base import Base
+from helper.IndiWebManagerClient import IndiWebManagerDummy
 from utils.error import ScopeControllerError
 
+class IndiClientDummy:
+    def __init__(self):
+        self.indi_webmanager_client = IndiWebManagerDummy()
 
 class DummyScopeController(Base):
     def __init__(self, config=None, connect_on_create=True,
                  logger=None):
         Base.__init__(self)
-
+        self.indi_client = IndiClientDummy()
         self._is_initialized = False
         logger = logger or logging.getLogger(__name__)
 

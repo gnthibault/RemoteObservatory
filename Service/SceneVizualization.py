@@ -64,6 +64,12 @@ class SceneVizualization(threading.Thread):
         self.world3D = None
         self.observatory = None
 
+    def set_mount(self, mount):
+        self.mount_device = mount
+
+    def set_observatory(self, observatory):
+        self.observatory_device = observatory
+
     def init_vizualizer(self):
         # Create a new visualizer
         self.view3D = meshcat.Visualizer()

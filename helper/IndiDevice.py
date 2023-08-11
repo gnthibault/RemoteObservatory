@@ -231,9 +231,12 @@ class IndiDevice(Base, device):
             return False
 
     def stop_indi_server(self):
-        self.indi_client.indi_webmanager_client.stop_server()
+        if self.indi_client is not None:
+            self.indi_client.indi_webmanager_client.stop_server()
 
     def start_indi_server(self):
+        if self.indi_client is None:
+            self._setup_indi_client()
         self.indi_client.indi_webmanager_client.start_server()
 
     def start_indi_driver(self):
