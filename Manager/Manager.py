@@ -44,7 +44,13 @@ class Manager(Base):
         """
         Base.__init__(self)
 
-        self.is_initialized = False
+        self.independant_services  = None
+        self.is_initialized        = False
+        self.serv_time             = None
+        self.serv_weather          = None
+        self.vizualization_service = None
+        self.webmanager_client     = None
+
 ##########################################################################
 # Properties
 ##########################################################################
@@ -95,6 +101,9 @@ class Manager(Base):
         self.logger.info('\tSetting up main image directory')
         self._setup_image_directory()
 
+        # Reset indi webmanager client
+        self._setup_indi_web_manager_client()
+
         # setup various services
         self.logger.info('\tSetting up web services')
         self._setup_services()
@@ -128,9 +137,9 @@ class Manager(Base):
         self._setup_scheduler()
 
         # Setup vizualization service
-        self.logger.info('\tSetting up vizualization service')
-        self._setup_vizualization_service()
-        self.logger.info('\t Observatory initialized')
+        # self.logger.info('\tSetting up vizualization service')
+        # self._setup_vizualization_service()
+        # self.logger.info('\t Observatory initialized')
         self.is_initialized = True
     #     self.logger.debug("Initializing mount")
     #     self.mount.initialize()
@@ -531,9 +540,23 @@ class Manager(Base):
 
     def unpark(self):
         try:
+
             # Reset indi server
+            #TODO TN This needs to be setup properly with splitted webmanager clients
+            if self.serv_weather is not None:
+                self.logger.debug("Waiting for weather server to stop")
+                self.serv_weather.stop()
+            if self.vizualization_service is not None:
+                self.logger.debug("Waiting for vizualization server to stop")
+                self.vizualization_service.stop()
+
+            for _, indi_client in IndiClient._instances.items():
+                #indi_client.stop() # This is working properly in debug but not in normal runtime
+                del indi_client
+            IndiClient._instances = {}
+
+            self.observatory.reset_config()
             self.webmanager_client.reset_server()
-            self._setup_weather_service()
 
             # unpark the observatory
             self.observatory.power_on_all_equipments()
@@ -551,6 +574,9 @@ class Manager(Base):
                 self.guider.launch_server()
                 self.guider.connect_server()
                 # self.guider.connect_profile()
+
+            self._setup_weather_service()
+            self._setup_vizualization_service()
             return True
         except Exception as e:
             self.logger.error(f"Problem unparking: {e}")
@@ -591,7 +617,7 @@ class Manager(Base):
             setup various services that are supposed to provide infos/data
         """
         try:
-            self._setup_indi_web_manager_client()
+            # TODO TN, I need to properly split observatory related webmanager and services related
             self._setup_time_service()
             self._setup_weather_service()
             self._setup_messaging()

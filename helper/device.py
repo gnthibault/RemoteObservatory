@@ -1566,7 +1566,7 @@ class device(ABC):
         because this call is blocking inside the main ioloop, an it is the only single
         place where blobvector are manipulated
         """
-        blob_vector.tell()
+        # blob_vector.tell() # Too verbose
         blob = blob_vector.get_first_element()
         if blob.get_plain_format() == ".fits":
             #await self.blob_queue.put(io.BytesIO(blob.get_data()))

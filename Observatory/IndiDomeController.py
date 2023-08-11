@@ -1,5 +1,6 @@
 # Basic stuff
 import logging
+import time
 
 # Indi stuff
 from helper.IndiDevice import IndiDevice
@@ -26,6 +27,9 @@ class IndiDomeController(IndiDevice):
 
         # Finished configuring
         self.logger.debug('Indi dome configured successfully')
+
+    def power_on(self):
+        self.connect(connect_device=True)
 
     def initialize(self):
         self._is_initialized = True

@@ -312,4 +312,4 @@ class IndiG11(IndiAbstractMount):
     def set_coord(self, coord):
         IndiMount.set_coord(self, coord)
         # Wait for the mount/tube to damper vibrations
-        time.sleep(2)
+        time.sleep(5)

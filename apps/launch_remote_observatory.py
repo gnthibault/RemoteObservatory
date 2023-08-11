@@ -373,7 +373,8 @@ class RemoteObservatoryFSM(StateMachine, Base):
         else:
             if age > stale:
                 self.logger.warning("Weather record looks stale, marking unsafe.")
-                is_safe = False
+                if not self.simulation_mode:
+                    is_safe = False
 
         self._is_safe = is_safe
 

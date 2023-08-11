@@ -131,6 +131,7 @@ class IndiWeather(threading.Thread, IndiDevice):
         Stops the web server.
         """
         self._stop_event.set()
+        self.join()
 
     def stopped(self):
         """

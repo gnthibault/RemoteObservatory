@@ -11,7 +11,7 @@ import numpy as np
 # Astropy stuff
 from astropy.coordinates import get_moon
 from astropy.coordinates import get_sun
-from astropy import units as AU
+from astropy import units as u
 from astropy.coordinates import AltAz
 from astropy.coordinates import EarthLocation
 from astropy.coordinates import SkyCoord
@@ -23,8 +23,9 @@ from astroplan import moon_illumination
 from astroplan import ObservingBlock
 from astroplan.constraints import AtNightConstraint
 from astroplan.constraints import AirmassConstraint
-from astroplan.constraints import TimeConstraint
+from astroplan.constraints import AltitudeConstraint
 from astroplan.constraints import MoonSeparationConstraint
+from astroplan.constraints import TimeConstraint
 from astroplan.plots import plot_sky
 from astroplan.scheduling import PriorityScheduler
 from astroplan.scheduling import SequentialScheduler
@@ -121,14 +122,16 @@ class ObservationPlanner(Base):
         #
         return [AirmassConstraint(max=3, boolean_constraint=True),
                 AtNightConstraint.twilight_astronomical(),
-                MoonSeparationConstraint(min=45*AU.deg),
+                MoonSeparationConstraint(min=45*u.deg),
                 LocalHorizonConstraint(horizon=self.obs.get_horizon(),
-                                       boolean_constraint=True)]
+                                       boolean_constraint=True),
+                AltitudeConstraint(max=self.obs.max_altitude_degree*u.deg,
+                                   boolean_constraint=True)]
 
     def gen_obs_blocks(self, constraint):
 
         #TODO TN readout time, get that info from camera
-        camera_time = 1*AU.second
+        camera_time = 1*u.second
         # Create ObservingBlocks for each filter and target with our time
         # constraint, and durations determined by the exposures needed
 
@@ -140,7 +143,7 @@ class ObservationPlanner(Base):
                     SkyCoord.from_name(target_name,
                                        frame="icrs"),
                     equinox=Time('J2000')))
-            #target = FixedTarget(SkyCoord(239*AU.deg, 49*AU.deg))
+            #target = FixedTarget(SkyCoord(239*u.deg, 49*u.deg))
             for filter_name, acq_config in config.items():
                 # We split big observing blocks into smaller blocks for better
                 # granularity
@@ -148,7 +151,7 @@ class ObservationPlanner(Base):
                 while count > 0:
                     l_count = max(1, min(count,
                         self.MaximumSlotDurationSec//exp_time_sec))
-                    exp_time = exp_time_sec*AU.second
+                    exp_time = exp_time_sec*u.second
                 
                     #TODO TN retrieve priority from the file
                     priority = 0 if (filter_name=='Luminance') else 1
@@ -166,9 +169,9 @@ class ObservationPlanner(Base):
         # Initialize a transitioner object with the slew rate and/or the
         # duration of other transitions (e.g. filter changes)
         # TODO TN do that from mount or filterwheel info
-        slew_rate = 1.5*AU.deg/AU.second
+        slew_rate = 1.5*u.deg/u.second
         transitions = Transitioner(slew_rate,
-                                   {'filter':{'default': 10*AU.second}})
+                                   {'filter':{'default': 10*u.second}})
 
         # Initialize the priority scheduler with constraints and transitioner
         return PriorityScheduler(
@@ -180,9 +183,9 @@ class ObservationPlanner(Base):
                      duration_hour=None):
         """ start_time can either be a precise datetime or a datetime.date """
         if duration_hour is None:
-            duration_hour = self.tmh * 2 * AU.hour
+            duration_hour = self.tmh * 2 * u.hour
         else:
-            duration_hour = duration_hour * AU.hour
+            duration_hour = duration_hour * u.hour
 
         if start_time is None or (isinstance(start_time, datetime.date) and not
                                   isinstance(start_time, datetime.datetime)):
@@ -208,9 +211,9 @@ class ObservationPlanner(Base):
                             show_airmass=True, afig=None, pfig=None):
         """ start_time can either be a precise datetime or a datetime.date """
         if duration_hour is None:
-            duration_hour = self.tmh * 2 * AU.hour
+            duration_hour = self.tmh * 2 * u.hour
         else:
-            duration_hour = duration_hour * AU.hour
+            duration_hour = duration_hour * u.hour
 
         if start_time is None or (isinstance(start_time, datetime.date) and not
                                   isinstance(start_time, datetime.datetime)):
@@ -219,13 +222,13 @@ class ObservationPlanner(Base):
             else:
                 target_date = start_time
             midnight = self.ntpServ.get_next_local_midnight_in_utc(target_date)
-            d_h = float(duration_hour/AU.hour)
+            d_h = float(duration_hour/u.hour)
             start_time = midnight - datetime.timedelta(hours=d_h/2)
         else:
             target_date = start_time.date()
 
         #Time margin, in hour
-        tmh_range = int(np.ceil(float(duration_hour/AU.hour)))
+        tmh_range = int(np.ceil(float(duration_hour/u.hour)))
         #tmh_range = np.arange(tmh_range, dtype=float) - tmh_range//2
         date_font_size = 8
         resolution = 400
@@ -239,7 +242,7 @@ class ObservationPlanner(Base):
         #Astropy ranges (everything in UTC)
         start_time = Time(start_time)
         relative_time_frame = np.linspace(0, tmh_range,
-                                          resolution) * AU.hour
+                                          resolution) * u.hour
         absolute_time_frame = start_time + relative_time_frame
         altaz_frame = AltAz(obstime=absolute_time_frame,
                             location=self.obs.getAstropyEarthLocation())
@@ -273,18 +276,18 @@ class ObservationPlanner(Base):
                     color='silver', label=moon_label)
 
         #grey sky when sun lower than -0 deg
-        grey_sun_range = sun_altazs.alt < -0*AU.deg
+        grey_sun_range = sun_altazs.alt < -0*u.deg
         self.alt_ax.fill_between(matplotlib.dates.date2num(
                             absolute_time_frame.to_datetime()), 0, 90,
                             grey_sun_range, color='0.5', zorder=0)
         #Dark sky when sun is below -18 deg
-        dark_sun_range = sun_altazs.alt < -18*AU.deg
+        dark_sun_range = sun_altazs.alt < -18*u.deg
         self.alt_ax.fill_between(matplotlib.dates.date2num(
                             absolute_time_frame.to_datetime()), 0, 90,
                             dark_sun_range, color='0', zorder=0)
         #grey sky when sun is low (<18deg) but moon has risen
-        grey_moon_range = np.logical_and(moon_altazs.alt > -5*AU.deg,
-                                         sun_altazs.alt < -18*AU.deg)
+        grey_moon_range = np.logical_and(moon_altazs.alt > -5*u.deg,
+                                         sun_altazs.alt < -18*u.deg)
         grey_moon_intensity = 0.0025*moon_ill_perc #hence 0.25 for 100%
         self.alt_ax.fill_between(matplotlib.dates.date2num(
             absolute_time_frame.to_datetime()), 0, 90,
@@ -360,7 +363,7 @@ class ObservationPlanner(Base):
         for (target_name, imaging_program), color in zip(
                 self.targetList.items(), colors):
             target_coord = SkyCoord(SkyCoord.from_name(target_name, frame="icrs"), equinox=Time('J2000'))
-            #target_coord = SkyCoord(239*AU.deg, 49*AU.deg)
+            #target_coord = SkyCoord(239*u.deg, 49*u.deg)
 
             # Compute altazs for target
             target_altazs = target_coord.transform_to(altaz_frame)

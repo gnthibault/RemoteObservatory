@@ -50,6 +50,9 @@ class DummyScopeController(Base):
     def power_off_all_equipments(self):
         self.logger.debug("Shutting down all equipements")
 
+    def reset_config(self):
+        pass
+
     def deinitialize(self):
         self.logger.debug("Deinitializing DummyScopeController")
 

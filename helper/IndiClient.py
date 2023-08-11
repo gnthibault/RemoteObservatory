@@ -92,6 +92,8 @@ class IndiClient(SingletonIndiClientHolder, INDIClient, Base):
         self.running = False
         # Now wait until the main connection loop (also running in ioloop) is over
         #self.communication_over_event.wait()
+
+        # TODO TN THIS IS QUITE EXPERIMENTAL (runinng stop in its own loop...)
         remaining_tasks = asyncio.all_tasks(loop=self.ioloop)
         while remaining_tasks:
             future = asyncio.run_coroutine_threadsafe(asyncio.wait(remaining_tasks, return_when=asyncio.ALL_COMPLETED), self.ioloop)
@@ -99,6 +101,7 @@ class IndiClient(SingletonIndiClientHolder, INDIClient, Base):
             remaining_tasks = asyncio.all_tasks(loop=self.ioloop)
         # We need to force stop the ioloop that has been started with run_forever
         self.ioloop.call_soon_threadsafe(self.ioloop.stop)
+
         #self.ioloop.run_until_complete(self.ioloop.shutdown_asyncgens())
         # self.ioloop.close()
         # The thread whose only work was to run the ioloop forever should properly terminate
@@ -132,7 +135,6 @@ class IndiClient(SingletonIndiClientHolder, INDIClient, Base):
             assert (future.result(timeout) is True)
         except concurrent.futures.TimeoutError:
             msg = f"Waiting for predicate {predicate_checker} took too long..."
-            logger.error(msg)
             future.cancel()
             raise IndiClientPredicateTimeoutError(msg)
         except Exception as exc:

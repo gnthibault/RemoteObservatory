@@ -2,18 +2,19 @@ name: Remote observatory
 observatory:
     module: Observatory
     investigator: gnthibault
-    latitude: 45.67 # Degrees
-    longitude: 5.67 # Degrees
+    latitude: 43.934807501800606 # Degrees
+    longitude: 5.710652100000001 # Degrees
     elevation: 650.0 # Meters
     timezone: Europe/Paris #This is not mandatory, just speeds up startup
     # UTC+1 CET Central European Time,
     # UTC +2  CEST Central European Summer Time
     utc_offset: 1 # Hours
     horizon: # Degrees
-        0 : 0
-        90 : 0
-        180 : 0
-        270 : 0
+        0 : 20
+        90 : 20
+        180 : 20
+        270 : 20
+    max_altitude_degree: 60
     twilight_horizon: -18 # Degrees
     timezone: Europe/Paris
     # Paris is in the Central European Time Zone ( CET ) is 1 hours ahead of
@@ -160,11 +161,11 @@ cameras:
             APERTURE: 200
         sampling_arcsec: 0.88
         do_guiding: true
-        do_pointing: false
+        do_pointing: true
         pointing_seconds: 40
         do_adjust_pointing: true
-        adjust_center_x: 894
-        adjust_center_y: 653
+        adjust_center_x: 877
+        adjust_center_y: 637
         adjust_roi_search_size: 50
         adjust_pointing_seconds: 40
         do_autofocus: false
@@ -191,7 +192,7 @@ cameras:
         adjust_center_y: 400
         adjust_roi_search_size: 50
         adjust_pointing_seconds: 5
-        do_autofocus: true
+        do_autofocus: false
         autofocus_seconds: 5
         autofocus_roi_size : 750
         autofocus_merit_function : half_flux_radius #vollath_F4
@@ -232,14 +233,14 @@ cameras:
             indi_port : 7625
     - module: IndiAltairCameraNonCool
       camera_name: Altair AA183MPRO
-      do_acquisition: true
+      do_acquisition: false
       SCOPE_INFO: # 50/242 evoguide
           FOCAL_LENGTH: 242
           APERTURE: 50
       sampling_arcsec: 1.88
       subsample_astrometry: 4
       do_guiding: false
-      do_pointing: true
+      do_pointing: false
       pointing_seconds: 10
       do_adjust_pointing: false
       adjust_center_x: 400
@@ -259,13 +260,13 @@ pointer:
     gen_hips: False
     timeout_seconds: 900
     max_iterations: 10
-    max_pointing_error_seconds: 5
+    max_pointing_error_seconds: 10
 offset_pointer:
     module: StarOffsetPointer #StarOffsetPointer #NoOffsetPointer
     timeout_seconds: 300
     max_identification_error_seconds: 1
-    sync_mount_upon_solve: False
-    use_guider_adjust: False
+    sync_mount_upon_solve: True
+    use_guider_adjust: True
     on_star_identification_failure: trust_astrometry # get_brightest or trust_astrometry
 guider:
     module : GuiderPHD2
@@ -273,11 +274,11 @@ guider:
     port : 4400
     do_calibration : False
     profile_name : backyard
-    exposure_time_sec : 4
+    exposure_time_sec : 2
     settle :
-        pixels : 1.5
+        pixels : 3
         time : 10
-        timeout : 60
+        timeout : 300
     dither :
         pixels : 0.0
         ra_only : False
@@ -287,11 +288,11 @@ weather_service :
     module : IndiWeather
     service_name : Weather Simulator
     key_path : /var/RemoteObservatory/keys.json
-    delay_sec : 60
+    delay_sec : 10
     observatory:
-        latitude: 43.56 # Degrees
-        longitude: 5.43 # Degrees
-        elevation: 150.0 # Meters
+        latitude: 43.934807501800606 # Degrees
+        longitude: 5.710652100000001 # Degrees
+        elevation: 650.0 # Meters
     limits :
         MAX_WEATHER_WIND_SPEED_KPH : 25
         MAX_WEATHER_WIND_GUST_KPH : 30
@@ -305,8 +306,8 @@ vizualization_service:
         delay_moving_objects_s: 0.05
         show_stars: False
         gps_coord:
-            latitude: 45.67
-            longitude: 5.67
+            latitude: 43.934807501800606 # Degrees
+            longitude: 5.710652100000001 # Degrees
 time_service :
     module : HostTimeService
 messaging_publisher:

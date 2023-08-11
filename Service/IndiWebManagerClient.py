@@ -66,7 +66,7 @@ class IndiWebManagerClient():
             base_url = f"http://{self.host}:{self.port}"
             req = f"{base_url}/api/server/stop"
             response = requests.post(req)
-            self.logger.debug(f"start_server - url {req} - code {response.status_code} - response:{response.text}")
+            self.logger.debug(f"stop_server - url {req} - code {response.status_code} - response:{response.text}")
             assert response.status_code == 200
         except Exception as e:
             msg = f"Cannot start server: {e}"

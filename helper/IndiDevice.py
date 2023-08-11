@@ -94,7 +94,7 @@ class IndiDevice(Base, device):
         #    lambda x: self.indi_client.device_subscriptions.append(x),
         #    self.parse_xml_str)
         future = asyncio.run_coroutine_threadsafe(self.registering_runner(self.parse_xml_str), self.indi_client.ioloop)
-        _ = future.result() # This is just sync
+        _ = future.result()  # This is just sync
 
     def unregister_device_to_client(self):
         self.logger.debug(f"IndiDevice: asking indi_client to stop listen for device {self.device_name}")

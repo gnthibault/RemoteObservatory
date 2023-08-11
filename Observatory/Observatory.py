@@ -53,6 +53,7 @@ class Observatory(Base):
                                     longitude=config['longitude'])
         self.altitude_meter = config['elevation']
         self.horizon = config['horizon']
+        self.max_altitude_degree = config.get("max_altitude_degree", 90)
         self.investigator = config['investigator']
         
         # Now find the timezone from the gps coordinate
@@ -156,8 +157,14 @@ class Observatory(Base):
         self.logger.debug('Observatory: unparking')
         self.open_everything()
 
+    def reset_config(self):
+        if self.has_scope:
+            self.scope_controller.reset_config()
+
     def power_on_all_equipments(self):
         self.logger.debug('Observatory: powering all scope equipments')
+        if self.has_dome:
+            self.dome_controller.power_on()
         if self.has_scope:
             self.scope_controller.power_on_all_equipments()
 

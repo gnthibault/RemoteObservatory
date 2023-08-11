@@ -162,6 +162,7 @@ class UPBV2(IndiDevice, Base):
         self.initialize_adjustable_power_source()
         self.initialize_all_dew_outputs()
         self.set_auto_dew_aggressivity()
+        time.sleep(1) # this is a very specific case, see https://github.com/indilib/indi-3rdparty/issues/822
         self.initialize_all_usb()
         self.initialize_usb_hub()
 
@@ -300,6 +301,7 @@ class UPBV2(IndiDevice, Base):
         # 5V adjustable power source
         self.set_number('ADJUSTABLE_VOLTAGE', {'ADJUSTABLE_VOLTAGE_VALUE': self.adjustable_voltage_value})
 
+    def switch_on_arduino_control_box_usb(self):
         # Now setup USB
         on_switches = [f"PORT_{i}" for i in range(1, 7) if self.usb_labels[f"USB_LABEL_{i}"] == "ARDUINO_CONTROL_BOX"]
         self.set_switch("USB_PORT_CONTROL", on_switches=on_switches)
@@ -585,30 +587,43 @@ class AggregatedCustomScopeController(Base):
         # Finished configuring
         self.logger.debug('configured successfully')
 
-    def power_on_all_equipments(self):
+    def reset_config(self):
         # initialize upbv2
         self.start_upbv2_driver()
-        self.upbv2.initialize()
+        self.upbv2.initialize() # This force to put to zero power and usb usually before an indiserver reset
 
+    def power_on_all_equipments(self):
+        self.upbv2.connect(connect_device=True)
+        self.logger.debug(f'1#################################### {self.upbv2.get_switch("USB_PORT_CONTROL")["PORT_4"]}')
         # Power servo controller
         self.upbv2.power_on_arduino_control_box()
+        self.logger.debug(f'2#################################### {self.upbv2.get_switch("USB_PORT_CONTROL")["PORT_4"]}')
+        time.sleep(self._indi_driver_connect_delay_s)
+        self.upbv2.switch_on_arduino_control_box_usb()
+        self.logger.debug(f'3#################################### {self.upbv2.get_switch("USB_PORT_CONTROL")["PORT_4"]}')
+        time.sleep(self._indi_driver_connect_delay_s)
+        self.logger.debug(f'3.5#################################### {self.upbv2.get_switch("USB_PORT_CONTROL")["PORT_4"]}')
         # Power acquisition instruments: this is a very specific case, see https://github.com/indilib/indi-3rdparty/issues/822
-        self.switch_on_acquisition_equipments_usb()
+        self.upbv2.switch_on_acquisition_equipments_usb()
+        self.logger.debug(f'4#################################### {self.upbv2.get_switch("USB_PORT_CONTROL")["PORT_4"]}')
+        time.sleep(self._indi_driver_connect_delay_s)
         # Power mount
         self.switch_on_mount()
-
+        self.logger.debug(f'5#################################### {self.upbv2.get_switch("USB_PORT_CONTROL")["PORT_4"]}')
         # Wait for the os serial port to be created, and stuff like that
         time.sleep(self._indi_driver_connect_delay_s)
 
         # Power acquisition instruments: this is a very specific case, see https://github.com/indilib/indi-3rdparty/issues/822
-        self.power_on_acquisition_equipments()
-
+        self.upbv2.power_on_acquisition_equipments()
+        self.logger.debug(f'6#################################### {self.upbv2.get_switch("USB_PORT_CONTROL")["PORT_4"]}')
+        time.sleep(self._indi_driver_connect_delay_s)
         # start or restart drivers if needed
         self.start_all_drivers()
         # Now we need to wait a bit before trying to connect driver
         # but _indi_driver_connect_delay_s was already waited for at previous step
         for driver_name, device_name in self._indi_resetable_instruments_driver_map.items():
             if not self.probe_device_driver_connection(driver_name=driver_name, device_name=device_name):
+                self.logger.debug(f"Device {device_name} doesn't seems to have its driver properly started - restarting")
                 self.restart_driver(driver_name)
         # Now we need to wait a bit before trying to connect driver
         if not self.probe_device_driver_connection(driver_name=self._indi_mount_driver_name,
@@ -616,9 +631,11 @@ class AggregatedCustomScopeController(Base):
             self.restart_driver(self._indi_mount_driver_name)
 
         # Initialize dependent device
+        self.logger.debug(f'7#################################### {self.upbv2.get_switch("USB_PORT_CONTROL")["PORT_4"]}')
         self.arduino_servo_controller.initialize()
 
         self.is_initialized = True
+        exit()
 
     def power_off_all_equipments(self):
         """
@@ -628,10 +645,10 @@ class AggregatedCustomScopeController(Base):
         self.logger.debug("Deinitializing AggregatedCustomScopeController")
 
         self.switch_off_mount()
-        self.power_off_acquisition_equipments()
+        self.upbv2.power_off_acquisition_equipments()
         # Power acquisition instruments: this is a very specific case, see https://github.com/indilib/indi-3rdparty/issues/822
         time.sleep(1)
-        self.switch_off_acquisition_equipments_usb()
+        self.upbv2.switch_off_acquisition_equipments_usb()
 
         # Deinitialize arduino servo first (as it relies on upb power)
         self.arduino_servo_controller.deinitialize()
@@ -691,7 +708,7 @@ class AggregatedCustomScopeController(Base):
                        f"{self._indi_webserver_port}"
             req = f"{base_url}/api/server/drivers"
             response = requests.get(req)
-            self.logger.debug(f"get_running_driver - url {req} - code {response.status_code} - response:{response.text}")
+            # self.logger.debug(f"get_running_driver - url {req} - code {response.status_code} - response :{response.text}")
             assert response.status_code == 200
             running_driver_list = json.loads(response.text)
         except json.JSONDecodeError as e:

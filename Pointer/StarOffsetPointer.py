@@ -99,6 +99,7 @@ class StarOffsetPointer(OffsetPointer):
                                            gen_hips=False,
                                            remove_extras=False,
                                            skip_solved=False,
+                                           use_header_position=True,
                                            sampling_arcsec=camera.sampling_arcsec)
 
                 # update mount with the actual position
