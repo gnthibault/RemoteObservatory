@@ -28,3 +28,8 @@ class IndiAbstractCameraSimulator(IndiAbstractCamera):
         self.set_number("SIMULATOR_SETTINGS", self.indi_camera_config["SIMULATOR_SETTINGS"])
         self.set_number("SCOPE_INFO", self.indi_camera_config["SCOPE_INFO"])
         super().prepare_shoot()
+
+    def set_cooling_on(self):
+        # This feels like a bug from the simulator ...
+        self.logger.warning(f"set_cooling_on asynchronously as, there seems to be a bug in simulator implementation")
+        self.set_switch('CCD_COOLER', ['COOLER_ON'], sync=False, timeout=self.defaultTimeout)

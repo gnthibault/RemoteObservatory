@@ -113,6 +113,7 @@ class IndiAbstractMount(IndiMount, AbstractMount):
         Returns:
             bool: indicating success
         """
+        self.logger.debug(f"Mount {self.device_name} about to park")
         try:
             IndiMount.park(self)
             self._is_parked = True
@@ -132,6 +133,7 @@ class IndiAbstractMount(IndiMount, AbstractMount):
         Returns:
             bool: indicating success
         """
+        self.logger.debug(f"Mount {self.device_name} about to unpark")
         self.start_indi_server()
         self.start_indi_driver()
         self.connect(connect_device=True)
