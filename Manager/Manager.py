@@ -44,6 +44,8 @@ class Manager(Base):
         """
         Base.__init__(self)
 
+        self.cameras               = None
+        self.guider                = None
         self.independant_services  = None
         self.is_initialized        = False
         self.serv_time             = None
@@ -101,13 +103,6 @@ class Manager(Base):
         self.logger.info('\tSetting up main image directory')
         self._setup_image_directory()
 
-        # Reset indi webmanager client
-        self._setup_indi_web_manager_client()
-
-        # setup various services
-        self.logger.info('\tSetting up web services')
-        self._setup_services()
-
         # Setup physical obervatory related informations
         self.logger.info('\tSetting up observatory')
         self._setup_observatory()
@@ -136,14 +131,7 @@ class Manager(Base):
         self.logger.info('\tSetting up observation planner')
         self._setup_scheduler()
 
-        # Setup vizualization service
-        # self.logger.info('\tSetting up vizualization service')
-        # self._setup_vizualization_service()
-        # self.logger.info('\t Observatory initialized')
         self.is_initialized = True
-    #     self.logger.debug("Initializing mount")
-    #     self.mount.initialize()
-    #     self.observatory.initialize()
 
     # def power_down(self):
     #     """Power down the observatory. Currently does nothing
@@ -156,6 +144,8 @@ class Manager(Base):
         """Get status information for various parts of the observatory
         """
         status = {}
+        if not self.is_initialized:
+            return status
         try:
             t = self.serv_time.get_astropy_time_from_utc()
             local_time = str(self.serv_time.get_local_time())
@@ -541,15 +531,6 @@ class Manager(Base):
     def unpark(self):
         try:
 
-            # Reset indi server
-            #TODO TN This needs to be setup properly with splitted webmanager clients
-            if self.serv_weather is not None:
-                self.logger.debug("Waiting for weather server to stop")
-                self.serv_weather.stop()
-            if self.vizualization_service is not None:
-                self.logger.debug("Waiting for vizualization server to stop")
-                self.vizualization_service.stop()
-
             for _, indi_client in IndiClient._instances.items():
                 #indi_client.stop() # This is working properly in debug but not in normal runtime
                 del indi_client
@@ -565,6 +546,9 @@ class Manager(Base):
             # unpark the mount
             self.mount.unpark()
 
+            # Mount and observatory are ready, we can vizualize
+            self.vizualization_service.start()
+
             # unpark cameras
             for camera_name, camera in self.cameras.items():
                 camera.unpark()
@@ -575,8 +559,6 @@ class Manager(Base):
                 self.guider.connect_server()
                 # self.guider.connect_profile()
 
-            self._setup_weather_service()
-            self._setup_vizualization_service()
             return True
         except Exception as e:
             self.logger.error(f"Problem unparking: {e}")
@@ -592,6 +574,9 @@ class Manager(Base):
             # parking cameras
             for camera_name, camera in self.cameras.items():
                 camera.park()
+
+            # Mount and observatory will be shut down
+            self.vizualization_service.stop()
 
             # park the mount
             self.mount.park()
@@ -621,6 +606,7 @@ class Manager(Base):
             self._setup_time_service()
             self._setup_weather_service()
             self._setup_messaging()
+            self._setup_vizualization_service()
             self._setup_independant_services()
         except Exception:
             raise RuntimeError('Problem setting up services')
@@ -876,7 +862,6 @@ class Manager(Base):
                     config=self.config['vizualization_service'],
                     mount_device=self.mount,
                     observatory_device=self.observatory.dome_controller)
-                self.vizualization_service.start()
         except Exception as e:
             # No need to stop everything just for this service
             self.logger.error(f"Problem setting up vizualization_service: {e}")

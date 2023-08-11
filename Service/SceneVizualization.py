@@ -64,9 +64,6 @@ class SceneVizualization(threading.Thread):
         self.world3D = None
         self.observatory = None
 
-        # Init objects to be rendered
-        self.init_vizualizer()
-
     def init_vizualizer(self):
         # Create a new visualizer
         self.view3D = meshcat.Visualizer()
@@ -88,6 +85,9 @@ class SceneVizualization(threading.Thread):
                 actual_indi_device=self.mount_device)
 
     def run(self):
+        # Init objects to be rendered
+        self.init_vizualizer()
+        # Now go
         timeout_sky_update = Timeout(duration=self.delay_sky_update_s)
         timeout_obj_update = Timeout(duration=self.delay_moving_objects_s)
         shortest_update = min(self.delay_sky_update_s, self.delay_moving_objects_s)
@@ -118,7 +118,6 @@ class SceneVizualization(threading.Thread):
                         pass
             if self.mount_device is None and self.observatory_device is None:
                 time.sleep(shortest_update)
-
 
     def stop(self):
         self.stop_requested = True

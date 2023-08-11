@@ -8,6 +8,7 @@ import weakref
 
 # Indi stuff
 from helper.client import INDIClient
+from helper.IndiWebManagerClient import IndiWebManagerClient, IndiWebManagerDummy
 from utils.error import IndiClientPredicateTimeoutError
 
 # Imaging and Fits stuff
@@ -75,6 +76,10 @@ class IndiClient(SingletonIndiClientHolder, INDIClient, Base):
                             host=config["indi_host"],
                             port=config["indi_port"])
         logger.debug(f"Indi Client, remote host is: {self.host}:{self.port}")
+
+        self.indi_webmanager_client = IndiWebManagerDummy()
+        if "indi_webmanager" in config:
+            self.indi_webmanager_client = IndiWebManagerClient(config)
 
         # Start the main ioloop that will serve all async task in another (single) thread
         self.device_subscriptions = {} # dict of device_name: coroutines

@@ -1,9 +1,7 @@
 # Basic stuff
 import json
 import logging
-import requests
 import time
-import urllib.parse
 
 # Local
 from Base.Base import Base
@@ -635,7 +633,6 @@ class AggregatedCustomScopeController(Base):
         self.arduino_servo_controller.initialize()
 
         self.is_initialized = True
-        exit()
 
     def power_off_all_equipments(self):
         """
@@ -676,121 +673,6 @@ class AggregatedCustomScopeController(Base):
         self.logger.debug("Closing AggregatedCustomScopeController")
         self.close_finder_dustcap()
         self.close_scope_dustcap()
-
-    def probe_device_driver_connection(self, driver_name, device_name):
-        probe = IndiDevice(
-            device_name=device_name,
-            indi_client_config=self.default_indi_client_config)
-        # setup indi client
-        probe.connect(connect_device=False)
-        try:
-            probe.wait_for_any_property_vectors(timeout=1.5)
-        except IndiClientPredicateTimeoutError as e:
-            return False
-        else:
-            return True
-
-    def is_driver_started(self, driver_name):
-        return driver_name in self.get_running_driver_list()
-
-    def get_running_driver_list(self):
-        running_driver_list = self.get_running_driver()
-        return [driver["name"] for driver in running_driver_list]
-    
-    def get_running_driver(self):
-        """
-            See documentation for the API here: https://github.com/knro/indiwebmanager
-        :param driver_name:
-        :return:
-        """
-        try:
-            base_url = f"http://{self._indi_webserver_host}:"\
-                       f"{self._indi_webserver_port}"
-            req = f"{base_url}/api/server/drivers"
-            response = requests.get(req)
-            # self.logger.debug(f"get_running_driver - url {req} - code {response.status_code} - response :{response.text}")
-            assert response.status_code == 200
-            running_driver_list = json.loads(response.text)
-        except json.JSONDecodeError as e:
-            msg = f"Cannot properly parse list of running indi driver from {response.text} : {e}"
-            self.logger.error(msg)
-            raise RuntimeError(msg)
-        except Exception as e:
-            msg = f"Cannot get list of running indi driver : {e}"
-            self.logger.error(msg)
-            raise RuntimeError(msg)
-        else:
-            return running_driver_list
-
-    def restart_driver(self, driver_name):
-        """
-            See documentation for the API here: https://github.com/knro/indiwebmanager
-        :param driver_name:
-        :return:
-        """
-        if self.is_driver_started(driver_name):
-            try:
-                base_url = f"http://{self._indi_webserver_host}:"\
-                           f"{self._indi_webserver_port}"
-                req = f"{base_url}/api/drivers/restart/"\
-                      f"{urllib.parse.quote(driver_name)}"
-                response = requests.post(req)
-                self.logger.debug(f"restart_driver {driver_name} - url {req} - code {response.status_code} - response:{response.text}")
-                assert response.status_code == 200
-            except Exception as e:
-                msg = f"Cannot restart indi driver : {e}"
-                self.logger.error(msg)
-                raise RuntimeError(msg)
-        else:
-            self.start_driver(driver_name, check_started=False)
-            
-    def start_driver(self, driver_name, check_started=True):
-        """
-            See documentation for the API here: https://github.com/knro/indiwebmanager
-        :param driver_name:
-        :return:
-        """
-        if check_started and self.is_driver_started(driver_name):
-            return
-        try:
-            base_url = f"http://{self._indi_webserver_host}:"\
-                       f"{self._indi_webserver_port}"
-            req = f"{base_url}/api/drivers/start/"\
-                  f"{urllib.parse.quote(driver_name)}"
-            response = requests.post(req)
-            self.logger.debug(f"start_driver {driver_name} - url {req} - code {response.status_code} - response:{response.text}")
-            assert response.status_code == 200
-        except Exception as e:
-            msg = f"Cannot start indi driver : {e}"
-            self.logger.error(msg)
-            raise RuntimeError(msg)
-
-    def stop_driver(self, driver_name):
-        """
-            See documentation for the API here: https://github.com/knro/indiwebmanager
-        :param driver_name:
-        :return:
-        """
-        # No need to stop a driver that is not started
-        if not self.is_driver_started(driver_name):
-            self.logger.debug(f"No need to stop driver {driver_name} because it doesn't seems to be started")
-            return
-        try:
-            #if driver_name not in ["ZWO CCD"]: #"Shelyak SPOX", "Arduino telescope controller", "ASI EAF", "Altair", "ZWO CCD"
-            #    return
-            base_url = f"http://{self._indi_webserver_host}:"\
-                       f"{self._indi_webserver_port}"
-            req = f"{base_url}/api/drivers/stop/"\
-                  f"{urllib.parse.quote(driver_name)}"
-            #self.logger.setLevel("DEBUG")
-            #self.logger.warning(f"stop_driver {driver_name} DISABLED for now as it was randomly breaking indiserver")
-            response = requests.post(req)
-            self.logger.debug(f"stop_driver {driver_name} - url {req} - code {response.status_code} - response: {response.text}")
-            assert response.status_code == 200
-        except Exception as e:
-            msg = f"Cannot stop indi driver : {e}"
-            self.logger.error(msg)
-            raise RuntimeError(msg)
 
     def switch_on_acquisition_instruments(self):
         """ blocking call: switch on cameras, calibration tools, finderscopes, etc...
