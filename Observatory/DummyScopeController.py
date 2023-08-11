@@ -44,14 +44,11 @@ class DummyScopeController(Base):
     def initialize(self):
         self._is_initialized = True
 
-    def power_on_all_equipments(self):
-        self.logger.debug("Powering on all equipements")
+    def unpark(self):
+        self.logger.debug("Unparking all equipements")
 
-    def power_off_all_equipments(self):
-        self.logger.debug("Shutting down all equipements")
-
-    def reset_config(self):
-        pass
+    def park(self):
+        self.logger.debug("Parking all equipements")
 
     def deinitialize(self):
         self.logger.debug("Deinitializing DummyScopeController")

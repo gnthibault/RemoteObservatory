@@ -8,8 +8,9 @@ import time
 from helper.device import device, VectorHandler
 
 #Local
-from helper.IndiClient import IndiClient
 from Base.Base import Base
+from helper.IndiClient import IndiClient
+from utils.error import IndiClientPredicateTimeoutError
 
 class PyIndi():
     """
@@ -43,10 +44,24 @@ class PyIndi():
     INDI_BLOB = 4
     INDI_UNKNOWN = 5
 
+def probe_device_driver_connection(self, indi_client_config, device_name):
+    probe = IndiDevice(
+        device_name=device_name,
+        indi_client_config=indi_client_config)
+    # setup indi client
+    probe.connect(connect_device=False)
+    try:
+        probe.wait_for_any_property_vectors(timeout=1.5)
+    except IndiClientPredicateTimeoutError as e:
+        return False
+    else:
+        return True
+
+
 class IndiDevice(Base, device):
     defaultTimeout = 30
 
-    def __init__(self, device_name, indi_client_config, debug=False):
+    def __init__(self, device_name, indi_client_config, indi_driver_name=None, debug=False):
         Base.__init__(self)
         device.__init__(self, name=device_name)
 
@@ -54,6 +69,7 @@ class IndiDevice(Base, device):
         self.is_client_connected = False
         self.indi_client_config = indi_client_config
         self.timeout = IndiDevice.defaultTimeout
+        self.indi_driver_name = indi_driver_name
         self.interfaces = None
         self.debug = debug
 

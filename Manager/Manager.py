@@ -51,7 +51,6 @@ class Manager(Base):
         self.serv_time             = None
         self.serv_weather          = None
         self.vizualization_service = None
-        self.webmanager_client     = None
 
 ##########################################################################
 # Properties
@@ -530,17 +529,7 @@ class Manager(Base):
 
     def unpark(self):
         try:
-
-            for _, indi_client in IndiClient._instances.items():
-                #indi_client.stop() # This is working properly in debug but not in normal runtime
-                del indi_client
-            IndiClient._instances = {}
-
-            self.observatory.reset_config()
-            self.webmanager_client.reset_server()
-
             # unpark the observatory
-            self.observatory.power_on_all_equipments()
             self.observatory.unpark()
 
             # unpark the mount
@@ -583,7 +572,6 @@ class Manager(Base):
 
             # park the observatory
             self.observatory.park()
-            self.observatory.power_off_all_equipments()
 
             return True
         except Exception as e:
@@ -622,17 +610,6 @@ class Manager(Base):
                 config=self.config['time_service'])
         except Exception as e:
             raise RuntimeError(f'Problem setting up time service: {e}')
-
-    def _setup_indi_web_manager_client(self):
-        self.webmanager_client = None
-        try:
-            client_name = self.config['indi_webmanager']['module']
-            client_module = load_module('Service.'+client_name)
-            self.webmanager_client = getattr(client_module, client_name)(
-                config=self.config['indi_webmanager'])
-            self.webmanager_client.reset_server()
-        except Exception as e:
-            self.logger.warning(f'Problem setting up indi webmanager service {e}')
 
     def _setup_weather_service(self):
         """

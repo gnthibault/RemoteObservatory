@@ -379,6 +379,17 @@ class IndiCamera(IndiDevice):
                          f"autofocus with focuser {self.focuser.device_name}")
         return autofocus_event
 
+    def shutdown_indi_server(self):
+        self.indi_client.indi_webmanager_client.stop_server()
+
+    def start_indi_server(self):
+        self.indi_client.indi_webmanager_client.start_server()
+
+    def start_indi_driver(self):
+        self.indi_client.indi_webmanager_client.start_driver(
+            driver_name=self.indi_driver_name,
+            check_started=True)
+
     def __str__(self):
         return f"INDI Camera {self.device_name}"
 

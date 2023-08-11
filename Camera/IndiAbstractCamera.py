@@ -27,9 +27,12 @@ class IndiAbstractCamera(IndiCamera, AbstractCamera):
     def park(self):
         self.logger.debug(f"Parking camera {self.camera_name}")
         self.disconnect()
+        self.shutdown_indi_server()
 
     def unpark(self):
         self.logger.debug(f"Unparking camera {self.camera_name}")
+        self.start_indi_server()
+        self.start_indi_driver()
         self.connect(connect_device=True)
 
     # TODO TN: setup event based acquisition properly

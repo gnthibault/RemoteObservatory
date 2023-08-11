@@ -101,19 +101,6 @@ class IndiWebManagerClient:
             self.logger.error(msg)
             raise RuntimeError(msg)
 
-    def probe_device_driver_connection(self, driver_name, device_name):
-        probe = IndiDevice(
-            device_name=device_name,
-            indi_client_config=self.default_indi_client_config)
-        # setup indi client
-        probe.connect(connect_device=False)
-        try:
-            probe.wait_for_any_property_vectors(timeout=1.5)
-        except IndiClientPredicateTimeoutError as e:
-            return False
-        else:
-            return True
-
     def is_driver_started(self, driver_name):
         return driver_name in self.get_running_driver_list()
 
@@ -175,6 +162,9 @@ class IndiWebManagerClient:
         :param driver_name:
         :return:
         """
+        if driver_name is None:
+            self.logger.debug(f"In start_driver, no driver name provided, assuming webmanager has auto-start enabled")
+            return
         if check_started and self.is_driver_started(driver_name):
             return
         try:

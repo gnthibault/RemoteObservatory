@@ -28,9 +28,6 @@ class IndiDomeController(IndiDevice):
         # Finished configuring
         self.logger.debug('Indi dome configured successfully')
 
-    def power_on(self):
-        self.connect(connect_device=True)
-
     def initialize(self):
         self._is_initialized = True
         self.logger.debug("Initializing dome, not doing much actually")
@@ -45,11 +42,16 @@ class IndiDomeController(IndiDevice):
 
     def unpark(self):
         self.logger.debug("Unparking")
+        self.start_indi_server()
+        self.start_indi_driver()
+        self.connect(connect_device=True)
         self.set_switch("DOME_PARK", on_switches=["UNPARK"], sync=True, timeout=self.dome_movement_timeout_s)
 
     def park(self):
         self.logger.debug("Parking")
         self.set_switch("DOME_PARK", on_switches=["PARK"], sync=True, timeout=self.dome_movement_timeout_s)
+        self.disconnect()
+        self.shutdown_indi_server()
 
     def open(self):
         self.logger.debug("Opening")

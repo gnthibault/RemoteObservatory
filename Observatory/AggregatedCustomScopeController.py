@@ -141,6 +141,11 @@ class UPBV2(IndiDevice, Base):
         # Finished configuring
         self.logger.debug('configured successfully')
 
+    def unpark(self):
+        self.start_indi_server()
+        self.start_indi_driver()
+        self.initialize()
+
     def initialize(self):
         """
         Connection is made in two phases:
@@ -166,6 +171,11 @@ class UPBV2(IndiDevice, Base):
 
         self.is_initialized = True
 
+    def park(self):
+        self.deinitialize()
+        self.disconnect()
+        self.shutdown_indi_server()
+
     def deinitialize(self):
         # Then switch off all electronic devices
         self.close_scope_dustcap()
@@ -173,8 +183,6 @@ class UPBV2(IndiDevice, Base):
         self.switch_off_dew_heater()
         self.power_off_all_telescope_equipments()
         self.power_off_mount()
-
-        self.disconnect()
 
         self.is_initialized = False
 
@@ -468,6 +476,11 @@ class ArduinoServoController(IndiDevice, Base):
         # Finished configuring
         self.logger.debug('configured successfully')
 
+    def unpark(self):
+        self.start_indi_server()
+        self.start_indi_driver()
+        self.initialize()
+
     def initialize(self):
         """
         Connection is made in two phases:
@@ -560,7 +573,6 @@ class AggregatedCustomScopeController(Base):
         # Actual device config
         self.config_upbv2 = config["config_upbv2"]
         self.config_arduino = config["config_arduino"]
-        self.default_indi_client_config = config["indi_client"]
 
         # Local features
         self._indi_resetable_instruments_driver_map = config["indi_resetable_instruments_driver_map"]
@@ -585,76 +597,77 @@ class AggregatedCustomScopeController(Base):
         # Finished configuring
         self.logger.debug('configured successfully')
 
-    def reset_config(self):
-        # initialize upbv2
-        self.start_upbv2_driver()
-        self.upbv2.initialize() # This force to put to zero power and usb usually before an indiserver reset
+    # def reset_config(self):
+    #     # initialize upbv2
+    #     self.start_upbv2_driver()
+    #     self.upbv2.initialize() # This force to put to zero power and usb usually before an indiserver reset
 
-    def power_on_all_equipments(self):
-        self.upbv2.connect(connect_device=True)
-        self.logger.debug(f'1#################################### {self.upbv2.get_switch("USB_PORT_CONTROL")["PORT_4"]}')
+    def unpark(self):
+
+        self.logger.debug("Parking AggregatedCustomScopeController")
+        self.upbv2.unpark()
+        # self.logger.debug(f'1#################################### {self.upbv2.get_switch("USB_PORT_CONTROL")["PORT_4"]}')
+
         # Power servo controller
         self.upbv2.power_on_arduino_control_box()
-        self.logger.debug(f'2#################################### {self.upbv2.get_switch("USB_PORT_CONTROL")["PORT_4"]}')
-        time.sleep(self._indi_driver_connect_delay_s)
+        # self.logger.debug(f'2#################################### {self.upbv2.get_switch("USB_PORT_CONTROL")["PORT_4"]}')
+
+        # power-on USB for the arduino
         self.upbv2.switch_on_arduino_control_box_usb()
-        self.logger.debug(f'3#################################### {self.upbv2.get_switch("USB_PORT_CONTROL")["PORT_4"]}')
-        time.sleep(self._indi_driver_connect_delay_s)
-        self.logger.debug(f'3.5#################################### {self.upbv2.get_switch("USB_PORT_CONTROL")["PORT_4"]}')
+        # self.logger.debug(f'3#################################### {self.upbv2.get_switch("USB_PORT_CONTROL")["PORT_4"]}')
+        # self.logger.debug(f'3.5#################################### {self.upbv2.get_switch("USB_PORT_CONTROL")["PORT_4"]}')
+
         # Power acquisition instruments: this is a very specific case, see https://github.com/indilib/indi-3rdparty/issues/822
         self.upbv2.switch_on_acquisition_equipments_usb()
-        self.logger.debug(f'4#################################### {self.upbv2.get_switch("USB_PORT_CONTROL")["PORT_4"]}')
-        time.sleep(self._indi_driver_connect_delay_s)
+        # self.logger.debug(f'4#################################### {self.upbv2.get_switch("USB_PORT_CONTROL")["PORT_4"]}')
+
         # Power mount
         self.switch_on_mount()
-        self.logger.debug(f'5#################################### {self.upbv2.get_switch("USB_PORT_CONTROL")["PORT_4"]}')
+        # self.logger.debug(f'5#################################### {self.upbv2.get_switch("USB_PORT_CONTROL")["PORT_4"]}')
+
         # Wait for the os serial port to be created, and stuff like that
         time.sleep(self._indi_driver_connect_delay_s)
 
         # Power acquisition instruments: this is a very specific case, see https://github.com/indilib/indi-3rdparty/issues/822
         self.upbv2.power_on_acquisition_equipments()
-        self.logger.debug(f'6#################################### {self.upbv2.get_switch("USB_PORT_CONTROL")["PORT_4"]}')
-        time.sleep(self._indi_driver_connect_delay_s)
-        # start or restart drivers if needed
-        self.start_all_drivers()
+        # self.logger.debug(f'6#################################### {self.upbv2.get_switch("USB_PORT_CONTROL")["PORT_4"]}')
+        # time.sleep(self._indi_driver_connect_delay_s)
+
+        # # start or restart drivers if needed
+        # self.start_all_drivers()
         # Now we need to wait a bit before trying to connect driver
         # but _indi_driver_connect_delay_s was already waited for at previous step
-        for driver_name, device_name in self._indi_resetable_instruments_driver_map.items():
-            if not self.probe_device_driver_connection(driver_name=driver_name, device_name=device_name):
-                self.logger.debug(f"Device {device_name} doesn't seems to have its driver properly started - restarting")
-                self.restart_driver(driver_name)
+        # for driver_name, device_name in self._indi_resetable_instruments_driver_map.items():
+        #     if not self.probe_device_driver_connection(driver_name=driver_name, device_name=device_name):
+        #         self.logger.debug(f"Device {device_name} doesn't seems to have its driver properly started - restarting")
+        #         self.restart_driver(driver_name)
         # Now we need to wait a bit before trying to connect driver
-        if not self.probe_device_driver_connection(driver_name=self._indi_mount_driver_name,
-                                                   device_name=self._indi_mount_device_name):
-            self.restart_driver(self._indi_mount_driver_name)
+        # if not self.probe_device_driver_connection(driver_name=self._indi_mount_driver_name,
+        #                                            device_name=self._indi_mount_device_name):
+        #     self.restart_driver(self._indi_mount_driver_name)
 
         # Initialize dependent device
-        self.logger.debug(f'7#################################### {self.upbv2.get_switch("USB_PORT_CONTROL")["PORT_4"]}')
-        self.arduino_servo_controller.initialize()
+        # self.logger.debug(f'7#################################### {self.upbv2.get_switch("USB_PORT_CONTROL")["PORT_4"]}')
+        self.arduino_servo_controller.unpark()
 
         self.is_initialized = True
 
-    def power_off_all_equipments(self):
+    def park(self):
         """
-
         :return:
         """
-        self.logger.debug("Deinitializing AggregatedCustomScopeController")
+        self.logger.debug("Parking AggregatedCustomScopeController")
 
-        self.switch_off_mount()
-        self.upbv2.power_off_acquisition_equipments()
         # Power acquisition instruments: this is a very specific case, see https://github.com/indilib/indi-3rdparty/issues/822
+        self.upbv2.power_off_acquisition_equipments()
         time.sleep(1)
         self.upbv2.switch_off_acquisition_equipments_usb()
 
         # Deinitialize arduino servo first (as it relies on upb power)
-        self.arduino_servo_controller.deinitialize()
+        self.arduino_servo_controller.park()
 
         # Deinitialize upbv2
-        self.upbv2.deinitialize()
-
-        # stop all drivers that relies on device being on
-        self.stop_all_drivers()
+        self.upbv2.park()
 
         self.is_initialized = False
 
@@ -695,25 +708,25 @@ class AggregatedCustomScopeController(Base):
     #     for driver_name, device_name in self._indi_resetable_instruments_driver_map.items():
     #         self.stop_driver(driver_name)
 
-    def start_upbv2_driver(self):
-        self.start_driver(driver_name="Pegasus UPB", check_started=True)
+    # def start_upbv2_driver(self):
+    #     self.start_driver(driver_name="Pegasus UPB", check_started=True)
+    #
+    # def stop_upbv2_driver(self):
+    #     self.stop_driver(driver_name="Pegasus UPB", check_started=True)
+    #
+    # def start_servo_controller_driver(self):
+    #     self.start_driver(driver_name="Arduino telescope controller", check_started=True)
+    #
+    # def start_all_drivers(self):
+    #     for driver_name, device_name in self._indi_resetable_instruments_driver_map.items():
+    #         self.start_driver(driver_name, check_started=True)
+    #     self.start_driver(self._indi_mount_driver_name, check_started=True)
 
-    def stop_upbv2_driver(self):
-        self.stop_driver(driver_name="Pegasus UPB", check_started=True)
-
-    def start_servo_controller_driver(self):
-        self.start_driver(driver_name="Arduino telescope controller", check_started=True)
-
-    def start_all_drivers(self):
-        for driver_name, device_name in self._indi_resetable_instruments_driver_map.items():
-            self.start_driver(driver_name, check_started=True)
-        self.start_driver(self._indi_mount_driver_name, check_started=True)
-
-    def stop_all_drivers(self):
-        for driver_name, device_name in self._indi_resetable_instruments_driver_map.items():
-            self.stop_driver(driver_name)
-        self.stop_driver(self._indi_mount_driver_name)
-        self.stop_upbv2_driver()
+    # def stop_all_drivers(self):
+    #     for driver_name, device_name in self._indi_resetable_instruments_driver_map.items():
+    #         self.stop_driver(driver_name)
+    #     self.stop_driver(self._indi_mount_driver_name)
+    #     self.stop_upbv2_driver()
 
     def switch_on_scope_fan(self):
         """ blocking call: switch on fan to cool down primary mirror
