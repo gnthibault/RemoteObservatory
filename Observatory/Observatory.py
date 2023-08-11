@@ -162,7 +162,6 @@ class Observatory(Base):
     #     if self.has_scope:
     #         self.scope_controller.reset_config()
 
-
     def open_everything(self):
         try:
             self.logger.debug('Observatory: open everything....')

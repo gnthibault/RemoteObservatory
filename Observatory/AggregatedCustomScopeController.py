@@ -675,8 +675,8 @@ class AggregatedCustomScopeController(Base):
         """ blocking call: opens both main telescope and guiding scope dustcap
         """
         self.logger.debug("Opening AggregatedCustomScopeController")
-        if not self.is_initialized:
-            self.power_on_all_equipments()
+        # if not self.is_initialized:
+        #     self.power_on_all_equipments()
         self.open_finder_dustcap()
         self.open_scope_dustcap()
 
