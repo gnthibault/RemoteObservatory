@@ -154,6 +154,7 @@ cameras:
         module: IndiAbstractCameraSimulator
         camera_name : CCD Simulator
         do_acquisition: true
+        working_temperature: -12
         SIMULATOR_SETTINGS: # 180mm
             SIM_XRES: 5496
             SIM_YRES: 3672

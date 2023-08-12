@@ -21,6 +21,7 @@ class IndiAbstractCamera(IndiCamera, AbstractCamera):
         IndiCamera.__init__(self, logger=self.logger, config=config,
                            connect_on_create=connect_on_create)
         self.indi_camera_config = config
+        self.working_temperature = config.get("working_temperature", None)
         self.sampling_arcsec = config.get("sampling_arcsec", None)
         self.subsample_astrometry = config.get("subsample_astrometry", 1)
 

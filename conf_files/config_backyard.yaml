@@ -181,6 +181,7 @@ cameras:
         camera_name : PlayerOne CCD Ares-M PRO
         indi_driver_name: PlayerOne CCD
         do_acquisition: true
+        working_temperature: -12
         SCOPE_INFO: # 200/800 newtonian
             FOCAL_LENGTH: 800
             APERTURE: 200
