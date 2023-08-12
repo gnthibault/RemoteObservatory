@@ -92,7 +92,7 @@ class IndiWebManagerClient:
             req = f"{base_url}/api/server/stop"
             response = requests.post(req)
             self.logger.debug(f"stop_server - url {req} - code {response.status_code} - response:{response.text}")
-            assert response.status_code == 200
+            assert response.status_code in [200, 500] # It's ok to stop an already stopped server
         except Exception as e:
             msg = f"Cannot start server: {e}"
             self.logger.error(msg)
@@ -112,8 +112,8 @@ class IndiWebManagerClient:
         :return:
         """
         try:
-            base_url = f"http://{self._indi_webserver_host}:" \
-                       f"{self._indi_webserver_port}"
+            base_url = f"http://{self.host}:" \
+                       f"{self.port}"
             req = f"{base_url}/api/server/drivers"
             response = requests.get(req)
             # self.logger.debug(f"get_running_driver - url {req} - code {response.status_code} - response :{response.text}")
@@ -138,8 +138,8 @@ class IndiWebManagerClient:
         """
         if self.is_driver_started(driver_name):
             try:
-                base_url = f"http://{self._indi_webserver_host}:" \
-                           f"{self._indi_webserver_port}"
+                base_url = f"http://{self.host}:" \
+                           f"{self.port}"
                 req = f"{base_url}/api/drivers/restart/" \
                       f"{urllib.parse.quote(driver_name)}"
                 response = requests.post(req)
@@ -165,8 +165,8 @@ class IndiWebManagerClient:
         if check_started and self.is_driver_started(driver_name):
             return
         try:
-            base_url = f"http://{self._indi_webserver_host}:" \
-                       f"{self._indi_webserver_port}"
+            base_url = f"http://{self.host}:" \
+                       f"{self.port}"
             req = f"{base_url}/api/drivers/start/" \
                   f"{urllib.parse.quote(driver_name)}"
             response = requests.post(req)
@@ -191,8 +191,8 @@ class IndiWebManagerClient:
         try:
             # if driver_name not in ["ZWO CCD"]: #"Shelyak SPOX", "Arduino telescope controller", "ASI EAF", "Altair", "ZWO CCD"
             #    return
-            base_url = f"http://{self._indi_webserver_host}:" \
-                       f"{self._indi_webserver_port}"
+            base_url = f"http://{self.host}:" \
+                       f"{self.port}"
             req = f"{base_url}/api/drivers/stop/" \
                   f"{urllib.parse.quote(driver_name)}"
             # self.logger.setLevel("DEBUG")

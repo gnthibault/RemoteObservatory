@@ -6,6 +6,7 @@ import time
 
 # Indi stuff
 from helper.device import device, VectorHandler
+from helper.IndiWebManagerClient import IndiWebManagerClient
 
 #Local
 from Base.Base import Base
@@ -171,8 +172,10 @@ class IndiDevice(Base, device):
         try:
             self.logger.debug(f"Setting up indi client")
             self.indi_client = IndiClient(config=self.indi_client_config)
-        except Exception:
-            raise RuntimeError('Problem setting up indi client')
+        except Exception as e:
+            msg = f"Problem setting up indi client for device {self.device_name}: {e}"
+            self.logger.error(msg)
+            raise RuntimeError(msg)
 
     def connect_client(self):
         """
@@ -231,8 +234,18 @@ class IndiDevice(Base, device):
             return False
 
     def stop_indi_server(self):
+        # We could simply do like that:
+        # if self.indi_client is None:
+        #     self._setup_indi_client()
+        # self.indi_client.indi_webmanager_client.start_server()
+        # But then in case of stopping, it could consume ressources for no reason
         if self.indi_client is not None:
             self.indi_client.indi_webmanager_client.stop_server()
+        else:
+            # Setup temporary webmanager client
+            if "indi_webmanager" in self.indi_client_config:
+                iwmc = IndiWebManagerClient(self.indi_client_config["indi_webmanager"])
+                iwmc.stop_server()
 
     def start_indi_server(self):
         if self.indi_client is None:
@@ -243,7 +256,6 @@ class IndiDevice(Base, device):
         self.indi_client.indi_webmanager_client.start_driver(
             driver_name=self.indi_driver_name,
             check_started=True)
-
 
     def get_switch(self, name):
         return self.get_vector_dict(name)

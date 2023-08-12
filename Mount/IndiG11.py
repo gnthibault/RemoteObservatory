@@ -254,7 +254,7 @@ class IndiG11(IndiAbstractMount):
         #TODO TN URGENT as a temporary fix. we decided to park at startup but
         # the proper behaviour for the mount should be parked status by default
         # at startup, see https://indilib.org/forum/general/5497-indi-losmandy-driver-impossible-to-get-proper-park-status.html#41664
-        IndiMount.park(self)
+        IndiMount.unpark(self)
         self.logger.debug("Successfully initialized from IndiG11")
 
     def set_time_config(self):
@@ -308,4 +308,4 @@ class IndiG11(IndiAbstractMount):
     def set_coord(self, coord):
         IndiMount.set_coord(self, coord)
         # Wait for the mount/tube to damper vibrations
-        time.sleep(5)
+        time.sleep(10)
