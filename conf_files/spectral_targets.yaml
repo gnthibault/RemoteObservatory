@@ -24,27 +24,34 @@ targets :
         gain: 150
         offset: 30
         exp_time_sec: 20
-    "T CrB" :
-        priority : 0
-        count : 1
-        temperature : 10
-        gain: 150
-        offset: 30
-        exp_time_sec : 20
-    "V375 Lac" :
+    "Gamma Cassiopeiae" :
         priority : 0
         count : 2
         temperature : 10
         gain: 150
         offset: 30
         exp_time_sec : 5
-    "GK Per":
-        priority: 0
-        count: 2
-        temperature: 15
-        gain: 150
-        offset: 30
-        exp_time_sec: 5
+#    "T CrB" :
+#        priority : 0
+#        count : 1
+#        temperature : 10
+#        gain: 150
+#        offset: 30
+#        exp_time_sec : 20
+#    "V375 Lac" :
+#        priority : 0
+#        count : 2
+#        temperature : 10
+#        gain: 150
+#        offset: 30
+#        exp_time_sec : 5
+#    "GK Per":
+#        priority: 0
+#        count: 2
+#        temperature: 15
+#        gain: 150
+#        offset: 30
+#        exp_time_sec: 5
 reference_observation:
     count : 10
     temperature : 10
