@@ -149,7 +149,7 @@ class RemoteObservatoryFSM(StateMachine, Base):
             except Exception as e:
                 self.logger.info(f"Oh wait. There was a problem initializing: {e}")
                 self.logger.info(f"Since we did not initialize, I am going to exit.")
-                self.power_down()
+                self.park()
             else:
                 self._initialized = True
         self.status()

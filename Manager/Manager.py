@@ -557,6 +557,8 @@ class Manager(Base):
         except Exception as e:
             self.logger.error(f"Problem unparking: {e}")
             return False
+    def power_down(self):
+        self.logger.info("Powering down observatory")
 
     def park(self):
         try:

@@ -152,7 +152,7 @@ class IndiMount(IndiDevice):
         :return:
         """
         self.logger.debug('Slewing to Park')
-        self.set_switch('TELESCOPE_PARK', ['PARK'], sync=True, timeout=180)
+        self.set_switch('TELESCOPE_PARK', ['PARK'], sync=True, timeout=180) #It can take some time to park a mount
 
     def unpark(self):
         self.logger.debug('Unparking with indi mount semantic')

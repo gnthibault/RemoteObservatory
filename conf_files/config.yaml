@@ -117,6 +117,7 @@ cameras:
         SCOPE_INFO: # 200/800 newtonian
             FOCAL_LENGTH: 800
             APERTURE: 200
+        subsample_astrometry: 1
         do_guiding: true
         do_pointing: false
         pointing_seconds: 5
@@ -175,6 +176,7 @@ cameras:
         SCOPE_INFO: # 200/800 newtonian
             FOCAL_LENGTH: 242
             APERTURE: 50
+        subsample_astrometry: 4
         do_guiding: false
         do_pointing: true
         pointing_seconds: 5
