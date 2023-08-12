@@ -24,10 +24,13 @@ class IndiAbstractCameraSimulator(IndiAbstractCamera):
         focal_length_mm = config["SCOPE_INFO"]["FOCAL_LENGTH"]
         return 206*px_size/focal_length_mm
 
-    def prepare_shoot(self):
+    def initialize_simulation_setup(self):
         self.set_number("SIMULATOR_SETTINGS", self.indi_camera_config["SIMULATOR_SETTINGS"])
         self.set_number("SCOPE_INFO", self.indi_camera_config["SCOPE_INFO"])
-        super().prepare_shoot()
+
+    def unpark(self):
+        IndiAbstractCamera.unpark()
+        self.initialize_simulation_setup()
 
     def set_cooling_on(self):
         # This feels like a bug from the simulator ...
