@@ -185,6 +185,9 @@ class UPBV2(IndiDevice, Base):
         self.logger.debug("Successfully parked")
 
     def deinitialize(self):
+        if not self.is_initialized:
+            self.logger.debug("No need for deinitializing")
+            return
         self.logger.debug("Deinitializing")
         # Then switch off all electronic devices
         self.close_scope_dustcap()
@@ -520,6 +523,9 @@ class ArduinoServoController(IndiDevice, Base):
         self.logger.debug("Successfully parked")
 
     def deinitialize(self):
+        if not self.is_initialized:
+            self.logger.debug("No need for deinitializing")
+            return
         self.logger.debug("Denitialization")
         self.close_finder_dustcap()
         self.disconnect()
