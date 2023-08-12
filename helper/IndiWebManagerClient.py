@@ -5,7 +5,7 @@ import requests
 import urllib.parse
 
 class IndiWebManagerDummy:
-    def __init__(self):
+    def __init__(self, config=None):
         pass
     def reset_server(self):
         pass

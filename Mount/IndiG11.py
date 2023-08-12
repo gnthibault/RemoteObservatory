@@ -242,12 +242,8 @@ class IndiG11(IndiAbstractMount):
                          config=config,
                          connect_on_create=connect_on_create)
 
-    def unpark(self):
-        if not self.is_connected:
-            self.initialize()
-        IndiAbstractMount.unpark(self)
-
     def initialize(self):
+        self.logger.debug("Initializing from IndiG11")
         self.connect(connect_device=False)
         self.set_connectivity_config()
         self.connect_device()
@@ -259,7 +255,7 @@ class IndiG11(IndiAbstractMount):
         # the proper behaviour for the mount should be parked status by default
         # at startup, see https://indilib.org/forum/general/5497-indi-losmandy-driver-impossible-to-get-proper-park-status.html#41664
         IndiMount.park(self)
-        self._is_parked = True
+        self.logger.debug("Successfully initialized from IndiG11")
 
     def set_time_config(self):
         """

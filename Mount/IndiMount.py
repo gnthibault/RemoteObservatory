@@ -155,7 +155,7 @@ class IndiMount(IndiDevice):
         self.set_switch('TELESCOPE_PARK', ['PARK'], sync=True, timeout=180)
 
     def unpark(self):
-        self.logger.debug('unpark')
+        self.logger.debug('Unparking with indi mount semantic')
         self.set_switch('TELESCOPE_PARK', ['UNPARK'], sync=True, timeout=self.defaultTimeout)
 
     def get_guide_rate(self):

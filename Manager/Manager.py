@@ -570,7 +570,8 @@ class Manager(Base):
                 camera.park()
 
             # Mount and observatory will be shut down
-            self.vizualization_service.stop()
+            if self.vizualization_service:
+                self.vizualization_service.stop()
 
             # park the mount
             self.mount.park()

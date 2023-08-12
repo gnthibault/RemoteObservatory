@@ -169,7 +169,7 @@ class IndiDevice(Base, device):
             setup the indi client that will communicate with devices
         """
         try:
-            self.logger.info(f"Setting up indi client")
+            self.logger.debug(f"Setting up indi client")
             self.indi_client = IndiClient(config=self.indi_client_config)
         except Exception:
             raise RuntimeError('Problem setting up indi client')
@@ -213,13 +213,13 @@ class IndiDevice(Base, device):
             self.connect_device()
 
     def disconnect(self):
-        self.logger.info(f"Disconnecting device {self.device_name}")
-
+        self.logger.debug(f"Disconnecting device {self.device_name}")
         if self.is_client_connected:
             # set the corresponding switch to off
             self.disconnect_device()
             self.unregister_device_to_client()
             self.is_client_connected = False
+        self.logger.debug(f"Successfully disconnected device {self.device_name}")
 
     @property
     def is_connected(self):

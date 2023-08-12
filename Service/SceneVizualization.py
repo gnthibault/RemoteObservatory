@@ -127,4 +127,7 @@ class SceneVizualization(threading.Thread):
 
     def stop(self):
         self.stop_requested = True
-        self.join()
+        try:
+            self.join()
+        except RuntimeError as e: # cannot join thread before it is started
+            self.debug(f"Most likely thread was not started: {e}")

@@ -25,7 +25,7 @@ observatory:
     scope_controller:
         module: AggregatedCustomScopeController
         config_arduino:
-            device_name: Arduino
+            device_name: Arduino telescope controller
             device_port: /dev/serial/by-id/usb-FTDI_FT232R_USB_UART_AB0L9VL1-if00-port0
             connection_type: CONNECTION_SERIAL
             baud_rate: 57600
@@ -179,6 +179,7 @@ cameras:
     -
         module: IndiPlayerOneCamera
         camera_name : PlayerOne CCD Ares-M PRO
+        indi_driver_name: PlayerOne CCD
         do_acquisition: true
         SCOPE_INFO: # 200/800 newtonian
             FOCAL_LENGTH: 800
@@ -230,7 +231,13 @@ cameras:
         #        indi_port: 7625
         indi_client :
             indi_host : localhost
-            indi_port : 7625
+            indi_port : 7626
+            indi_webmanager:
+                module: IndiWebManagerClient
+                host: localhost
+                port: 8626
+                profile_name: playerone_science
+
     - module: IndiAltairCameraNonCool
       camera_name: Altair AA183MPRO
       do_acquisition: false

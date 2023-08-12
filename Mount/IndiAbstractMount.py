@@ -124,7 +124,7 @@ class IndiAbstractMount(IndiMount, AbstractMount):
             # by default, we assume that mount is in the "worst" situation
             self._is_parked = False
             return False
-
+        self.logger.debug(f"Mount {self.device_name} successfully parked")
         return self.is_parked
 
     def unpark(self):
@@ -137,8 +137,14 @@ class IndiAbstractMount(IndiMount, AbstractMount):
         self.start_indi_server()
         self.start_indi_driver()
         self.connect(connect_device=True)
-        IndiMount.unpark(self)
+        self.initialize()
         self._is_parked = False
+        self.logger.debug(f"Mount {self.device_name} successfully unparked")
+
+    def initialize(self):
+        self.logger.debug("Initializing from IndiAbstractMount")
+        IndiMount.unpark(self)
+        self.logger.debug("Successfully initialized from IndiAbstractMount")
 
     def slew_to_coord(self, coord):
         self.slew_to_coord_and_track(self, coord)

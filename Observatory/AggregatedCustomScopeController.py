@@ -143,9 +143,11 @@ class UPBV2(IndiDevice, Base):
         self.logger.debug('configured successfully')
 
     def unpark(self):
+        self.logger.debug("Unparking")
         self.start_indi_server()
         self.start_indi_driver()
         self.initialize()
+        self.logger.debug("Successfully unparked")
 
     def initialize(self):
         """
@@ -157,6 +159,7 @@ class UPBV2(IndiDevice, Base):
         state, that can last a very long time (multiple days without operation)
         :return:
         """
+        self.logger.debug("Initializing")
         self.connect(connect_device=False)
         self.set_device_communication_options()
         self.connect_device()
@@ -172,12 +175,17 @@ class UPBV2(IndiDevice, Base):
 
         self.is_initialized = True
 
+        self.logger.debug("Successfully Initialized")
+
     def park(self):
+        self.logger.debug("Parking")
         self.deinitialize()
         self.disconnect()
         self.stop_indi_server()
+        self.logger.debug("Successfully parked")
 
     def deinitialize(self):
+        self.logger.debug("Deinitializing")
         # Then switch off all electronic devices
         self.close_scope_dustcap()
         self.switch_off_scope_fan()
@@ -186,6 +194,7 @@ class UPBV2(IndiDevice, Base):
         self.power_off_mount()
 
         self.is_initialized = False
+        self.logger.debug("Successfully deinitialized")
 
     def set_device_communication_options(self):
         self.set_text("DEVICE_PORT", {"PORT": self.device_port})
@@ -479,9 +488,11 @@ class ArduinoServoController(IndiDevice, Base):
         self.logger.debug('configured successfully')
 
     def unpark(self):
+        self.logger.debug("About to unpark")
         self.start_indi_server()
         self.start_indi_driver()
         self.initialize()
+        self.logger.debug("Unpark done")
 
     def initialize(self):
         """
@@ -490,6 +501,7 @@ class ArduinoServoController(IndiDevice, Base):
           * connect server to actual physical device
         :return:
         """
+        self.logger.debug("Initializing")
         self.connect(connect_device=False) #TODO TN Urgent check if this is ok
         self.set_device_communication_options()
         self.connect_device()
@@ -498,11 +510,14 @@ class ArduinoServoController(IndiDevice, Base):
         #'message': 'Cannot change property while device is disconnected.'})
         self.initialize_servo()
         self.is_initialized = True
+        self.logger.debug("Initialization done")
 
     def deinitialize(self):
+        self.logger.debug("Denitialization")
         self.close_finder_dustcap()
         self.disconnect()
         self.is_initialized = False
+        self.logger.debug("Deinitialization done")
 
     def set_device_communication_options(self):
         self.set_text("DEVICE_PORT", {"PORT": self.device_port})
@@ -606,7 +621,7 @@ class AggregatedCustomScopeController(Base):
 
     def unpark(self):
 
-        self.logger.debug("Parking AggregatedCustomScopeController")
+        self.logger.debug("Unparking")
         self.upbv2.unpark()
         # self.logger.debug(f'1#################################### {self.upbv2.get_switch("USB_PORT_CONTROL")["PORT_4"]}')
 
@@ -653,12 +668,13 @@ class AggregatedCustomScopeController(Base):
         self.arduino_servo_controller.unpark()
 
         self.is_initialized = True
+        self.logger.debug("Successfully unparked")
 
     def park(self):
         """
         :return:
         """
-        self.logger.debug("Parking AggregatedCustomScopeController")
+        self.logger.debug("Parking")
 
         # Power acquisition instruments: this is a very specific case, see https://github.com/indilib/indi-3rdparty/issues/822
         self.upbv2.power_off_acquisition_equipments()
@@ -672,6 +688,7 @@ class AggregatedCustomScopeController(Base):
         self.upbv2.park()
 
         self.is_initialized = False
+        self.logger.debug("Successfully parked")
 
     def open(self):
         """ blocking call: opens both main telescope and guiding scope dustcap
