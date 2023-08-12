@@ -86,21 +86,6 @@ class IndiAbstractMount(IndiMount, AbstractMount):
 ###############################################################################
 # Mandatory overriden methods
 ###############################################################################
-    def connect(self, connect_device=True):  # pragma: no cover
-        IndiMount.connect(self, connect_device=connect_device)
-
-    def disconnect(self):
-        if not self.is_parked:
-            try:
-                IndiMount.park(self)
-                self._is_parked = True
-                self.disconnect()  # Disconnect indi server
-            except Exception as e:
-                self.logger.warning('Problem with park')
-                # by default, we assume that mount is in the "worst" situation
-
-        IndiMount.disconnect(self)
-
     def initialize(self, *arg, **kwargs):  # pragma: no cover
         self.logger.debug(f"Initializing mount with args {arg}, {kwargs}")
         self.connect()
