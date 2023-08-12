@@ -1,0 +1,25 @@
+[Unit]
+Description=INDI Web Manager
+After=multi-user.target
+
+[Service]
+Type=idle
+# MUST SET YOUR USERNAME HERE.
+User=gnthibault
+Environment=LD_LIBRARY_PATH=/usr/local/lib:/usr/lib
+ExecStart=/home/gnthibault/.local/bin/indi-web -v --fifo /tmp/indiFIFO_pointing_camera --indi-port 7627 --port 8627 --xmldir /home/gnthibault/projects/RemoteObservatory/conf_files/indi_driver_xml --conf /home/gnthibault/projects/RemoteObservatory/conf_files/indi_driver_conf
+
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
+
+#sudo cp ./indiwebmanager_pointing_camera.service /etc/systemd/system/
+#sudo systemctl daemon-reload
+#sudo systemctl restart indiwebmanager_pointing_camera.service
+#sudo systemctl status indiwebmanager_pointing_camera.service
+
+#git clone https://github.com/knro/indiwebmanager (push)
+#python ./setup.py install --prefix /home/gnthibault/.local/
+
