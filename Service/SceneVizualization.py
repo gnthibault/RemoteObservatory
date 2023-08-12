@@ -130,4 +130,4 @@ class SceneVizualization(threading.Thread):
         try:
             self.join()
         except RuntimeError as e: # cannot join thread before it is started
-            self.debug(f"Most likely thread was not started: {e}")
+            self.logger.debug(f"Most likely thread was not started: {e}")

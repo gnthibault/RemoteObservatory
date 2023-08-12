@@ -133,7 +133,8 @@ class IndiAbstractMount(IndiMount, AbstractMount):
         Returns:
             bool: indicating success
         """
-        self.logger.debug(f"Mount {self.device_name} about to unpark")
+        self.logger.debug(f"Mount {self.device_name} about to unpark with a reset-like behaviour")
+        self.park()
         self.start_indi_server()
         self.start_indi_driver()
         self.connect(connect_device=True)

@@ -492,7 +492,7 @@ class ArduinoServoController(IndiDevice, Base):
         self.start_indi_server()
         self.start_indi_driver()
         self.initialize()
-        self.logger.debug("Unpark done")
+        self.logger.debug("Successfully Unparked")
 
     def initialize(self):
         """
@@ -511,6 +511,13 @@ class ArduinoServoController(IndiDevice, Base):
         self.initialize_servo()
         self.is_initialized = True
         self.logger.debug("Initialization done")
+
+    def park(self):
+        self.logger.debug("About to park")
+        self.deinitialize()
+        self.disconnect()
+        self.stop_indi_server()
+        self.logger.debug("Successfully parked")
 
     def deinitialize(self):
         self.logger.debug("Denitialization")
@@ -621,7 +628,10 @@ class AggregatedCustomScopeController(Base):
 
     def unpark(self):
 
-        self.logger.debug("Unparking")
+        self.logger.debug("About to unpark in a reset-like manner")
+        self.park()
+
+        # Now actually start unparking
         self.upbv2.unpark()
         # self.logger.debug(f'1#################################### {self.upbv2.get_switch("USB_PORT_CONTROL")["PORT_4"]}')
 

@@ -42,17 +42,20 @@ class IndiDomeController(IndiDevice):
         return self._is_initialized
 
     def unpark(self):
-        self.logger.debug("Unparking")
+        self.logger.debug("Unparking with a reset-like behaviour")
+        self.park()
         self.start_indi_server()
         self.start_indi_driver()
         self.connect(connect_device=True)
         self.set_switch("DOME_PARK", on_switches=["UNPARK"], sync=True, timeout=self.dome_movement_timeout_s)
+        self.logger.debug("Successfully unparked")
 
     def park(self):
         self.logger.debug("Parking")
         self.set_switch("DOME_PARK", on_switches=["PARK"], sync=True, timeout=self.dome_movement_timeout_s)
         self.disconnect()
         self.stop_indi_server()
+        self.logger.debug("Successfully parked")
 
     def open(self):
         self.logger.debug("Opening")

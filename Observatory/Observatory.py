@@ -157,6 +157,7 @@ class Observatory(Base):
             self.dome_controller.unpark()
         if self.has_scope:
             self.scope_controller.unpark()
+        self.logger.debug('Successfully unparked Observatory')
 
     # def reset_config(self):
     #     if self.has_scope:
