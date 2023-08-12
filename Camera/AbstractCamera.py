@@ -37,6 +37,8 @@ class AbstractCamera(Base):
         self._file_extension = 'fits'
         self._serial_number = '0123456789'
 
+        self._is_initialized = False
+
 ###############################################################################
 # Properties
 ###############################################################################
@@ -55,6 +57,11 @@ class AbstractCamera(Base):
     def uid(self):
         """ A six-digit serial number for the camera """
         return self._serial_number[0:6]
+
+    @property
+    def is_initialized(self):
+        """ bool: Has mount been initialized with connection """
+        return self._is_initialized
 
 ###############################################################################
 # Methods

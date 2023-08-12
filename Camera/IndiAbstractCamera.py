@@ -26,17 +26,21 @@ class IndiAbstractCamera(IndiCamera, AbstractCamera):
 
     def park(self):
         self.logger.debug(f"Parking camera {self.camera_name}")
+        self.deinitialize_working_conditions()
         self.disconnect()
         self.stop_indi_server()
         self.logger.debug(f"Successfully parked camera {self.camera_name}")
+        self._is_initialized = False
 
     def unpark(self):
         self.logger.debug(f"Unparking camera {self.camera_name} with a reset-like behaviour")
         self.park()
         self.start_indi_server()
         self.start_indi_driver()
+        self.initialize_working_conditions()
         self.connect(connect_device=True)
         self.logger.debug(f"Successfully unparked camera {self.camera_name}")
+        self._is_initialized = True
 
     # TODO TN: setup event based acquisition properly
     def shoot_asyncWithEvent(self, exp_time_sec, filename, exposure_event,
@@ -73,6 +77,19 @@ class IndiAbstractCamera(IndiCamera, AbstractCamera):
         except Exception as e:
             self.logger.error(f"Error while writing file {filename} : {e}")
         exposure_event.set()
+
+    def initialize_working_conditions(self):
+        self.logger.debug(f"Camera {self.camera_name} initializing to be in working conditions")
+        if self.working_temperature is not None:
+            self.set_cooling_on()
+            self.set_temperature(self.working_temperature)
+        self.logger.debug(f"Camera {self.camera_name} successfully initialized to working conditions")
+
+    def deinitialize_working_conditions(self):
+        if self.is_initialized:
+            self.logger.debug(f"Camera {self.camera_name} deinitializing from working conditions")
+            self.set_cooling_off()
+            self.logger.debug(f"Camera {self.camera_name} successfully deinitialized")
 
     def take_exposure(self, exposure_time, filename, *args, **kwargs):
         """

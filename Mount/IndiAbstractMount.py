@@ -115,10 +115,12 @@ class IndiAbstractMount(IndiMount, AbstractMount):
         """
         self.logger.debug(f"Mount {self.device_name} about to park")
         try:
-            IndiMount.park(self)
+            if self.is_initialized:
+                IndiMount.park(self)
             self._is_parked = True
             self.disconnect() # Disconnect indi server
             self.stop_indi_server()
+            self._is_initialized = False
         except Exception as e:
             self.logger.warning('Problem with park')
             # by default, we assume that mount is in the "worst" situation
@@ -139,6 +141,7 @@ class IndiAbstractMount(IndiMount, AbstractMount):
         self.start_indi_driver()
         self.connect(connect_device=True)
         self.initialize()
+        self._is_initialized = False
         self._is_parked = False
         self.logger.debug(f"Mount {self.device_name} successfully unparked")
 

@@ -15,10 +15,23 @@ class IndiAltairCameraNonCool(IndiAltairCamera):
             connect_on_create=connect_on_create)
 
     def set_cooling_on(self):
-        pass
+        """
+            Altair AA183MPRO.TC_FAN_SPEED.INDI_DISABLED=Off
+            Altair AA183MPRO.TC_FAN_SPEED.FAN_SPEED1=Off
+            Altair AA183MPRO.TC_FAN_SPEED.FAN_SPEED2=On
+        :return:
+        """
+        self.set_switch('TC_FAN_SPEED', ['FAN_SPEED2'], sync=True)
+
 
     def set_cooling_off(self):
-        pass
+        """
+            Altair AA183MPRO.TC_FAN_SPEED.INDI_DISABLED=Off
+            Altair AA183MPRO.TC_FAN_SPEED.FAN_SPEED1=Off
+            Altair AA183MPRO.TC_FAN_SPEED.FAN_SPEED2=On
+        :return:
+        """
+        self.set_switch('TC_FAN_SPEED', ['INDI_DISABLED'], sync=True)
 
     def get_temperature(self):
         return np.nan
