@@ -48,7 +48,6 @@ def solve_field(fname, timeout=360, solve_opts=None, **kwargs):
             '--match', 'none',
             '--corr', 'none',
             '--wcs', 'none',
-            '--downsample', '1',
         ]
 
         if kwargs.get('overwrite', True):
@@ -75,9 +74,9 @@ def solve_field(fname, timeout=360, solve_opts=None, **kwargs):
                 options.append("arcsecperpix")
         if kwargs.get("downsample", 1) > 1:
             options.append('--downsample')
-            options.append(kwargs.get('downsample'))
+            options.append(str(kwargs.get('downsample')))
             options.append('--plot-scale')
-            options.append(1/kwargs.get('downsample'))
+            options.append(str(1/kwargs.get('downsample')))
 
     cmd = [solve_field_script] + options + [fname]
     if verbose:
@@ -88,13 +87,11 @@ def solve_field(fname, timeout=360, solve_opts=None, **kwargs):
         proc = subprocess.Popen(cmd, universal_newlines=True,
                                 stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
     except OSError as e:
-        raise error.InvalidCommand(
-            "Can't send command to solve_field.sh: {} \t {}".format(e, cmd))
+        raise error.AstrometrySolverError(f"Error: {e} - Can't send command to solve_field.sh: {cmd}")
     except ValueError as e:
-        raise error.InvalidCommand(
-            "Bad parameters to solve_field: {} \t {}".format(e, cmd))
+        raise error.AstrometrySolverError(f"Error: {e} - Bad parameters to solve_field: {cmd}")
     except Exception as e:
-        raise error.PanError("Error on plate solving: {}".format(e))
+        raise error.AstrometrySolverError(f"Error: {e} - Error for solve_field: {cmd}")
 
     if verbose:
         print("Returning proc from solve_field")

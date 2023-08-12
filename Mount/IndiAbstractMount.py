@@ -139,7 +139,7 @@ class IndiAbstractMount(IndiMount, AbstractMount):
         self.logger.debug("Successfully initialized from IndiAbstractMount")
 
     def slew_to_coord(self, coord):
-        self.slew_to_coord_and_track(self, coord)
+        self.slew_to_coord_and_track(coord)
 
     def get_current_coordinates(self):
         return IndiMount.get_current_coordinates(self)

@@ -92,7 +92,7 @@ mount:
         indi_port : 7624
 cameras:
     -
-        module: IndiAbstractCameraSimulator
+        module: IndiAbstractCameraSimulatorNonCoolNonOffset
         camera_name : Guide Simulator
         do_acquisition: false
         SIMULATOR_SETTINGS: # 290MM
