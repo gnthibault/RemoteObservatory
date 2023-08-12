@@ -29,10 +29,10 @@ class IndiAbstractCameraSimulator(IndiAbstractCamera):
         self.set_number("SCOPE_INFO", self.indi_camera_config["SCOPE_INFO"])
 
     def unpark(self):
-        IndiAbstractCamera.unpark()
+        IndiAbstractCamera.unpark(self)
         self.initialize_simulation_setup()
 
     def set_cooling_on(self):
         # This feels like a bug from the simulator ...
-        self.logger.warning(f"set_cooling_on asynchronously as, there seems to be a bug in simulator implementation")
+        self.logger.warning(f"set_cooling_on removed as there seems to be a bug in simulator implementation")
         self.set_switch('CCD_COOLER', ['COOLER_ON'], sync=False, timeout=self.defaultTimeout)

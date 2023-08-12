@@ -57,10 +57,13 @@ class IndiAbstractMount(IndiMount, AbstractMount):
 
     @property
     def is_parked(self):
-        ret = IndiMount.is_parked.fget(self)
-        if ret != AbstractMount.is_parked.fget(self):
-            self.logger.error('It looks like the software maintained state is'
-                              ' different from the Indi maintained state')
+        logical_park_status = AbstractMount.is_parked.fget(self)
+        ret = logical_park_status
+        if self._is_initialized:
+            physical_park_status = IndiMount.is_parked.fget(self)
+            if physical_park_status != logical_park_status:
+                self.logger.error('It looks like the software maintained state is'
+                                  ' different from the Indi maintained state')
         return ret
 
     @property

@@ -38,8 +38,8 @@ class IndiAbstractCamera(IndiCamera, AbstractCamera):
         self.park()
         self.start_indi_server()
         self.start_indi_driver()
-        self.initialize_working_conditions()
         self.connect(connect_device=True)
+        self.initialize_working_conditions()
         self.logger.debug(f"Successfully unparked camera {self.camera_name}")
         self._is_initialized = True
 
