@@ -21,10 +21,10 @@ class SpectralCalibration(Base):
 
         if config is None:
             config = dict(
-                module = "SpectralCalibration",
-                controller = dict(
-                    module = 'IndiSpectroController',
-                    controller_name = "spox")
+                module="SpectralCalibration",
+                controller=dict(
+                    module='IndiSpectroController',
+                    controller_name="spox")
             )
 
         # Get info from config

@@ -122,7 +122,7 @@ calibration:
     #module: ImagingCalibration
     module: SpectralCalibration
     spectral_calib:
-        nb: 10
+        nb: 5
         sec: 30
         gain: 150
         offset: 30

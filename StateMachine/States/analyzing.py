@@ -5,7 +5,7 @@ def on_enter(event_data):
 
     observation = model.manager.current_observation
 
-    model.say(f"Analyzing image {observation.current_exp} / {observation.number_exposures}")
+    model.logger.debug(f"Analyzing image {observation.current_exp} / {observation.number_exposures}")
 
     model.next_state = 'observing'
 
