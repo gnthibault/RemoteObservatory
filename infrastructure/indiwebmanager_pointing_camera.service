@@ -7,7 +7,7 @@ Type=idle
 # MUST SET YOUR USERNAME HERE.
 User=gnthibault
 Environment=LD_LIBRARY_PATH=/usr/local/lib:/usr/lib
-ExecStart=/home/gnthibault/.local/bin/indi-web -v --fifo /tmp/indiFIFO_pointing_camera --indi-port 7627 --port 8627 --xmldir /home/gnthibault/projects/RemoteObservatory/conf_files/indi_driver_xml --conf /home/gnthibault/projects/RemoteObservatory/conf_files/indi_driver_conf
+ExecStart=/home/gnthibault/.local/bin/indi-web -v --fifo /tmp/indiFIFO_pointing_camera --indi-port 7628 --port 8628 --xmldir /home/gnthibault/projects/RemoteObservatory/conf_files/indi_driver_xml --conf /home/gnthibault/projects/RemoteObservatory/conf_files/indi_driver_conf
 
 Restart=always
 RestartSec=5
