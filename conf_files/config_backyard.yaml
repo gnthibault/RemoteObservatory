@@ -153,7 +153,7 @@ mount:
         indi_port : 7625
 cameras:
     -
-        module: IndiASICameraNonCool
+        module: IndiASICamera290MMMini
         camera_name : ZWO CCD ASI290MM Mini
         do_acquisition: false
         SCOPE_INFO: # 200/800 newtonian
@@ -161,8 +161,8 @@ cameras:
             APERTURE: 200
         sampling_arcsec: 0.88
         do_guiding: true
-        do_pointing: true
-        pointing_seconds: 40
+        do_pointing: false
+        pointing_seconds: 30
         do_adjust_pointing: true
         adjust_center_x: 877
         adjust_center_y: 637
@@ -174,14 +174,19 @@ cameras:
         autofocus_merit_function: half_flux_radius
         indi_client :
             indi_host : localhost
-            indi_port : 7625
+            indi_port : 7627
             #use_unique_client: True
+            indi_webmanager:
+                module: IndiWebManagerClient
+                host: localhost
+                port: 8627
+                profile_name: zwo_guiding
     -
         module: IndiPlayerOneCamera
         camera_name : PlayerOne CCD Ares-M PRO
         indi_driver_name: PlayerOne CCD
         do_acquisition: true
-        working_temperature: -12
+        working_temperature: 10
         SCOPE_INFO: # 200/800 newtonian
             FOCAL_LENGTH: 800
             APERTURE: 200
@@ -248,7 +253,7 @@ cameras:
       sampling_arcsec: 1.88
       subsample_astrometry: 4
       do_guiding: false
-      do_pointing: false
+      do_pointing: true
       pointing_seconds: 10
       do_adjust_pointing: false
       adjust_center_x: 400
@@ -261,8 +266,12 @@ cameras:
       autofocus_merit_function: half_flux_radius #vollath_F4
       indi_client:
           indi_host: localhost
-          indi_port: 7625
-
+          indi_port: 7628
+      indi_webmanager:
+          module: IndiWebManagerClient
+          host: localhost
+          port: 8628
+          profile_name: altair_pointing
 pointer:
     module: IterativeSync #DifferentialPointer #IterativeSync
     gen_hips: False
@@ -270,7 +279,7 @@ pointer:
     max_iterations: 10
     max_pointing_error_seconds: 10
 offset_pointer:
-    module: StarOffsetPointer #StarOffsetPointer #NoOffsetPointer
+    module: StarOffsetPointer #StarOffsetPointer #NoOffsetPointer #InvisibleOffsetPointer
     timeout_seconds: 300
     max_identification_error_seconds: 1
     sync_mount_upon_solve: True
@@ -282,7 +291,7 @@ guider:
     port : 4400
     do_calibration : False
     profile_name : backyard
-    exposure_time_sec : 2
+    exposure_time_sec : 8
     settle :
         pixels : 3
         time : 10
@@ -342,11 +351,6 @@ paws_publisher:
     mqtt_port: 1883
     com_mode: publisher
     msg_port: 6500
-indi_webmanager:
-    module: IndiWebManagerClient
-    host: localhost
-    port: 8624
-    profile_name: full_setup
 #independant_services:
 #    -
 #        module: NasaGCNService

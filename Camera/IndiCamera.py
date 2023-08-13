@@ -293,7 +293,8 @@ class IndiCamera(IndiDevice):
                            sync=True, timeout=1200)
 
     def set_cooling_on(self):
-        self.set_switch('CCD_COOLER', ['COOLER_ON'], sync=True, timeout=self.defaultTimeout)
+        # No sync, because that's the way it works on indi for the CCD_COOLER property, it stays yellow in the interface
+        self.set_switch('CCD_COOLER', ['COOLER_ON'], sync=False)
 
     def set_cooling_off(self):
         self.set_switch('CCD_COOLER', ['COOLER_OFF'], sync=True, timeout=self.defaultTimeout)

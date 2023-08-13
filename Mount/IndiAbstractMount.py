@@ -89,10 +89,11 @@ class IndiAbstractMount(IndiMount, AbstractMount):
 ###############################################################################
 # Mandatory overriden methods
 ###############################################################################
-    def initialize(self, *arg, **kwargs):  # pragma: no cover
-        self.logger.debug(f"Initializing mount with args {arg}, {kwargs}")
-        self.connect()
-        self._is_initialized = True
+
+    def initialize(self):
+        self.logger.debug("Initializing from IndiAbstractMount")
+        IndiMount.unpark(self)
+        self.logger.debug("Successfully initialized from IndiAbstractMount")
 
     def park(self):
         """ Slews to the park position and parks the mount.
@@ -129,14 +130,9 @@ class IndiAbstractMount(IndiMount, AbstractMount):
         self.start_indi_driver()
         self.connect(connect_device=True)
         self.initialize()
-        self._is_initialized = False
+        self._is_initialized = True
         self._is_parked = False
         self.logger.debug(f"Mount {self.device_name} successfully unparked")
-
-    def initialize(self):
-        self.logger.debug("Initializing from IndiAbstractMount")
-        IndiMount.unpark(self)
-        self.logger.debug("Successfully initialized from IndiAbstractMount")
 
     def slew_to_coord(self, coord):
         self.slew_to_coord_and_track(coord)

@@ -693,12 +693,13 @@ class AggregatedCustomScopeController(Base):
         self.logger.debug("Parking")
 
         # Power acquisition instruments: this is a very specific case, see https://github.com/indilib/indi-3rdparty/issues/822
-        self.upbv2.power_off_acquisition_equipments()
-        time.sleep(1)
-        self.upbv2.switch_off_acquisition_equipments_usb()
+        if self.is_initialized:
+            self.upbv2.power_off_acquisition_equipments()
+            time.sleep(1)
+            self.upbv2.switch_off_acquisition_equipments_usb()
 
-        # Deinitialize arduino servo first (as it relies on upb power)
-        self.arduino_servo_controller.park()
+            # Deinitialize arduino servo first (as it relies on upb power)
+            self.arduino_servo_controller.park()
 
         # Deinitialize upbv2
         self.upbv2.park()
