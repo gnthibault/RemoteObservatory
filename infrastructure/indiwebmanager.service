@@ -15,3 +15,13 @@ RestartSec=5
 [Install]
 WantedBy=multi-user.target
 
+
+#sudo cp ./indiwebmanager.service /etc/systemd/system/
+#sudo systemctl daemon-reload
+#sudo systemctl enable indiwebmanager.service
+#sudo systemctl restart indiwebmanager.service
+#sudo systemctl status indiwebmanager.service
+
+#git clone https://github.com/knro/indiwebmanager (push)
+#python ./setup.py install --prefix /home/gnthibault/.local/
+
