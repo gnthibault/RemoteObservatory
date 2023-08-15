@@ -136,8 +136,7 @@ class SpectroScheduler(Scheduler):
                     target = FixedTarget(name=target_name.replace(" ", ""),
                                          coord=coord)
                 except:
-                    raise RuntimeError("SpectroScheduler: did not managed to "
-                                       "define target {target_name}")
+                    raise RuntimeError(f"SpectroScheduler: did not managed to define target {target_name}")
         return target, spinfo
 
     def get_best_reference_target(self, observation):

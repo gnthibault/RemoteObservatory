@@ -10,7 +10,6 @@ def on_enter(event_data):
     model.next_state = 'parked'
 
     msg = f"Taking it on home and then parking."
-    model.logger.debug(msg)
     model.say(msg)
     
     if not model.manager.park():

@@ -598,7 +598,6 @@ class Manager(Base):
             setup various services that are supposed to provide infos/data
         """
         try:
-            # TODO TN, I need to properly split observatory related webmanager and services related
             self._setup_time_service()
             self._setup_weather_service()
             self._setup_messaging()

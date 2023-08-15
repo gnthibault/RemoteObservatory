@@ -29,11 +29,11 @@ def on_enter(event_data):
             # We might have shutdown during previous sleep.
             if not model.connected:
                 break
-            elif model.is_safe():
+            elif model.is_safe() and not model.is_simulation():
                 model.reset_observing_run()
                 model.next_state = 'ready'
                 break
-            elif model.is_dark() is False:
+            elif model.is_dark() is False or model.is_simulation():
                 model.logger.debug(f"Looks like it is not dark anymore. Going to clean up.")
                 model.next_state = 'housekeeping'
                 break

@@ -238,6 +238,8 @@ offset_pointer:
     sync_mount_upon_solve: False
     use_guider_adjust: False
     on_star_identification_failure: trust_astrometry # get_brightest or trust_astrometry
+    max_iterations: 5
+    max_pointing_error_seconds: 2
 guider:
     module : GuiderPHD2
     host : localhost
