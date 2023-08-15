@@ -3,7 +3,6 @@ constraints :
     maxairmass : 100 # for testing, normally use 2
     minmoonseparationdeg : 2 # normally put 45
 targets :
-
     "T CrB" :
         Luminance :
             count : 60

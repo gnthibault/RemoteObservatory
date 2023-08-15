@@ -283,8 +283,7 @@ class Scheduler(Base):
                                          frame='icrs',
                                          equinox='J2000.0'))
             except:
-                raise RuntimeError(f"Scheduler: did not managed to "
-                                   f"define target {target_name}")
+                raise RuntimeError(f"Scheduler: did not managed to define target {target_name}")
         return target
 
     def initialize_target_list(self):

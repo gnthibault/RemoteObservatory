@@ -150,7 +150,12 @@ mount:
     tcp_port: 11110
     indi_client :
         indi_host : localhost
-        indi_port : 7625
+        indi_port : 7627
+        indi_webmanager:
+            module: IndiWebManagerClient
+            host: localhost
+            port: 8627
+            profile_name: zwo_guiding
 cameras:
     -
         module: IndiASICamera290MMMini
@@ -161,7 +166,7 @@ cameras:
             APERTURE: 200
         sampling_arcsec: 0.88
         do_guiding: true
-        do_pointing: false
+        do_pointing: true
         pointing_seconds: 30
         do_adjust_pointing: true
         adjust_center_x: 877
@@ -176,11 +181,11 @@ cameras:
             indi_host : localhost
             indi_port : 7627
             #use_unique_client: True
-            indi_webmanager:
-                module: IndiWebManagerClient
-                host: localhost
-                port: 8627
-                profile_name: zwo_guiding
+#            indi_webmanager:
+#                module: IndiWebManagerClient
+#                host: localhost
+#                port: 8627
+#                profile_name: zwo_guiding
     -
         module: IndiPlayerOneCamera
         camera_name : PlayerOne CCD Ares-M PRO
@@ -244,34 +249,34 @@ cameras:
                 port: 8626
                 profile_name: playerone_science
 
-    - module: IndiAltairCameraNonCool
-      camera_name: Altair AA183MPRO
-      do_acquisition: false
-      SCOPE_INFO: # 50/242 evoguide
-          FOCAL_LENGTH: 242
-          APERTURE: 50
-      sampling_arcsec: 1.88
-      subsample_astrometry: 4
-      do_guiding: false
-      do_pointing: true
-      pointing_seconds: 10
-      do_adjust_pointing: false
-      adjust_center_x: 400
-      adjust_center_y: 400
-      adjust_roi_search_size: 50
-      adjust_pointing_seconds: 5
-      do_autofocus: false
-      autofocus_seconds: 5
-      autofocus_roi_size: 750
-      autofocus_merit_function: half_flux_radius #vollath_F4
-      indi_client:
-          indi_host: localhost
-          indi_port: 7628
-      indi_webmanager:
-          module: IndiWebManagerClient
-          host: localhost
-          port: 8628
-          profile_name: altair_pointing
+#    - module: IndiAltairCameraNonCool
+#      camera_name: Altair AA183MPRO
+#      do_acquisition: false
+#      SCOPE_INFO: # 50/242 evoguide
+#          FOCAL_LENGTH: 242
+#          APERTURE: 50
+#      sampling_arcsec: 1.88
+#      subsample_astrometry: 4
+#      do_guiding: false
+#      do_pointing: true
+#      pointing_seconds: 10
+#      do_adjust_pointing: false
+#      adjust_center_x: 400
+#      adjust_center_y: 400
+#      adjust_roi_search_size: 50
+#      adjust_pointing_seconds: 5
+#      do_autofocus: false
+#      autofocus_seconds: 5
+#      autofocus_roi_size: 750
+#      autofocus_merit_function: half_flux_radius #vollath_F4
+#      indi_client:
+#          indi_host: localhost
+#          indi_port: 7628
+#      indi_webmanager:
+#          module: IndiWebManagerClient
+#          host: localhost
+#          port: 8628
+#          profile_name: altair_pointing
 pointer:
     module: IterativeSync #DifferentialPointer #IterativeSync
     gen_hips: False

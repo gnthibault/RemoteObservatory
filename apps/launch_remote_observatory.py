@@ -177,6 +177,7 @@ class RemoteObservatoryFSM(StateMachine, Base):
         Args:
             msg(str): Message to be sent
         """
+        self.logger.debug(msg)
         if not self.has_messaging:
             self.logger.info(f"Unit says: {msg}")
         else:
@@ -322,6 +323,9 @@ class RemoteObservatoryFSM(StateMachine, Base):
                 self.park()
 
         return safe
+
+    def is_simulation(self):
+        return self.simulation_mode
 
     def is_dark(self):
         """Is it dark
