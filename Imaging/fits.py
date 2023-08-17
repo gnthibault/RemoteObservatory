@@ -9,9 +9,10 @@ import numpy as np
 import skimage.io as io
 
 # Astropy
-from astropy.io import fits
-from astropy.wcs import WCS
 from astropy import units as u
+from astropy.io import fits
+from astropy.time import Time
+from astropy.wcs import WCS
 
 # Local
 from utils import error

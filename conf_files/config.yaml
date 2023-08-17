@@ -119,7 +119,7 @@ cameras:
             APERTURE: 200
         subsample_astrometry: 1
         do_guiding: true
-        do_pointing: false
+        do_pointing: true
         pointing_seconds: 5
         do_adjust_pointing: true
         adjust_center_x: 580
@@ -179,9 +179,9 @@ cameras:
             APERTURE: 50
         subsample_astrometry: 4
         do_guiding: false
-        do_pointing: true
+        do_pointing: false
         pointing_seconds: 5
-        do_adjust_pointing: true
+        do_adjust_pointing: false
         adjust_center_x: 400
         adjust_center_y: 400
         adjust_roi_search_size: 50
@@ -230,9 +230,9 @@ pointer:
     gen_hips: False
     timeout_seconds: 450
     max_iterations: 5
-    max_pointing_error_seconds: 3
+    max_pointing_error_seconds: 2
 offset_pointer:
-    module: InvisibleObjectOffsetPointer #StarOffsetPointer #NoOffsetPointer #InvisibleObjectOffsetPointer
+    module: StarOffsetPointer #StarOffsetPointer #NoOffsetPointer #InvisibleObjectOffsetPointer
     timeout_seconds: 300
     max_identification_error_seconds: 1
     sync_mount_upon_solve: False

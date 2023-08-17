@@ -467,11 +467,12 @@ class GuiderPHD2(Base):
                    otherwise returns an error object
            desc. : Select a star
         """
-        params = [int(x), int(y), int(width), int(height)]
+        params = [x, y, width, height]
         if all(map(lambda x: x is None, params)):
             params = []
         else:
             assert not any(map(lambda x: x is None, params)), f"Please provide all parameters, invalid {params}"
+            params = [int(x), int(y), int(width), int(height)]
             params = [params]
         req={"method": "find_star",
              "params": params,
