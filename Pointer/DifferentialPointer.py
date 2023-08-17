@@ -101,10 +101,10 @@ class DifferentialPointer(Base):
                 self.logger.debug(f"Pointing Coords: {pointing_image.pointing}")
                 self.logger.debug(f"Pointing Error: {pointing_error}")
                 # adjust by slewing again to correct the delta
-                target = mount.get_current_coordinates()
+                current = mount.get_current_coordinates()
                 target = SkyCoord(
-                    ra=target.ra-pointing_error.delta_ra,
-                    dec=target.dec-pointing_error.delta_dec,
+                    ra=current.ra-pointing_error.delta_ra,
+                    dec=current.dec-pointing_error.delta_dec,
                     frame='icrs', equinox='J2000.0')
                 mount.slew_to_coord(target)
                 # update pointing process tracking information

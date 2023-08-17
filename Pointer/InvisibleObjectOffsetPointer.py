@@ -2,18 +2,17 @@
 import threading
 import traceback
 
+# Numerical tools
+import numpy as np
+
 # Astropy
 from astropy.coordinates import SkyCoord
-
-# Local
-from utils.error import AstrometrySolverError, ImageAcquisitionError
-
-# Astropy
 import astropy.units as u
 
 # Local
 from Imaging.Image import OffsetError
 from Pointer.OffsetPointer import OffsetPointer
+from utils.error import AstrometrySolverError, ImageAcquisitionError
 
 class InvisibleObjectOffsetPointer(OffsetPointer):
     def __init__(self, config=None):
@@ -81,6 +80,7 @@ class InvisibleObjectOffsetPointer(OffsetPointer):
                 msg = f"Going to adjust pointing, need to stop guiding"
                 self.logger.debug(msg)
                 guider.stop_capture()
+                #guider.set_paused(paused=True, full="full")
                 try:
                     exp_time_sec = guiding_camera.is_remaining_exposure_time()
                     guiding_camera.synchronize_with_image_reception(exp_time_sec=exp_time_sec)
@@ -91,7 +91,7 @@ class InvisibleObjectOffsetPointer(OffsetPointer):
             pointing_error = OffsetError(*(np.inf * u.arcsec,) * 3)
             pointing_error_stack = {}
 
-            while (img_num < self.max_iterations and pointing_error.magnitude > self.max_pointing_error.magnitude):
+            while (img_num <= self.max_iterations and pointing_error.magnitude > self.max_pointing_error.magnitude):
                 pointing_image = self.acquire_pointing(camera, guiding_camera, observation, fits_headers,
                                                        img_num)
                 try:
@@ -105,52 +105,41 @@ class InvisibleObjectOffsetPointer(OffsetPointer):
                     # update mount with the actual position
                     if self.sync_mount_upon_solve:
                         mount.sync_to_coord(pointing_image.pointing)
-                    px_identified_target = pointing_image.get_center_coordinates()
+                    # There are some subteleties here: https://astropy-cjhang.readthedocs.io/en/latest/wcs/
+                    current_sky_coord_of_target_sensor_position = pointing_image.all_pix2world(
+                        camera.adjust_center_x,
+                        camera.adjust_center_y)
                 except AstrometrySolverError as e:
                     msg = f"Cannot solve image {pointing_image.fits_file} while in offset_pointing state: {e}"
                     self.logger.error(msg)
                     raise RuntimeError(msg)
-                    # TODO TN We can decide to assume that main camera is already pointing to the expected object
 
-                # There are some subteleties here: https://astropy-cjhang.readthedocs.io/en/latest/wcs/
-                radeg, decdeg = pointing_image.wcs.all_pix2world(
-                    camera.adjust_center_x,
-                    camera.adjust_center_y,
-                    0,  # 0-based indexing
-                    ra_dec_order=True)
-                current_sky_coord_of_target_sensor_position = SkyCoord(
-                    ra=float(radeg) * u.degree,
-                    dec=float(decdeg) * u.degree,
-                    frame='icrs',
-                    equinox='J2000.0')
-                radeg, decdeg = pointing_image.wcs.all_pix2world(
-                    px_identified_target[0],
-                    px_identified_target[1],
-                    0,  # 0-based indexing
-                    ra_dec_order=True)
-                current_sky_coord_of_target_star = SkyCoord(
-                    ra=float(radeg) * u.degree,
-                    dec=float(decdeg) * u.degree,
-                    frame='icrs',
-                    equinox='J2000.0')
-
-                pointing_error = pointing_image.pointing_error(
-                    pointing_reference_coord=current_sky_coord_of_target_star
-                )
-                offset_delta_ra = current_sky_coord_of_target_sensor_position.ra - current_sky_coord_of_target_star.ra
-                offset_delta_dec = current_sky_coord_of_target_sensor_position.dec - current_sky_coord_of_target_star.dec
+                star_pointing_delta = pointing_image.pointing_error()
+                offset_delta_ra = current_sky_coord_of_target_sensor_position.ra - pointing_image.pointing.ra
+                offset_delta_dec = current_sky_coord_of_target_sensor_position.dec - pointing_image.pointing.dec
                 # adjust by slewing to the opposite of the delta
                 current = mount.get_current_coordinates()
                 target = SkyCoord(
-                    ra=current.ra + pointing_error.delta_ra - offset_delta_ra,
-                    dec=current.dec + pointing_error.delta_dec - offset_delta_dec,
+                    ra=current.ra - star_pointing_delta.delta_ra - offset_delta_ra,
+                    dec=current.dec - star_pointing_delta.delta_dec - offset_delta_dec,
                     frame='icrs', equinox='J2000.0')
-                # Now adjust by slewing to the specified counter-offseted coordinates
-                mount.slew_to_coord(target)
-
+                # Virtual target (different from target if we do not do sync on the mount)
+                virtual_target = SkyCoord(
+                    ra=pointing_image.pointing.ra - star_pointing_delta.delta_ra - offset_delta_ra,
+                    dec=pointing_image.pointing.dec - star_pointing_delta.delta_dec - offset_delta_dec,
+                    frame='icrs', equinox='J2000.0')
+                pointing_error = pointing_image.pointing_error(
+                    pointing_reference_coord=virtual_target
+                )
+                self.logger.debug(f"Offset point, current error is: {pointing_error}")
                 # update pointing process tracking information
                 pointing_error_stack[img_num] = pointing_error
                 img_num = img_num + 1
+
+                if (img_num <= self.max_iterations) and (pointing_error.magnitude >
+                                                         self.max_pointing_error.magnitude):
+                    # Now adjust by slewing to the specified counter-offseted coordinates
+                    mount.slew_to_coord(target)
 
             if pointing_error.magnitude > self.max_pointing_error.magnitude:
                 self.logger.error(f"Pointing accuracy was not good enough after "

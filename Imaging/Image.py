@@ -1,5 +1,6 @@
 # generic import
 from collections import namedtuple
+import datetime
 import os
 
 # Astropy
@@ -7,6 +8,7 @@ from astropy import units as u
 from astropy import wcs
 from astropy.coordinates import EarthLocation
 from astropy.coordinates import FK5
+from astropy.coordinates import ICRS
 from astropy.coordinates import SkyCoord
 from astropy.io import fits
 from astropy.time import Time
@@ -127,7 +129,7 @@ class Image(Base):
         Returns:
             namedtuple: Pointing error information
         """
-        if self._pointing_error is None:
+        if (self._pointing_error is None) or not (pointing_reference_coord is None):
             assert self.pointing is not None, "No world coordinate system (WCS), can't get pointing_error"
             assert self.header_pointing is not None
 
@@ -153,7 +155,9 @@ class Image(Base):
 
     def get_center_coordinates(self):
         """
-        Those are 0-based indexing
+        Those are 0-based indexing, also from documentation:
+        https://docs.astropy.org/en/stable/api/astropy.wcs.WCS.html#astropy.wcs.WCS.pixel_to_world_values
+        Note that pixel coordinates are assumed to be 0 at the center of the first pixel in each dimension
         :return:
         """
         return (self.header["NAXIS1"]/2-0.5,
@@ -164,7 +168,7 @@ class Image(Base):
 
         The header should contain the `RA-FIELD` and `DEC-FIELD` keywords, from
         which the header pointing coordinates are built. Those two entries are
-        written by us as J2000 format, which is also the expected format for the
+        written by us as J2000 format, which might not be the expected format for the
         astrometric resolution
         """
         try:
@@ -183,18 +187,19 @@ class Image(Base):
             msg = 'Cannot get header pointing information: {}'.format(e)
             self.logger.error(msg)
             raise RuntimeError(msg)
-            
 
     def get_wcs_pointing(self):
         """Get the pointing information from the WCS
         Builds the pointing coordinates from the plate-solved WCS. These will be
         compared with the coordinates stored in the header.
-        One should notice that Astrometry.net uses J2000 equinox
+        One should notice that Astrometry.net uses J2000 equinox in general,
+        however, we assume the install related to Gaia DR2 + Tycho2 catalogs, which are J2015.5
+        see https://portal.nersc.gov/project/cosmo/temp/dstn/index-5200/LITE/
         """
         if self.wcs is not None:
             # This was wrong because crval coord relates to crpix reference pixels
-            ra = self.wcs.celestial.wcs.crval[0]
-            dec = self.wcs.celestial.wcs.crval[1]
+            # ra = self.wcs.celestial.wcs.crval[0]
+            # dec = self.wcs.celestial.wcs.crval[1]
 
             # TODO TN trying alternative definition
             cx, cy = self.get_center_coordinates()
@@ -204,15 +209,44 @@ class Image(Base):
                 0,  # 0-based indexing
                 ra_dec_order=True)
 
+            # fk5_J2015_5 = FK5(equinox=Time(datetime.datetime(year=2015, month=6, day=30)))
+            # pointing = SkyCoord(ra=radeg*u.degree,
+            #                     dec=decdeg*u.degree,
+            #                     frame=fk5_J2015_5,
+            #                     obstime=Time(datetime.datetime(year=2015, month=6, day=30)))
+            # icrs_j2k = ICRS()
+            # self.pointing = pointing.transform_to(icrs_j2k)
+
+            icrs_j2k = ICRS()
             self.pointing = SkyCoord(ra=radeg*u.degree,
-                                     dec=decdeg*u.degree,
-                                     frame='icrs', equinox='J2000.0')
+                                dec=decdeg*u.degree,
+                                frame=icrs_j2k)
+
             self.ra = self.pointing.ra.to(u.hourangle)
             self.dec = self.pointing.dec.to(u.degree)
             # Precess to the current equinox otherwise the RA - LST method
             # will be off.
             #self.ha = self.pointing.transform_to(self.FK5_Jnow).ra.to(
             #    u.hourangle) - self.sidereal
+
+    def all_pix2world(self, x, y):
+        coord_ra, coord_dec = self.wcs.all_pix2world(
+            x,
+            y,
+            0,  # 0-based indexing
+            ra_dec_order=True)
+        # fk5_J2015_5 = FK5(equinox=Time(datetime.datetime(year=2015, month=6, day=30)))
+        # coord = SkyCoord(ra=coord_ra*u.deg,
+        #                  dec=coord_dec*u.deg,
+        #                  frame=fk5_J2015_5,
+        #                  obstime=Time(datetime.datetime(year=2015, month=6, day=30)))
+        # icrs_j2k = ICRS()
+        icrs_j2k = ICRS()
+        coord = SkyCoord(ra=coord_ra * u.deg,
+                                 dec=coord_dec * u.deg,
+                                 frame=icrs_j2k)
+
+        return coord.transform_to(icrs_j2k)
 
     def solve_field(self, **kwargs):
         """ Solve field and populate WCS information

@@ -304,7 +304,8 @@ class IndiMount(IndiDevice):
                        frame=fk5_now,
                        obstime=Time.now())
         icrs_j2k = ICRS()
-        self.logger.debug(f"Received coordinates in JNOw/CIRS from mount: {ret}")
+        # This was too verbose
+        #self.logger.debug(f"Received coordinates in JNOw/CIRS from mount: {ret}")
         ret = ret.transform_to(icrs_j2k)
 
         # ret = SkyCoord(ra=rahour_decdeg['RA'] * u.hourangle,
