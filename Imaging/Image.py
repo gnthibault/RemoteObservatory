@@ -155,7 +155,9 @@ class Image(Base):
 
     def get_center_coordinates(self):
         """
-        Those are 0-based indexing
+        Those are 0-based indexing, also from documentation:
+        https://docs.astropy.org/en/stable/api/astropy.wcs.WCS.html#astropy.wcs.WCS.pixel_to_world_values
+        Note that pixel coordinates are assumed to be 0 at the center of the first pixel in each dimension
         :return:
         """
         return (self.header["NAXIS1"]/2-0.5,
@@ -196,8 +198,8 @@ class Image(Base):
         """
         if self.wcs is not None:
             # This was wrong because crval coord relates to crpix reference pixels
-            ra = self.wcs.celestial.wcs.crval[0]
-            dec = self.wcs.celestial.wcs.crval[1]
+            # ra = self.wcs.celestial.wcs.crval[0]
+            # dec = self.wcs.celestial.wcs.crval[1]
 
             # TODO TN trying alternative definition
             cx, cy = self.get_center_coordinates()
@@ -207,14 +209,19 @@ class Image(Base):
                 0,  # 0-based indexing
                 ra_dec_order=True)
 
-            fk5_J2015_5 = FK5(equinox=Time(datetime.datetime(year=2015, month=6, day=30)))
-            pointing = SkyCoord(ra=radeg*u.degree,
-                                dec=decdeg*u.degree,
-                                frame=fk5_J2015_5,
-                                obstime=Time(datetime.datetime(year=2015, month=6, day=30)))
-            icrs_j2k = ICRS()
+            # fk5_J2015_5 = FK5(equinox=Time(datetime.datetime(year=2015, month=6, day=30)))
+            # pointing = SkyCoord(ra=radeg*u.degree,
+            #                     dec=decdeg*u.degree,
+            #                     frame=fk5_J2015_5,
+            #                     obstime=Time(datetime.datetime(year=2015, month=6, day=30)))
+            # icrs_j2k = ICRS()
+            # self.pointing = pointing.transform_to(icrs_j2k)
 
-            self.pointing = pointing.transform_to(icrs_j2k)
+            icrs_j2k = ICRS()
+            self.pointing = SkyCoord(ra=radeg*u.degree,
+                                dec=decdeg*u.degree,
+                                frame=icrs_j2k)
+
             self.ra = self.pointing.ra.to(u.hourangle)
             self.dec = self.pointing.dec.to(u.degree)
             # Precess to the current equinox otherwise the RA - LST method
@@ -228,12 +235,17 @@ class Image(Base):
             y,
             0,  # 0-based indexing
             ra_dec_order=True)
-        fk5_J2015_5 = FK5(equinox=Time(datetime.datetime(year=2015, month=6, day=30)))
-        coord = SkyCoord(ra=coord_ra*u.deg,
-                         dec=coord_dec*u.deg,
-                         frame=fk5_J2015_5,
-                         obstime=Time(datetime.datetime(year=2015, month=6, day=30)))
+        # fk5_J2015_5 = FK5(equinox=Time(datetime.datetime(year=2015, month=6, day=30)))
+        # coord = SkyCoord(ra=coord_ra*u.deg,
+        #                  dec=coord_dec*u.deg,
+        #                  frame=fk5_J2015_5,
+        #                  obstime=Time(datetime.datetime(year=2015, month=6, day=30)))
+        # icrs_j2k = ICRS()
         icrs_j2k = ICRS()
+        coord = SkyCoord(ra=coord_ra * u.deg,
+                                 dec=coord_dec * u.deg,
+                                 frame=icrs_j2k)
+
         return coord.transform_to(icrs_j2k)
 
     def solve_field(self, **kwargs):

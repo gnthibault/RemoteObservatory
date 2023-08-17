@@ -175,8 +175,8 @@ cameras:
             SIM_PEMAX: 0
             SIM_TIME_FACTOR: 1
         SCOPE_INFO: # 200/800 newtonian
-            FOCAL_LENGTH: 242
-            APERTURE: 50
+            FOCAL_LENGTH: 800
+            APERTURE: 200
         subsample_astrometry: 4
         do_guiding: false
         do_pointing: false
@@ -236,7 +236,7 @@ offset_pointer:
     timeout_seconds: 300
     max_identification_error_seconds: 1
     sync_mount_upon_solve: False
-    use_guider_adjust: False
+    use_guider_adjust: True
     on_star_identification_failure: trust_astrometry # get_brightest or trust_astrometry
     max_iterations: 5
     max_pointing_error_seconds: 2
@@ -248,9 +248,9 @@ guider:
     profile_name : Simulator
     exposure_time_sec : 4
     settle :
-        pixels : 1.5
+        pixels : 3
         time : 10
-        timeout : 60
+        timeout : 360
     dither :
         pixels : 0.0
         ra_only : False

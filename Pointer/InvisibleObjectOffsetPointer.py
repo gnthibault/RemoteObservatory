@@ -80,6 +80,7 @@ class InvisibleObjectOffsetPointer(OffsetPointer):
                 msg = f"Going to adjust pointing, need to stop guiding"
                 self.logger.debug(msg)
                 guider.stop_capture()
+                #guider.set_paused(paused=True, full="full")
                 try:
                     exp_time_sec = guiding_camera.is_remaining_exposure_time()
                     guiding_camera.synchronize_with_image_reception(exp_time_sec=exp_time_sec)
@@ -104,8 +105,6 @@ class InvisibleObjectOffsetPointer(OffsetPointer):
                     # update mount with the actual position
                     if self.sync_mount_upon_solve:
                         mount.sync_to_coord(pointing_image.pointing)
-                    # We used px_identified_target only if the assumption that target was centered beforehand is ok
-                    current_sky_coord_of_image_center = pointing_image.pointing
                     # There are some subteleties here: https://astropy-cjhang.readthedocs.io/en/latest/wcs/
                     current_sky_coord_of_target_sensor_position = pointing_image.all_pix2world(
                         camera.adjust_center_x,
@@ -114,22 +113,23 @@ class InvisibleObjectOffsetPointer(OffsetPointer):
                     msg = f"Cannot solve image {pointing_image.fits_file} while in offset_pointing state: {e}"
                     self.logger.error(msg)
                     raise RuntimeError(msg)
-                    # TODO TN We can decide to assume that main camera is already pointing to the expected object
 
-                star_pointing_delta = pointing_image.pointing_error(
-                    pointing_reference_coord=observation.target.coord
-                )
-                offset_delta_ra = current_sky_coord_of_target_sensor_position.ra - current_sky_coord_of_image_center.ra
-                offset_delta_dec = current_sky_coord_of_target_sensor_position.dec - current_sky_coord_of_image_center.dec
+                star_pointing_delta = pointing_image.pointing_error()
+                offset_delta_ra = current_sky_coord_of_target_sensor_position.ra - pointing_image.pointing.ra
+                offset_delta_dec = current_sky_coord_of_target_sensor_position.dec - pointing_image.pointing.dec
                 # adjust by slewing to the opposite of the delta
                 current = mount.get_current_coordinates()
                 target = SkyCoord(
                     ra=current.ra - star_pointing_delta.delta_ra - offset_delta_ra,
                     dec=current.dec - star_pointing_delta.delta_dec - offset_delta_dec,
                     frame='icrs', equinox='J2000.0')
-
+                # Virtual target (different from target if we do not do sync on the mount)
+                virtual_target = SkyCoord(
+                    ra=pointing_image.pointing.ra - star_pointing_delta.delta_ra - offset_delta_ra,
+                    dec=pointing_image.pointing.dec - star_pointing_delta.delta_dec - offset_delta_dec,
+                    frame='icrs', equinox='J2000.0')
                 pointing_error = pointing_image.pointing_error(
-                    pointing_reference_coord=target
+                    pointing_reference_coord=virtual_target
                 )
                 self.logger.debug(f"Offset point, current error is: {pointing_error}")
                 # update pointing process tracking information

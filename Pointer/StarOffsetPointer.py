@@ -90,6 +90,7 @@ class StarOffsetPointer(OffsetPointer):
                     msg = f"Going to adjust pointing, need to stop guiding"
                     self.logger.debug(msg)
                     guider.stop_capture()
+                    #guider.set_paused(paused=True, full="full")
                     try:
                         exp_time_sec = guiding_camera.is_remaining_exposure_time()
                         guiding_camera.synchronize_with_image_reception(exp_time_sec=exp_time_sec)
@@ -186,13 +187,13 @@ class StarOffsetPointer(OffsetPointer):
                     # adjust by slewing to the opposite of the delta
                     current = mount.get_current_coordinates()
                     target = SkyCoord(
-                        ra=current.ra - star_pointing_delta.delta_ra + offset_delta_ra,
-                        dec=current.dec - star_pointing_delta.delta_dec + offset_delta_dec,
+                        ra=current.ra - star_pointing_delta.delta_ra - offset_delta_ra,
+                        dec=current.dec - star_pointing_delta.delta_dec - offset_delta_dec,
                         frame='icrs', equinox='J2000.0')
                     # Virtual target (different from target if we do not do sync on the mount)
                     virtual_target = SkyCoord(
-                        ra=pointing_image.pointing.ra - star_pointing_delta.delta_ra + offset_delta_ra,
-                        dec=pointing_image.pointing.dec - star_pointing_delta.delta_dec + offset_delta_dec,
+                        ra=pointing_image.pointing.ra - star_pointing_delta.delta_ra - offset_delta_ra,
+                        dec=pointing_image.pointing.dec - star_pointing_delta.delta_dec - offset_delta_dec,
                         frame='icrs', equinox='J2000.0')
                     pointing_error = pointing_image.pointing_error(
                         pointing_reference_coord=virtual_target
@@ -218,6 +219,7 @@ class StarOffsetPointer(OffsetPointer):
                                      f"{pointing_error_stack}")
 
                 if guider is not None:
+                    # guider.stop_capture()
                     guider.loop()
                     half_search_size = camera.adjust_roi_search_size / 2
                     guider.find_star(x=max(0, int(round(camera.adjust_center_x - half_search_size))),

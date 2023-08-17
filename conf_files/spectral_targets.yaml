@@ -3,13 +3,13 @@ constraints :
     maxairmass : 17 #for testing, normally use 2
     minmoonseparationdeg : 2 # normally put 45
 targets :
-#    "Altair":
-#        priority : 0
-#        count : 1
-#        temperature : 10
-#        gain: 150
-#        offset: 30
-#        exp_time_sec : 20
+    "Altair":
+        priority : 0
+        count : 1
+        temperature : 10
+        gain: 150
+        offset: 30
+        exp_time_sec : 20
     "Capella":
         priority: 0
         count: 1
