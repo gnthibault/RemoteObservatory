@@ -45,8 +45,7 @@ class SpectralCalibration(Base):
             cfg = config['controller']
             controller_name = cfg['module']
             controller = load_module('Spectro.'+controller_name)
-            self.controller = getattr(controller,
-                                            controller_name)(cfg)
+            self.controller = getattr(controller, controller_name)(config=cfg)
         except Exception as e:
             self.controller = None
             msg = f"Cannot instantiate controller properly: {e}"
@@ -71,7 +70,7 @@ class SpectralCalibration(Base):
                 temperature=self.flat_temperature,
                 gain=self.flat_gain,
                 offset=self.flat_offset,
-                exp_time_sec=self.flat_exp_sec,
+                exp_time=self.flat_exp_sec,
                 calibration_name="flat",
                 observations=observed_list.values())
             #yield event
@@ -85,7 +84,7 @@ class SpectralCalibration(Base):
                 temperature=self.spectral_calib_temperature,
                 gain=self.spectral_calib_gain,
                 offset=self.spectral_calib_offset,
-                exp_time_sec=self.spectral_calib_exp_sec,
+                exp_time=self.spectral_calib_exp_sec,
                 calibration_name="spectral_calib",
                 observations=observed_list.values())
             # yield event

@@ -562,24 +562,42 @@ class Manager(Base):
 
     def park(self):
         try:
-            #close running guider server and client
-            if self.guider is not None:
-                self.guider.disconnect_profile()
-                self.guider.disconnect_server()
+            def call_subroutine_with_event(subroutine, event):
+                subroutine()
+                event.set()
+            def run_park_subroutine(subroutine, timeout_s=60):
+                try:
+                    event = Event()
+                    thread = Thread(target=call_subroutine_with_event, args=(subroutine, event))
+                    thread.start()
+                    assert event.wait(timeout=timeout_s), f"Timeout while waiting for subroutine {subroutine}"
+                except Exception as e:
+                    self.logger.error(f"There has been an error while trying to park with routine {subroutine}:{e}")
 
-            # parking cameras
+            def park_guider():
+                # close running guider server and client
+                if self.guider is not None:
+                    self.guider.disconnect_profile()
+                    self.guider.disconnect_server()
+            run_park_subroutine(park_guider, timeout_s=60)
+
+            def park_camera(camera):
+                return lambda: camera.park()
             for camera_name, camera in self.cameras.items():
-                camera.park()
+                run_park_subroutine(park_camera(camera), timeout_s=60)
 
-            # Mount and observatory will be shut down
-            if self.vizualization_service:
-                self.vizualization_service.stop()
+            def park_vizualization():
+                if self.vizualization_service:
+                    self.vizualization_service.stop()
+            run_park_subroutine(park_vizualization, timeout_s=60)
 
-            # park the mount
-            self.mount.park()
+            def park_mount():
+                self.mount.park()
+            run_park_subroutine(park_mount, timeout_s=200)
 
-            # park the observatory
-            self.observatory.park()
+            def park_observatory():
+                self.observatory.park()
+            run_park_subroutine(park_observatory, timeout_s=200)
 
             return True
         except Exception as e:

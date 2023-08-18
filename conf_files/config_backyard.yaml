@@ -116,8 +116,6 @@ scheduler:
     module: SpectroScheduler
     # target_file: targets.yaml
     target_file: spectral_targets.yaml
-spectroscope_controller:
-    module: IndiSpectroController
 calibration:
     #module: ImagingCalibration
     module: SpectralCalibration

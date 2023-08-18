@@ -125,9 +125,14 @@ class SceneVizualization(threading.Thread):
             if self.mount_device is None and self.observatory_device is None:
                 time.sleep(shortest_update)
 
+    def start(self):
+        self.do_run = True
+        super().start()
+
     def stop(self):
-        self.stop_requested = True
+        self.do_run = False
         try:
             self.join()
+            self.logger.debug(f"Vizualization thread successfully stopped")
         except RuntimeError as e: # cannot join thread before it is started
             self.logger.debug(f"Most likely thread was not started: {e}")
