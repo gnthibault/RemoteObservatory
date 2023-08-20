@@ -59,11 +59,14 @@ class SpectralCalibration(Base):
 
     def calibrate(self, observed_list):
 
-        self.take_flat(observed_list)
-        self.take_spectral_calib(observed_list)
-        self.take_dark(observed_list)
+        event_flat = self.take_flat(observed_list)
+        event_spectral = self.take_spectral_calib(observed_list, event=event_flat)
+        event_dark = self.take_dark(observed_list, event=event_spectral)
+        return event_dark
 
-    def take_flat(self, observed_list):
+    def take_flat(self, observed_list, event=None):
+        if event:
+            event.wait()
         self.controller.switch_on_flat_light()
         for i in range(self.flat_nb):
             event = self.camera.take_calibration(
@@ -77,7 +80,9 @@ class SpectralCalibration(Base):
             event.wait()
         self.controller.switch_off_flat_light()
 
-    def take_spectral_calib(self, observed_list):
+    def take_spectral_calib(self, observed_list, event=None):
+        if event:
+            event.wait()
         self.controller.switch_on_spectro_light()
         for i in range(self.spectral_calib_nb):
             event = self.camera.take_calibration(
@@ -91,12 +96,14 @@ class SpectralCalibration(Base):
             event.wait()
         self.controller.switch_off_spectro_light()
 
-    def take_dark(self, observed_list):
+    def take_dark(self, observed_list, event=None):
         """
         Temperature is the "most expensive" parameter to change, hence we will use this as our primary key
         :param observed_list:
         :return:
         """
+        if event:
+            event.wait()
         dark_config_dict = dict()
         for seq_time, observation in observed_list.items():
             temp_deg = observation.configuration['temperature']

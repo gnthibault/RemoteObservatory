@@ -146,6 +146,9 @@ mount:
     equatorial_eod: J2000 # JNOW
     tcp_host: 192.168.8.63
     tcp_port: 11110
+    indi_client:
+        indi_host: localhost
+        indi_port: 7625
 cameras:
     -
         module: IndiASICamera290MMMini
@@ -156,7 +159,7 @@ cameras:
             APERTURE: 200
         sampling_arcsec: 0.88
         do_guiding: true
-        do_pointing: true
+        do_pointing: false
         pointing_seconds: 30
         do_adjust_pointing: true
         adjust_center_x: 877
@@ -280,12 +283,14 @@ pointer:
     max_iterations: 10
     max_pointing_error_seconds: 10
 offset_pointer:
-    module: StarOffsetPointer #StarOffsetPointer #NoOffsetPointer #InvisibleOffsetPointer
+    module: StarOffsetPointer #StarOffsetPointer #NoOffsetPointer #InvisibleObjectOffsetPointer
     timeout_seconds: 300
-    max_identification_error_seconds: 1
+    max_identification_error_seconds: 2
     sync_mount_upon_solve: True
     use_guider_adjust: True
     on_star_identification_failure: trust_astrometry # get_brightest or trust_astrometry
+    max_iterations: 10
+    max_pointing_error_seconds: 2.5
 guider:
     module : GuiderPHD2
     host : 127.0.0.1

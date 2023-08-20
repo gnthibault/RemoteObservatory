@@ -335,7 +335,7 @@ class AbstractCamera(Base):
             'exp_time': exp_time.to(u.second).value,
             'gain': gain,
             'offset': offset,
-            'temperature_degC': temperature.to(u.Celsius).value if temperature else "no_target",
+            'temperature_degC': temperature if temperature else "no_target",
             'observation_ids': [o.id for o in observations]
         }
         metadata.update(headers)

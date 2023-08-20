@@ -47,13 +47,13 @@ class ImagingCalibration(Base):
                           f"{self.controller}")
 
     def calibrate(self, observed_list):
-        #TODO TN: event are already waited for, you need to fix that
-        event = self.take_flat(observed_list)
-        event.wait()
-        event = self.take_dark(observed_list)
-        return event
+        event_flat = self.take_flat(observed_list)
+        event_dark = self.take_dark(observed_list, event=event_flat)
+        return event_dark
 
-    def take_flat(self, observed_list):
+    def take_flat(self, observed_list, event=None):
+        if event:
+            event.wait()
         flat_config = set()
         for seq_time, observation in observed_list.items():
             conf = observation.configuration.get("filter", "no-filter")
@@ -75,12 +75,14 @@ class ImagingCalibration(Base):
         self.controller.switch_off_flat_light()
         return event
 
-    def take_dark(self, observed_list):
+    def take_dark(self, observed_list, event=None):
         """
         Temperature is the "most expensive" parameter to change, hence we will use this as our primary key
         :param observed_list:
         :return:
         """
+        if event:
+            event.wait()
         dark_config_dict = dict()
         for seq_time, observation in observed_list.items():
             temp_deg = observation.configuration['temperature']

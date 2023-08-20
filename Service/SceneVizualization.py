@@ -127,7 +127,8 @@ class SceneVizualization(threading.Thread):
 
     def start(self):
         self.do_run = True
-        super().start()
+        if not self.is_alive():
+            super().start()
 
     def stop(self):
         self.do_run = False

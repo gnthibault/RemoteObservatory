@@ -166,7 +166,7 @@ class IndiWebManagerClient:
             host, port = self.master_host, self.master_port
         else:
             host, port = self.host, self.port
-        if self.is_driver_started(driver_name, host=host, port=port):
+        if self.is_driver_started(driver_name, master=master):
             try:
                 base_url = f"http://{host}:{port}"
                 req = f"{base_url}/api/drivers/restart/{urllib.parse.quote(driver_name)}"
@@ -179,7 +179,7 @@ class IndiWebManagerClient:
                 self.logger.error(msg)
                 raise RuntimeError(msg)
         else:
-            self.start_driver(driver_name, check_started=False, host=host, port=port)
+            self.start_driver(driver_name, check_started=False, master=master)
 
     def start_driver(self, driver_name, check_started=True, master=False):
         """
@@ -194,7 +194,7 @@ class IndiWebManagerClient:
         if driver_name is None:
             self.logger.debug(f"In start_driver, no driver name provided, assuming webmanager has auto-start enabled")
             return
-        if check_started and self.is_driver_started(driver_name, host=host, port=port):
+        if check_started and self.is_driver_started(driver_name, master=master):
             return
         try:
             base_url = f"http://{host}:{port}"
@@ -219,7 +219,7 @@ class IndiWebManagerClient:
         else:
             host, port = self.host, self.port
         # No need to stop a driver that is not started
-        if not self.is_driver_started(driver_name, host=host, port=port):
+        if not self.is_driver_started(driver_name, master=master):
             self.logger.debug(f"No need to stop driver {driver_name} because it doesn't seems to be started")
             return
         try:

@@ -17,20 +17,20 @@ targets :
         gain: 150
         offset: 30
         exp_time_sec: 20
-#    "10 Lacertae":
-#        priority: 0
-#        count: 1
-#        temperature: 15
-#        gain: 150
-#        offset: 30
-#        exp_time_sec: 20
-#    "Gamma Cassiopeiae" :
-#        priority : 0
-#        count : 2
-#        temperature : 10
-#        gain: 150
-#        offset: 30
-#        exp_time_sec : 5
+    "10 Lacertae":
+        priority: 0
+        count: 1
+        temperature: 15
+        gain: 150
+        offset: 30
+        exp_time_sec: 20
+    "Gamma Cassiopeiae" :
+        priority : 0
+        count : 2
+        temperature : 10
+        gain: 150
+        offset: 30
+        exp_time_sec : 5
 #    "T CrB" :
 #        priority : 0
 #        count : 1

@@ -17,3 +17,5 @@ indiserver indi_lx200gemini indi_canon_ccd indi_asi_ccd
 # export REMOTE_OBSERVATORY_CONFIG=config_backyard
 # Other wise in simulation, you might want to set this variable
 # export REMOTE_OBSERVATORY_IS_DARK=0
+# export REMOTE_OBSERVATORY_CONFIG=config_backyard; export REMOTE_OBSERVATORY_IS_DARK=1; PYTHONPATH=. python ./apps/launch_remote_observatory.py --simulation_mode
+
