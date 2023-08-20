@@ -147,7 +147,7 @@ cameras:
         indi_client :
             indi_host : localhost
             indi_port : 7624
-            #use_unique_client: True
+            use_unique_client: True
     -
         module: IndiAbstractCameraSimulator
         camera_name : CCD Simulator
@@ -223,6 +223,7 @@ cameras:
         indi_client :
             indi_host : localhost
             indi_port : 7624
+            use_unique_client: True
 pointer:
     module: DifferentialPointer #DifferentialPointer #IterativeSync
     gen_hips: False
@@ -230,7 +231,7 @@ pointer:
     max_iterations: 5
     max_pointing_error_seconds: 2
 offset_pointer:
-    module: StarOffsetPointer #StarOffsetPointer #NoOffsetPointer #InvisibleObjectOffsetPointer
+    module: InvisibleObjectOffsetPointer #StarOffsetPointer #NoOffsetPointer #InvisibleObjectOffsetPointer
     timeout_seconds: 300
     max_identification_error_seconds: 1
     sync_mount_upon_solve: False

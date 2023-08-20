@@ -151,7 +151,6 @@ class InvisibleObjectOffsetPointer(OffsetPointer):
                                  f"{img_num} iterations, pointing error stack was: "
                                  f"{pointing_error_stack}")
                 if guider is not None:
-                    guider.find_star() # Star have changed position, we need to force re-detect stars
                     guider.guide(recalibrate=False)
                     pointing_status[0] = True
         except Exception as e:
