@@ -244,13 +244,14 @@ class IndiDevice(Base, device):
         else:
             # Setup temporary webmanager client
             if "indi_webmanager" in self.indi_client_config:
-                iwmc = IndiWebManagerClient(self.indi_client_config["indi_webmanager"])
-                iwmc.stop_server()
+                iwmc = IndiWebManagerClient(config=self.indi_client_config["indi_webmanager"],
+                                            indi_config=self.indi_client_config)
+                iwmc.stop_server(device_name=self.device_name)
 
     def start_indi_server(self):
         if self.indi_client is None:
             self._setup_indi_client()
-        self.indi_client.indi_webmanager_client.start_server()
+        self.indi_client.indi_webmanager_client.start_server(device_name=self.device_name)
 
     def start_indi_driver(self):
         self.indi_client.indi_webmanager_client.start_driver(

@@ -79,7 +79,7 @@ class IndiClient(SingletonIndiClientHolder, INDIClient, Base):
 
         self.indi_webmanager_client = IndiWebManagerDummy()
         if "indi_webmanager" in config:
-            self.indi_webmanager_client = IndiWebManagerClient(config["indi_webmanager"])
+            self.indi_webmanager_client = IndiWebManagerClient(config["indi_webmanager"], indi_config=config)
 
         # Start the main ioloop that will serve all async task in another (single) thread
         self.device_subscriptions = {} # dict of device_name: coroutines

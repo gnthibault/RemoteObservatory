@@ -269,13 +269,13 @@ cameras:
       indi_client:
           indi_host: localhost
           indi_port: 7628
-      indi_webmanager:
-          module: IndiWebManagerClient
-          master_host: localhost
-          master_port: 8624
-          host: localhost
-          port: 8628
-          profile_name: altair_pointing
+          indi_webmanager:
+              module: IndiWebManagerClient
+              master_host: localhost
+              master_port: 8624
+              host: localhost
+              port: 8628
+              profile_name: altair_pointing
 pointer:
     module: IterativeSync #DifferentialPointer #IterativeSync
     gen_hips: False

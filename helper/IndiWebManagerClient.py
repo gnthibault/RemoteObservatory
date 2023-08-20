@@ -5,7 +5,7 @@ import requests
 import urllib.parse
 
 class IndiWebManagerDummy:
-    def __init__(self, config=None):
+    def __init__(self, config=None, indi_config=None):
         pass
     def build_remote_driver_name(self, device_name):
         pass
@@ -30,7 +30,7 @@ class IndiWebManagerDummy:
 
 class IndiWebManagerClient:
 
-    def __init__(self, config):
+    def __init__(self, config, indi_config=None):
         self.logger = logging.getLogger(__name__)
         if config is None:
             config = dict(
@@ -46,9 +46,11 @@ class IndiWebManagerClient:
         self.host = config["host"]
         self.port = config["port"]
         self.profile_name = config["profile_name"]
+        # Indi config
+        self.indi_config = indi_config
 
     def build_remote_driver_name(self, device_name):
-        return f'"{device_name}"@{self.host}:{self.port}'
+        return f'"{device_name}"@{self.indi_config["indi_host"]}:{self.indi_config["indi_port"]}'
 
     def reset_server(self, device_name=None):
         status, profile = self._get_server_status()
@@ -118,14 +120,14 @@ class IndiWebManagerClient:
             host, port = self.master_host, self.master_port
         else:
             host, port = self.host, self.port
-        return driver_name in self.get_running_driver_list(host=host, port=port)
+        return driver_name in self.get_running_driver_list(master=master)
 
     def get_running_driver_list(self, master=False):
         if master:
             host, port = self.master_host, self.master_port
         else:
             host, port = self.host, self.port
-        running_driver_list = self.get_running_driver(host=host, port=port)
+        running_driver_list = self.get_running_driver(master=master)
         return [driver["name"] for driver in running_driver_list]
 
     def get_running_driver(self, master=False):
