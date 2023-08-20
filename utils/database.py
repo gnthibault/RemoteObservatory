@@ -187,17 +187,15 @@ class DB():
 
         # Pre-defined list of collections that are valid.
         collection_names = [
-            'scope_controller',
-            'config',
-            'current',
+            'scope_controller', # useless ?
+            'config',        # useless ?
+            'current',       # useless ?
             'calibrations',
-            'drift_align',
-            'environment',
-            'mount',
+            'environment',   # useless ?
+            'mount',         # useles
             'observations',
-            'offset_info',
+            'offset_info',   # Legacy: Used to be there to store guiding delta info
             'state',
-            'telemetry_board',
             'weather',
         ]
 
