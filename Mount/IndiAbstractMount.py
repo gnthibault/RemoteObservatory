@@ -92,6 +92,7 @@ class IndiAbstractMount(IndiMount, AbstractMount):
 
     def initialize(self):
         self.logger.debug("Initializing from IndiAbstractMount")
+        self.connect(connect_device=True)
         IndiMount.unpark(self)
         self.logger.debug("Successfully initialized from IndiAbstractMount")
 
@@ -128,7 +129,6 @@ class IndiAbstractMount(IndiMount, AbstractMount):
         self.park()
         self.start_indi_server()
         self.start_indi_driver()
-        self.connect(connect_device=True)
         self.initialize()
         self._is_initialized = True
         self._is_parked = False

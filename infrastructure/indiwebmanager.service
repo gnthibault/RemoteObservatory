@@ -21,6 +21,7 @@ WantedBy=multi-user.target
 #sudo systemctl enable indiwebmanager.service
 #sudo systemctl restart indiwebmanager.service
 #sudo systemctl status indiwebmanager.service
+#journalctl -u indiwebmanager.service
 
 #git clone https://github.com/knro/indiwebmanager (push)
 #python ./setup.py install --prefix /home/gnthibault/.local/

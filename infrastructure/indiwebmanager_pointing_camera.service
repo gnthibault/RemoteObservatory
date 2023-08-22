@@ -20,6 +20,7 @@ WantedBy=multi-user.target
 #sudo systemctl enable indiwebmanager_pointing_camera.service
 #sudo systemctl restart indiwebmanager_pointing_camera.service
 #sudo systemctl status indiwebmanager_pointing_camera.service
+#journalctl -u indiwebmanager_pointing_camera.service
 
 #git clone https://github.com/knro/indiwebmanager (push)
 #python ./setup.py install --prefix /home/gnthibault/.local/

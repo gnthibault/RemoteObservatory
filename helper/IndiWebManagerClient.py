@@ -2,6 +2,7 @@
 import json
 import logging
 import requests
+import time
 import urllib.parse
 
 class IndiWebManagerDummy:
@@ -91,6 +92,7 @@ class IndiWebManagerClient:
             self.logger.debug(f"start_server - url {req} - code {response.status_code} - response:{response.text}")
             assert response.status_code == 200
             if self.master_host and self.master_port and device_name:
+                time.sleep(5)
                 self.logger.debug(
                     f"We are also going to start driver on master server {self.master_host}:{self.master_port}")
                 self.restart_driver(driver_name=self.build_remote_driver_name(device_name), master=True)
@@ -200,7 +202,10 @@ class IndiWebManagerClient:
             return
         try:
             base_url = f"http://{host}:{port}"
-            req = f"{base_url}/api/drivers/start/{urllib.parse.quote(driver_name)}"
+            if master:
+                req = f"{base_url}/api/drivers/start_remote/{urllib.parse.quote(driver_name)}"
+            else:
+                req = f"{base_url}/api/drivers/start/{urllib.parse.quote(driver_name)}"
             response = requests.post(req)
             self.logger.debug(
                 f"start_driver {driver_name} - url {req} - code {response.status_code} - response:{response.text}")

@@ -16,7 +16,7 @@ After=multi-user.target
 Type=idle
 User=gnthibault
 Environment=LD_LIBRARY_PATH=/usr/local/lib:/usr/lib
-Environment="DISPLAY=:10"
+Environment="DISPLAY=:0"
 # "XAUTHORITY=/home/gnthibault/.Xauthority"
 ExecStartPre=rm -f /home/gnthibault/phd2.1
 ExecStart=/usr/bin/phd2

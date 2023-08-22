@@ -31,8 +31,8 @@ observatory:
             baud_rate: 57600
             polling_ms: 1000
             indi_client:
-                indi_host: localhost
-                indi_port: 7625
+                indi_host: robot-scope
+                indi_port: 7624
         config_upbv2:
             device_name: Pegasus UPB
             device_port: /dev/serial/by-id/usb-Pegasus_Astro_UPBv2_revD_UPB25S4VWV-if00-port0
@@ -75,8 +75,8 @@ observatory:
                 FINDER_DEW_HEATER: True
             auto_dew_aggressivity: 150 # Number between 50 and 250
             indi_client:
-                indi_host: localhost
-                indi_port: 7625
+                indi_host: robot-scope
+                indi_port: 7624
         indi_driver_connect_delay_s: 5
         indi_resetable_instruments_driver_map:
             ZWO CCD: ZWO CCD ASI290MM Mini
@@ -86,18 +86,18 @@ observatory:
             Arduino telescope controller: Arduino
         indi_mount_driver_name: Losmandy Gemini
         indi_mount_device_name: Losmandy Gemini
-        indi_webserver_host: localhost
+        indi_webserver_host: robot-scope
         indi_webserver_port: 8624
         indi_client: #TODO TN urgent
-            indi_host: localhost
-            indi_port: 7625
+            indi_host: robot-scope
+            indi_port: 7624
     dome_controller:
         module : IndiDomeController
         dome_movement_timeout_s: 300
         dome_name: Dome Simulator
         indi_client :
-            indi_host : localhost
-            indi_port : 7625
+            indi_host : robot-scope
+            indi_port : 7624
 directories:
     base: /var/RemoteObservatory
     images: images
@@ -106,7 +106,7 @@ directories:
     resources: resources/
     targets: resources/targets
     mounts: resources/mounts
-db: 
+db:
     name: /var/RemoteObservatory/DB
     type: file
 ntp:
@@ -138,8 +138,8 @@ calibration:
         device_name: Shelyak Spox
         port: /dev/serial/by-id/usb-FTDI_FT232R_USB_UART_AD0JE0ID-if00-port0
         indi_client :
-            indi_host : localhost
-            indi_port : 7625
+            indi_host : robot-scope
+            indi_port : 7624
 mount:
     module: IndiG11
     mount_name: Losmandy Gemini
@@ -147,8 +147,8 @@ mount:
     tcp_host: 192.168.8.63
     tcp_port: 11110
     indi_client:
-        indi_host: localhost
-        indi_port: 7625
+        indi_host: robot-scope
+        indi_port: 7624
 cameras:
     -
         module: IndiASICamera290MMMini
@@ -171,14 +171,14 @@ cameras:
         autofocus_roi_size : 750
         autofocus_merit_function: half_flux_radius
         indi_client :
-            indi_host : localhost
+            indi_host : robot-scope
             indi_port : 7627
             #use_unique_client: True
             indi_webmanager:
                 module: IndiWebManagerClient
-                master_host: localhost
+                master_host: robot-scope
                 master_port: 8624
-                host: localhost
+                host: robot-scope
                 port: 8627
                 profile_name: zwo_guiding
     -
@@ -217,8 +217,8 @@ cameras:
         #        fine: 10000
         #        coarse: 30000
         #    indi_client:
-        #        indi_host: localhost
-        #        indi_port: 7625
+        #        indi_host: robot-scope
+        #        indi_port: 7624
         #do_filter_wheel: false
         #filter_wheel:
         #    module: IndiFilterWheel
@@ -233,16 +233,16 @@ cameras:
         #        SII: 7
         #        LPR: 8
         #    indi_client:
-        #        indi_host: localhost
-        #        indi_port: 7625
+        #        indi_host: robot-scope
+        #        indi_port: 7624
         indi_client :
-            indi_host : localhost
+            indi_host : robot-scope
             indi_port : 7626
             indi_webmanager: #"PlayerOne CCD Ares-M PRO"@localhost:7626
                 module: IndiWebManagerClient
-                master_host: localhost
+                master_host: robot-scope
                 master_port: 8624
-                host: localhost
+                host: robot-scope
                 port: 8626
                 profile_name: playerone_science
 
@@ -267,13 +267,13 @@ cameras:
       autofocus_roi_size: 750
       autofocus_merit_function: half_flux_radius #vollath_F4
       indi_client:
-          indi_host: localhost
+          indi_host: robot-scope
           indi_port: 7628
           indi_webmanager:
               module: IndiWebManagerClient
-              master_host: localhost
+              master_host: robot-scope
               master_port: 8624
-              host: localhost
+              host: robot-scope
               port: 8628
               profile_name: altair_pointing
 pointer:
@@ -293,7 +293,7 @@ offset_pointer:
     max_pointing_error_seconds: 2.5
 guider:
     module : GuiderPHD2
-    host : 127.0.0.1
+    host : robot-scope
     port : 4400
     do_calibration : False
     profile_name : backyard
@@ -321,8 +321,8 @@ weather_service :
         MAX_WEATHER_WIND_GUST_KPH : 30
         MAX_WEATHER_CLOUD_COVER : 5
     indi_client :
-        indi_host : localhost
-        indi_port : 7625
+        indi_host : robot-scope
+        indi_port : 7624
 vizualization_service:
         module: SceneVizualization
         delay_sky_update_s: 1
