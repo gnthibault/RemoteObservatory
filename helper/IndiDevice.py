@@ -240,7 +240,7 @@ class IndiDevice(Base, device):
         # self.indi_client.indi_webmanager_client.start_server()
         # But then in case of stopping, it could consume ressources for no reason
         if self.indi_client is not None:
-            self.indi_client.indi_webmanager_client.stop_server()
+            self.indi_client.indi_webmanager_client.stop_server(device_name=self.device_name)
         else:
             # Setup temporary webmanager client
             if "indi_webmanager" in self.indi_client_config:
