@@ -103,15 +103,20 @@ class IndiWebManagerClient:
 
     def stop_server(self, device_name=None):
         try:
+            if self.master_host and self.master_port and device_name:
+                self.logger.debug(
+                    f"We are also going to stop driver on master server {self.master_host}:{self.master_port}")
+                self.stop_driver(driver_name=self.build_remote_driver_name(device_name), master=True)
+        except Exception as e:
+            msg = f"Cannot stop driver for device {device_name} on master server {self.master_host}:" \
+                  f"{self.master_port}. But still going to proceed with actual server stop. Error: {e}"
+            self.logger.error(msg)
+        try:
             base_url = f"http://{self.host}:{self.port}"
             req = f"{base_url}/api/server/stop"
             response = requests.post(req)
             self.logger.debug(f"stop_server - url {req} - code {response.status_code} - response:{response.text}")
             assert response.status_code in [200, 500] # It's ok to stop an already stopped server
-            if self.master_host and self.master_port and device_name:
-                self.logger.debug(
-                    f"We are also going to stop driver on master server {self.master_host}:{self.master_port}")
-                self.stop_driver(driver_name=self.build_remote_driver_name(device_name), master=True)
         except Exception as e:
             msg = f"Cannot start server: {e}"
             self.logger.error(msg)
@@ -233,7 +238,10 @@ class IndiWebManagerClient:
             # if driver_name not in ["ZWO CCD"]: #"Shelyak SPOX", "Arduino telescope controller", "ASI EAF", "Altair", "ZWO CCD"
             #    return
             base_url = f"http://{host}:{port}"
-            req = f"{base_url}/api/drivers/stop/{urllib.parse.quote(driver_name)}"
+            if master:
+                req = f"{base_url}/api/drivers/stop_remote/{urllib.parse.quote(driver_name)}"
+            else:
+                req = f"{base_url}/api/drivers/stop/{urllib.parse.quote(driver_name)}"
             # self.logger.setLevel("DEBUG")
             # self.logger.warning(f"stop_driver {driver_name} DISABLED for now as it was randomly breaking indiserver")
             response = requests.post(req)
