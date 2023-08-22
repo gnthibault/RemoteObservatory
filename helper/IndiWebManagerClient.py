@@ -151,7 +151,7 @@ class IndiWebManagerClient:
             base_url = f"http://{host}:{port}"
             req = f"{base_url}/api/server/drivers"
             response = requests.get(req)
-            # self.logger.debug(f"get_running_driver - url {req} - code {response.status_code} - response :{response.text}")
+            self.logger.debug(f"get_running_driver - url {req} - code {response.status_code} - response :{response.text}")
             assert response.status_code == 200
             running_driver_list = json.loads(response.text)
         except json.JSONDecodeError as e:

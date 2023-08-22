@@ -55,9 +55,9 @@ observatory:
                 USB_LABEL_1: FIELD_CAMERA
                 USB_LABEL_2: PRIMARY_CAMERA
                 USB_LABEL_3: SPECTRO_CONTROL_BOX
-                USB_LABEL_4: ARDUINO_CONTROL_BOX
+                USB_LABEL_4: GUIDE_CAMERA
                 USB_LABEL_5: WIFI_ROUTER
-                USB_LABEL_6: GUIDE_CAMERA
+                USB_LABEL_6: ARDUINO_CONTROL_BOX
             always_on_usb_identifiers:
                 FIELD_CAMERA: False
                 PRIMARY_CAMERA: False
