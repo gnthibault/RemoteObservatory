@@ -256,7 +256,7 @@ cameras:
       subsample_astrometry: 4
       do_guiding: false
       do_pointing: true
-      pointing_seconds: 10
+      pointing_seconds: 4
       do_adjust_pointing: false
       adjust_center_x: 400
       adjust_center_y: 400
