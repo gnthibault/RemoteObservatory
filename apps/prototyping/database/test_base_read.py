@@ -1,5 +1,6 @@
 from Base.Base import Base
-
+from utils.database import FileDB, create_storage_obj
+#from utils.datamodel import
 
 b = Base()
 print(b.db.collection_names)
@@ -18,7 +19,13 @@ print(b.db.collection_names)
     ]
 """
 
+# Test actual DB
+latest_observation = b.db.get_current(collection="observations")
 latest_calibration = b.db.get_current(collection='calibrations')
 
+# Test DB creation and usage
+file_db = FileDB()
 
-def find(self, collection, obj_id):
+# test storage object (unstructured)
+obj = create_storage_obj()
+print(obj)

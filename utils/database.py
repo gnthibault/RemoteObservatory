@@ -10,9 +10,10 @@ from warnings import warn
 import weakref
 
 # Local
+from Service.HostTimeService import HostTimeService
 from utils import serializers as json_util
 from utils.config import load_config
-from Service.HostTimeService import HostTimeService
+#from utils.datamodel import
 
 class AbstractDB(metaclass=abc.ABCMeta):
     def __init__(self, db_name=None, collection_names=list(), logger=None,
@@ -406,8 +407,7 @@ class FileDB(AbstractDB):
             json_util.dumps_file(collection_fn, obj)
             return obj_id
         except Exception as e:
-            self._warn('Problem inserting object into collection: '
-                       '{}, {!r}'.format(e, obj))
+            self._warn(f"Problem inserting object {obj} into collection: {collection}: {e}")
             return None
 
     @thread_safe
@@ -416,7 +416,7 @@ class FileDB(AbstractDB):
         try:
             return json_util.loads_file(current_fn)
         except FileNotFoundError as e:
-            self._warn("No record found for {}".format(collection))
+            self._warn(f"No record found for collection {collection}")
             return None
 
     @thread_safe
@@ -435,8 +435,7 @@ class FileDB(AbstractDB):
 
     @thread_safe
     def clear_current(self, type):
-        current_f = os.path.join(self._storage_dir,
-                                 'current_{}.json'.format(type))
+        current_f = os.path.join(self._storage_dir, f"current_{type}.json")
         try:
             os.remove(current_f)
         except FileNotFoundError as e:
@@ -444,9 +443,9 @@ class FileDB(AbstractDB):
 
     def get_file(self, collection, permanent=True):
         if permanent:
-            name = '{}.json'.format(collection)
+            name = f'{collection}.json'
         else:
-            name = 'current_{}.json'.format(collection)
+            name = f'current_{collection}.json'
         return os.path.join(self._storage_dir, name)
 
     def _make_id(self):
