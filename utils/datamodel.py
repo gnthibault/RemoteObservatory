@@ -1,7 +1,10 @@
 from datetime import datetime
 from enum import Enum
-from typing import List, Optional
 from pydantic import BaseModel
+from sqlmodel import Field, Session, SQLModel, create_engine, select
+from typing import List, Optional
+
+# TODO TN: https://sqlmodel.tiangolo.com/tutorial/fastapi/simple-hero-api/
 
 class Sequence(BaseModel):
     id: str
