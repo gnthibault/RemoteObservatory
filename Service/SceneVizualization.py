@@ -135,5 +135,7 @@ class SceneVizualization(threading.Thread):
         try:
             self.join()
             self.logger.debug(f"Vizualization thread successfully stopped")
-        except RuntimeError as e: # cannot join thread before it is started
+            # threads can only be started once
+            super().__init__(name="observatory_control_scene_vizualization")
+        except Exception as e: # cannot join thread before it is started
             self.logger.debug(f"Most likely thread was not started: {e}")

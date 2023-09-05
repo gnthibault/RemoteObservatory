@@ -2,7 +2,7 @@ name: Remote observatory
 observatory:
     module: Observatory
     investigator: gnthibault
-    latitude: 43.93447527626349  # Degrees
+    latitude: 45.93447527626349  # Degrees
     longitude: 5.710523353974106 # Degrees
     elevation: 650.0 # Meters
     timezone: Europe/Paris #This is not mandatory, just speeds up startup
