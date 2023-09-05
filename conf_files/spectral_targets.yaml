@@ -59,14 +59,14 @@ targets :
         gain: 150
         offset: 30
         exp_time_sec: 5
-    "Kochab":
+    "Mizar":
         priority: 0
         count: 2
         temperature: 15
         gain: 150
         offset: 30
         exp_time_sec: 5
-    "Pherkad":
+    "Alioth":
         priority: 0
         count: 2
         temperature: 15

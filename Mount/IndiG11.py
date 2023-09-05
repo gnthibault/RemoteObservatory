@@ -263,7 +263,7 @@ class IndiG11(IndiAbstractMount):
             Losmandy Gemini.TIME_UTC.OFFSET=2
         :return:
         """
-        utc_time_str = self.serv_time.get_astropy_time_from_utc().value.strftime("%Y-%d-%mT%H:%M:%S")
+        utc_time_str = self.serv_time.get_astropy_time_from_utc().value.strftime("%Y-%m-%dT%H:%M:%S")
         utc_offset_value = self.serv_time.timezone.localize(self.serv_time.get_astropy_time_from_utc().value).utcoffset().total_seconds()/60/60
         self.set_text("TIME_UTC", {"UTC": utc_time_str}, sync=True)
         self.set_number('TIME_UTC', {'OFFSET': utc_offset_value}, sync=True)
