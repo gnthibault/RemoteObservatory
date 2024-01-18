@@ -112,6 +112,13 @@ sudo apt-get install \
     pip install -r requirements.txt
 ```
 
+## Build and use docker for development (for macos dev for instance)
+
+```console
+    cd ./docker
+    ./build_images.sh latest linux/amd64
+```
+
 ## Building the nice reporting / latex reports
 ```bash
   sudo apt-get update

@@ -39,6 +39,8 @@ docker_tag() {
     #$2 is the actual tag
     echo "--docker tag $1:$2 $DOCKER_URL_REPO/$1:$2"
     docker tag $1:$2 $DOCKER_URL_REPO/$1:$2
+    # For local kaniko please check https://github.com/GoogleContainerTools/kaniko?tab=readme-ov-file#running-kaniko-in-docker
+    # kaniko --dockerfile=Dockerfile --context=/path/to/build/context --destination=my-registry.com/my-image:latest
 }
 
 docker_push() {
@@ -46,6 +48,8 @@ docker_push() {
     #$2 is the actual tag
     echo "--docker push $DOCKER_URL_REPO/$1:$2"
     docker push $DOCKER_URL_REPO/$1:$2
+    # For local kaniko please check https://github.com/GoogleContainerTools/kaniko?tab=readme-ov-file#running-kaniko-in-docker
+    # kaniko --dockerfile=Dockerfile --context=/path/to/build/context --destination=my-registry.com/my-image:latest --push
 }
 
 docker_build () {
@@ -58,7 +62,11 @@ docker_build () {
     PARAMETERS=$(sed -e 's/^"//' -e 's/"$//' <<<"$4")
     PARAMETERS="$PARAMETERS --no-cache=true"
     echo "--docker build $PARAMETERS -t $IMAGE_NAME $2"
-    docker build $PARAMETERS -t $IMAGE_NAME $2 # 2>&1 >/dev/null
+    # Use --progress=plain for debugging purpose
+    docker build --progress=plain $PARAMETERS -t $IMAGE_NAME $2 # 2>&1 >/dev/null
+    # For local kaniko please check https://github.com/GoogleContainerTools/kaniko?tab=readme-ov-file#running-kaniko-in-docker
+    # kaniko --dockerfile=Dockerfile --context=/path/to/build/context --destination=my-image:latest --build-arg KEY=VALUE
+    # you might want to use "--tar-path $APP_NAME.tar --no-push" and then use crane to push to remote
 }
 
 process_build() {
@@ -89,12 +97,10 @@ process_build() {
            --platform $TARGET_ARCH\""
 
     # tag the freshly generated image
-    docker_tag $NAME $TAG
-    #push the tagged image to our repo
-    docker_push $NAME $TAG
+    # docker_tag $NAME $TAG
+    # push the tagged image to the repo
+    # docker_push $NAME $TAG
 
-
-    production_builder $NAME . $TARGET_ARCH
     echo "-- DOCKER BUILD -- Finished building image"
 
 
