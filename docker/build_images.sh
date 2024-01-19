@@ -1,5 +1,7 @@
 #!/bin/bash
 
+DOCKER_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
+MAIN_REPO_DIR="$DOCKER_DIR/.."
 DOCKER_URL_REPO="gnthibault"
 DOCKER_BASE_IMAGE="ubuntu:24.04"
 DOCKER_ARM64_BASE_IMAGE="arm64v8/ubuntu:24.04"
@@ -87,6 +89,14 @@ process_build() {
         DOCKER_BASE_IMAGE=$DOCKER_BASE_IMAGE
     fi
 
+    #Build a tar out of the code repo
+    tar --directory $MAIN_REPO_DIR \
+      -cvzf $DOCKER_DIR/code.tar.gz \
+      --exclude "*.log"\
+      --exclude "*.tar.gz" \
+      --exclude "*.zip" \
+      --exclude "*.pyc" .
+
     # Now build the actual production image
     echo "-- DOCKER BUILD -- Now building image"
     # Takes at input, the tag ($1) and directory ($2) whether it should embed
@@ -102,8 +112,6 @@ process_build() {
     # docker_push $NAME $TAG
 
     echo "-- DOCKER BUILD -- Finished building image"
-
-
 }
 
 # Main script

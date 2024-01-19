@@ -74,9 +74,10 @@ RUN pyenv install -v 3.11.7
 RUN pyenv global 3.11.7
 
 # Python virtual environment
-ENV VIRTUAL_ENV=/opt/obs_venv
-RUN source /root/.bashrc && python -m venv $VIRTUAL_ENV
+ENV VIRTUAL_ENV=/opt/remote_observatory_venv
+RUN python -m venv $VIRTUAL_ENV
 ENV PATH="$VIRTUAL_ENV/bin:$PATH"
+RUN echo 'source /opt/remote_observatory_venv/bin/activate' >> /root/.bashrc
 
 # Python packages
 COPY requirements.txt .
@@ -139,6 +140,9 @@ RUN pip install -r requirements.txt
 #        xplanet\
 #        zlib1g-dev\
 #        wget && \
+
+# Actual application code
+ADD code.tar.gz /opt/remote_observatory
 
 
 # Build with
