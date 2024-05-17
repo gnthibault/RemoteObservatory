@@ -15,6 +15,7 @@ ENV INDI_3RD_PARTY_VERSION=v2.0.6
 
 # Generic install / utilities / dev
 RUN apt-get update && apt-get --assume-yes --quiet install --no-install-recommends \
+    build-essential \
     cmake \
     git \
     libz3-dev \
@@ -89,13 +90,37 @@ RUN mkdir -p $HOME/projects \
     && cd $HOME/projects/indi \
     && git checkout $INDI_VERSION \
     && cd $HOME/projects \
-    && mkdir -p build/libindi \
-    && cd build/libindi \
+    && mkdir -p build/indi \
+    && cd build/indi \
     && cmake -DCMAKE_INSTALL_PREFIX=/usr  $HOME/projects/indi \
     && make -j8 \
-    && sudo make install
+    && make install
 
-## Additional dependencies with indi-3rd party \
+# Dependencies to build indi-3rd party from sources
+RUN apt-get --assume-yes --quiet install --no-install-recommends \
+    libnova-dev \
+    libcfitsio-dev \
+    libusb-1.0-0-dev \
+    zlib1g-dev \
+    libgsl-dev \
+    libjpeg-dev \
+    libcurl4-gnutls-dev \
+    libtiff-dev \
+    libftdi-dev \
+    libraw-dev \
+    libdc1394-dev \
+    libgphoto2-dev \
+    libboost-dev \
+    libboost-regex-dev \
+    librtlsdr-dev \
+    liblimesuite-dev \
+    libftdi1-dev \
+    libgps-dev \
+    libavcodec-dev \
+    libavdevice-dev \
+    libzmq3-dev
+
+## Additional dependencies with indi-3rd party - clone the whole thing
 RUN mkdir -p $HOME/projects \
     && cd $HOME/projects \
     && git clone https://github.com/indilib/indi-3rdparty.git \
@@ -104,42 +129,42 @@ RUN mkdir -p $HOME/projects \
 # indi-duino
 RUN cd $HOME/projects \
     mkdir -p build/indi-duino \
-    cd build/indi-duino \
-    cmake -DCMAKE_INSTALL_PREFIX=/usr  $HOME/projects/indi-3rdparty/indi-duino \
-    make -j8 \
-    sudo make install
+    && cd build/indi-duino \
+    && cmake -DCMAKE_INSTALL_PREFIX=/usr  $HOME/projects/indi-3rdparty/indi-duino \
+    && make -j8 \
+    && make install
 
 # indi-asi
 RUN cd $HOME/projects \
     mkdir -p build/indi-asi \
-    cd build/indi-asi \
-    cmake -DCMAKE_INSTALL_PREFIX=/usr  $HOME/projects/indi-3rdparty/indi-asi \
-    make -j8 \
-    sudo make install
+    && cd build/indi-asi \
+    && cmake -DCMAKE_INSTALL_PREFIX=/usr  $HOME/projects/indi-3rdparty/indi-asi \
+    && make -j8 \
+    && make install
 
 #indi-playerone
 RUN cd $HOME/projects \
     mkdir -p build/indi-playerone \
-    cd build/indi-playerone \
-    cmake -DCMAKE_INSTALL_PREFIX=/usr  $HOME/projects/indi-3rdparty/indi-playerone \
-    make -j8 \
-    sudo make install
+    && cd build/indi-playerone \
+    && cmake -DCMAKE_INSTALL_PREFIX=/usr  $HOME/projects/indi-3rdparty/indi-playerone \
+    && make -j8 \
+    && make install
 
 #indi-shelyak
 RUN cd $HOME/projects \
     mkdir -p build/indi-shelyak \
-    cd build/indi-shelyak \
-    cmake -DCMAKE_INSTALL_PREFIX=/usr  $HOME/projects/indi-3rdparty/indi-shelyak \
-    make -j8 \
-    sudo make install
+    && cd build/indi-shelyak \
+    && cmake -DCMAKE_INSTALL_PREFIX=/usr  $HOME/projects/indi-3rdparty/indi-shelyak \
+    && make -j8 \
+    && make install
 
 #libaltaircam
 RUN cd $HOME/projects \
     mkdir -p build/libaltaircam \
-    cd build/libaltaircam \
-    cmake -DCMAKE_INSTALL_PREFIX=/usr  $HOME/projects/indi-3rdparty/libaltaircam \
-    make -j8 \
-    sudo make install
+    && cd build/libaltaircam \
+    && cmake -DCMAKE_INSTALL_PREFIX=/usr  $HOME/projects/indi-3rdparty/libaltaircam \
+    && make -j8 \
+    && make install
 
 
 ## OpenPhd2 might later be replaced by the original source ?
@@ -150,10 +175,10 @@ RUN mkdir -p $HOME/projects \
     && cd $HOME/projects \
     && git clone https://github.com/gnthibault/phd2.git \
     && mkdir -p build/phd2 \
-    cd build/phd2 \
-    cmake -DCMAKE_INSTALL_PREFIX=/usr  $HOME/projects/phd2 \
-    make -j8 \
-    sudo make install
+    && cd build/phd2 \
+    && cmake -DCMAKE_INSTALL_PREFIX=/usr  $HOME/projects/phd2 \
+    && make -j8 \
+    && make install
 
 
 ## Dependencies for nice reporting / latex reports
