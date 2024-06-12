@@ -1,6 +1,6 @@
 astroalign==1.0.4
 astroplan==0.8
-astropy==4.1
+astropy==5.3.3
 astroquery==0.4.1
 erdantic==0.6.0
 influxdb-client==1.35.0
