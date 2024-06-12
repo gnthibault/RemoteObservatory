@@ -3,7 +3,7 @@ astropy==3.2.1
 attrs==19.1.0
 backcall==0.1.0
 beautifulsoup4==4.8.0
-black==19.3b0
+black==24.3.0
 bleach==3.3.0
 clean-ipynb==0.1.2
 Click==7.0
