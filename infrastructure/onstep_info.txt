@@ -1,0 +1,25 @@
+https://onstep.groups.io/g/main/wiki/26586#AXIS1  --> AXIS1_LIMIT_MIN et MAX et pareil pour AXIS2
+
+AXIS1_LIMIT_MIN
+
+    Default Value: -180
+    Other Values: -90 to -270 or -360 (degrees)
+    Notes: Minimum Hour Angle for Equatorial Mount modes (to -270 degrees) or minimum Azimuth for AltAzm mode (to -360 degrees.)
+    Reminder:
+        To disable limits in Azimuth (unlimited range) set to -360 and also set AXIS1_LIMIT_MAX to 360.
+        During tracking and gotos if a limit is broken motion is stopped by canceling any goto and turning tracking off.  Keep in mind that up to SLEW_RAPID_STOP_DIST (Config.h) distance should be allowed for to stop the motors/mount once the limit is detected. 
+
+LIMIT_SENSE
+
+    Default Value: OFF
+    Other Values: OFF, ON, ON_PULLUP, ON_PULLDOWN
+    Notes: Limit sense switches can be wired so several can be used where any switch change causes OnStep to stop tracking and slews (allowing for SLEW_RAPID_STOP_DIST.)  This is most often implemented as a panic switch the user can press and/or lever switches on the mount axes.
+    Associated Options:
+        LIMIT_SENSE_STATE
+            Default Value: LOW
+            Other Values: LOW, HIGH
+            Notes:
+                Use LOW for NO (normally open) switches.  If multiple switches of this type are used wired them in parallel.
+                Use HIGH for NC (normally closed) switches.  If multiple switches of this type are used wired them in series.
+    Reminder: For my recent PCB designs this input DOES have a pullup resistor along with a bypass capacitor to provide basic ESD protection.
+
