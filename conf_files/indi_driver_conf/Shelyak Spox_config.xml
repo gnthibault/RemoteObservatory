@@ -1,5 +1,5 @@
 <INDIDriver>
-<newSwitchVector device='Shelyak Spox' name='DEBUG'>
+<newSwitchVector device='Shelyak SPOX' name='DEBUG'>
   <oneSwitch name='ENABLE'>
       Off
   </oneSwitch>
@@ -7,12 +7,12 @@
       On
   </oneSwitch>
 </newSwitchVector>
-<newNumberVector device='Shelyak Spox' name='POLLING_PERIOD'>
+<newNumberVector device='Shelyak SPOX' name='POLLING_PERIOD'>
   <oneNumber name='PERIOD_MS'>
       1000
   </oneNumber>
 </newNumberVector>
-<newSwitchVector device='Shelyak Spox' name='DEBUG_LEVEL'>
+<newSwitchVector device='Shelyak SPOX' name='DEBUG_LEVEL'>
   <oneSwitch name='DBG_ERROR'>
       On
   </oneSwitch>
@@ -29,7 +29,7 @@
       Off
   </oneSwitch>
 </newSwitchVector>
-<newSwitchVector device='Shelyak Spox' name='LOGGING_LEVEL'>
+<newSwitchVector device='Shelyak SPOX' name='LOGGING_LEVEL'>
   <oneSwitch name='LOG_ERROR'>
       On
   </oneSwitch>
@@ -46,7 +46,7 @@
       Off
   </oneSwitch>
 </newSwitchVector>
-<newSwitchVector device='Shelyak Spox' name='LOG_OUTPUT'>
+<newSwitchVector device='Shelyak SPOX' name='LOG_OUTPUT'>
   <oneSwitch name='CLIENT_DEBUG'>
       On
   </oneSwitch>

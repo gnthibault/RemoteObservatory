@@ -9,6 +9,7 @@ __pycache__
 *.svg
 *.swo
 *.swp
+*.tar.gz
 
 **/build
 
