@@ -8,15 +8,16 @@ ENV DEBIAN_FRONTEND noninteractive
 ENV PIP_NO_CACHE_DIR=1
 
 # Versioning
-ENV INDI_VERSION=v2.0.6
+ENV INDI_VERSION=v2.0.8
 ENV PYINDI_VERSION=v1.9.1
-ENV INDI_3RD_PARTY_VERSION=v2.0.6
-
+ENV INDI_3RD_PARTY_VERSION=v2.0.8
+ENV PYTHON_VERSION=3.12.3
 
 # Generic install / utilities / dev
 RUN apt-get update && apt-get --assume-yes --quiet install --no-install-recommends \
     build-essential \
     cmake \
+    gettext \
     git \
     libz3-dev \
     python3 \
@@ -126,6 +127,8 @@ RUN mkdir -p $HOME/projects \
     && git clone https://github.com/indilib/indi-3rdparty.git \
     && git checkout $INDI_3RD_PARTY_VERSION
 
+#for i in $(ls); do cd $i; export name=$(basename $(pwd)); cmake -DCMAKE_INSTALL_PREFIX=/usr ../../../indi-3rdparty/$name; make -j4; sudo make install; cd ..; done
+
 # indi-duino
 RUN cd $HOME/projects \
     mkdir -p build/indi-duino \
@@ -134,11 +137,27 @@ RUN cd $HOME/projects \
     && make -j8 \
     && make install
 
+# libasi
+RUN cd $HOME/projects \
+    mkdir -p build/libasi \
+    && cd build/libasi \
+    && cmake -DCMAKE_INSTALL_PREFIX=/usr  $HOME/projects/indi-3rdparty/libasi \
+    && make -j8 \
+    && make install
+
 # indi-asi
 RUN cd $HOME/projects \
     mkdir -p build/indi-asi \
     && cd build/indi-asi \
     && cmake -DCMAKE_INSTALL_PREFIX=/usr  $HOME/projects/indi-3rdparty/indi-asi \
+    && make -j8 \
+    && make install
+
+# libplayerone
+RUN cd $HOME/projects \
+    mkdir -p build/libplayerone \
+    && cd build/libplayerone \
+    && cmake -DCMAKE_INSTALL_PREFIX=/usr  $HOME/projects/indi-3rdparty/libplayerone \
     && make -j8 \
     && make install
 
@@ -170,7 +189,11 @@ RUN cd $HOME/projects \
 ## OpenPhd2 might later be replaced by the original source ?
 #RUN add-apt-repository ppa:pch/phd2 && apt-get --assume-yes --quiet install --no-install-recommends \
 #    phd2
-#
+
+# Dependencies to build phd2 from sources
+RUN apt-get --assume-yes --quiet install --no-install-recommends \
+    libwxgtk3.2-dev
+
 RUN mkdir -p $HOME/projects \
     && cd $HOME/projects \
     && git clone https://github.com/gnthibault/phd2.git \
@@ -200,8 +223,8 @@ RUN curl https://pyenv.run | bash
 RUN echo 'export PYENV_ROOT=/root/.pyenv' >> /root/.bashrc
 RUN echo '[[ -d $PYENV_ROOT/bin ]] && export PATH="$PYENV_ROOT/bin:$PATH"' >> /root/.bashrc
 RUN echo 'eval "$(pyenv init -)"' >> /root/.bashrc
-RUN pyenv install -v 3.11.7
-RUN pyenv global 3.11.7
+RUN pyenv install -v $PYTHON_VERSION
+RUN pyenv global $PYTHON_VERSION
 
 # Python virtual environment
 ENV VIRTUAL_ENV=/opt/remote_observatory_venv
@@ -218,7 +241,7 @@ RUN mkdir -p $HOME/projects \
     && cd $HOME/projects \
     && git clone https://github.com/indilib/pyindi-client.git \
     && cd $HOME/projects/pyindi-client \
-    && git checkout PYINDI_VERSION \
+    && git checkout $PYINDI_VERSION \
     && pip install -e .
 
 
