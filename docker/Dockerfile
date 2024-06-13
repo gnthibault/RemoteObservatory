@@ -19,6 +19,7 @@ RUN apt-get update && apt-get --assume-yes --quiet install --no-install-recommen
     cmake \
     gettext \
     git \
+    libgraphviz-dev \
     libz3-dev \
     python3 \
     python3-dev \
