@@ -129,63 +129,70 @@ RUN mkdir -p $HOME/projects \
     && cd $HOME/projects/indi-3rdparty \
     && git checkout $INDI_3RD_PARTY_VERSION
 
-#for i in $(ls); do cd $i; export name=$(basename $(pwd)); cmake -DCMAKE_INSTALL_PREFIX=/usr ../../../indi-3rdparty/$name; make -j4; sudo make install; cd ..; done
-
-# indi-duino
-RUN cd $HOME/projects \
-    mkdir -p build/indi-duino \
-    && cd build/indi-duino \
-    && cmake -DCMAKE_INSTALL_PREFIX=/usr  $HOME/projects/indi-3rdparty/indi-duino \
+RUN for i in indi-duino libasi indi-asi libplayerone indi-playerone indi-shelyak libaltaircam; \
+    do cd $HOME/projects \
+    && mkdir -p $HOME/projects/build/$i \
+    && cd $HOME/projects/build/$i \
+    && cmake -DCMAKE_INSTALL_PREFIX=/usr  $HOME/projects/indi-3rdparty/$i \
     && make -j8 \
-    && make install
+    && make install; \
+    done
 
-# libasi
-RUN cd $HOME/projects \
-    mkdir -p build/libasi \
-    && cd build/libasi \
-    && cmake -DCMAKE_INSTALL_PREFIX=/usr  $HOME/projects/indi-3rdparty/libasi \
-    && make -j8 \
-    && make install
-
-# indi-asi
-RUN cd $HOME/projects \
-    mkdir -p build/indi-asi \
-    && cd build/indi-asi \
-    && cmake -DCMAKE_INSTALL_PREFIX=/usr  $HOME/projects/indi-3rdparty/indi-asi \
-    && make -j8 \
-    && make install
-
-# libplayerone
-RUN cd $HOME/projects \
-    mkdir -p build/libplayerone \
-    && cd build/libplayerone \
-    && cmake -DCMAKE_INSTALL_PREFIX=/usr  $HOME/projects/indi-3rdparty/libplayerone \
-    && make -j8 \
-    && make install
-
-#indi-playerone
-RUN cd $HOME/projects \
-    mkdir -p build/indi-playerone \
-    && cd build/indi-playerone \
-    && cmake -DCMAKE_INSTALL_PREFIX=/usr  $HOME/projects/indi-3rdparty/indi-playerone \
-    && make -j8 \
-    && make install
-
-#indi-shelyak
-RUN cd $HOME/projects \
-    mkdir -p build/indi-shelyak \
-    && cd build/indi-shelyak \
-    && cmake -DCMAKE_INSTALL_PREFIX=/usr  $HOME/projects/indi-3rdparty/indi-shelyak \
-    && make -j8 \
-    && make install
-
-#libaltaircam
-RUN cd $HOME/projects \
-    mkdir -p build/libaltaircam \
-    && cd build/libaltaircam \
-    && cmake -DCMAKE_INSTALL_PREFIX=/usr  $HOME/projects/indi-3rdparty/libaltaircam \
-    && make -j8 \
-    && make install
+## indi-duino
+#RUN cd $HOME/projects \
+#    && mkdir -p build/indi-duino \
+#    && cd build/indi-duino \
+#    && cmake -DCMAKE_INSTALL_PREFIX=/usr  $HOME/projects/indi-3rdparty/indi-duino \
+#    && make -j8 \
+#    && make install
+#
+## libasi
+#RUN cd $HOME/projects \
+#    && mkdir -p build/libasi \
+#    && cd build/libasi \
+#    && cmake -DCMAKE_INSTALL_PREFIX=/usr  $HOME/projects/indi-3rdparty/libasi \
+#    && make -j8 \
+#    && make install
+#
+## indi-asi
+#RUN cd $HOME/projects \
+#    && mkdir -p build/indi-asi \
+#    && cd build/indi-asi \
+#    && cmake -DCMAKE_INSTALL_PREFIX=/usr  $HOME/projects/indi-3rdparty/indi-asi \
+#    && make -j8 \
+#    && make install
+#
+## libplayerone
+#RUN cd $HOME/projects \
+#    && mkdir -p build/libplayerone \
+#    && cd build/libplayerone \
+#    && cmake -DCMAKE_INSTALL_PREFIX=/usr  $HOME/projects/indi-3rdparty/libplayerone \
+#    && make -j8 \
+#    && make install
+#
+##indi-playerone
+#RUN cd $HOME/projects \
+#    && mkdir -p build/indi-playerone \
+#    && cd build/indi-playerone \
+#    && cmake -DCMAKE_INSTALL_PREFIX=/usr  $HOME/projects/indi-3rdparty/indi-playerone \
+#    && make -j8 \
+#    && make install
+#
+##indi-shelyak
+#RUN cd $HOME/projects \
+#    && mkdir -p build/indi-shelyak \
+#    && cd build/indi-shelyak \
+#    && cmake -DCMAKE_INSTALL_PREFIX=/usr  $HOME/projects/indi-3rdparty/indi-shelyak \
+#    && make -j8 \
+#    && make install
+#
+##libaltaircam
+#RUN cd $HOME/projects \
+#    && mkdir -p build/libaltaircam \
+#    && cd build/libaltaircam \
+#    && cmake -DCMAKE_INSTALL_PREFIX=/usr  $HOME/projects/indi-3rdparty/libaltaircam \
+#    && make -j8 \
+#    && make install
 
 
 ## OpenPhd2 might later be replaced by the original source ?
