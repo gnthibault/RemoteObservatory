@@ -134,4 +134,4 @@ fi
 set -e
 
 # Perform actual work
-process_build  $img_name $image_tag $target_arch
+process_build $img_name $image_tag $target_arch

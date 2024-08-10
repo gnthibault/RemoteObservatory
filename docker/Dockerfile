@@ -122,10 +122,11 @@ RUN apt-get --assume-yes --quiet install --no-install-recommends \
     libavdevice-dev \
     libzmq3-dev
 
-## Additional dependencies with indi-3rd party - clone the whole thing
+# Additional dependencies with indi-3rd party - clone the whole thing
 RUN mkdir -p $HOME/projects \
     && cd $HOME/projects \
     && git clone https://github.com/indilib/indi-3rdparty.git \
+    && cd $HOME/projects/indi-3rdparty \
     && git checkout $INDI_3RD_PARTY_VERSION
 
 #for i in $(ls); do cd $i; export name=$(basename $(pwd)); cmake -DCMAKE_INSTALL_PREFIX=/usr ../../../indi-3rdparty/$name; make -j4; sudo make install; cd ..; done
@@ -203,7 +204,6 @@ RUN mkdir -p $HOME/projects \
     && cmake -DCMAKE_INSTALL_PREFIX=/usr  $HOME/projects/phd2 \
     && make -j8 \
     && make install
-
 
 ## Dependencies for nice reporting / latex reports
 #RUN apt-get --assume-yes --quiet install --no-install-recommends \
