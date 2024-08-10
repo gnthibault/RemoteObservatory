@@ -5,13 +5,13 @@ FROM ${BASE_IMAGE}
 ENV DEBIAN_FRONTEND noninteractive
 
 # Useless docker cache for pip
-ENV PIP_NO_CACHE_DIR=1
+ENV PIP_NO_CACHE_DIR 1
 
 # Versioning
-ENV INDI_VERSION=v2.0.8
-ENV PYINDI_VERSION=v1.9.1
-ENV INDI_3RD_PARTY_VERSION=v2.0.8
-ENV PYTHON_VERSION=3.12.3
+ENV INDI_VERSION v2.0.8
+ENV PYINDI_VERSION v1.9.1
+ENV INDI_3RD_PARTY_VERSION v2.0.8
+ENV PYTHON_VERSION 3.12.3
 
 # Generic install / utilities / dev
 RUN apt-get update && apt-get --assume-yes --quiet install --no-install-recommends \
@@ -25,6 +25,7 @@ RUN apt-get update && apt-get --assume-yes --quiet install --no-install-recommen
     python3-dev \
     python3-numpy-dev \
     python3-pip \
+    python3-setuptools \
     python3-six \
     software-properties-common \
     vim && \
@@ -138,63 +139,6 @@ RUN for i in indi-duino libasi indi-asi libplayerone indi-playerone indi-shelyak
     && make install; \
     done
 
-## indi-duino
-#RUN cd $HOME/projects \
-#    && mkdir -p build/indi-duino \
-#    && cd build/indi-duino \
-#    && cmake -DCMAKE_INSTALL_PREFIX=/usr  $HOME/projects/indi-3rdparty/indi-duino \
-#    && make -j8 \
-#    && make install
-#
-## libasi
-#RUN cd $HOME/projects \
-#    && mkdir -p build/libasi \
-#    && cd build/libasi \
-#    && cmake -DCMAKE_INSTALL_PREFIX=/usr  $HOME/projects/indi-3rdparty/libasi \
-#    && make -j8 \
-#    && make install
-#
-## indi-asi
-#RUN cd $HOME/projects \
-#    && mkdir -p build/indi-asi \
-#    && cd build/indi-asi \
-#    && cmake -DCMAKE_INSTALL_PREFIX=/usr  $HOME/projects/indi-3rdparty/indi-asi \
-#    && make -j8 \
-#    && make install
-#
-## libplayerone
-#RUN cd $HOME/projects \
-#    && mkdir -p build/libplayerone \
-#    && cd build/libplayerone \
-#    && cmake -DCMAKE_INSTALL_PREFIX=/usr  $HOME/projects/indi-3rdparty/libplayerone \
-#    && make -j8 \
-#    && make install
-#
-##indi-playerone
-#RUN cd $HOME/projects \
-#    && mkdir -p build/indi-playerone \
-#    && cd build/indi-playerone \
-#    && cmake -DCMAKE_INSTALL_PREFIX=/usr  $HOME/projects/indi-3rdparty/indi-playerone \
-#    && make -j8 \
-#    && make install
-#
-##indi-shelyak
-#RUN cd $HOME/projects \
-#    && mkdir -p build/indi-shelyak \
-#    && cd build/indi-shelyak \
-#    && cmake -DCMAKE_INSTALL_PREFIX=/usr  $HOME/projects/indi-3rdparty/indi-shelyak \
-#    && make -j8 \
-#    && make install
-#
-##libaltaircam
-#RUN cd $HOME/projects \
-#    && mkdir -p build/libaltaircam \
-#    && cd build/libaltaircam \
-#    && cmake -DCMAKE_INSTALL_PREFIX=/usr  $HOME/projects/indi-3rdparty/libaltaircam \
-#    && make -j8 \
-#    && make install
-
-
 ## OpenPhd2 might later be replaced by the original source ?
 #RUN add-apt-repository ppa:pch/phd2 && apt-get --assume-yes --quiet install --no-install-recommends \
 #    phd2
@@ -224,6 +168,7 @@ SHELL ["/bin/bash", "-l", "-c"]
 RUN echo 'export PS1="\u@\h \w> "' | cat - /root/.profile > temp && mv temp /root/.profile
 
 # Actual application code and configs
+RUN mkdir -p /opt/remote_observatory
 ADD code.tar.gz /opt/remote_observatory
 
 # Python environment
