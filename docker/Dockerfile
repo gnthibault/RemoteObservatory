@@ -186,8 +186,8 @@ ENV PATH="$VIRTUAL_ENV/bin:$PATH"
 RUN echo 'source /opt/remote_observatory_venv/bin/activate' >> /root/.bashrc
 
 # Python packages
-COPY requirements.txt .
-RUN pip install -r requirements.txt
+#COPY requirements.txt .
+RUN pip install -r /opt/remote_observatory/requirements.txt
 
 # Build and install pyindi-client
 RUN mkdir -p $HOME/projects \
