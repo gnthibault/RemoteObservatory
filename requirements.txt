@@ -1,9 +1,9 @@
-astroalign==2.4.2
-astroplan==0.9
-astropy==6.1.0
-astroquery==0.4.6
+astroalign==2.5.1
+astroplan==0.10
+astropy==6.1.2
+astroquery==0.4.7
 erdantic==0.6.0
-influxdb-client==1.37.0
+influxdb-client==1.37.0f
 gcn-kafka==0.3.0
 graphviz==0.20.1
 lxml==5.2.2
