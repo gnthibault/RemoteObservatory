@@ -199,9 +199,9 @@ RUN mkdir -p $HOME/projects \
 
 
 # Indi webmanager for dev
-#RUN pip install indiweb
-#RUN cp indiwebmanager.service /etc/systemd/system/
-#RUN chmod 644 /etc/systemd/system/indiwebmanager.service
+RUN pip install indiweb==0.1.8
+RUN cp /opt/remote_observatory/infrastructure/indiwebmanager.service /etc/systemd/system/
+RUN chmod 644 /etc/systemd/system/indiwebmanager.service
 #RUN systemctl daemon-reload
 #RUN systemctl enable indiwebmanager.service
 
