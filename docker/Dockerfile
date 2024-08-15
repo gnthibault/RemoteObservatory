@@ -51,6 +51,33 @@ RUN apt-get --assume-yes --quiet install --no-install-recommends \
     xz-utils \
     zlib1g-dev
 
+## Install astrometry.net packages
+# Check cat /usr/local/astrometry/etc/astrometry.cfg to make sure destination path is correct
+# 4100-series built from the Tycho-2 catalog; scales 7-19 available, good for images wider than 1 degree. Recommended.
+# Mean satellite observation epoch      ~J1991.5
+# Epoch of the Tycho-2 catalog           J2000.0
+# Reference system                       ICRS
+# see https://heasarc.gsfc.nasa.gov/W3Browse/all/tycho2.html
+
+# 5200-series, LIGHT version built from Tycho-2 + Gaia-DR2; scales 0-6 available, good for images narrower than 1 degree. Combine with 4100-series for broader scale coverage.
+# The LIGHT version contains smaller files with no additional Gaia-DR2 information tagged along. Recommended.
+# Gaia DR2 astrometry consistently uses the ICRS reference system and provides stellar coordinates valid for epoch J2015.5
+# see https://www.cosmos.esa.int/web/cheops-guest-observers-programme/coordinates
+RUN apt-get --assume-yes --quiet install --no-install-recommends libcairo2-dev libnetpbm11-dev \
+  && mkdir -p $HOME/projects/astrometry.net \
+  && cd $HOME/projects/astrometry.net \
+  && wget https://astrometry.net/downloads/astrometry.net-0.95.tar.gz \
+  && tar -xvf ./*.tar.gz \
+  && cd astrometry.net-0.95 \
+  && export NETPBM_LIB="-L/usr/lib -lnetpbm" \
+  && export NETPBM_INC="-I/usr/include" \
+  && ./configure --prefix=/usr \
+  && make reconfig \
+  && make all -j8 \
+  && make install \
+  && ln -s /usr/local/astrometry/bin/an-fitstopnm /usr/local/bin/an-fitstopnm \
+  && wget --recursive --no-parent --continue --directory-prefix=/usr/local/astrometry/data/ https://portal.nersc.gov/project/cosmo/temp/dstn/index-5200/LITE/
+
 ## Indi dependencies for pre-packages binaries
 #RUN apt-add-repository ppa:mutlaqja/ppa && apt-get --assume-yes --quiet install --no-install-recommends \
 #    gsc \
@@ -62,8 +89,8 @@ RUN apt-get --assume-yes --quiet install --no-install-recommends \
 #    swig
 
 # Dependencies to build indi from sources + pyindi-client that is linked with binaries through swig
+# astrometry.net was built from source
 RUN apt-get --assume-yes --quiet install --no-install-recommends \
-        astrometry.net \
         cdbs \
         dkms \
         fxload \
@@ -142,7 +169,6 @@ RUN for i in indi-duino libasi indi-asi libplayerone indi-playerone indi-shelyak
 ## OpenPhd2 might later be replaced by the original source ?
 #RUN add-apt-repository ppa:pch/phd2 && apt-get --assume-yes --quiet install --no-install-recommends \
 #    phd2
-
 # Dependencies to build phd2 from sources
 RUN apt-get --assume-yes --quiet install --no-install-recommends \
     libwxgtk3.2-dev
@@ -156,12 +182,15 @@ RUN mkdir -p $HOME/projects \
     && make -j8 \
     && make install
 
+RUN cp /opt/remote_observatory/infrastructure/phd2.service /etc/systemd/system/
+RUN chmod 644 /etc/systemd/system/phd2.service
+
 ## Dependencies for nice reporting / latex reports
-#RUN apt-get --assume-yes --quiet install --no-install-recommends \
-#    texlive-latex-recommended \
-#    texlive-publishers \
-#    texlive-bibtex-extra \
-#    texlive-science
+RUN apt-get --assume-yes --quiet install --no-install-recommends \
+    texlive-latex-recommended \
+    texlive-publishers \
+    texlive-bibtex-extra \
+    texlive-science
 
 # Using bash for lower level scripting from now-on
 SHELL ["/bin/bash", "-l", "-c"]
@@ -200,8 +229,12 @@ RUN mkdir -p $HOME/projects \
 
 # Indi webmanager for dev
 RUN pip install indiweb==0.1.8
-RUN cp /opt/remote_observatory/infrastructure/indiwebmanager.service /etc/systemd/system/
+RUN cp /opt/remote_observatory/infrastructure/indiwebmanager*.service /etc/systemd/system/
 RUN chmod 644 /etc/systemd/system/indiwebmanager.service
+RUN chmod 644 /etc/systemd/system/indiwebmanager_guiding_camera.service
+RUN chmod 644 /etc/systemd/system/indiwebmanager_pointing_camera.service
+RUN chmod 644 /etc/systemd/system/indiwebmanager_science_camera.service
+
 #RUN systemctl daemon-reload
 #RUN systemctl enable indiwebmanager.service
 
