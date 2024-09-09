@@ -5,9 +5,9 @@ After=multi-user.target
 [Service]
 Type=idle
 # MUST SET YOUR USERNAME HERE.
-User=gnthibault
+User=root
 Environment=LD_LIBRARY_PATH=/usr/local/lib:/usr/lib
-ExecStart=/home/gnthibault/.local/bin/indi-web -v --xmldir /home/gnthibault/projects/RemoteObservatory/conf_files/indi_driver_xml --conf /home/gnthibault/projects/RemoteObservatory/conf_files/indi_driver_conf
+ExecStart=/bin/indi-web -v --xmldir /opt/remote_observatory/infrastructure/conf_files/indi_driver_xml --conf /opt/remote_observatory/conf_files/indi_driver_conf
 
 Restart=always
 RestartSec=5

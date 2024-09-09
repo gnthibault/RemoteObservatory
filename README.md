@@ -32,6 +32,18 @@ Quick overview of what you will be able to see and manage through this project
 
 # Install
 
+## System requirements when using macOS
+```bash
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+brew install python@3.9 
+brew install virtualenv
+brew install graphviz
+export GRAPHVIZ_DIR="$(brew --prefix graphviz)"
+export C_INCLUDE_PATH=/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/Headers
+export CPLUS_INCLUDE_PATH=/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/Headers
+pip install pygraphviz --global-option=build_ext --global-option="-I$GRAPHVIZ_DIR/include" --global-option="-L$GRAPHVIZ_DIR/lib"
+```
+
 ## System requirements when using ubuntu
 ```bash
 sudo apt-add-repository ppa:mutlaqja/ppa
@@ -98,6 +110,13 @@ sudo apt-get install \
     virtualenv venv
     source venv/bin/activate
     pip install -r requirements.txt
+```
+
+## Build and use docker for development (for macos dev for instance)
+
+```console
+    cd ./docker
+    ./build_images.sh latest linux/amd64
 ```
 
 ## Building the nice reporting / latex reports
