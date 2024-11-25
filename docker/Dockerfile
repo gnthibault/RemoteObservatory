@@ -75,8 +75,16 @@ RUN apt-get --assume-yes --quiet install --no-install-recommends libcairo2-dev l
   && make reconfig \
   && make all -j8 \
   && make install \
-  && ln -s /usr/local/astrometry/bin/an-fitstopnm /usr/local/bin/an-fitstopnm \
-  && wget --recursive --no-parent --no-host-directories --cut-dirs=6 --accept "*.fits" --continue --directory-prefix=/usr/local/astrometry/data/ https://portal.nersc.gov/project/cosmo/temp/dstn/index-5200/LITE/
+  && ln -s /usr/local/astrometry/bin/an-fitstopnm /usr/local/bin/an-fitstopnm
+#  && wget --recursive --no-parent --no-host-directories --cut-dirs=6 --accept "*.fits" --continue --directory-prefix=/usr/local/astrometry/data/ https://portal.nersc.gov/project/cosmo/temp/dstn/index-5200/LITE/
+
+# Downloading gcloud package
+RUN curl -sSL https://sdk.cloud.google.com > /tmp/gcl && bash /tmp/gcl --install-dir=/opt/gcloud --disable-prompts
+ENV PATH $PATH:/opt/gcloud/google-cloud-sdk/bin
+
+# Now Download astrometry.net index files
+RUN gsutil -m cp gs://astrometry_data/* /usr/local/astrometry/data/
+
 ## Indi dependencies for pre-packages binaries
 #RUN apt-add-repository ppa:mutlaqja/ppa && apt-get --assume-yes --quiet install --no-install-recommends \
 #    gsc \
