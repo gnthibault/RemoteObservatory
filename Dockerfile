@@ -63,27 +63,53 @@ RUN apt-get --assume-yes --quiet install --no-install-recommends \
 # The LIGHT version contains smaller files with no additional Gaia-DR2 information tagged along. Recommended.
 # Gaia DR2 astrometry consistently uses the ICRS reference system and provides stellar coordinates valid for epoch J2015.5
 # see https://www.cosmos.esa.int/web/cheops-guest-observers-programme/coordinates
-RUN apt-get --assume-yes --quiet install --no-install-recommends libcairo2-dev libnetpbm11-dev \
+RUN apt-get --assume-yes --quiet install --no-install-recommends \
+  build-essential \
+  curl \
+  git \
+  file \
+  pkg-config \
+  swig \
+  libcairo2-dev \
+  libnetpbm10-dev \
+  netpbm \
+  libpng-dev \
+  libgsl-dev \
+  libjpeg-dev \
+  zlib1g-dev \
+  libbz2-dev \
+  libcfitsio-dev \
+  wcslib-dev \
+  python3 \
+  python3-pip \
+  python3-dev \
+  python3-numpy \
+  python3-scipy \
+  python3-pil \
   && mkdir -p $HOME/projects/astrometry.net \
   && cd $HOME/projects/astrometry.net \
-  && wget https://astrometry.net/downloads/astrometry.net-0.95.tar.gz \
+  && wget https://astrometry.net/downloads/astrometry.net-0.96.tar.gz \
   && tar -xvf ./*.tar.gz \
-  && cd astrometry.net-0.95 \
+  && cd astrometry.net-0.96 \
   && export NETPBM_LIB="-L/usr/lib -lnetpbm" \
   && export NETPBM_INC="-I/usr/include" \
   && ./configure --prefix=/usr \
-  && make reconfig \
-  && make all -j8 \
+  && make all SYSTEM_GSL=yes GSL_INC="-I/usr/include" GSL_LIB="-L/usr/lib -lgsl" -j8 \
   && make install \
   && ln -s /usr/local/astrometry/bin/an-fitstopnm /usr/local/bin/an-fitstopnm
+#   libcairo2-dev \
+#   libjpeg-dev \
+#   libnetpbm11-dev \
+
 #  && wget --recursive --no-parent --no-host-directories --cut-dirs=6 --accept "*.fits" --continue --directory-prefix=/usr/local/astrometry/data/ https://portal.nersc.gov/project/cosmo/temp/dstn/index-5200/LITE/
 
 # Downloading gcloud package
 RUN curl -sSL https://sdk.cloud.google.com > /tmp/gcl && bash /tmp/gcl --install-dir=/opt/gcloud --disable-prompts
 ENV PATH $PATH:/opt/gcloud/google-cloud-sdk/bin
 
-# Now Download astrometry.net index files
-RUN gsutil -m cp gs://astrometry_data/* /usr/local/astrometry/data/
+# Actual application code and configs (could be used in builds)
+RUN mkdir -p /opt/remote_observatory
+COPY . /opt/remote_observatory/
 
 ## Indi dependencies for pre-packages binaries
 #RUN apt-add-repository ppa:mutlaqja/ppa && apt-get --assume-yes --quiet install --no-install-recommends \
@@ -110,7 +136,7 @@ RUN apt-get --assume-yes --quiet install --no-install-recommends \
         libftdi-dev \
         libftdi1-dev \
         libgps-dev \
-        libgsl0-dev \
+        libgsl-dev \
         libjpeg-dev \
         libkrb5-dev \
         libnova-dev \
@@ -121,12 +147,10 @@ RUN apt-get --assume-yes --quiet install --no-install-recommends \
         swig
 
 # Build indi from sources
-RUN mkdir -p $HOME/projects \
-    && cd $HOME/projects \
-    && git clone https://github.com/indilib/indi.git \
-    && cd $HOME/projects/indi \
-    && git checkout $INDI_VERSION \
-    && cd $HOME/projects \
+RUN --mount=type=cache,target=/tmp/git_cache/ \
+    mkdir -p $HOME/projects/indi \
+    && git clone https://github.com/indilib/indi.git /tmp/git_cache/indi/ \
+    && cd /tmp/git_cache/indi/ && git checkout $INDI_VERSION && cp -r . $HOME/projects/indi/ \
     && mkdir -p build/indi \
     && cd build/indi \
     && cmake -DCMAKE_INSTALL_PREFIX=/usr  $HOME/projects/indi \
@@ -158,11 +182,10 @@ RUN apt-get --assume-yes --quiet install --no-install-recommends \
     libzmq3-dev
 
 # Additional dependencies with indi-3rd party - clone the whole thing
-RUN mkdir -p $HOME/projects \
-    && cd $HOME/projects \
-    && git clone https://github.com/indilib/indi-3rdparty.git \
-    && cd $HOME/projects/indi-3rdparty \
-    && git checkout $INDI_3RD_PARTY_VERSION
+RUN --mount=type=cache,target=/tmp/git_cache/ \
+    mkdir -p $HOME/projects/indi-3rdparty/ \
+    && git clone https://github.com/indilib/indi-3rdparty.git /tmp/git_cache/indi-3rdparty/ \
+    && cd /tmp/git_cache/indi-3rdparty/ && git checkout $INDI_3RD_PARTY_VERSION && cp -r . $HOME/projects/indi-3rdparty/
 
 RUN for i in indi-duino libasi indi-asi libplayerone indi-playerone indi-shelyak libaltaircam; \
     do cd $HOME/projects \
@@ -180,12 +203,11 @@ RUN for i in indi-duino libasi indi-asi libplayerone indi-playerone indi-shelyak
 RUN apt-get --assume-yes --quiet install --no-install-recommends \
     libwxgtk3.2-dev
 
-RUN mkdir -p $HOME/projects \
-    && cd $HOME/projects \
-    && git clone https://github.com/gnthibault/phd2.git \
+RUN --mount=type=cache,target=/tmp/git_cache/ \
+    git clone https://github.com/gnthibault/phd2.git /tmp/git_cache/phd2/ \
     && mkdir -p build/phd2 \
     && cd build/phd2 \
-    && cmake -DCMAKE_INSTALL_PREFIX=/usr  $HOME/projects/phd2 \
+    && cmake -DCMAKE_INSTALL_PREFIX=/usr /tmp/git_cache/phd2/ \
     && make -j8 \
     && make install
 
@@ -203,10 +225,6 @@ RUN apt-get --assume-yes --quiet install --no-install-recommends \
 SHELL ["/bin/bash", "-l", "-c"]
 RUN echo 'export PS1="\u@\h \w> "' | cat - /root/.profile > temp && mv temp /root/.profile
 
-# Actual application code and configs
-RUN mkdir -p /opt/remote_observatory
-ADD code.tar.gz /opt/remote_observatory
-
 # Python environment
 RUN curl https://pyenv.run | bash
 RUN echo 'export PYENV_ROOT=/root/.pyenv' >> /root/.bashrc
@@ -214,6 +232,12 @@ RUN echo '[[ -d $PYENV_ROOT/bin ]] && export PATH="$PYENV_ROOT/bin:$PATH"' >> /r
 RUN echo 'eval "$(pyenv init -)"' >> /root/.bashrc
 RUN pyenv install -v $PYTHON_VERSION
 RUN pyenv global $PYTHON_VERSION
+
+# Now Download astrometry.net index files -- This needs to be moved when gsutil is updated
+RUN pyenv install 3.11 \
+ && pyenv global 3.11 \
+ && gsutil -m cp gs://astrometry_data/* /usr/local/astrometry/data/ \
+ && pyenv global $PYTHON_VERSION
 
 # Python virtual environment
 ENV VIRTUAL_ENV=/opt/remote_observatory_venv
@@ -226,13 +250,12 @@ RUN echo 'source /opt/remote_observatory_venv/bin/activate' >> /root/.bashrc
 RUN pip install -r /opt/remote_observatory/requirements.txt
 
 # Build and install pyindi-client
-RUN mkdir -p $HOME/projects \
-    && cd $HOME/projects \
-    && git clone https://github.com/indilib/pyindi-client.git \
-    && cd $HOME/projects/pyindi-client \
-    && git checkout $PYINDI_VERSION \
+RUN --mount=type=cache,target=/tmp/git_cache/ \
+    mkdir -p $HOME/projects/pyindi-client/ \
+    && git clone https://github.com/indilib/pyindi-client.git /tmp/git_cache/pyindi-client/ \
+    && cd /tmp/git_cache/pyindi-client/ && git checkout $PYINDI_VERSION && cp -r . $HOME/projects/pyindi-client/ \
+    && cd $HOME/projects/pyindi-client/ \
     && pip install -e .
-
 
 # Indi webmanager for dev
 RUN pip install indiweb==0.1.8
@@ -264,3 +287,7 @@ RUN chmod 644 /etc/systemd/system/indiwebmanager_science_camera.service
 # ./build_images.sh latest linux/amd64
 # launch with
 # docker run --user $(id -u):$(id -g) -it --rm -v /main/machine/volume:/docker/mount/point --net host gnthibault/remote_observatory:latest
+
+# docker buildx build --platform linux/arm64/v8 -t test_to_delete .
+# docker buildx build --platform linux/amd64 -t test_to_delete .
+# docker buildx build -t europe-west1-docker.pkg.dev/tom-toolkit-dev-hxm/remote-observatory-tom-repo/tom_app .
