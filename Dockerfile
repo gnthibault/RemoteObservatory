@@ -13,6 +13,10 @@ ENV PYINDI_VERSION v1.9.1
 ENV INDI_3RD_PARTY_VERSION v2.0.8
 ENV PYTHON_VERSION 3.12.3
 
+# Actual application code and configs (could be used in builds)
+RUN mkdir -p /opt/remote_observatory/astrometry_data
+COPY . /opt/remote_observatory/
+
 # Generic install / utilities / dev
 RUN apt-get update && apt-get --assume-yes --quiet install --no-install-recommends \
     build-essential \
@@ -103,13 +107,13 @@ RUN apt-get --assume-yes --quiet install --no-install-recommends \
 
 #  && wget --recursive --no-parent --no-host-directories --cut-dirs=6 --accept "*.fits" --continue --directory-prefix=/usr/local/astrometry/data/ https://portal.nersc.gov/project/cosmo/temp/dstn/index-5200/LITE/
 
-# Downloading gcloud package
-RUN curl -sSL https://sdk.cloud.google.com > /tmp/gcl && bash /tmp/gcl --install-dir=/opt/gcloud --disable-prompts
-ENV PATH $PATH:/opt/gcloud/google-cloud-sdk/bin
-
-# Actual application code and configs (could be used in builds)
-RUN mkdir -p /opt/remote_observatory
-COPY . /opt/remote_observatory/
+# Now Download astrometry.net index files -- This needs to be moved when gsutil is updated
+# RUN pyenv install 3.11 \
+#  && pyenv global 3.11 \
+#  && gsutil -m cp gs://astrometry_data/* /usr/local/astrometry/data/ \
+#  && pyenv global $PYTHON_VERSION
+#RUN mv /opt/remote_observatory/astrometry_data/* /usr/local/astrometry/data/
+RUN find /opt/remote_observatory/astrometry_data/ -maxdepth 1 -type f -exec mv '{}' /usr/local/astrometry/data/  \;
 
 ## Indi dependencies for pre-packages binaries
 #RUN apt-add-repository ppa:mutlaqja/ppa && apt-get --assume-yes --quiet install --no-install-recommends \
@@ -221,6 +225,10 @@ RUN apt-get --assume-yes --quiet install --no-install-recommends \
     texlive-bibtex-extra \
     texlive-science
 
+# Downloading gcloud client
+RUN curl -sSL https://sdk.cloud.google.com > /tmp/gcl && bash /tmp/gcl --install-dir=/opt/gcloud --disable-prompts
+ENV PATH $PATH:/opt/gcloud/google-cloud-sdk/bin
+
 # Using bash for lower level scripting from now-on
 SHELL ["/bin/bash", "-l", "-c"]
 RUN echo 'export PS1="\u@\h \w> "' | cat - /root/.profile > temp && mv temp /root/.profile
@@ -232,12 +240,6 @@ RUN echo '[[ -d $PYENV_ROOT/bin ]] && export PATH="$PYENV_ROOT/bin:$PATH"' >> /r
 RUN echo 'eval "$(pyenv init -)"' >> /root/.bashrc
 RUN pyenv install -v $PYTHON_VERSION
 RUN pyenv global $PYTHON_VERSION
-
-# Now Download astrometry.net index files -- This needs to be moved when gsutil is updated
-RUN pyenv install 3.11 \
- && pyenv global 3.11 \
- && gsutil -m cp gs://astrometry_data/* /usr/local/astrometry/data/ \
- && pyenv global $PYTHON_VERSION
 
 # Python virtual environment
 ENV VIRTUAL_ENV=/opt/remote_observatory_venv
@@ -291,3 +293,8 @@ RUN chmod 644 /etc/systemd/system/indiwebmanager_science_camera.service
 # docker buildx build --platform linux/arm64/v8 -t test_to_delete .
 # docker buildx build --platform linux/amd64 -t test_to_delete .
 # docker buildx build -t europe-west1-docker.pkg.dev/tom-toolkit-dev-hxm/remote-observatory-tom-repo/tom_app .
+
+# If you want to debug a layer:
+# DOCKER_BUILDKIT=0 docker build --platform linux/arm64/v8 -t test_to_delete .
+# docker run -it --rm 1941be9e1d8c /bin/bash
+# docker buildx prune # To clean cache
