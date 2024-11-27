@@ -270,7 +270,6 @@ RUN chmod 644 /etc/systemd/system/indiwebmanager_science_camera.service
 #RUN systemctl daemon-reload
 #RUN systemctl enable indiwebmanager.service
 
-
 # # Add Docker's official GPG key:
 # sudo apt-get update
 # sudo apt-get install ca-certificates curl
