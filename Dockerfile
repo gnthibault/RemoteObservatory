@@ -291,7 +291,7 @@ RUN chmod 644 /etc/systemd/system/indiwebmanager_science_camera.service
 
 # docker buildx build --platform linux/arm64/v8 -t test_to_delete .
 # docker buildx build --platform linux/amd64 -t test_to_delete .
-# docker buildx build -t europe-west1-docker.pkg.dev/tom-toolkit-dev-hxm/remote-observatory-tom-repo/tom_app .
+# docker buildx build --platform linux/amd64 -t europe-west1-docker.pkg.dev/remote-observatory-dev-XXX/remote-observatory-main-repo/remote_observatory .
 
 # If you want to debug a layer:
 # DOCKER_BUILDKIT=0 docker build --platform linux/arm64/v8 -t test_to_delete .
