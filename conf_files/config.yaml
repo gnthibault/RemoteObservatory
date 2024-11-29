@@ -154,10 +154,10 @@ cameras:
         do_acquisition: true
         working_temperature: -12
         SIMULATOR_SETTINGS: # 180mm
-            SIM_XRES: 5496
-            SIM_YRES: 3672
-            SIM_XSIZE: 2.4
-            SIM_YSIZE: 2.4
+            SIM_XRES: 1500
+            SIM_YRES: 1500
+            SIM_XSIZE: 4.8
+            SIM_YSIZE: 4.8
             SIM_MAXVAL: 65000
             SIM_SATURATION: 1
             SIM_LIMITINGMAG: 17
@@ -175,7 +175,7 @@ cameras:
         SCOPE_INFO: # 200/800 newtonian
             FOCAL_LENGTH: 800
             APERTURE: 200
-        subsample_astrometry: 4
+        subsample_astrometry: 2
         do_guiding: false
         do_pointing: false
         pointing_seconds: 5
@@ -282,25 +282,25 @@ vizualization_service:
 time_service :
     module : HostTimeService
 messaging_publisher:
-    module: PanMessagingMQTT #PanMessagingZMQ, PanMessagingMQTT
+    module: PanMessagingZMQ #PanMessagingZMQ, PanMessagingMQTT
     mqtt_host: localhost
     mqtt_port: 1883
     com_mode: publisher
     msg_port: 6510
 messaging_subscriber:
-    module: PanMessagingMQTT #PanMessagingZMQ, PanMessagingMQTT
+    module: PanMessagingZMQ #PanMessagingZMQ, PanMessagingMQTT
     mqtt_host: localhost
     mqtt_port: 1883
     com_mode: subscriber
     cmd_port: 6500
 paws_subscriber:
-    module: PanMessagingMQTT #PanMessagingZMQ, PanMessagingMQTT
+    module: PanMessagingZMQ #PanMessagingZMQ, PanMessagingMQTT
     mqtt_host: localhost
     mqtt_port: 1883
     com_mode: subscriber
     cmd_port: 6511
 paws_publisher:
-    module: PanMessagingMQTT #PanMessagingZMQ, PanMessagingMQTT
+    module: PanMessagingZMQ #PanMessagingZMQ, PanMessagingMQTT
     mqtt_host: localhost
     mqtt_port: 1883
     com_mode: publisher

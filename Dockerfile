@@ -2,16 +2,16 @@ ARG BASE_IMAGE=ubuntu:24.04
 FROM ${BASE_IMAGE}
 
 # prevent keyboard related user input to be asked for
-ENV DEBIAN_FRONTEND noninteractive
+ENV DEBIAN_FRONTEND=noninteractive
 
 # Useless docker cache for pip
-ENV PIP_NO_CACHE_DIR 1
+ENV PIP_NO_CACHE_DIR=1
 
 # Versioning
-ENV INDI_VERSION v2.0.8
-ENV PYINDI_VERSION v1.9.1
-ENV INDI_3RD_PARTY_VERSION v2.0.8
-ENV PYTHON_VERSION 3.12.3
+ENV INDI_VERSION=v2.0.8
+ENV PYINDI_VERSION=v1.9.1
+ENV INDI_3RD_PARTY_VERSION=v2.0.8
+ENV PYTHON_VERSION=3.12.3
 
 # Actual application code and configs (could be used in builds)
 RUN mkdir -p /opt/remote_observatory/astrometry_data
@@ -32,8 +32,30 @@ RUN apt-get update && apt-get --assume-yes --quiet install --no-install-recommen
     python3-setuptools \
     python3-six \
     software-properties-common \
+    tmux \
     vim && \
     apt-get clean
+
+# Install XFCE, VNC server, dbus-x11, and xfonts-base for vnc
+RUN apt-get install -y --no-install-recommends \
+    xfce4 \
+    xfce4-goodies \
+    tightvncserver \
+    dbus-x11 \
+    xfonts-base \
+    && apt-get clean
+# Setup VNC server
+RUN mkdir /root/.vnc \
+    && echo "password" | vncpasswd -f > /root/.vnc/passwd \
+    && chmod 600 /root/.vnc/passwd
+# Create an .Xauthority file
+RUN touch /root/.Xauthority
+# Copy a script to start the VNC server
+RUN cp /opt/remote_observatory/infrastructure/vncserver /etc/init.d/vncserver \
+    && chmod +x /etc/init.d/vncserver
+# Expose VNC port
+EXPOSE 5901
+##################################################
 
 # pyenv dependencies
 RUN apt-get --assume-yes --quiet install --no-install-recommends \
@@ -151,9 +173,10 @@ RUN apt-get --assume-yes --quiet install --no-install-recommends \
         swig
 
 # Build indi from sources
+# cache trick from https://stackoverflow.com/questions/55003297/how-to-get-git-clone-to-play-nice-with-docker-cache
 RUN --mount=type=cache,target=/tmp/git_cache/ \
     mkdir -p $HOME/projects/indi \
-    && git clone https://github.com/indilib/indi.git /tmp/git_cache/indi/ \
+    && git -C /tmp/git_cache/indi/ fetch || git clone https://github.com/indilib/indi.git /tmp/git_cache/indi/ \
     && cd /tmp/git_cache/indi/ && git checkout $INDI_VERSION && cp -r . $HOME/projects/indi/ \
     && mkdir -p build/indi \
     && cd build/indi \
@@ -188,7 +211,7 @@ RUN apt-get --assume-yes --quiet install --no-install-recommends \
 # Additional dependencies with indi-3rd party - clone the whole thing
 RUN --mount=type=cache,target=/tmp/git_cache/ \
     mkdir -p $HOME/projects/indi-3rdparty/ \
-    && git clone https://github.com/indilib/indi-3rdparty.git /tmp/git_cache/indi-3rdparty/ \
+    && git -C /tmp/git_cache/indi-3rdparty/ fetch || git clone https://github.com/indilib/indi-3rdparty.git /tmp/git_cache/indi-3rdparty/ \
     && cd /tmp/git_cache/indi-3rdparty/ && git checkout $INDI_3RD_PARTY_VERSION && cp -r . $HOME/projects/indi-3rdparty/
 
 RUN for i in indi-duino libasi indi-asi libplayerone indi-playerone indi-shelyak libaltaircam; \
@@ -208,7 +231,7 @@ RUN apt-get --assume-yes --quiet install --no-install-recommends \
     libwxgtk3.2-dev
 
 RUN --mount=type=cache,target=/tmp/git_cache/ \
-    git clone https://github.com/gnthibault/phd2.git /tmp/git_cache/phd2/ \
+    git -C /tmp/git_cache/phd2/ fetch || git clone https://github.com/gnthibault/phd2.git /tmp/git_cache/phd2/ \
     && mkdir -p build/phd2 \
     && cd build/phd2 \
     && cmake -DCMAKE_INSTALL_PREFIX=/usr /tmp/git_cache/phd2/ \
@@ -227,7 +250,7 @@ RUN apt-get --assume-yes --quiet install --no-install-recommends \
 
 # Downloading gcloud client
 RUN curl -sSL https://sdk.cloud.google.com > /tmp/gcl && bash /tmp/gcl --install-dir=/opt/gcloud --disable-prompts
-ENV PATH $PATH:/opt/gcloud/google-cloud-sdk/bin
+ENV PATH=$PATH:/opt/gcloud/google-cloud-sdk/bin
 
 # Using bash for lower level scripting from now-on
 SHELL ["/bin/bash", "-l", "-c"]
@@ -254,7 +277,7 @@ RUN pip install -r /opt/remote_observatory/requirements.txt
 # Build and install pyindi-client
 RUN --mount=type=cache,target=/tmp/git_cache/ \
     mkdir -p $HOME/projects/pyindi-client/ \
-    && git clone https://github.com/indilib/pyindi-client.git /tmp/git_cache/pyindi-client/ \
+    && git -C /tmp/git_cache/pyindi-client/ fetch || git clone https://github.com/indilib/pyindi-client.git /tmp/git_cache/pyindi-client/ \
     && cd /tmp/git_cache/pyindi-client/ && git checkout $PYINDI_VERSION && cp -r . $HOME/projects/pyindi-client/ \
     && cd $HOME/projects/pyindi-client/ \
     && pip install -e .
@@ -270,7 +293,9 @@ RUN chmod 644 /etc/systemd/system/indiwebmanager_science_camera.service
 #RUN systemctl daemon-reload
 #RUN systemctl enable indiwebmanager.service
 
-# # Add Docker's official GPG key:
+CMD /sbin/init
+
+# Add Docker's official GPG key:
 # sudo apt-get update
 # sudo apt-get install ca-certificates curl
 # sudo install -m 0755 -d /etc/apt/keyrings
@@ -284,11 +309,8 @@ RUN chmod 644 /etc/systemd/system/indiwebmanager_science_camera.service
 #   sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
 # sudo apt-get update && sudo apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
 
-# Build with
-# ./build_images.sh latest linux/amd64
-# launch with
-# docker run --user $(id -u):$(id -g) -it --rm -v /main/machine/volume:/docker/mount/point --net host gnthibault/remote_observatory:latest
 
+# Build with
 # docker buildx build --platform linux/arm64/v8 -t test_to_delete .
 # docker buildx build --platform linux/amd64 -t test_to_delete .
 # docker buildx build --platform linux/amd64 -t europe-west1-docker.pkg.dev/remote-observatory-dev-XXX/remote-observatory-main-repo/remote_observatory .
@@ -297,3 +319,18 @@ RUN chmod 644 /etc/systemd/system/indiwebmanager_science_camera.service
 # DOCKER_BUILDKIT=0 docker build --platform linux/arm64/v8 -t test_to_delete .
 # docker run -it --rm 1941be9e1d8c /bin/bash
 # docker buildx prune # To clean cache
+
+# start the container in daemon mode with -d, and then look around in a shell using docker exec -it <container id> sh.
+# docker run -d --rm  --name remote_observatory -v $HOME/projects/RemoteObservatory:/opt/remote_observatory_dev -p 5901:5901 test_to_delete
+# docker exec -it remote_observatory /bin/bash
+# docker kill remote_observatory
+
+# docker run --user $(id -u):$(id -g) -it --rm -v /main/machine/volume:/docker/mount/point --net host gnthibault/remote_observatory:latest
+
+
+
+# tmux new -s t1
+# ctrl b + d
+# tmux new -s t2
+# export PYTHONPATH=/opt/remote_observatory_dev
+# python ./apps/launch_remote_observatory.py

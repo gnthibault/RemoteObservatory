@@ -29,6 +29,7 @@ sep==1.2.1
 #serial==0.0.97
 setuptools==70.0.0
 Sphinx==1.8.1
+sqlmodel==0.0.22
 transitions==0.7.1
 tzwhere==3.0.3
 watchdog==4.0.1
