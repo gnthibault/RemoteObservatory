@@ -20,6 +20,7 @@ This project either uses, or is directly inspired by:
 * Aladin-lite (mostly for PAWS actually): https://github.com/cds-astro/aladin-lite
 * MMTO Observatory indi client: https://github.com/MMTObservatory/indiclient
 * Meshcat: https://github.com/rdeits/meshcat-python but we might want to replace meshcat with scenepic in the future: https://microsoft.github.io/scenepic/python/
+* PockerISO: https://github.com/shantanoo-desai/PockerISO/tree/main
 
 
 # Overview, scratching the surface
@@ -118,6 +119,39 @@ sudo apt-get install \
     cd ./docker
     ./build_images.sh latest linux/amd64
 ```
+
+## Build iso with packer
+
+### Installing packer
+On mac:
+```console
+    brew tap hashicorp/tap
+    brew install hashicorp/tap/packer
+    packer # you should see a list of Packer commands and options.
+```
+
+On ubuntu:
+
+```console
+    wget -O - https://apt.releases.hashicorp.com/gpg | sudo gpg --dearmor -o /usr/share/keyrings/hashicorp-archive-keyring.gpg
+    echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/hashicorp-archive-keyring.gpg] https://apt.releases.hashicorp.com $(lsb_release -cs) main" | sudo tee /etc/apt/sources.list.d/hashicorp.list
+    sudo apt update && sudo apt install packer
+    packer # you should see a list of Packer commands and options
+```
+
+### Build iso with packer
+
+```console
+    cd packer
+	packer init -upgrade ./templates/ubuntu-template.pkr.hcl
+    packer build -var-file=./vars/ubuntu.pkrvars.hcl -only="gen-fs-tarball.*" ./templates/ubuntu-template.pkr.hcl
+	mkdir ubuntu.dir
+	tar -vxf ubuntu.tar -C ubuntu.dir
+	packer build -var-file=./vars/ubuntu.pkrvars.hcl -only="gen-boot-img.ubuntu" ./templates/ubuntu-template.pkr.hcl
+	rm -rf mnt ubuntu.*
+```
+
+
 
 ## Building the nice reporting / latex reports
 ```bash
