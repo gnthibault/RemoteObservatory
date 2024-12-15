@@ -116,7 +116,7 @@ def _parse_config(config):
 
     # Prepend the base directory to relative dirs
     if 'directories' in config:
-        base_dir = config['directories'].get('base','/var/RemoteObservatory')
+        base_dir = config['directories'].get('base','/opt/RemoteObservatory')
         for dir_name, rel_dir in config['directories'].items():
             if not rel_dir.startswith('/'):
                 config['directories'][dir_name] = os.path.join(base_dir,

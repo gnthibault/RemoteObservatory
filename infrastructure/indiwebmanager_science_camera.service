@@ -5,9 +5,9 @@ After=multi-user.target
 [Service]
 Type=idle
 # MUST SET YOUR USERNAME HERE.
-User=gnthibault
+User=LOCAL_USER_NAME
 Environment=LD_LIBRARY_PATH=/usr/local/lib:/usr/lib
-ExecStart=/home/gnthibault/.local/bin/indi-web -v --fifo /tmp/indiFIFO_science_camera --indi-port 7626 --port 8626 --xmldir /home/gnthibault/projects/RemoteObservatory/conf_files/indi_driver_xml --conf /home/gnthibault/projects/RemoteObservatory/conf_files/indi_driver_conf
+ExecStart=/opt/remote_observatory_venv/bin/indi-web -v --fifo /tmp/indiFIFO_science_camera --indi-port 7626 --port 8626 --xmldir LOCAL_INSTALL_PATH/../conf_files/indi_driver_xml --conf LOCAL_INSTALL_PATH/../conf_files/indi_driver_conf
 
 Restart=always
 RestartSec=5
@@ -23,5 +23,5 @@ WantedBy=multi-user.target
 #journalctl -u indiwebmanager_science_camera.service
 
 #git clone https://github.com/knro/indiwebmanager (push)
-#python ./setup.py install --prefix /home/gnthibault/.local/
+#python ./setup.py install --prefix /home/LOCAL_USER_NAME/.local/
 

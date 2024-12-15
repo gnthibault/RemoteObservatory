@@ -14,11 +14,11 @@ After=multi-user.target
 
 [Service]
 Type=idle
-User=root
+User=LOCAL_USER_NAME
 Environment=LD_LIBRARY_PATH=/usr/local/lib:/usr/lib
-Environment="DISPLAY=:0"
+Environment="DISPLAY=:1"
 # "XAUTHORITY=/root/.Xauthority"
-ExecStartPre=rm -f /root/phd2.1
+ExecStartPre=rm -f /home/LOCAL_USER_NAME/phd2.1
 ExecStart=/usr/bin/phd2
 Restart=always
 RestartSec=3

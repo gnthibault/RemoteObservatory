@@ -18,6 +18,18 @@ __pycache__
 /state_images
 /venv
 
+# Custom options for packer:
+packer/*.dir
+packer/*.gz
+packer/*.img
+acker/*.output
+packer/*.qcow2
+packer/*.sha256
+packer/*.tar
+
+# Custom for docker build tmp
+astrometry_data*
+
 # Custom options for latex:
 reports_build
 documentation/papers/latex/**/*.aux

@@ -36,7 +36,7 @@ class Image(BaseModel):
     image_id:         str   # Altair AA183MPRO_012345_20230822T220825
     camera_name:      str   # Altair AA183MPRO
     camera_uid:       str   # 012345
-    file_path:        str   # /var/RemoteObservatory/images/targets/Alioth/012345/20230822T220718/pointing01.fits
+    file_path:        str   # /opt/RemoteObservatory/images/targets/Alioth/012345/20230822T220718/pointing01.fits
 
     creator:          str   # RemoteObservatory_0.0.0
     observer:         str   # Remote observatory
