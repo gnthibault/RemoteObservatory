@@ -14,6 +14,13 @@ but using a single Packer Template which can be configured for different Distrib
 | __Alpine 3.16__  | `linux/amd64` | :heavy_check_mark: |
 
 
+## Additional links on packer
+https://github.com/shantanoo-desai/PockerISO/tree/main (Where this code comes from)
+https://iximiuz.com/en/posts/from-docker-container-to-bootable-linux-disk-image/ (The original blog post/repo that inspired this code)
+https://www.infracloud.io/blogs/deploy-ubuntu-packer-image-bare-metal/
+https://medium.com/@williamwarley/mastering-packer-a-comprehensive-guide-to-automated-machine-image-creation-61cd7d8ac9ed
+
+
 ## Usage
 
 Requirements:
