@@ -147,7 +147,7 @@ On ubuntu:
     packer build -var-file=./vars/ubuntu.pkrvars.hcl -only="gen-fs-tarball.*" ./templates/ubuntu-template.pkr.hcl
 	mkdir ubuntu.dir
 	tar -vxf ubuntu.tar -C ubuntu.dir
-	packer build -var-file=./vars/ubuntu.pkrvars.hcl -only="gen-boot-img.ubuntu" ./templates/ubuntu-template.pkr.hcl
+	packer build -var-file=./vars/ubuntu.pkrvars.hcl -only="gen-boot-img.*" ./templates/ubuntu-template.pkr.hcl
 	rm -rf mnt ubuntu.*
 ```
 

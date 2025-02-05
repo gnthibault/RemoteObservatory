@@ -14,6 +14,7 @@ echo_blue() {
 }
 
 echo_blue "[Install APT dependencies]"
+DEBIAN_FRONTEND=noninteractive apt-get install --reinstall coreutils # Some /bin tools might not exist
 DEBIAN_FRONTEND=noninteractive apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y extlinux fdisk qemu-utils
 
 echo_blue "[Create disk image]"
