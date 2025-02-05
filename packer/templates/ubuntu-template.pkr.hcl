@@ -48,7 +48,7 @@ locals {
 # This Source will only be used to create a Filesystem from the Docker Container
 source "docker" "filesystem-container" {
     image = "${local.distro_docker_image}"
-    pull = false # save bandwidth and avoid multiple pulls to same image
+    pull = true # save bandwidth and avoid multiple pulls to same image
     platform = "${var.distro_platform}"
     export_path = "./${var.distro}.tar"
 }
@@ -72,6 +72,7 @@ build {
     sources = [ "source.docker.filesystem-container" ]
     provisioner "shell" {
         inline = [
+            "apt-get install --reinstall coreutils", # Some /bin tools might not exist
             "apt-get update",
             "apt-get install -y ${var.distro_kernel}",
             "apt-get install -y --no-install-recommends systemd-sysv",

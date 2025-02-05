@@ -18,6 +18,10 @@ __pycache__
 /state_images
 /venv
 
+# Custom options for packer:
+packer/*.dir
+packer/*.tar
+
 # Custom options for latex:
 reports_build
 documentation/papers/latex/**/*.aux
