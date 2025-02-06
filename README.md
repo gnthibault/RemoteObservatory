@@ -142,6 +142,7 @@ On ubuntu:
 ### Build iso with packer
 
 ```console
+    # On ubuntu you might need to do echo '{ "experimental": true }' | sudo tee -a /etc/docker/daemon.json
     cd packer
 	packer init -upgrade ./templates/ubuntu-template.pkr.hcl
     packer build -var-file=./vars/ubuntu.pkrvars.hcl -only="gen-fs-tarball.*" ./templates/ubuntu-template.pkr.hcl

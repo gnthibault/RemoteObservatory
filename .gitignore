@@ -21,6 +21,7 @@ __pycache__
 # Custom options for packer:
 packer/*.dir
 packer/*.img
+packer/*.qcow2
 packer/*.tar
 
 # Custom options for latex:
