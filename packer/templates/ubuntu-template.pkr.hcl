@@ -74,8 +74,8 @@ build {
         inline = [
             "apt-get install --reinstall coreutils", # Some /bin tools might not exist
             "apt-get update",
-            "apt-get install -y ${var.distro_kernel}",
-            "apt-get install -y --no-install-recommends systemd-sysv",
+            "DEBIAN_FRONTEND=noninteractive apt-get install -y ${var.distro_kernel}",
+            "DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends systemd-sysv",
             "echo \"root:root\" | chpasswd"
         ]
     }
