@@ -145,11 +145,24 @@ On ubuntu:
     # On ubuntu you might need to do echo '{ "experimental": true }' | sudo tee -a /etc/docker/daemon.json
     cd packer
 	packer init -upgrade ./templates/ubuntu-template.pkr.hcl
+	# You might want to make sure you have proper formatting with
+	packer fmt .
+	# You might also want to make sure your template is valid
+	packer validate .
+	# Then build
     packer build -var-file=./vars/ubuntu.pkrvars.hcl -only="gen-fs-tarball.*" ./templates/ubuntu-template.pkr.hcl
 	mkdir ubuntu.dir
 	tar -vxf ubuntu.tar -C ubuntu.dir
 	packer build -var-file=./vars/ubuntu.pkrvars.hcl -only="gen-boot-img.*" ./templates/ubuntu-template.pkr.hcl
+	# You can test image with
+	sudo qemu-system-x86_64 -drive file=ubuntu.img,index=0,media=disk,format=raw
+	# Compress for artifact
+    xz --compress --threads=4 --keep --suffix=.tomove ubuntu.img
+    mv ubuntu.img.tomove image.img.xz
 	rm -rf mnt ubuntu.*
+	# Uncompress and burn to usb disk
+    xz --keep --decompress --threads=4 --stdout ./image.img.xz > image.img
+    sudo dd if=./image.img of=/dev/sdc bs=128M status=progress
 ```
 
 
