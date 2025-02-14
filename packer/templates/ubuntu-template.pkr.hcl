@@ -21,6 +21,10 @@ packer {
       version = ">= 1.0.1"
       source = "github.com/hashicorp/docker"
     }
+    qemu = {
+      version = "~> 1"
+      source  = "github.com/hashicorp/qemu"
+    }
   }
 }
 
@@ -93,4 +97,49 @@ build {
             "./scripts/create-image.sh"
         ]
     }
+}
+
+# https://developer.hashicorp.com/packer/integrations/hashicorp/qemu/latest/components/builder/qemu
+source "qemu" "qemu-boot-img" {
+  disk_image        = true
+  iso_url           = "./ubuntu.img"
+  #iso_checksum     = "file:./sha256sum.txt"
+  iso_checksum      = "none"
+  output_directory  = "./ubuntu.output"
+  communicator      = "ssh" # https://developer.hashicorp.com/packer/integrations/hashicorp/qemu/latest/components/builder/qemu#optional-ssh-fields:
+  ssh_username      = "root"
+  ssh_password      = "root"
+  ssh_timeout       = "20m"
+  shutdown_command  = "echo 'packer' | sudo -S shutdown -P now"
+  disk_size         = "5G"
+  format            = "raw"
+  accelerator       = "kvm"
+  http_directory    = "../"
+  vm_name           = "customized_ubuntu"
+  net_device        = "virtio-net"
+  disk_interface    = "virtio"
+  boot_wait         = "10s"
+  boot_command      = []
+}
+
+build {
+  sources = ["qemu.qemu-boot-img"]
+
+  provisioner "shell" {
+    environment_vars = [
+      "HOME_DIR=/opt/remote_observatory"
+    ]
+    execute_command = "echo 'vagrant' | {{ .Vars }} sudo -S -E sh -eux '{{ .Path }}'"
+    scripts = ["scripts/ubuntu_install.sh"]
+    expect_disconnect = true
+  }
+  post-processors {
+    post-processor "compress" {
+      compression_level   = 6
+      format              = ".gz"
+      keep_input_artifact = true
+      only                = ["qemu"]
+      output              = "./customized_ubuntu.img.gz"
+    }
+  }
 }
