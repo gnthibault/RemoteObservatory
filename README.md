@@ -155,7 +155,7 @@ On ubuntu:
 	tar -vxf ubuntu.tar -C ubuntu.dir
 	packer build -var-file=./vars/ubuntu.pkrvars.hcl -only="gen-boot-img.*" ./templates/ubuntu-template.pkr.hcl
 	# You can test image with
-	sudo qemu-system-x86_64 -drive file=ubuntu.img,index=0,media=disk,format=raw
+	sudo qemu-system-x86_64 -m 4096 -smp 4 -drive file=ubuntu.img,index=0,media=disk,format=raw
 	# Compress for artifact
     xz --compress --threads=4 --keep --suffix=.tomove ubuntu.img
     mv ubuntu.img.tomove image.img.xz
