@@ -149,7 +149,7 @@ On ubuntu:
 	packer fmt .
 	# You might also want to make sure your template is valid
 	packer validate -var-file=./vars/ubuntu.pkrvars.hcl ./templates/ubuntu-template.pkr.hcl
-	# Then build
+	# Then build the filesystem only from docker image base
     packer build -var-file=./vars/ubuntu.pkrvars.hcl -only="gen-fs-tarball.*" ./templates/ubuntu-template.pkr.hcl
 	mkdir ubuntu.dir
 	tar -vxf ubuntu.tar -C ubuntu.dir
