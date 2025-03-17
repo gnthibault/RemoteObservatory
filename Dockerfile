@@ -14,7 +14,7 @@ ENV INDI_3RD_PARTY_VERSION=v2.0.8
 ENV PYTHON_VERSION=3.12.3
 
 # Actual application code and configs (could be used in builds)
-RUN mkdir -p /opt/remote_observatory/astrometry_data
+RUN mkdir -p /opt/remote_observatory/
 COPY . /opt/remote_observatory/
 
 # Generic install / utilities / dev
@@ -146,6 +146,9 @@ RUN find /opt/remote_observatory/astrometry_data/ -maxdepth 1 -type f -exec mv '
 #    indi-bin \
 #    kstars-bleeding \
 #    swig
+
+# Generic dependency to make sure we can install system components that will start at boot if built as an image (not docker)
+# RUN apt-get --assume-yes --quiet install --no-install-recommends systemd-sysv
 
 # Dependencies to build indi from sources + pyindi-client that is linked with binaries through swig
 # astrometry.net was built from source
