@@ -16,5 +16,5 @@
 
 distro = "ubuntu"
 distro_version = "noble"
-distro_platform = "linux/amd64" # linux/armv64/v8 for ARM64 Docker Images
+distro_platform = "linux/amd64" # "linux/amd64" # linux/arm64/v8 for ARM64 Docker Images
 distro_kernel = "linux-image-virtual"
