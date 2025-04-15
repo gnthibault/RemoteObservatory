@@ -79,10 +79,12 @@ class InvisibleObjectOffsetPointer(OffsetPointer):
             if guider is not None:
                 msg = f"Going to adjust pointing, need to stop guiding"
                 self.logger.debug(msg)
+                # From https://github.com/OpenPHDGuiding/phd2/wiki/EventMonitoring#guide-method
+                # To "start fresh" with guiding, first transmit the 'stop_capture' RPC, then transmit the 'guide' RPC.
                 guider.stop_capture()
                 #guider.set_paused(paused=True, full="full")
                 try:
-                    exp_time_sec = guiding_camera.is_remaining_exposure_time()
+                    exp_time_sec = guiding_camera.get_remaining_exposure_time()
                     guiding_camera.synchronize_with_image_reception(exp_time_sec=exp_time_sec)
                 except ImageAcquisitionError as e:
                     pass

@@ -148,13 +148,13 @@ class IndiWeather(threading.Thread, IndiDevice):
                          'LONG': self.observatory['longitude'],
                          'ELEV': self.observatory['elevation']},
                         sync=True,
-                        timeout=self.defaultTimeout)
+                        timeout=self.timeout)
 
     def set_update_period(self):
         self.set_number('WEATHER_UPDATE',
                         {'PERIOD': self._delay_sec},
                         sync=True,
-                        timeout=self.defaultTimeout)
+                        timeout=self.timeout)
 
     def get_weather_features(self):
         """

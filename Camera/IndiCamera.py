@@ -39,6 +39,9 @@ class IndiCamera(IndiDevice):
             config = dict(
                 camera_name='CCD Simulator',
                 pointing_seconds=30,
+                default_exp_time_sec=5,
+                default_gain=50,
+                default_offset=30,
                 adjust_center_x=400,
                 adjust_center_y=400,
                 adjust_roi_search_size=50,
@@ -80,6 +83,9 @@ class IndiCamera(IndiDevice):
 
         # Specific initialization
         self.pointing_seconds = float(config['pointing_seconds'])
+        self.default_exp_time_sec = config.get('default_exp_time_sec', 5)
+        self.default_gain = config.get('default_gain', 50)
+        self.default_offset = config.get('default_offset', 30)
         self.adjust_center_x = float(config['adjust_center_x'])
         self.adjust_center_y = float(config['adjust_center_y'])
         self.adjust_roi_search_size = int(config['adjust_roi_search_size'])
@@ -90,12 +96,13 @@ class IndiCamera(IndiDevice):
         self._setup_focuser(config, connect_on_create)
         self._setup_filter_wheel(config, connect_on_create)
 
+
         self.logger.debug(f"Indi camera, camera name is: {device_name}")
 
         # Default exposureTime, gain
-        self.exp_time_sec = 5
-        self.gain = 150
-        self.offset = 30
+        self.exp_time_sec = self.default_exp_time_sec
+        self.gain = self.default_gain
+        self.offset = self.default_offset
 
         # Finished configuring
         self.logger.debug('Configured Indi Camera successfully')
@@ -147,9 +154,12 @@ class IndiCamera(IndiDevice):
           We should inform the indi server that we want to receive the
           "CCD1" blob from this device
         '''
-        self.logger.debug('Indi client will register to server in order to '
-                          'receive blob CCD1 when it is ready')
-        self.indi_client.enable_blob()
+        self.logger.debug('Indi client will register to server in order to receive blob CCD1 when it is ready')
+        self.enable_blob()
+
+    def disable_shoot(self):
+        self.logger.debug('Indi client will unregister blob subscription')
+        self.disable_blob()
 
     def synchronize_with_image_reception(self, exp_time_sec=None):
         try:
@@ -167,7 +177,9 @@ class IndiCamera(IndiDevice):
     def get_received_image(self):
         try:
             self.logger.debug(f"Indicamera {self.device_name} about to read blob")
-            image = fits.open(self.blob_queue.popleft()) # FIFO in "circular buffer" mode
+            blob = self.get_last_incoming_blob_vector()
+            #image = fits.open(self.blob_queue.popleft()) # FIFO in "circular buffer" mode
+            image = blob.get_fits()
             #blob = await self.blob_queue.get() # FIFO in "circular buffer" mode
             #image = fits.open(blob)
             return image
@@ -184,7 +196,7 @@ class IndiCamera(IndiDevice):
         except Exception as e:
             self.logger.error(f"Indi Camera Error in shoot: {e}")
 
-    def is_remaining_exposure_time(self):
+    def get_remaining_exposure_time(self):
         return self.get_number('CCD_EXPOSURE')['CCD_EXPOSURE_VALUE']
 
     def get_thumbnail(self, exp_time_sec, thumbnail_size):
@@ -228,7 +240,7 @@ class IndiCamera(IndiDevice):
 
 
     def abort_shoot(self, sync=True):
-        self.set_number('CCD_ABORT_EXPOSURE', {'ABORT': 1}, sync=sync, timeout=self.defaultTimeout)
+        self.set_number('CCD_ABORT_EXPOSURE', {'ABORT': 1}, sync=sync, timeout=self.timeout)
 
     def launch_streaming(self):
         self.set_switch('VIDEO_STREAM', ['ON'])
@@ -263,7 +275,7 @@ class IndiCamera(IndiDevice):
             HEIGHT: Frame width in pixels
             ex: cam.set_roi({'X':256, 'Y':480, 'WIDTH':512, 'HEIGHT':640})
         """
-        self.set_number('CCD_FRAME', roi, sync=True, timeout=self.defaultTimeout)
+        self.set_number('CCD_FRAME', roi, sync=True, timeout=self.timeout)
         #self.logger.debug(f"After set_roi, ROI is {self.get_roi()}")
 
     def get_dynamic(self):
@@ -297,17 +309,17 @@ class IndiCamera(IndiDevice):
         self.set_switch('CCD_COOLER', ['COOLER_ON'], sync=False)
 
     def set_cooling_off(self):
-        self.set_switch('CCD_COOLER', ['COOLER_OFF'], sync=True, timeout=self.defaultTimeout)
+        self.set_switch('CCD_COOLER', ['COOLER_OFF'], sync=True, timeout=self.timeout)
 
     def set_gain(self, value):
-        self.set_number('CCD_GAIN', {'GAIN': value}, sync=True, timeout=self.defaultTimeout)
+        self.set_number('CCD_GAIN', {'GAIN': value}, sync=True, timeout=self.timeout)
 
     def get_gain(self):
         gain = self.get_number('CCD_GAIN')
         return gain["GAIN"]
 
     def set_offset(self, value):
-        self.set_number('CCD_OFFSET', {'OFFSET': value}, sync=True, timeout=self.defaultTimeout)
+        self.set_number('CCD_OFFSET', {'OFFSET': value}, sync=True, timeout=self.timeout)
 
     def get_offset(self):
         offset = self.get_number('CCD_OFFSET')
@@ -323,11 +335,11 @@ class IndiCamera(IndiDevice):
         FRAME_DARK Take a dark frame exposure
         FRAME_FLAT Take a flat field frame exposure
         """
-        self.set_switch('CCD_FRAME_TYPE', [frame_type], sync=True, timeout=self.defaultTimeout)
+        self.set_switch('CCD_FRAME_TYPE', [frame_type], sync=True, timeout=self.timeout)
 
     def setUploadTo(self, upload_to='local'):
         uploadTo = IndiCamera.UploadModeDict[upload_to]
-        self.set_switch('UPLOAD_MODE', [uploadTo], sync=True, timeout=self.defaultTimeout)
+        self.set_switch('UPLOAD_MODE', [uploadTo], sync=True, timeout=self.timeout)
 
     # def getExposureRange(self):
     #     pv = self.getCCDControls('CCD_EXPOSURE', 'number')[0]

@@ -329,13 +329,11 @@ class RemoteObservatoryFSM(StateMachine, Base):
 
     def is_dark(self):
         """Is it dark
-
         Checks whether it is dark at the location provided. This checks for the
         config entry `location.horizon` or 18 degrees (astronomical twilight).
 
         Returns:
             bool: Is night at location
-
         """
         # See if dark
         if self.simulation_mode:
@@ -371,17 +369,15 @@ class RemoteObservatoryFSM(StateMachine, Base):
             self.logger.debug(f"Weather Safety: {is_safe} [{age:.0f} sec old "
                               f"- {timestamp}]")
         except (TypeError, KeyError) as e:
-            self.logger.warning("No record found in DB: {}", e)
+            self.logger.warning(f"No record found in DB: {e}")
         except BaseException as e:
-            self.logger.error("Error checking weather: {}", e)
+            self.logger.error(f"Error checking weather: {e}")
         else:
             if age > stale:
                 self.logger.warning("Weather record looks stale, marking unsafe.")
                 if not self.simulation_mode:
                     is_safe = False
-
         self._is_safe = is_safe
-
         return self._is_safe
 
     def has_free_space(self, required_space=0.25 * u.gigabyte):

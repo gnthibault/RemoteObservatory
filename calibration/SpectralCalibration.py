@@ -58,7 +58,8 @@ class SpectralCalibration(Base):
                           f"{self.controller.device_name}")
 
     def calibrate(self, observed_list):
-
+        self.camera.unpark()
+        self.camera.prepare_shoot()
         event_flat = self.take_flat(observed_list)
         event_spectral = self.take_spectral_calib(observed_list, event=event_flat)
         event_dark = self.take_dark(observed_list, event=event_spectral)

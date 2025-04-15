@@ -42,6 +42,8 @@ class IndiAbstractMount(IndiMount, AbstractMount):
         # device related intialization
         IndiMount.__init__(self, config=config,
                            connect_on_create=False)
+        self.indi_mount_config = config
+
         # setup AbstractMount config
         self._setup_abstract_config()
         #Setup AbstractMount

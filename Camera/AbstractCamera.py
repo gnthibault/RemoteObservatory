@@ -32,6 +32,11 @@ class AbstractCamera(Base):
         self.do_adjust_pointing = kwargs.get("do_adjust_pointing", False)
         self.do_autofocus = kwargs.get("do_autofocus", False)
 
+        self.default_exp_time_sec = kwargs.get('default_exp_time_sec', 5)
+        self.default_gain = kwargs.get('default_gain', 50)
+        self.default_offset = kwargs.get('default_offset', 30)
+
+
         self.camera_name = kwargs["camera_name"]
         self.filter_type = 'no-filter'
         self._file_extension = 'fits'
@@ -169,9 +174,9 @@ class AbstractCamera(Base):
         is_pointing = ('POINTING' in headers) and (headers["POINTING"] == "True")
 
         # get values
-        exp_time = kwargs.get('exp_time', observation.time_per_exposure)
-        gain = observation.configuration["gain"]
-        offset = observation.configuration["offset"]
+        exp_time = self.default_exp_time_sec*u.second if is_pointing else kwargs.get('exp_time', observation.time_per_exposure)
+        gain = self.default_gain if is_pointing else observation.configuration["gain"]
+        offset = self.default_offset if is_pointing else observation.configuration["offset"]
         temperature = observation.configuration["temperature"]
         filter_name = observation.configuration.get("filter", "no-filter")
 
