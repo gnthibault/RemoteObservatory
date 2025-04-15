@@ -437,7 +437,7 @@ class AutoFocuser(Base):
         thumbnails = np.zeros((n_positions, thumbnail_size, thumbnail_size),
                               dtype=initial_thumbnail.dtype)
         masks = np.empty((n_positions, thumbnail_size, thumbnail_size),
-                         dtype=np.bool)
+                         dtype=bool)
         metric = np.empty(n_positions)
 
         # Take and store an exposure for each focus position.

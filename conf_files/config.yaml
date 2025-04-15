@@ -39,7 +39,7 @@ observatory:
             indi_host : localhost
             indi_port : 7624
 directories:
-    base: /var/RemoteObservatory
+    base: /opt/RemoteObservatory
     images: images
     webcam: webcams
     data: data
@@ -47,7 +47,7 @@ directories:
     targets: resources/targets
     mounts: resources/mounts
 db: 
-    name: /var/RemoteObservatory/DB
+    name: /opt/RemoteObservatory/DB
     type: file
 ntp:
     ntpserver: time.google.com
@@ -81,7 +81,7 @@ calibration:
 mount:
     #module: IndiG11
     #mount_name: Losmandy Gemini
-    module: IndiAbstractMount
+    module: IndiAbstractMountSimulator
     mount_name : Telescope Simulator
     equatorial_eod: J2000 # JNOW
     is_simulator: true
@@ -241,7 +241,7 @@ offset_pointer:
     max_pointing_error_seconds: 2
 guider:
     module : GuiderPHD2
-    host : localhost
+    host : 127.0.0.1
     port : 4400
     do_calibration : False
     profile_name : Simulator
@@ -258,7 +258,7 @@ weather_service :
     #service_name: OpenWeatherMap
     module : IndiWeather
     service_name : Weather Simulator
-    key_path : /var/RemoteObservatory/keys.json
+    key_path : /opt/RemoteObservatory/keys.json
     delay_sec : 60
     observatory:
         latitude: 43.56 # Degrees
@@ -282,25 +282,25 @@ vizualization_service:
 time_service :
     module : HostTimeService
 messaging_publisher:
-    module: PanMessagingZMQ #PanMessagingZMQ, PanMessagingMQTT
+    module: PanMessagingMQTT #PanMessagingZMQ, PanMessagingMQTT
     mqtt_host: localhost
     mqtt_port: 1883
     com_mode: publisher
     msg_port: 6510
 messaging_subscriber:
-    module: PanMessagingZMQ #PanMessagingZMQ, PanMessagingMQTT
+    module: PanMessagingMQTT #PanMessagingZMQ, PanMessagingMQTT
     mqtt_host: localhost
     mqtt_port: 1883
     com_mode: subscriber
     cmd_port: 6500
 paws_subscriber:
-    module: PanMessagingZMQ #PanMessagingZMQ, PanMessagingMQTT
+    module: PanMessagingMQTT #PanMessagingZMQ, PanMessagingMQTT
     mqtt_host: localhost
     mqtt_port: 1883
     com_mode: subscriber
     cmd_port: 6511
 paws_publisher:
-    module: PanMessagingZMQ #PanMessagingZMQ, PanMessagingMQTT
+    module: PanMessagingMQTT #PanMessagingZMQ, PanMessagingMQTT
     mqtt_host: localhost
     mqtt_port: 1883
     com_mode: publisher

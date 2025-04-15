@@ -11,8 +11,8 @@ from astropy import units as u
 from astropy.visualization import AsymmetricPercentileInterval, ImageNormalize, MinMaxInterval, SqrtStretch
 from astropy.wcs import WCS
 
-img_filename = "/var/RemoteObservatory/images/targets/HCG49/012345/20221222T070425/pointing00.new"
-xy_filename = "/var/RemoteObservatory/images/targets/HCG49/012345/20221222T070425/pointing00.axy"
+img_filename = "/opt/RemoteObservatory/images/targets/HCG49/012345/20221222T070425/pointing00.new"
+xy_filename = "/opt/RemoteObservatory/images/targets/HCG49/012345/20221222T070425/pointing00.axy"
 
 # Open image file
 hdu = fits.open(img_filename)[0]

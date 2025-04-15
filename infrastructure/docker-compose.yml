@@ -1,0 +1,144 @@
+#Note: depends_on will not wait for services to be started to start the next nod in the dependency graph
+#Please check out https://docs.docker.com/compose/startup-order/ for more info on that
+
+#Mulitarch support: https://github.com/docker/buildx
+
+services:
+  # docker run -d -p 8086:8086 -v $PWD/influxdb/config:/etc/influxdb2 -v influxdb_data_volume:/var/lib/influxdb2 influxdb:2.1.1
+  influxdb:
+    platform: linux/amd64
+    container_name: influxdb-observatory
+    image: influxdb:2.6.1
+    restart: always
+    environment:
+      #- INFLUXD_BOLT_PATH="/etc/influxdb2/influxd.bolt"
+      - DOCKER_INFLUXDB_INIT_MODE=setup
+      - DOCKER_INFLUXDB_INIT_USERNAME=observatory
+      - DOCKER_INFLUXDB_INIT_PASSWORD=observatory
+      - DOCKER_INFLUXDB_INIT_ORG=observatory
+      - DOCKER_INFLUXDB_INIT_BUCKET=observatory
+      - DOCKER_INFLUXDB_INIT_RETENTION=52w
+      - DOCKER_INFLUXDB_INIT_ADMIN_TOKEN=observatory
+    ports: #use ports for debug
+      - "8086:8086"
+    volumes:
+      - type: bind
+        source: "${INSTALL_PATH}/influxdb/config"
+        target: /etc/influxdb2
+      - type: bind
+        source: "${INSTALL_PATH}/influxdb/scripts/init.sh"
+        target: "/docker-entrypoint-initdb.d/init.sh"
+      - type: volume
+        source: influxdb_data_volume
+        target: /var/lib/influxdb2
+
+  # docker run -d -p 1883:1883 -p 9001:9001 -v $PWD/mosquitto/mosquitto.conf:/mosquitto/mosquitto.conf:ro -v mosquitto_data_volume:/mosquitto/data -v mosquitto_log_volume:/mosquitto/log eclipse-mosquitto:2.0.14
+  # NOTE: Automated setup will not run if an existing boltdb file is found at the configured path. This behavior allows for the InfluxDB container to reboot post-setup without encountering "DB is already set up" errors.
+  mosquitto:
+    platform: linux/amd64
+    container_name: mosquitto-observatory
+    image: eclipse-mosquitto:2.0.15
+    restart: always
+    ports:
+      - "1883:1883"
+      - "9001:9001"
+    depends_on:
+      - influxdb
+    volumes:
+      - type: bind
+        source: "${INSTALL_PATH}/mosquitto/mosquitto.conf"
+        target: /mosquitto/config/mosquitto.conf
+        read_only: true
+      - type: volume
+        source: mosquitto_data_volume
+        target: /mosquitto/data
+      - type: volume
+        source: mosquitto_log_volume
+        target: /mosquitto/log
+
+  # docker run -v $PWD/telegraf/telegraf.conf:/etc/telegraf/telegraf.conf:ro telegraf:1.21.2
+  # for telegraf conf options, check https://docs.influxdata.com/telegraf/v1.21/administration/configuration/
+  telegraf:
+    platform: linux/amd64
+    container_name: telegraf-observatory
+    image: telegraf:1.25.0
+    restart: always
+    environment:
+      - HOST_ETC=/hostfs/etc
+      - HOST_PROC=/hostfs/proc
+      - HOST_SYS=/hostfs/sys
+      - HOST_VAR=/hostfs/var
+      - HOST_RUN=/hostfs/run
+      - HOST_MOUNT_PREFIX=/hostfs
+      # This does not work on FC board
+      #- LD_LIBRARY_PATH=/usr/lib/aarch64-linux-gnu:/hostfs/usr/lib/aarch64-linux-gnu/
+    depends_on:
+      - influxdb
+      - mosquitto
+    volumes:
+      - type: bind
+        source: "${INSTALL_PATH}/telegraf/telegraf.conf"
+        target: /etc/telegraf/telegraf.conf
+        read_only: true
+      - type: bind
+        source: "${INSTALL_PATH}/telegraf/scripts"
+        target: /etc/telegraf/scripts
+        read_only: true
+      - type: bind
+        source: "/"
+        target: /hostfs
+        read_only: true
+# TO monitor raspbery Pi you might need to check this out: https://hub.docker.com/_/telegraf
+#  -v /:/hostfs:ro \
+#  -e HOST_ETC=/hostfs/etc \
+#  -e HOST_PROC=/hostfs/proc \
+#  -e HOST_SYS=/hostfs/sys \
+#  -e HOST_VAR=/hostfs/var \
+#  -e HOST_RUN=/hostfs/run \
+#  -e HOST_MOUNT_PREFIX=/hostfs \
+
+  # docker run -v $PWD/grafana/:/etc/grafana/ -v grafana_data_volume:/var/lib/grafana -v grafana_log_volume:/var/log/grafana grafana/grafana:8.2.6
+  # check other options on https://grafana.com/docs/grafana/latest/administration/configure-docker/
+  # And https://grafana.com/docs/grafana/latest/setup-grafana/configure-docker/
+  grafana:
+    platform: linux/amd64
+    container_name: grafana-observatory
+    image: grafana/grafana:9.3.2
+    restart: always
+    environment:
+      - GF_PATHS_CONFIG=/etc/grafana/grafana.ini
+      - GF_PATHS_DATA=/var/lib/grafana
+      - GF_PATHS_LOGS=/var/log/grafana
+      - GF_INSTALL_PLUGINS=grafana-clock-panel,grafana-piechart-panel,grafana-polystat-panel
+      - GF_LOG_MODE=console file
+    ports:
+      - "3000:3000"
+    depends_on:
+      - influxdb
+      - telegraf
+    volumes:
+      - type: bind
+        source: "${INSTALL_PATH}/grafana/provisioning/dashboards"
+        target: /etc/grafana/provisioning/dashboards
+      - type: bind
+        source: "${INSTALL_PATH}/grafana/provisioning/dashboards_files"
+        target: /etc/grafana/provisioning/dashboards_files
+      - type: bind
+        source: "${INSTALL_PATH}/grafana/provisioning/datasources"
+        target: /etc/grafana/provisioning/datasources
+      - type: bind
+        source: "${INSTALL_PATH}/grafana/grafana.ini"
+        target: /etc/grafana/grafana.ini
+      - type: volume
+        source: grafana_data_volume
+        target: /var/lib/grafana
+      - type: volume
+        source: grafana_log_volume
+        target: /var/log/grafana
+
+volumes:
+    influxdb_data_volume:
+    grafana_data_volume:
+    grafana_log_volume:
+    mosquitto_data_volume:
+    mosquitto_log_volume:

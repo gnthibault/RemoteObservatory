@@ -1,0 +1,24 @@
+[Unit]
+Description=Virtual X session with XFCE for observatory
+After=network.target
+
+[Service]
+Type=simple
+User=LOCAL_USER_NAME
+Environment=DISPLAY=:1
+ExecStart=/bin/bash -c "Xvfb :1 -screen 0 1280x800x24 & sleep 2; startxfce4 & sleep 5; /usr/bin/x11vnc -display :1 -forever -listen 0.0.0.0 -xkb -rfbauth /home/LOCAL_USER_NAME/.vnc/passwd -rfbport 5901"
+
+# Xvfb = X Virtual Framebuffer, a headless X server that runs in memory (no display hardware needed).
+# :1 = The display number (like DISPLAY=:1). You can think of it as "virtual monitor #1".
+# -screen 0 1280x800x24 = Create one virtual screen number 0 with resolution 1280x800 and color depth of 24 bits
+# startxfce4 & Starts the XFCE desktop environment inside the Xvfb display. This launches the desktop session (xfwm, , etc.) — just like a full GUI desktop
+# -rfbport 5901	This is the TCP port x11vnc will listen on. VNC ports typically start at 5900 + display number. So 5901 usually corresponds to :1.
+# -listen 0.0.0.0	Accepts connections from any IP address (you could also restrict this to 127.0.0.1 or your LAN IP).
+# -nopw	Disables password authentication (⚠️ secure only behind a firewall).
+# -forever	Keeps x11vnc running even after a client disconnects.
+# -xkb	Enables better keyboard handling.
+
+Restart=always
+
+[Install]
+WantedBy=multi-user.target

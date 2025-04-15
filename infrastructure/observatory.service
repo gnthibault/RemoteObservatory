@@ -1,0 +1,22 @@
+[Unit]
+Description=Observatory Services
+Requires=docker.service
+After=docker.service
+
+[Service]
+Type=oneshot
+RemainAfterExit=true
+User=LOCAL_USER_NAME
+Environment=BASH_ENV=NIBASHRC_PATH
+Environment=INSTALL_PATH=LOCAL_INSTALL_PATH
+
+ExecStart=bash -c 'docker compose -f LOCAL_INSTALL_PATH/docker-compose.yml up -d --remove-orphans'
+ExecStop=bash -c 'docker compose -f LOCAL_INSTALL_PATH/docker-compose.yml down'
+
+[Install]
+WantedBy=multi-user.target
+
+# You can check logs with
+#   journalctl -u observatory.service -b
+# For whole services logs, check
+#   docker compose -f /opt/remote_observatory/infrastructure/docker-compose.yml logs

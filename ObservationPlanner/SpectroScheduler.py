@@ -103,8 +103,8 @@ class SpectroScheduler(Scheduler):
             # for sptypes, check 
             # http://simbad.u-strasbg.fr/simbad/sim-display?data=sptypes
             # eventually CDS["SP_TYPE"][0] returns 'B8.5Ib-II'
-            ra_h_m_s = np.array([*map(np.float, CDS['RA'][0].split(" "))])
-            dec_d_m_s = np.array([*map(np.float, CDS['DEC'][0].split(" "))])
+            ra_h_m_s = np.array([*map(float, CDS['RA'][0].split(" "))])
+            dec_d_m_s = np.array([*map(float, CDS['DEC'][0].split(" "))])
             coord = SkyCoord(
                 ra=np.dot(ra_h_m_s, np.array([u.hourangle, u.hourangle / 60, u.hourangle / 3600])).to(u.degree),
                 dec=np.dot(dec_d_m_s, np.array([u.degree, u.arcminute, u.arcsecond])),
@@ -306,8 +306,7 @@ class SpectroScheduler(Scheduler):
                     score = constraint.compute_constraint(time, observer,
                                                           observation.target.coord)
                     # Check if the computed score is a boolean
-                    if np.any([isinstance(score, ty) for ty in
-                               [bool, np.bool, np.bool_]]):
+                    if isinstance(score, bool):
                         self.logger.debug(f"\t\tVetoed if false: {score}")
                         # Log vetoed observations
                         if not score:

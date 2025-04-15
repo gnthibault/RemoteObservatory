@@ -77,11 +77,22 @@ jobs:
         uses: 'google-github-actions/setup-gcloud@v2'
         with:
           version: '>= 416.0.0'
-      - id: 'build_and_push'
+      - id: 'build_docker_and_push'
         run: |-
           mkdir -p ./astrometry_data/ && gsutil -m cp -n gs://astrometry_data/* ./astrometry_data/
+          docker image prune -f && docker buildx prune -f && docker container prune -f
           docker buildx build --platform linux/amd64 -t ${{ vars.AR_URL }}/${{ vars.IMAGE_NAME }} .
           docker tag ${{ vars.AR_URL }}/${{ vars.IMAGE_NAME }} ${{ vars.AR_URL }}/${{ vars.IMAGE_NAME }}:${{ github.sha }}
           docker push ${{ vars.AR_URL }}/${{ vars.IMAGE_NAME }}:${{ github.sha }}
           docker tag ${{ vars.AR_URL }}/${{ vars.IMAGE_NAME }} ${{ vars.AR_URL }}/${{ vars.IMAGE_NAME }}:latest
           docker push ${{ vars.AR_URL }}/${{ vars.IMAGE_NAME }}:latest
+      - id: 'build_packer'
+        run: |-
+          cd packer
+          packer build -var-file=./vars/ubuntu.pkrvars.hcl -var "base_docker_image=${{ vars.AR_URL }}/${{ vars.IMAGE_NAME }}" -only="gen-fs-tarball.*" ./templates/ubuntu-template.pkr.hcl
+          mkdir ubuntu.dir
+          tar -vxf ubuntu.tar -C ubuntu.dir
+          packer build -var-file=./vars/ubuntu.pkrvars.hcl -only="gen-boot-img.*" ./templates/ubuntu-template.pkr.hcl
+          packer build -var-file=./vars/ubuntu.pkrvars.hcl -only="customize-boot-img.*" ./templates/ubuntu-template.pkr.hcl 
+          mv customized_ubuntu.img.gz  customized_ubuntu-:${{ github.sha }}.img.gz
+          rm -rf mnt ubuntu.*
