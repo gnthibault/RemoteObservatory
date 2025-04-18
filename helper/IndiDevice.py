@@ -1,16 +1,21 @@
 # Basic stuff
 import asyncio
+from collections import deque
 import ctypes
 import logging
+import queue
 import time
 
 # Indi stuff
 import PyIndi
 
 #Local
-from helper.IndiClient import IndiClient
+from helper.IndiClient import defaultTimeout, IndiClient
 from Base.Base import Base
-from utils.error import IndiClientPredicateTimeoutError
+from utils.error import BLOBError, IndiClientPredicateTimeoutError
+
+logger = logging.getLogger(__name__)
+
 
 # class PyIndi():
 #     """
@@ -59,7 +64,6 @@ from utils.error import IndiClientPredicateTimeoutError
 
 
 class IndiDevice(Base):
-    defaultTimeout = 30
     __prop_getter = {
         'blob': 'getBLOB',
         'light': 'getLight',
@@ -91,19 +95,21 @@ class IndiDevice(Base):
 
         self.device_name = device_name
         self.indi_client_config = indi_client_config
-        self.timeout = IndiDevice.defaultTimeout
+        self.timeout = defaultTimeout
         self.device = None
         self.interfaces = None
+        self.blob_listener = None
+        self.blob_queue = deque()
 
         # self.indi_client = None
         # self.is_client_connected = False
         # self.indi_client_config = indi_client_config
-        # self.timeout = IndiDevice.defaultTimeout
+        # self.timeout = defaultTimeout
         # self.indi_driver_name = indi_driver_name
         # self.interfaces = None
         # self.debug = debug
 
-@property
+    @property
     def is_connected(self):
         return self.device.isConnected()
 
@@ -112,8 +118,7 @@ class IndiDevice(Base):
         return self.device_name
 
     def _setup_device(self):
-        self.logger.debug(f"IndiDevice: asking indi_client to look for device "
-                          f"{self.device_name}")
+        self.logger.debug(f"IndiDevice: asking indi_client to look for device {self.device_name}")
         if self.device is None:
             started = time.time()
             while not self.device:
@@ -173,11 +178,11 @@ class IndiDevice(Base):
         except Exception:
             raise RuntimeError('Problem setting up indi client')
 
-    def connect_client(self):
-        """
-        connect to indi server
-        """
-        self.indi_client.connect()
+    # def connect_client(self):
+    #     """
+    #     connect to indi server
+    #     """
+    #     self.indi_client.connect()
 
     def connect_driver(self):
         # Try first to ask server to give us the device handle, through client
@@ -201,7 +206,7 @@ class IndiDevice(Base):
     def connect(self):
         # setup indi client
         self._setup_indi_client()
-        # Connect indj client to server
+        # Connect indi client to server
         self.connect_client()
         # Ask server to give us the device handle, through client
         self.connect_driver()
@@ -366,6 +371,26 @@ class IndiDevice(Base):
         except:
             return False
 
+    def enable_blob(self):
+        self.blob_listener = self.indi_client.add_blob_listener(
+            device_name=self.device_name
+        )
+        self.indi_client.enable_blob(
+            blob_mode=PyIndi.B_ALSO,
+            device_name=self.device_name,
+            property_name=None)
+
+    def disable_blob(self):
+        self.indi_client.remove_blob_listener(
+            device_name=self.device_name
+        )
+        self.blob_listener = None
+        self.blob_queue.clear()
+        self.indi_client.enable_blob(
+            blob_mode=PyIndi.B_NEVER,
+            device_name=self.device_name,
+            property_name=None)
+
 
 # class IndiDevice(Base, device):
 #     defaultTimeout = 30
@@ -377,7 +402,7 @@ class IndiDevice(Base):
 #         self.indi_client = None
 #         self.is_client_connected = False
 #         self.indi_client_config = indi_client_config
-#         self.timeout = IndiDevice.defaultTimeout
+#         self.timeout = defaultTimeout
 #         self.indi_driver_name = indi_driver_name
 #         self.interfaces = None
 #         self.debug = debug
@@ -485,11 +510,11 @@ class IndiDevice(Base):
 #             self.logger.error(msg)
 #             raise RuntimeError(msg)
 #
-#     def connect_client(self):
-#         """
-#         connect client to indi server
-#         """
-#         self.indi_client.connect_to_server(sync=True, timeout=self.defaultTimeout)
+    def connect_client(self):
+        """
+        connect client to indi server
+        """
+        self.indi_client.connect_to_server(sync=True, timeout=defaultTimeout)
 #
 #     # def connect_driver(self):
 #     #     # Try first to ask server to give us the device handle, through client
@@ -500,13 +525,13 @@ class IndiDevice(Base):
 #
 #         """
 #         # set the corresponding switch to on
-#         self.set_switch('CONNECTION', ['CONNECT'], sync=True, timeout=self.defaultTimeout)
+#         self.set_switch('CONNECTION', ['CONNECT'], sync=True, timeout=defaultTimeout)
 #
 #     def disconnect_device(self):
 #         """
 #         Disable device connection
 #         """
-#         self.set_switch('CONNECTION', on_switches=['DISCONNECT'], sync=True, timeout=self.defaultTimeout)
+#         self.set_switch('CONNECTION', on_switches=['DISCONNECT'], sync=True, timeout=defaultTimeout)
 #
 #     def connect(self, connect_device=True):
 #         # setup indi client
@@ -583,22 +608,22 @@ class IndiDevice(Base):
 #     def set_switch(self, switch_name, on_switches=[], off_switches=[],
 #                    sync=True, timeout=None):
 #         if timeout is None:
-#             timeout = self.defaultTimeout
+#             timeout = defaultTimeout
 #         self.set_and_send_switchvector_by_element_name(switch_name, on_switches=on_switches, off_switches=off_switches)
 #         if sync:
 #            self.wait_for_vector_light(switch_name, timeout=timeout)
 #
 #     def set_number(self, number_name, value_vector, sync=True, timeout=None):
 #         if timeout is None:
-#             timeout = self.defaultTimeout
+#             timeout = defaultTimeout
 #         self.set_and_send_float(vector_name=number_name, value_vector=value_vector)
 #         if sync:
 #             self.wait_for_vector_light(number_name, timeout=timeout)
 #
 #     def set_text(self, text_name, value_vector, sync=True, timeout=None):
 #         if timeout is None:
-#             timeout = self.defaultTimeout
-#         self.set_and_send_text(vector_name=text_name, value_vector=value_vector)
+#             timeout = defaultTimeout
+#         self.set_and_send_text(vector_name=text_name, value_vector=valufe_vector)
 #         if sync:
 #             self.wait_for_vector_light(text_name, timeout=timeout)
 #
@@ -606,12 +631,22 @@ class IndiDevice(Base):
 #         light_checker = lambda: self.check_vector_light(vector_name)
 #         self.indi_client.sync_with_predicate(light_checker, timeout=timeout)
 #         return
-#
-#     def wait_for_incoming_blob_vector(self, blob_vector_name=None, timeout=None):
-#         blob_checker = lambda: self.check_blob_vector(blob_vector_name)
-#         self.indi_client.sync_with_predicate(blob_checker, timeout=timeout)
-#         return
-#
+
+    def wait_for_incoming_blob_vector(self, blob_vector_name=None, timeout=None):
+        #blob_checker = lambda: self.check_blob_vector(blob_vector_name)
+        #self.indi_client.sync_with_predicate(blob_checker, timeout=timeout)
+        #return
+        try:
+            logger.debug(f"BLOBListener[{self.device_name}]: waiting for blob, timeout={timeout}")
+            blob = self.blob_listener.queue.get(True, timeout)
+            logger.debug(f"BLOBListener[{self.device_name}]: blob received name={blob.name}, label={blob.label}, "
+                f"size={blob.size}, queue size: {self.blob_listener.queue.qsize()} (isEmpty: {self.blob_listener.queue.empty()})")
+            self.blob_queue.append(blob)
+        except queue.Empty:
+            raise BLOBError(f"Timeout while waiting for BLOB on "
+                            f"{self.device.name}")
+
+
 #     def wait_for_any_property_vectors(self, timeout=5):
 #         """
 #             Wait until property vector is non-empty

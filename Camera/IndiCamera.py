@@ -149,7 +149,7 @@ class IndiCamera(IndiDevice):
         '''
         self.logger.debug('Indi client will register to server in order to '
                           'receive blob CCD1 when it is ready')
-        self.indi_client.enable_blob()
+        self.enable_blob()
 
     def synchronize_with_image_reception(self, exp_time_sec=None):
         try:
@@ -167,7 +167,9 @@ class IndiCamera(IndiDevice):
     def get_received_image(self):
         try:
             self.logger.debug(f"Indicamera {self.device_name} about to read blob")
-            image = fits.open(self.blob_queue.popleft()) # FIFO in "circular buffer" mode
+            blob = self.blob_queue.popleft()
+            #image = fits.open(self.blob_queue.popleft()) # FIFO in "circular buffer" mode
+            image = blob.get_fits()
             #blob = await self.blob_queue.get() # FIFO in "circular buffer" mode
             #image = fits.open(blob)
             return image

@@ -22,6 +22,8 @@ from utils.error import BLOBError, IndiClientPredicateTimeoutError
 
 logger = logging.getLogger(__name__)
 
+defaultTimeout = 30
+
 class BLOB:
     def __init__(self, bp):
         self.name = bp.name
@@ -119,12 +121,12 @@ class IndiClient(SingletonIndiClientHolder, PyIndi.BaseClient, Base):
         # Blob related attributes
         self.blob_event = threading.Event()
         self.__listeners = []
-        self.queue_size = config.get('queue_size', 5)
+        self.queue_size = config.get('queue_size', 100)
 
         # Finished configuring
         logger.debug('Configured Indi Client successfully')
 
-    def connect_to_server(self):
+    def connect_to_server(self, sync=True, timeout=defaultTimeout):
       if self.isServerConnected():
           logger.warning(f"Already connected to server at {self.getHost()}: {self.getPort()}")
       else:
@@ -226,6 +228,31 @@ class IndiClient(SingletonIndiClientHolder, PyIndi.BaseClient, Base):
         finally:
             self.__listeners = [x for x in self.__listeners if x is not listener]
 
+    def add_blob_listener(self, device_name, queue_size=None):
+        queue_size = self.queue_size if queue_size is None else queue_size
+        # TODO TN you should use proper singleton pattern instead of this...
+        blob_listener = next((el for el in self.__listeners if el.device_name == device_name), None)
+        if blob_listener is None:
+            blob_listener = BLOBListener(device_name, queue_size)
+            self.__listeners.append(blob_listener)
+        return blob_listener
+
+    def remove_blob_listener(self, device_name):
+        self.__listeners[:] = [el for el in self.__listeners if el.device_name != device_name]
+
+    # Call functions in old style
+    def updateProperty(self, prop):
+        if prop.getType() == PyIndi.INDI_NUMBER:
+            self.newNumber(PyIndi.PropertyNumber(prop))
+        elif prop.getType() == PyIndi.INDI_SWITCH:
+            self.newSwitch(PyIndi.PropertySwitch(prop))
+        elif prop.getType() == PyIndi.INDI_TEXT:
+            self.newText(PyIndi.PropertyText(prop))
+        elif prop.getType() == PyIndi.INDI_LIGHT:
+            self.newLight(PyIndi.PropertyLight(prop))
+        elif prop.getType() == PyIndi.INDI_BLOB:
+            self.newBLOB(PyIndi.PropertyBlob(prop)[0])
+
     def newSwitch(self, svp):
         pass
 
@@ -257,15 +284,34 @@ class IndiClient(SingletonIndiClientHolder, PyIndi.BaseClient, Base):
     # def trigger_get_properties(self):
     #     self.xml_to_indiserver("<getProperties version='1.7'/>")
     #
-    # def enable_blob(self):
-    #     """
-    #     Sends a signal to the server that tells it, that this client wants to receive L{indiblob} objects.
-    #     If this method is not called, the server will not send any L{indiblob}. The DCD clients calls it each time
-    #     an L{indiblob} is defined.
-    #     @return: B{None}
-    #     @rtype: NoneType
-    #     """
-    #     self.xml_to_indiserver("<enableBLOB>Also</enableBLOB>")
+    def enable_blob(self, blob_mode, device_name=None, property_name=None):
+        """
+        Sends a signal to the server that tells it, that this client wants to receive L{indiblob} objects.
+        If this method is not called, the server will not send any L{indiblob}. The DCD clients calls it each time
+        an L{indiblob} is defined.
+        From https://github.com/indilib/indi/blob/master/libs/indiabstractclient/abstractbaseclient.h#L165C26-L165C38
+         *  Set the BLOB handling mode for the client. The client may either receive:
+         *  <ul>
+         *    <li>Only BLOBS</li>
+         *    <li>BLOBs mixed with normal messages</li>
+         *    <li>Normal messages only, no BLOBs</li>
+         *  </ul>
+         *  If \e dev and \e prop are supplied, then the BLOB handling policy is set for this particular device and property.
+         *  if \e prop is NULL, then the BLOB policy applies to the whole device.
+         *
+         *  @param blobH BLOB handling policy
+         *  @param dev name of device, required.
+         *  @param prop name of property, optional.
+
+        B_ALSO = 1
+        B_NEVER = 0
+        B_ONLY = 2
+
+        @return: B{None}
+        @rtype: NoneType
+        """
+        self.setBLOBMode(blob_mode, device_name, property_name)
+
     #
     # def disable_blob(self):
     #     """
