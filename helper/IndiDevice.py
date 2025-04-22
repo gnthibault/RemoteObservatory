@@ -256,8 +256,9 @@ class IndiDevice(Base):
 
         prop = prop if prop else self.get_prop(prop_name, prop_type, timeout)
         #d = dict((c.getName(), get_dict(c)) for c in prop)
+        d = {c.getName():transform(c) for c in prop}
         #d["state"] = prop.getStateAsString()
-        return transform(prop)
+        return d
 
     def set_switch(self, name, on_switches=[], off_switches=[],
                    sync=True, timeout=None):
