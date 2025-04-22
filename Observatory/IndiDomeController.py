@@ -77,11 +77,11 @@ class IndiDomeController(IndiDevice):
 
     @property
     def is_parked(self):
-        return self.get_switch("DOME_PARK")["PARK"] == "On"
+        return self.get_switch("DOME_PARK")["PARK"]
 
     @property
     def is_open(self):
-        return self.get_switch("DOME_SHUTTER")["SHUTTER_OPEN"] == "On"
+        return self.get_switch("DOME_SHUTTER")["SHUTTER_OPEN"]
 
     def status(self):
         return {"is_open": self.is_open, "position": self.get_dome_position()}

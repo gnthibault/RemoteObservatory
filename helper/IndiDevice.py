@@ -101,7 +101,7 @@ class IndiDevice(Base):
         self.blob_listener = None
         self.blob_queue = deque()
 
-        # self.indi_client = None
+        self.indi_client = None
         # self.is_client_connected = False
         self.indi_driver_name = indi_driver_name
         # self.debug = debug
@@ -185,14 +185,20 @@ class IndiDevice(Base):
         # Try first to ask server to give us the device handle, through client
         self._setup_device()
 
-    def connect_device(self):
+    def connect_device(self, force_reconnect=False):
         """
 
         """
         # Now connect
+        if self.device is None:
+            raise RuntimeError(f"Cannot connect device as device object named {self.device_name} has not bee initialized")
+
         if self.device.isConnected():
             self.logger.warning(f"already connected to device {self.device_name}")
-            return
+            if force_reconnect:
+                self.disconnect()
+            else:
+                return
         self.logger.info(f"Connecting to device {self.device_name}")
         # setup available list of interfaces
         self._setup_interfaces()
@@ -211,12 +217,13 @@ class IndiDevice(Base):
             self.connect_device()
 
     def disconnect(self):
-        if not self.device.isConnected():
-            self.logger.warning(f"Not connected to device {self.device_name}")
-            return
-        self.logger.info(f"Disconnecting from device {self.device_name}")
-        # set the corresponding switch to off
-        self.set_switch('CONNECTION', on_switches=['DISCONNECT'])
+        if not (self.device is None):
+            if not self.device.isConnected():
+                self.logger.warning(f"Not connected to device {self.device_name}")
+                return
+            self.logger.info(f"Disconnecting from device {self.device_name}")
+            # set the corresponding switch to off
+            self.set_switch('CONNECTION', on_switches=['DISCONNECT'])
 
     def get_values(self, ctl_name, ctl_type):
         return dict(map(lambda c: (c.name, c.value),
@@ -293,8 +300,7 @@ class IndiDevice(Base):
                                                         PyIndi.IPS_OK],
                                           timeout=timeout)
             if ret == PyIndi.IPS_ALERT:
-                raise RuntimeError(f"Indi alert upon set_number, {number_name} "
-                                   f": {value_vector}")
+                raise RuntimeError(f"Indi alert upon set_number, {number_name}: {value_vector}")
         return pv
 
     def set_text(self, text_name, value_vector, sync=True, timeout=None):
@@ -519,7 +525,6 @@ class IndiDevice(Base):
 
 #     def connect_device(self):
 #         """
-#
 #         """
 #         # set the corresponding switch to on
 #         self.set_switch('CONNECTION', ['CONNECT'], sync=True, timeout=defaultTimeout)
@@ -545,14 +550,14 @@ class IndiDevice(Base):
 #             # now enable actual communication between driver and device
 #             self.connect_device()
 #
-#     def disconnect(self):
-#         self.logger.debug(f"Disconnecting device {self.device_name}")
-#         if self.is_client_connected:
-#             # set the corresponding switch to off
-#             self.disconnect_device()
-#             self.unregister_device_to_client()
-#             self.is_client_connected = False
-#         self.logger.debug(f"Successfully disconnected device {self.device_name}")
+    # def disconnect(self):
+    #     self.logger.debug(f"Disconnecting device {self.device_name}")
+    #     if self.is_client_connected:
+    #         # set the corresponding switch to off
+    #         self.disconnect_device()
+    #         self.unregister_device_to_client()
+    #         self.is_client_connected = False
+    #     self.logger.debug(f"Successfully disconnected device {self.device_name}")
 #
 #     @property
 #     def is_connected(self):
@@ -569,7 +574,7 @@ class IndiDevice(Base):
         #     self._setup_indi_client()
         # self.indi_client.indi_webmanager_client.start_server()
         # But then in case of stopping, it could consume ressources for no reason
-        if self.indi_client is not None:
+        if not (self.indi_client is None):
             self.indi_client.indi_webmanager_client.stop_server(device_name=self.device_name)
         else:
             # Setup temporary webmanager client

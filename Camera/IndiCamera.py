@@ -147,9 +147,12 @@ class IndiCamera(IndiDevice):
           We should inform the indi server that we want to receive the
           "CCD1" blob from this device
         '''
-        self.logger.debug('Indi client will register to server in order to '
-                          'receive blob CCD1 when it is ready')
+        self.logger.debug('Indi client will register to server in order to receive blob CCD1 when it is ready')
         self.enable_blob()
+
+    def disable_shoot(self):
+        self.logger.debug('Indi client will unregister blob subscription')
+        self.disable_blob()
 
     def synchronize_with_image_reception(self, exp_time_sec=None):
         try:

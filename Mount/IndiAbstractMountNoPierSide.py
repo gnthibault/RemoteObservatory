@@ -6,7 +6,7 @@ import numpy as np
 # Local stuff
 from Mount.IndiAbstractMount import IndiAbstractMount
 
-class IndiAbstractMountSimulator(IndiAbstractMount):
+class IndiAbstractMountNoPierSide(IndiAbstractMount):
     def __init__(self, location, serv_time, config=None,
                  connect_on_create=True):
 

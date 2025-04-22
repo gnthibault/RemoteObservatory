@@ -70,6 +70,7 @@ def test_indiSimulatorCamera():
                                       config=config,
                                       connect_on_create=False)
     cam.connect()
+    cam.park()
     cam.unpark()
     cam.prepare_shoot()
     # Acquire data

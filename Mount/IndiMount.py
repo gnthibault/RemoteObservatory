@@ -208,7 +208,7 @@ class IndiMount(IndiDevice):
         slew_dict = self.get_switch('TELESCOPE_SLEW_RATE')
         #self.logger.debug(f"Got mount slewing rate dict: {slew_dict}")
         if len(slew_dict) > 0:
-            return [k for k, v in slew_dict.items() if v == "On"][0]
+            return [k for k, v in slew_dict.items() if v][0]
         else:
             return None
 
@@ -250,7 +250,7 @@ class IndiMount(IndiDevice):
         track_dict = self.get_switch('TELESCOPE_TRACK_MODE')
         #self.logger.debug(f"Got mount tracking rate dict: {track_dict}")
         if len(track_dict) > 0:
-            return [k for k, v in track_dict.items() if v == "On"][0]
+            return [k for k, v in track_dict.items() if v][0]
         else:
             return None
 

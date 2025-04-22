@@ -28,7 +28,7 @@ class IndiPlayerOneCamera(IndiAbstractCamera):
             #                 f"{self.get_dynamic()}")
 
     def get_current_format(self):
-        return [key for key, val in self.get_switch('CCD_VIDEO_FORMAT').items() if val == "On"]
+        return [key for key, val in self.get_switch('CCD_VIDEO_FORMAT').items() if val]
 
     def get_maximum_dynamic(self):
         return self.get_number('ADC_DEPTH')['BITS']
