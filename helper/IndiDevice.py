@@ -268,13 +268,13 @@ class IndiDevice(Base):
             on_switches = on_switches[0:1]
             off_switches = [s.name for s in pv if s.name not in on_switches]
         for index in range(0, len(pv)):
-            current_state = pv[index].s
+            current_state = pv[index].getState()
             new_state = current_state
-            if pv[index].name in on_switches:
+            if pv[index].getName() in on_switches:
                 new_state = PyIndi.ISS_ON
-            elif is_exclusive or pv[index].name in off_switches:
+            elif is_exclusive or pv[index].getName() in off_switches:
                 new_state = PyIndi.ISS_OFF
-            pv[index].s = new_state
+            pv[index].setState(new_state)
         self.indi_client.sendNewSwitch(pv)
         if sync:
             self.__wait_prop_status(pv, statuses=[PyIndi.IPS_IDLE,
@@ -317,7 +317,7 @@ class IndiDevice(Base):
         started = time.time()
         if timeout is None:
             timeout = self.timeout
-        while prop.s not in statuses:
+        while prop.getState() not in statuses:
             if 0 < timeout < time.time() - started:
                 self.logger.debug(f"IndiDevice: Timeout while waiting for "
                                   f"property status {prop.name} for device "
@@ -325,7 +325,7 @@ class IndiDevice(Base):
                 raise RuntimeError(f"Timeout error while changing property "
                                    f"{prop.name}")
             time.sleep(0.01)
-        return prop.s
+        return prop.getState()
 
     def __get_prop_vect_indices_having_values(self, property_vector, values):
         """ return dict of name-index of prop that are in values"""
@@ -646,6 +646,9 @@ class IndiDevice(Base):
             raise BLOBError(f"Timeout while waiting for BLOB on "
                             f"{self.device.name}")
 
+    def get_last_incoming_blob_vector(self):
+        blob = self.blob_queue.popleft()
+        return blob
 
 #     def wait_for_any_property_vectors(self, timeout=5):
 #         """

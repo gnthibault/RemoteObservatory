@@ -167,7 +167,7 @@ class IndiCamera(IndiDevice):
     def get_received_image(self):
         try:
             self.logger.debug(f"Indicamera {self.device_name} about to read blob")
-            blob = self.blob_queue.popleft()
+            blob = self.get_last_incoming_blob_vector()
             #image = fits.open(self.blob_queue.popleft()) # FIFO in "circular buffer" mode
             image = blob.get_fits()
             #blob = await self.blob_queue.get() # FIFO in "circular buffer" mode

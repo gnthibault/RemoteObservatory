@@ -72,7 +72,7 @@ def test_indiSimulatorCamera():
     cam.connect()
     cam.prepare_shoot()
     # Acquire data
-    cam.setExpTimeSec(4)
+    cam.setExpTimeSec(2)
     cam.shoot_async()
     cam.synchronize_with_image_reception()
     fits = cam.get_received_image()
