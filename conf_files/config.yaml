@@ -81,10 +81,14 @@ calibration:
 mount:
     #module: IndiG11
     #mount_name: Losmandy Gemini
-    module: IndiAbstractMount
+    module: IndiAbstractMountSimulator
     mount_name : Telescope Simulator
     equatorial_eod: J2000 # JNOW
     is_simulator: true
+    simulator_settings:
+        switches:
+            MOUNT_TYPE: ['EQ_GEM']
+            SIM_PIER_SIDE: ['PS_ON']
     indi_client :
         indi_host : localhost
         indi_port : 7624
