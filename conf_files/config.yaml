@@ -81,7 +81,7 @@ calibration:
 mount:
     #module: IndiG11
     #mount_name: Losmandy Gemini
-    module: IndiAbstractMountSimulator
+    module: IndiAbstractMount
     mount_name : Telescope Simulator
     equatorial_eod: J2000 # JNOW
     is_simulator: true

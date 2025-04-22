@@ -103,10 +103,7 @@ class IndiDevice(Base):
 
         # self.indi_client = None
         # self.is_client_connected = False
-        # self.indi_client_config = indi_client_config
-        # self.timeout = defaultTimeout
-        # self.indi_driver_name = indi_driver_name
-        # self.interfaces = None
+        self.indi_driver_name = indi_driver_name
         # self.debug = debug
 
     @property
@@ -194,8 +191,7 @@ class IndiDevice(Base):
         """
         # Now connect
         if self.device.isConnected():
-            self.logger.warning(f"already connected to device "
-                                f"{self.device_name}")
+            self.logger.warning(f"already connected to device {self.device_name}")
             return
         self.logger.info(f"Connecting to device {self.device_name}")
         # setup available list of interfaces
@@ -203,15 +199,16 @@ class IndiDevice(Base):
         # set the corresponding switch to on
         self.set_switch('CONNECTION', ['CONNECT'])
 
-    def connect(self):
+    def connect(self, connect_device=True):
         # setup indi client
         self._setup_indi_client()
         # Connect indi client to server
         self.connect_client()
         # Ask server to give us the device handle, through client
         self.connect_driver()
-        # now enable actual communication between driver and device
-        self.connect_device()
+        if connect_device:
+            # now enable actual communication between driver and device
+            self.connect_device()
 
     def disconnect(self):
         if not self.device.isConnected():
@@ -227,37 +224,40 @@ class IndiDevice(Base):
 
     def get_switch(self, name, ctl=None):
         return self.get_prop_dict(name, 'switch',
-                                  lambda c: {'value': c.getState() == PyIndi.ISS_ON},
+                                  #lambda c: {'value': c.getState() == PyIndi.ISS_ON},
+                                  lambda c: c.getState() == PyIndi.ISS_ON,
                                   ctl)
 
     def get_text(self, name, ctl=None):
         return self.get_prop_dict(name, 'text',
-                                  lambda c: {"value": c.text},
+                                  #lambda c: {"value": c.text},
+                                  lambda c: c.text,
                                   ctl)
 
     def get_number(self, name, ctl=None):
         return self.get_prop_dict(name, 'number',
-                                  lambda c: {'value': c.value, 'min': c.min,
-                                             'max': c.max, 'step': c.step,
-                                             'format': c.format},
+                                  # lambda c: {'value': c.value, 'min': c.min,
+                                  #            'max': c.max, 'step': c.step,
+                                  #            'format': c.format},
+                                  lambda c: c.value,
                                   ctl)
 
     def get_light(self, name, ctl=None):
         return self.get_prop_dict(name, 'light',
-                                  lambda c: {'value': c.getStateAsString()},
+                                  lambda c: c.getStateAsString(), #lambda c: {'value': c.getStateAsString()},
                                   ctl)
 
     def get_prop_dict(self, prop_name, prop_type, transform,
                       prop=None, timeout=None):
-        def get_dict(element):
-            dest = {'name': element.getName(), 'label': element.getLabel()}
-            dest.update(transform(element))
-            return dest
+        #def get_dict(element):
+        #    dest = {'name': element.getName(), 'label': element.getLabel()}
+        #    dest.update(transform(element))
+        #    return dest
 
         prop = prop if prop else self.get_prop(prop_name, prop_type, timeout)
-        d = dict((c.getName(), get_dict(c)) for c in prop)
-        d["state"] = IndiDevice.__state_str[prop.getState()]
-        return d
+        #d = dict((c.getName(), get_dict(c)) for c in prop)
+        #d["state"] = prop.getStateAsString()
+        return transform(prop)
 
     def set_switch(self, name, on_switches=[], off_switches=[],
                    sync=True, timeout=None):
@@ -514,11 +514,8 @@ class IndiDevice(Base):
         connect client to indi server
         """
         self.indi_client.connect_to_server(sync=True, timeout=defaultTimeout)
-#
-#     # def connect_driver(self):
-#     #     # Try first to ask server to give us the device handle, through client
-#     #     self._setup_device()
-#
+
+
 #     def connect_device(self):
 #         """
 #
@@ -565,30 +562,30 @@ class IndiDevice(Base):
 #         except Exception as e:
 #             return False
 #
-#     def stop_indi_server(self):
-#         # We could simply do like that:
-#         # if self.indi_client is None:
-#         #     self._setup_indi_client()
-#         # self.indi_client.indi_webmanager_client.start_server()
-#         # But then in case of stopping, it could consume ressources for no reason
-#         if self.indi_client is not None:
-#             self.indi_client.indi_webmanager_client.stop_server(device_name=self.device_name)
-#         else:
-#             # Setup temporary webmanager client
-#             if "indi_webmanager" in self.indi_client_config:
-#                 iwmc = IndiWebManagerClient(config=self.indi_client_config["indi_webmanager"],
-#                                             indi_config=self.indi_client_config)
-#                 iwmc.stop_server(device_name=self.device_name)
-#
-#     def start_indi_server(self):
-#         if self.indi_client is None:
-#             self._setup_indi_client()
-#         self.indi_client.indi_webmanager_client.start_server(device_name=self.device_name)
-#
-#     def start_indi_driver(self):
-#         self.indi_client.indi_webmanager_client.start_driver(
-#             driver_name=self.indi_driver_name,
-#             check_started=True)
+    def stop_indi_server(self):
+        # We could simply do like that:
+        # if self.indi_client is None:
+        #     self._setup_indi_client()
+        # self.indi_client.indi_webmanager_client.start_server()
+        # But then in case of stopping, it could consume ressources for no reason
+        if self.indi_client is not None:
+            self.indi_client.indi_webmanager_client.stop_server(device_name=self.device_name)
+        else:
+            # Setup temporary webmanager client
+            if "indi_webmanager" in self.indi_client_config:
+                iwmc = IndiWebManagerClient(config=self.indi_client_config["indi_webmanager"],
+                                            indi_config=self.indi_client_config)
+                iwmc.stop_server(device_name=self.device_name)
+
+    def start_indi_server(self):
+        if self.indi_client is None:
+            self._setup_indi_client()
+        self.indi_client.indi_webmanager_client.start_server(device_name=self.device_name)
+
+    def start_indi_driver(self):
+        self.indi_client.indi_webmanager_client.start_driver(
+            driver_name=self.indi_driver_name,
+            check_started=True)
 #
 #     def get_switch(self, name):
 #         return self.get_vector_dict(name)
@@ -638,7 +635,7 @@ class IndiDevice(Base):
         try:
             logger.debug(f"BLOBListener[{self.device_name}]: waiting for blob, timeout={timeout}")
             blob = self.blob_listener.queue.get(True, timeout)
-            logger.debug(f"BLOBListener[{self.device_name}]: blob received name={blob.name}, label={blob.getLabel()}, "
+            logger.debug(f"BLOBListener[{self.device_name}]: blob received name={blob.name}, label={blob.label}, "
                 f"size={blob.size}, queue size: {self.blob_listener.queue.qsize()} (isEmpty: {self.blob_listener.queue.empty()})")
             self.blob_queue.append(blob)
         except queue.Empty:

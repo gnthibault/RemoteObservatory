@@ -230,7 +230,7 @@ class IndiCamera(IndiDevice):
 
 
     def abort_shoot(self, sync=True):
-        self.set_number('CCD_ABORT_EXPOSURE', {'ABORT': 1}, sync=sync, timeout=self.defaultTimeout)
+        self.set_number('CCD_ABORT_EXPOSURE', {'ABORT': 1}, sync=sync, timeout=self.timeout)
 
     def launch_streaming(self):
         self.set_switch('VIDEO_STREAM', ['ON'])
@@ -265,7 +265,7 @@ class IndiCamera(IndiDevice):
             HEIGHT: Frame width in pixels
             ex: cam.set_roi({'X':256, 'Y':480, 'WIDTH':512, 'HEIGHT':640})
         """
-        self.set_number('CCD_FRAME', roi, sync=True, timeout=self.defaultTimeout)
+        self.set_number('CCD_FRAME', roi, sync=True, timeout=self.timeout)
         #self.logger.debug(f"After set_roi, ROI is {self.get_roi()}")
 
     def get_dynamic(self):
@@ -299,17 +299,17 @@ class IndiCamera(IndiDevice):
         self.set_switch('CCD_COOLER', ['COOLER_ON'], sync=False)
 
     def set_cooling_off(self):
-        self.set_switch('CCD_COOLER', ['COOLER_OFF'], sync=True, timeout=self.defaultTimeout)
+        self.set_switch('CCD_COOLER', ['COOLER_OFF'], sync=True, timeout=self.timeout)
 
     def set_gain(self, value):
-        self.set_number('CCD_GAIN', {'GAIN': value}, sync=True, timeout=self.defaultTimeout)
+        self.set_number('CCD_GAIN', {'GAIN': value}, sync=True, timeout=self.timeout)
 
     def get_gain(self):
         gain = self.get_number('CCD_GAIN')
         return gain["GAIN"]
 
     def set_offset(self, value):
-        self.set_number('CCD_OFFSET', {'OFFSET': value}, sync=True, timeout=self.defaultTimeout)
+        self.set_number('CCD_OFFSET', {'OFFSET': value}, sync=True, timeout=self.timeout)
 
     def get_offset(self):
         offset = self.get_number('CCD_OFFSET')
@@ -325,11 +325,11 @@ class IndiCamera(IndiDevice):
         FRAME_DARK Take a dark frame exposure
         FRAME_FLAT Take a flat field frame exposure
         """
-        self.set_switch('CCD_FRAME_TYPE', [frame_type], sync=True, timeout=self.defaultTimeout)
+        self.set_switch('CCD_FRAME_TYPE', [frame_type], sync=True, timeout=self.timeout)
 
     def setUploadTo(self, upload_to='local'):
         uploadTo = IndiCamera.UploadModeDict[upload_to]
-        self.set_switch('UPLOAD_MODE', [uploadTo], sync=True, timeout=self.defaultTimeout)
+        self.set_switch('UPLOAD_MODE', [uploadTo], sync=True, timeout=self.timeout)
 
     # def getExposureRange(self):
     #     pv = self.getCCDControls('CCD_EXPOSURE', 'number')[0]

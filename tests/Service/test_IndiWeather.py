@@ -30,4 +30,7 @@ def test_indiSimulatorCamera():
                     connect_on_create=False,
                     loop_on_create=False)
     w.connect()
+    status, features = w.get_weather_features()
+    data = w._fill_in_weather_data()
+    w._make_safety_decision(data)
     w.disconnect()

@@ -293,7 +293,7 @@ class IndiG11(IndiAbstractMount):
             WARM_START
             WARM_RESTART
         """
-        self.set_switch('STARTUP_MODE', [mode], sync=True, timeout=self.defaultTimeout)
+        self.set_switch('STARTUP_MODE', [mode], sync=True, timeout=self.timeout)
 
 
     def set_park_settings(self, mode='HOME'):

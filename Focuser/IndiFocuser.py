@@ -64,7 +64,7 @@ class IndiFocuser(IndiDevice):
         self.set_port()
 
     def set_port(self):
-        self.set_text("DEVICE_PORT", {"PORT": self.port}, sync=True, timeout=self.defaultTimeout)
+        self.set_text("DEVICE_PORT", {"PORT": self.port}, sync=True, timeout=self.timeout)
 
     def on_emergency(self):
         self.logger.debug('Indi Focuser: on emergency routine started...')
@@ -82,7 +82,7 @@ class IndiFocuser(IndiDevice):
         self.logger.debug(f"{self}  moving to position {position}")
         self.set_number('ABS_FOCUS_POSITION', #REL_FOCUS_POSITION
                         {'FOCUS_ABSOLUTE_POSITION': np.float64(position)}, #FOCUS_RELATIVE_POSITION
-                        sync=True, timeout=self.defaultTimeout)
+                        sync=True, timeout=self.timeout)
         new_position = self.get_position()
         self.logger.debug(f"{self} Now position is {new_position}")
         return new_position

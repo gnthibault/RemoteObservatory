@@ -34,7 +34,7 @@ class IndiAltairCamera(IndiAbstractCamera):
         return 16
 
     def set_gain(self, value):
-        self.set_number('CCD_CONTROLS', {'Gain': value}, sync=True, timeout=self.defaultTimeout)
+        self.set_number('CCD_CONTROLS', {'Gain': value}, sync=True, timeout=self.timeout)
 
     def get_gain(self):
         gain = self.get_number('CCD_CONTROLS')
