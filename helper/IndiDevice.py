@@ -227,7 +227,7 @@ class IndiDevice(Base):
 
     def get_switch(self, name, ctl=None):
         return self.get_prop_dict(name, 'switch',
-                                  lambda c: {'value': c.s == PyIndi.ISS_ON},
+                                  lambda c: {'value': c.getState() == PyIndi.ISS_ON},
                                   ctl)
 
     def get_text(self, name, ctl=None):
@@ -244,20 +244,19 @@ class IndiDevice(Base):
 
     def get_light(self, name, ctl=None):
         return self.get_prop_dict(name, 'light',
-                                  lambda c: {'value':
-                                             IndiDevice.__state_str[c.s]},
+                                  lambda c: {'value': c.getStateAsString()},
                                   ctl)
 
     def get_prop_dict(self, prop_name, prop_type, transform,
                       prop=None, timeout=None):
         def get_dict(element):
-            dest = {'name': element.name, 'label': element.label}
+            dest = {'name': element.getName(), 'label': element.getLabel()}
             dest.update(transform(element))
             return dest
 
         prop = prop if prop else self.get_prop(prop_name, prop_type, timeout)
-        d = dict((c.name, get_dict(c)) for c in prop)
-        d["state"] = IndiDevice.__state_str[prop.s]
+        d = dict((c.getName(), get_dict(c)) for c in prop)
+        d["state"] = IndiDevice.__state_str[prop.getState()]
         return d
 
     def set_switch(self, name, on_switches=[], off_switches=[],
@@ -266,7 +265,7 @@ class IndiDevice(Base):
         is_exclusive = pv.getRule() == PyIndi.ISR_ATMOST1 or pv.getRule() == PyIndi.ISR_1OFMANY
         if is_exclusive:
             on_switches = on_switches[0:1]
-            off_switches = [s.name for s in pv if s.name not in on_switches]
+            off_switches = [s.getName() for s in pv if s.getName() not in on_switches]
         for index in range(0, len(pv)):
             current_state = pv[index].getState()
             new_state = current_state
@@ -319,11 +318,9 @@ class IndiDevice(Base):
             timeout = self.timeout
         while prop.getState() not in statuses:
             if 0 < timeout < time.time() - started:
-                self.logger.debug(f"IndiDevice: Timeout while waiting for "
-                                  f"property status {prop.name} for device "
+                self.logger.debug(f"IndiDevice: Timeout while waiting for property status {prop.getName()} for device "
                                   f"{self.device_name}")
-                raise RuntimeError(f"Timeout error while changing property "
-                                   f"{prop.name}")
+                raise RuntimeError(f"Timeout error while changing property {prop.getName()}")
             time.sleep(0.01)
         return prop.getState()
 
@@ -331,8 +328,8 @@ class IndiDevice(Base):
         """ return dict of name-index of prop that are in values"""
         result = {}
         for i, p in enumerate(property_vector):
-            if p.name in values:
-                result[p.name] = i
+            if p.getName() in values:
+                result[p.getName()] = i
         return result
 
     def get_prop(self, propName, propType, timeout=None):
@@ -340,7 +337,7 @@ class IndiDevice(Base):
             A prop often has the following attributes:
             prop.device   : 'OpenWeatherMap'
             prop.group    : 'Parameters', equiv to UI panel
-            prop.label    : 'Parameters', equiv to UI subtable name
+            prop.getLabel()    : 'Parameters', equiv to UI subtable name
             prop.name     : 'WEATHER_PARAMETERS'
             prop.nnp      : 9
             prop.np       : Swig_stuff
@@ -348,6 +345,8 @@ class IndiDevice(Base):
             prop.s        : 1 , equiv to status: PyIndi.IPS_OK, PyIndi.IPS_ALERT
             prop.timeout  : 60.0
             prop.timestamp: ''
+
+            EDIT: the Python API completely changed after V2 see: https://github.com/indilib/pyindi-client
         """
         prop = None
         attr = IndiDevice.__prop_getter[propType]
@@ -639,7 +638,7 @@ class IndiDevice(Base):
         try:
             logger.debug(f"BLOBListener[{self.device_name}]: waiting for blob, timeout={timeout}")
             blob = self.blob_listener.queue.get(True, timeout)
-            logger.debug(f"BLOBListener[{self.device_name}]: blob received name={blob.name}, label={blob.label}, "
+            logger.debug(f"BLOBListener[{self.device_name}]: blob received name={blob.name}, label={blob.getLabel()}, "
                 f"size={blob.size}, queue size: {self.blob_listener.queue.qsize()} (isEmpty: {self.blob_listener.queue.empty()})")
             self.blob_queue.append(blob)
         except queue.Empty:
