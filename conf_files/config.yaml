@@ -123,6 +123,9 @@ cameras:
         do_guiding: true
         do_pointing: true
         pointing_seconds: 5
+        default_exp_time_sec: 5
+        default_gain: 50
+        default_offset: 30
         do_adjust_pointing: true
         adjust_center_x: 580
         adjust_center_y: 400
@@ -183,6 +186,9 @@ cameras:
         do_guiding: false
         do_pointing: false
         pointing_seconds: 5
+        default_exp_time_sec: 5
+        default_gain: 50
+        default_offset: 30
         do_adjust_pointing: false
         adjust_center_x: 400
         adjust_center_y: 400

@@ -119,9 +119,10 @@ class IndiClient(SingletonIndiClientHolder, PyIndi.BaseClient, Base):
             self.indi_webmanager_client = IndiWebManagerClient(config["indi_webmanager"], indi_config=config)
 
         # Blob related attributes
-        self.blob_event = threading.Event()
-        self.__listeners = []
+        self.blob_event = threading.Event() #TODO TN THIS IS NOT USED ANYMORE
+        self.__blob_listeners = []
         self.queue_size = config.get('queue_size', 100)
+        self.__pv_handlers = {}
 
         # Finished configuring
         logger.debug('Configured Indi Client successfully')
@@ -209,61 +210,102 @@ class IndiClient(SingletonIndiClientHolder, PyIndi.BaseClient, Base):
     def removeProperty(self, p):
         pass
 
-    def newBLOB(self, bp):
+    def process_blob_handlers(self, bp):
         # this threading.Event is used for sync purpose in other part of the code
         logger.debug(f"new BLOB received: {bp.name}")
         #self.blob_event.set()
-        for listener in self.__listeners:
+        for listener in self.__blob_listeners:
             if bp.bvp.device == listener.device_name:
                 logger.debug(f"Copying blob {bp.name} to listener {listener}")
                 listener.queue.put(BLOB(bp))
         del bp
 
-    @contextmanager
-    def listener(self, device_name):
+    def process_generic_handlers(self, pv):
         try:
-            listener = BLOBListener(device_name, self.queue_size)
-            self.__listeners.append(listener)
-            yield(listener)
-        finally:
-            self.__listeners = [x for x in self.__listeners if x is not listener]
+            if pv.getName() == "ABS_DOME_POSITION":
+                print("test")
+            list(
+                map(
+                    lambda f: f(pv),
+                    self.__pv_handlers[pv.getDeviceName()][pv.getName()].values())
+            )
+        except KeyError:
+            pass
+
+
+    # @contextmanager
+    # def listener(self, device_name):
+    #     try:
+    #         listener = BLOBListener(device_name, self.queue_size)
+    #         self.__listeners.append(listener)
+    #         yield(listener)
+    #     finally:
+    #         self.__listeners = [x for x in self.__listeners if x is not listener]
 
     def add_blob_listener(self, device_name, queue_size=None):
         queue_size = self.queue_size if queue_size is None else queue_size
         # TODO TN you should use proper singleton pattern instead of this...
-        blob_listener = next((el for el in self.__listeners if el.device_name == device_name), None)
+        blob_listener = next((el for el in self.__blob_listeners if el.device_name == device_name), None)
         if blob_listener is None:
             blob_listener = BLOBListener(device_name, queue_size)
-            self.__listeners.append(blob_listener)
+            self.__blob_listeners.append(blob_listener)
         return blob_listener
 
     def remove_blob_listener(self, device_name):
-        self.__listeners[:] = [el for el in self.__listeners if el.device_name != device_name]
+        self.__blob_listeners[:] = [el for el in self.__blob_listeners if el.device_name != device_name]
+
+    def add_pv_handler(self, device_name, pv_name, handler_name, pv_handler):
+        if device_name not in self.__pv_handlers:
+            self.__pv_handlers[device_name] = {pv_name: {handler_name: pv_handler}}
+        elif pv_name not in self.__pv_handlers[device_name]:
+            self.__pv_handlers[device_name][pv_name] = {handler_name: pv_handler}
+        else:
+             self.__pv_handlers[device_name][pv_name][handler_name] = pv_handler
+
+    def remove_pv_handler(self, device_name, pv_name=None, handler_name=None):
+        # if no property vector is provided, remove all handler for this device
+        if pv_name is None:
+            self.__pv_handlers.pop(device_name, None)
+        # if no handler name is provided, remove all handlers for this property vector
+        elif handler_name is None:
+            if device_name in self.__pv_handlers:
+                self.__pv_handlers[device_name].pop(pv_name, None)
+        else:
+            if device_name in self.__pv_handlers:
+                if handler_name in self.__pv_handlers[device_name]:
+                    self.__pv_handlers[device_name][pv_name].pop(handler_name, None)
+
+            self.__pv_handlers[device_name][pv_name].pop(handler_name, None)
 
     # Call functions in old style
     def updateProperty(self, prop):
-        if prop.getType() == PyIndi.INDI_NUMBER:
-            self.newNumber(PyIndi.PropertyNumber(prop))
-        elif prop.getType() == PyIndi.INDI_SWITCH:
-            self.newSwitch(PyIndi.PropertySwitch(prop))
-        elif prop.getType() == PyIndi.INDI_TEXT:
-            self.newText(PyIndi.PropertyText(prop))
-        elif prop.getType() == PyIndi.INDI_LIGHT:
-            self.newLight(PyIndi.PropertyLight(prop))
-        elif prop.getType() == PyIndi.INDI_BLOB:
-            self.newBLOB(PyIndi.PropertyBlob(prop)[0])
+        # if prop.getType() == PyIndi.INDI_NUMBER:
+        #     self.newNumber(PyIndi.PropertyNumber(prop))
+        # elif prop.getType() == PyIndi.INDI_SWITCH:
+        #     self.newSwitch(PyIndi.PropertySwitch(prop))
+        # elif prop.getType() == PyIndi.INDI_TEXT:
+        #     self.newText(PyIndi.PropertyText(prop))
+        # elif prop.getType() == PyIndi.INDI_LIGHT:
+        #     self.newLight(PyIndi.PropertyLight(prop))
+        # elif prop.getType() == PyIndi.INDI_BLOB:
+        #     self.newBLOB(PyIndi.PropertyBlob(prop)[0])
+        if prop.getType() == PyIndi.INDI_BLOB:
+            self.process_blob_handlers(PyIndi.PropertyBlob(prop)[0])
+        else:
+            self.process_generic_handlers(prop)
 
-    def newSwitch(self, svp):
-        pass
 
-    def newNumber(self, nvp):
-        pass
-
-    def newText(self, tvp):
-        pass
-
-    def newLight(self, lvp):
-        pass
+    # def newSwitch(self, svp):
+    #     pass
+    #
+    # def newNumber(self, nvp):
+    #     pass
+    #
+    # def newText(self, tvp):
+    #     pass
+    #
+    # def newLight(self, lvp):
+    #     pass
 
     def newMessage(self, d, m):
         pass
@@ -284,7 +326,7 @@ class IndiClient(SingletonIndiClientHolder, PyIndi.BaseClient, Base):
     # def trigger_get_properties(self):
     #     self.xml_to_indiserver("<getProperties version='1.7'/>")
     #
-    def enable_blob(self, blob_mode, device_name=None, property_name=None):
+    def enable_blob(self, blob_mode=PyIndi.B_ALSO, device_name=None, property_name=None):
         """
         Sends a signal to the server that tells it, that this client wants to receive L{indiblob} objects.
         If this method is not called, the server will not send any L{indiblob}. The DCD clients calls it each time

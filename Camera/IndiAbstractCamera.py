@@ -63,7 +63,7 @@ class IndiAbstractCamera(IndiCamera, AbstractCamera):
             if temperature is not None:
                 self.set_cooling_on()
                 self.set_temperature(temperature)
-            self.indi_client.enable_blob()
+            self.enable_blob()
             # Now shoot
             self.setExpTimeSec(exp_time_sec)
             self.logger.debug(f"Camera {self.camera_name}, about to shoot for {self.exp_time_sec}")

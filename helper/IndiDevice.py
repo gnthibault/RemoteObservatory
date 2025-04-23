@@ -464,12 +464,25 @@ class IndiDevice(Base):
 #         future = asyncio.run_coroutine_threadsafe(
 #             self.registering_custom_vector_handler(handler_name, vh), self.indi_client.ioloop)
 #         _ = future.result()  # This is just sync
-#
+    def register_vector_handler_to_client(self, vector_name, handler_name, callback):
+        self.indi_client.add_pv_handler(
+            device_name=self.device_name,
+            pv_name=vector_name,
+            handler_name=handler_name,
+            pv_handler=callback)
+    #
 #     def unregister_vector_handler_to_client(self, handler_name):
 #         future = asyncio.run_coroutine_threadsafe(
 #             self.unregistering_custom_vector_handler(handler_name), self.indi_client.ioloop)
 #         _ = future.result()  # This is just sync
-#
+    def unregister_vector_handler_to_client(self, vector_name, handler_name):
+        self.indi_client.remove_pv_handler(
+            device_name=self.device_name,
+            pv_name=vector_name,
+            handler_name=handler_name
+
+            )
+    #
 #     def _setup_interfaces(self):
 #         """
 #         Find out what interface the current device offers

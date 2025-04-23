@@ -39,6 +39,9 @@ class IndiCamera(IndiDevice):
             config = dict(
                 camera_name='CCD Simulator',
                 pointing_seconds=30,
+                default_exp_time_sec=5,
+                default_gain=50,
+                default_offset=30,
                 adjust_center_x=400,
                 adjust_center_y=400,
                 adjust_roi_search_size=50,
@@ -80,6 +83,9 @@ class IndiCamera(IndiDevice):
 
         # Specific initialization
         self.pointing_seconds = float(config['pointing_seconds'])
+        self.default_exp_time_sec = config.get('default_exp_time_sec', 5)
+        self.default_gain = config.get('default_gain', 50)
+        self.default_offset = config.get('default_offset', 30)
         self.adjust_center_x = float(config['adjust_center_x'])
         self.adjust_center_y = float(config['adjust_center_y'])
         self.adjust_roi_search_size = int(config['adjust_roi_search_size'])
@@ -90,12 +96,13 @@ class IndiCamera(IndiDevice):
         self._setup_focuser(config, connect_on_create)
         self._setup_filter_wheel(config, connect_on_create)
 
+
         self.logger.debug(f"Indi camera, camera name is: {device_name}")
 
         # Default exposureTime, gain
-        self.exp_time_sec = 5
-        self.gain = 150
-        self.offset = 30
+        self.exp_time_sec = self.default_exp_time_sec
+        self.gain = self.default_gain
+        self.offset = self.default_offset
 
         # Finished configuring
         self.logger.debug('Configured Indi Camera successfully')

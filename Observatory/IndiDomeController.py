@@ -46,7 +46,7 @@ class IndiDomeController(IndiDevice):
     def is_initialized(self):
         return self._is_initialized
 
-    def unpark(self):
+    def unpark_general(self):
         self.logger.debug("Unparking with a reset-like behaviour")
         self.park()
         self.start_indi_server()
@@ -57,6 +57,12 @@ class IndiDomeController(IndiDevice):
         self.logger.debug("Successfully unparked")
 
     def park(self):
+        self.set_switch(name="DOME_PARK", on_switches=["PARK"], sync=True, timeout=self.dome_movement_timeout_s)
+
+    def unpark(self):
+        self.set_switch(name="DOME_PARK", on_switches=["UNPARK"], sync=True, timeout=self.dome_movement_timeout_s)
+
+    def park_general(self):
         self.logger.debug("Parking")
         self.deinitialize()
         self.disconnect()
@@ -73,7 +79,7 @@ class IndiDomeController(IndiDevice):
         self.set_switch("DOME_SHUTTER", on_switches=["SHUTTER_CLOSE"], off_switches=["SHUTTER_OPEN"], sync=True, timeout=self.dome_movement_timeout_s)
 
     def get_dome_position(self):
-        self.get_number("ABS_DOME_POSITION")["DOME_ABSOLUTE_POSITION"]
+        return self.get_number("ABS_DOME_POSITION")["DOME_ABSOLUTE_POSITION"]
 
     @property
     def is_parked(self):

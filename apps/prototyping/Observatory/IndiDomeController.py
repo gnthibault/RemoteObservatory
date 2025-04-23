@@ -45,5 +45,8 @@ if __name__ == '__main__':
     )
     time.sleep(5)
     # Play with Kstars client for instance
-    dome.unregister_vector_handler_to_client(h_name)
+    dome.unregister_vector_handler_to_client(
+        vector_name="ABS_DOME_POSITION",
+        handler_name=h_name,
+    )
     dome.indi_client.stop()
