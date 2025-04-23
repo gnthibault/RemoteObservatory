@@ -46,13 +46,14 @@ def on_enter(event_data):
         model.logger.debug(msg)
         model.say(msg)
         model.manager.guider.set_paused(paused=True)
-        guiding_camera = model.manager.guiding_camera
-        if guiding_camera is not None:
-            try:
-                exp_time_sec = guiding_camera.is_remaining_exposure_time()
-                guiding_camera.synchronize_with_image_reception(exp_time_sec=exp_time_sec)
-            except ImageAcquisitionError as e:
-                pass
+        # guiding_camera = model.manager.guiding_camera
+        # This was some kind of trip to clear receiving buffer
+        # if guiding_camera is not None:
+        #     try:
+        #         exp_time_sec = guiding_camera.is_remaining_exposure_time()
+        #         guiding_camera.synchronize_with_image_reception(exp_time_sec=exp_time_sec)
+        #     except ImageAcquisitionError as e:
+        #         pass
     try:
         model.say("Starting focusing")
         # Before each observation, we should refocus

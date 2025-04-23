@@ -300,9 +300,21 @@ class GuiderPHD2(Base):
 
     def set_connected(self, connect=True):
         """
-           params: boolean: connect
-           result: integer(0)
-           desc. : connect or disconnect all equipment
+            params: boolean: connect
+            result: integer(0)
+            desc. : connect or disconnect all equipment
+
+            Note: for some unknown reason, it seems, that sometimes set_connected False is not properly taken into account,
+            See the following serie of events:
+            2025-04-23 20:34:03,257 - GuiderPHD2 - DEBUG - sending msg {"jsonrpc": "2.0", "method": "stop_capture", "params": [], "id": 12}
+            2025-04-23 20:34:03,266 - GuiderPHD2 - DEBUG - Received event: {'Event': 'Resumed', 'Timestamp': 1745440443.266, 'Host': 'ubuntu', 'Inst': 1}
+            2025-04-23 20:34:03,266 - GuiderPHD2 - DEBUG - Guiding has resumed {'Event': 'Resumed', 'Timestamp': 1745440443.266, 'Host': 'ubuntu', 'Inst': 1}
+            2025-04-23 20:34:03,266 - GuiderPHD2 - WARNING - Received , still waiting for expected {'id': 12} while loop mode is False
+            2025-04-23 20:34:03,266 - GuiderPHD2 - DEBUG - Received event: {'jsonrpc': '2.0', 'result': 0, 'id': 12}
+            2025-04-23 20:34:03,267 - GuiderPHD2 - DEBUG - sending msg {"jsonrpc": "2.0", "method": "set_connected", "params": [false], "id": 13}
+            2025-04-23 20:34:03,267 - GuiderPHD2 - DEBUG - Received event: {'jsonrpc': '2.0', 'error': {'code': 1, 'message': 'cannot disconnect equipment while capture active'}, 'id': 13}
+            2025-04-23 20:34:03,267 - GuiderPHD2 - ERROR - Received error msg: {'code': 1, 'message': 'cannot disconnect equipment while capture active'}
+            2025-04-23 20:34:03,267 - GuidingError - ERROR - GuidingError: Wrong answer to set_connected request: {'jsonrpc': '2.0', 'error': {'code': 1, 'message': 'cannot disconnect equipment while capture active'}, 'id': 13}
         """
         req={"method": "set_connected",
              "params": [connect],

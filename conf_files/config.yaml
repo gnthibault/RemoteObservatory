@@ -98,10 +98,10 @@ cameras:
         camera_name : Guide Simulator
         do_acquisition: false
         SIMULATOR_SETTINGS: # 290MM
-            SIM_XRES: 1936 #
-            SIM_YRES: 1096 #
-            SIM_XSIZE: 2.9 #2.9
-            SIM_YSIZE: 2.9 #2.9
+            SIM_XRES: 1000 #1936
+            SIM_YRES: 1000 #1096
+            SIM_XSIZE: 9 #2.9
+            SIM_YSIZE: 9 #2.9
             SIM_MAXVAL: 65000
             SIM_SATURATION: 1
             SIM_LIMITINGMAG: 17
@@ -131,30 +131,30 @@ cameras:
         adjust_center_y: 400
         adjust_roi_search_size: 50
         adjust_pointing_seconds: 5
-        do_autofocus: false
+        do_autofocus: True
         autofocus_seconds: 4
         autofocus_roi_size : 750
         autofocus_merit_function: half_flux_radius #vollath_F4
-#        focuser:
-#            module: IndiFocuser
-#            focuser_name: Focuser Simulator
-#            port: /dev/ttyUSB0
-#            focus_range:
-#                min: 32500
-#                max: 40000
-#            autofocus_step:
-#                fine: 750
-#                coarse: 2500
-#            autofocus_range:
-#                fine: 10000
-#                coarse: 30000
-#            indi_client:
-#                indi_host: localhost
-#                indi_port: 7624
+        focuser:
+            module: IndiFocuser
+            focuser_name: Focuser Simulator
+            port: /dev/ttyUSB0
+            focus_range:
+                min: 32500
+                max: 40000
+            autofocus_step:
+                fine: 750
+                coarse: 2500
+            autofocus_range:
+                fine: 10000
+                coarse: 30000
+            indi_client:
+                indi_host: localhost
+                indi_port: 7624
         indi_client :
             indi_host : localhost
             indi_port : 7624
-            use_unique_client: True
+            use_unique_client: False #This doesn't seems to work
     -
         module: IndiAbstractCameraSimulator
         camera_name : CCD Simulator

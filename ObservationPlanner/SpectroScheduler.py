@@ -105,6 +105,15 @@ class SpectroScheduler(Scheduler):
             # eventually CDS["SP_TYPE"][0] returns 'B8.5Ib-II'
             ra_h_m_s = np.array([*map(float, CDS['RA'][0].split(" "))])
             dec_d_m_s = np.array([*map(float, CDS['DEC'][0].split(" "))])
+
+            # Right ascension
+            # 1 hourangle is 1/24 of a circle
+            # 1 minute of RA is 1/60 of an hourangle
+            # 1 second of RA is 1/3600 of an hourangle
+            # Declination
+            # 1 degree is 1/360 of a circle
+            # 1 arcminute is 1/60 of a degree
+            # 1 arcsecond is 1/3600 of a degree
             coord = SkyCoord(
                 ra=np.dot(ra_h_m_s, np.array([u.hourangle, u.hourangle / 60, u.hourangle / 3600])).to(u.degree),
                 dec=np.dot(dec_d_m_s, np.array([u.degree, u.arcminute, u.arcsecond])),
@@ -124,6 +133,7 @@ class SpectroScheduler(Scheduler):
             spinfo["RVZ_TYPE"] = str(CDS['RVZ_TYPE'][0])
         if CDS is None:
             try:
+                self.logger.warning(f"Spectral target {target_name} not found in CDS, trying astropy engine")
                 coord = SkyCoord(SkyCoord.from_name(target_name, parse=True, frame="icrs"), equinox=Time('J2000'))
                 target = FixedTarget(name=target_name.replace(" ", ""),
                                      coord=coord)

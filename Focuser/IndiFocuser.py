@@ -54,12 +54,31 @@ class IndiFocuser(IndiDevice):
         # Finished configuring
         self.logger.debug('Indi Focuser configured successfully')
 
+    def park(self):
+        self.logger.debug(f"Parking focuser {self.device_name}")
+        self.deinitialize()
+        self.disconnect()
+        self.stop_indi_server()
+        self.logger.debug(f"Successfully parked focuser {self.device_name}")
+
+    def unpark(self):
+        self.logger.debug(f"Unparking focuser {self.device_name} with a reset-like behaviour")
+        self.park()
+        self.start_indi_server()
+        self.start_indi_driver()
+        self.connect(connect_device=True)
+        self.initialize()
+        self.logger.debug(f"Successfully unparked focuser {self.device_name}")
+
+    def deinitialize(self):
+        self.logger.debug(f"Deinitializing {self.device_name}")
     def initialize(self):
         """
         This is not as simple a just connecting, because we must also set some
         specific values
         :return:
         """
+        self.logger.debug(f"Initializing {self.device_name}")
         self.connect()
         self.set_port()
 

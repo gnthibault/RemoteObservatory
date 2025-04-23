@@ -222,8 +222,11 @@ class IndiDevice(Base):
                 self.logger.warning(f"Not connected to device {self.device_name}")
                 return
             self.logger.info(f"Disconnecting from device {self.device_name}")
+            self.disable_blob()
+            self.unregister_vector_handler_to_client()
             # set the corresponding switch to off
             self.set_switch('CONNECTION', on_switches=['DISCONNECT'])
+            self.device = None
 
     def get_values(self, ctl_name, ctl_type):
         return dict(map(lambda c: (c.name, c.value),
@@ -326,7 +329,7 @@ class IndiDevice(Base):
         while prop.getState() not in statuses:
             if 0 < timeout < time.time() - started:
                 self.logger.debug(f"IndiDevice: Timeout while waiting for property status {prop.getName()} for device "
-                                  f"{self.device_name}")
+                                  f"{self.device_name} with timeout {timeout}")
                 raise RuntimeError(f"Timeout error while changing property {prop.getName()}")
             time.sleep(0.01)
         return prop.getState()
@@ -378,6 +381,7 @@ class IndiDevice(Base):
             return False
 
     def enable_blob(self):
+        self.logger.debug(f"About to enable blob, and allocate associated control structures")
         self.blob_listener = self.indi_client.add_blob_listener(
             device_name=self.device_name
         )
@@ -387,6 +391,7 @@ class IndiDevice(Base):
             property_name=None)
 
     def disable_blob(self):
+        self.logger.debug(f"About to disable blob, and clean associated control structures")
         self.indi_client.remove_blob_listener(
             device_name=self.device_name
         )
@@ -475,7 +480,7 @@ class IndiDevice(Base):
 #         future = asyncio.run_coroutine_threadsafe(
 #             self.unregistering_custom_vector_handler(handler_name), self.indi_client.ioloop)
 #         _ = future.result()  # This is just sync
-    def unregister_vector_handler_to_client(self, vector_name, handler_name):
+    def unregister_vector_handler_to_client(self, vector_name=None, handler_name=None):
         self.indi_client.remove_pv_handler(
             device_name=self.device_name,
             pv_name=vector_name,
@@ -653,7 +658,7 @@ class IndiDevice(Base):
         #return
         try:
             logger.debug(f"BLOBListener[{self.device_name}]: waiting for blob, timeout={timeout}")
-            blob = self.blob_listener.queue.get(True, timeout)
+            blob = self.blob_listener.queue.get(block=True, timeout=timeout)
             logger.debug(f"BLOBListener[{self.device_name}]: blob received name={blob.name}, label={blob.label}, "
                 f"size={blob.size}, queue size: {self.blob_listener.queue.qsize()} (isEmpty: {self.blob_listener.queue.empty()})")
             self.blob_queue.append(blob)
@@ -662,7 +667,8 @@ class IndiDevice(Base):
                             f"{self.device.name}")
 
     def get_last_incoming_blob_vector(self):
-        blob = self.blob_queue.popleft()
+        blob = self.blob_queue.pop() # deque Append + pop = LIFO
+        #blob = self.blob_queue.popleft() # deque Append + popleft = FIFO
         return blob
 
 #     def wait_for_any_property_vectors(self, timeout=5):

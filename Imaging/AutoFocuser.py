@@ -291,6 +291,10 @@ class AutoFocuser(Base):
             focus_event.wait()
         return focus_event
 
+    def initialize_camera(self):
+        self.camera.set_frame_type('FRAME_LIGHT')
+        self.camera.prepare_shoot()
+
     def get_thumbnail(self, seconds, thumbnail_size):
         fits = self.camera.get_thumbnail(seconds, thumbnail_size)
         try:
@@ -403,6 +407,7 @@ class AutoFocuser(Base):
         #                                   self.camera.file_extension)
         # initial_path = os.path.join(file_path_root, initial_fn)
         #
+        self.initialize_camera()
         initial_thumbnail = self.get_thumbnail(seconds, thumbnail_size)
         self.logger.debug(f"Autofocusing: initial thumbnail size is {initial_thumbnail.shape}")
 
@@ -429,7 +434,7 @@ class AutoFocuser(Base):
             initial_focus = self.position
         focus_positions = np.arange(max(initial_focus - cur_focus_range / 2, self.min_position),
                                     min(initial_focus + cur_focus_range / 2, self.max_position) + 1,
-                                    cur_focus_step, dtype=np.int)
+                                    cur_focus_step, dtype=int)
         self.logger.debug(f"Autofocuser {self}  is going to sweep over the "
                           f"following positions for autofocusing {focus_positions}")
         n_positions = len(focus_positions)
@@ -507,7 +512,7 @@ class AutoFocuser(Base):
 
             # Select data range for fitting. Tries to use points on both side of
             # best, if in range.
-            #margin = max(3, np.int(np.ceil(n_positions/3)))
+            #margin = max(3, int(np.ceil(n_positions/3)))
             #fitting_indices = (max(ibest - margin, 0), min(ibest + margin, n_positions - 1))
             fitting_indices = (0, n_positions - 1)
 

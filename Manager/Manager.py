@@ -540,14 +540,17 @@ class Manager(Base):
 
             # Mount and observatory are ready, we can vizualize
             if self.vizualization_service:
+                self.logger.debug("About to start vizualization service")
                 self.vizualization_service.start()
 
             # unpark cameras
             for camera_name, camera in self.cameras.items():
+                self.logger.debug(f"About to unpark camera {camera_name}")
                 camera.unpark()
 
             # Launch guider server
             if self.guider is not None:
+                self.logger.debug("About to start guider")
                 self.guider.launch_server()
                 self.guider.connect_server()
                 # self.guider.connect_profile()
@@ -561,17 +564,24 @@ class Manager(Base):
 
     def park(self):
         try:
+            park_events = []
             def call_subroutine_with_event(subroutine, event):
                 subroutine()
                 event.set()
             def run_park_subroutine(subroutine, timeout_s=60):
+                park_event = Event()
+                park_events.append(park_event)
                 try:
+                    # There's one local event for each subroutine that might never be set ontime by the thread
+                    # and another event
                     event = Event()
                     thread = Thread(target=call_subroutine_with_event, args=(subroutine, event))
                     thread.start()
                     assert event.wait(timeout=timeout_s), f"Timeout while waiting for subroutine {subroutine}"
                 except Exception as e:
                     self.logger.error(f"There has been an error while trying to park with routine {subroutine}:{e}")
+                finally:
+                    park_event.set()
 
             def park_guider():
                 # close running guider server and client
@@ -594,9 +604,15 @@ class Manager(Base):
                 self.mount.park()
             run_park_subroutine(park_mount, timeout_s=200)
 
+            # Observatory is the only subroutine that should not be ran in parallel, to ensure dependency resolution
+            for e in park_events:
+                e.wait()
+            park_events = []
             def park_observatory():
                 self.observatory.park()
             run_park_subroutine(park_observatory, timeout_s=200)
+            for e in park_events:
+                e.wait()
 
             return True
         except Exception as e:
