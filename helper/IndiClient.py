@@ -222,8 +222,8 @@ class IndiClient(SingletonIndiClientHolder, PyIndi.BaseClient, Base):
 
     def process_generic_handlers(self, pv):
         try:
-            if pv.getName() == "ABS_DOME_POSITION":
-                print("test")
+            # if pv.getName() == "ABS_DOME_POSITION":
+            #     print("test")
             list(
                 map(
                     lambda f: f(pv),
