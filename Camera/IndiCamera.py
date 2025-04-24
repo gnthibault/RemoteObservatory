@@ -196,7 +196,7 @@ class IndiCamera(IndiDevice):
         except Exception as e:
             self.logger.error(f"Indi Camera Error in shoot: {e}")
 
-    def is_remaining_exposure_time(self):
+    def get_remaining_exposure_time(self):
         return self.get_number('CCD_EXPOSURE')['CCD_EXPOSURE_VALUE']
 
     def get_thumbnail(self, exp_time_sec, thumbnail_size):

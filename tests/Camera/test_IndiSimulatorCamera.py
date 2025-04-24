@@ -80,10 +80,10 @@ def test_indiSimulatorCamera():
     fits = cam.get_received_image()
 
     # Show image
-    fig, ax = plt.subplots(1, figsize=(16, 9))
+    #fig, ax = plt.subplots(1, figsize=(16, 9))
     img = fits[0].data
     img_eq = exposure.equalize_hist(img)
     print_ready_img = img_as_float(img_eq)
     print(f"Print ready has shape {print_ready_img.shape}")
-    ax.imshow(print_ready_img)
-    plt.show()
+    #ax.imshow(print_ready_img)
+    #plt.show()

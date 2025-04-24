@@ -11,6 +11,7 @@ from utils import Timeout
 from utils.error import ImageAcquisitionError
 
 SLEEP_SECONDS = 1.0
+LAST_IMAGE_RECEPTION_MARGIN = 5 * u.second
 STATUS_INTERVAL = 10. * u.second
 WAITING_MSG_INTERVAL = 5. * u.second
 MAX_FOCUSING_TIME = 15 * 60 * u.second
@@ -46,14 +47,15 @@ def on_enter(event_data):
         model.logger.debug(msg)
         model.say(msg)
         model.manager.guider.set_paused(paused=True)
-        # guiding_camera = model.manager.guiding_camera
-        # This was some kind of trip to clear receiving buffer
-        # if guiding_camera is not None:
-        #     try:
-        #         exp_time_sec = guiding_camera.is_remaining_exposure_time()
-        #         guiding_camera.synchronize_with_image_reception(exp_time_sec=exp_time_sec)
-        #     except ImageAcquisitionError as e:
-        #         pass
+        guiding_camera = model.manager.guiding_camera
+        # This is some kind of trick to wait for last ongoing acquisition from guiding
+        if guiding_camera is not None:
+            try:
+                exp_time_sec = guiding_camera.get_remaining_exposure_time()
+                time.sleep(exp_time_sec+LAST_IMAGE_RECEPTION_MARGIN.to(u.second).value)
+                #guiding_camera.synchronize_with_image_reception(exp_time_sec=exp_time_sec)
+            except ImageAcquisitionError as e:
+                pass
     try:
         model.say("Starting focusing")
         # Before each observation, we should refocus

@@ -202,10 +202,6 @@ class AutoFocuser(Base):
             ValueError: If invalid values are passed for any of the focus parameters.
         """
         self.logger.debug('Starting autofocus')
-        assert self.camera.is_connected, self.logger.error(
-            f"Camera {self.camera} must be connected for autofocus")
-        assert self.camera.focuser.is_connected, self.logger.error(
-            f"Focuser {self.camera.focuser} must be connected for autofocus")
 
         if autofocus_status is None:
             autofocus_status = [False]
@@ -294,6 +290,8 @@ class AutoFocuser(Base):
     def initialize_camera(self):
         self.camera.set_frame_type('FRAME_LIGHT')
         self.camera.prepare_shoot()
+        assert self.camera.is_connected, f"Camera {self.camera} must be connected for autofocus"
+        assert self.camera.focuser.is_connected, f"Focuser {self.camera.focuser} must be connected for autofocus"
 
     def get_thumbnail(self, seconds, thumbnail_size):
         fits = self.camera.get_thumbnail(seconds, thumbnail_size)
@@ -367,6 +365,8 @@ class AutoFocuser(Base):
 
         See public `autofocus` for information about the parameters.
         """
+        self.initialize_camera()
+
         focus_type = 'fine'
         if coarse:
             focus_type = 'coarse'
@@ -407,7 +407,6 @@ class AutoFocuser(Base):
         #                                   self.camera.file_extension)
         # initial_path = os.path.join(file_path_root, initial_fn)
         #
-        self.initialize_camera()
         initial_thumbnail = self.get_thumbnail(seconds, thumbnail_size)
         self.logger.debug(f"Autofocusing: initial thumbnail size is {initial_thumbnail.shape}")
 

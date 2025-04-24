@@ -31,6 +31,7 @@ observatory:
         indi_client :
             indi_host : localhost
             indi_port : 7624
+            use_unique_client: True
     dome_controller:
         module : IndiDomeController
         dome_movement_timeout_s: 300
@@ -38,6 +39,7 @@ observatory:
         indi_client :
             indi_host : localhost
             indi_port : 7624
+            use_unique_client: True
 directories:
     base: /opt/RemoteObservatory
     images: images
@@ -92,6 +94,7 @@ mount:
     indi_client :
         indi_host : localhost
         indi_port : 7624
+        use_unique_client: True
 cameras:
     -
         module: IndiAbstractCameraSimulatorNonCoolNonOffset
@@ -131,7 +134,7 @@ cameras:
         adjust_center_y: 400
         adjust_roi_search_size: 50
         adjust_pointing_seconds: 5
-        do_autofocus: True
+        do_autofocus: false # true
         autofocus_seconds: 4
         autofocus_roi_size : 750
         autofocus_merit_function: half_flux_radius #vollath_F4
@@ -151,10 +154,11 @@ cameras:
             indi_client:
                 indi_host: localhost
                 indi_port: 7624
+                use_unique_client: True
         indi_client :
             indi_host : localhost
             indi_port : 7624
-            use_unique_client: False #This doesn't seems to work
+            use_unique_client: True #This doesn't seems to work
     -
         module: IndiAbstractCameraSimulator
         camera_name : CCD Simulator
@@ -214,6 +218,7 @@ cameras:
             indi_client:
                 indi_host: localhost
                 indi_port: 7624
+                use_unique_client: True
         do_filter_wheel: false
         filter_wheel:
             module: IndiFilterWheel
@@ -230,6 +235,7 @@ cameras:
             indi_client:
                 indi_host: localhost
                 indi_port: 7624
+                use_unique_client: True
         indi_client :
             indi_host : localhost
             indi_port : 7624
@@ -281,6 +287,7 @@ weather_service :
     indi_client :
         indi_host : localhost
         indi_port : 7624
+        use_unique_client: True
 vizualization_service:
         module: SceneVizualization
         delay_sky_update_s: 1

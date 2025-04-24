@@ -82,7 +82,7 @@ class InvisibleObjectOffsetPointer(OffsetPointer):
                 guider.stop_capture()
                 #guider.set_paused(paused=True, full="full")
                 try:
-                    exp_time_sec = guiding_camera.is_remaining_exposure_time()
+                    exp_time_sec = guiding_camera.get_remaining_exposure_time()
                     guiding_camera.synchronize_with_image_reception(exp_time_sec=exp_time_sec)
                 except ImageAcquisitionError as e:
                     pass

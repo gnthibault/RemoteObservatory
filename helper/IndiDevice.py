@@ -10,8 +10,9 @@ import time
 import PyIndi
 
 #Local
-from helper.IndiClient import defaultTimeout, IndiClient
 from Base.Base import Base
+from helper.IndiClient import defaultTimeout, IndiClient
+from helper.IndiWebManagerClient import IndiWebManagerClient
 from utils.error import BLOBError, IndiClientPredicateTimeoutError
 
 logger = logging.getLogger(__name__)
@@ -71,6 +72,13 @@ class IndiDevice(Base):
         'switch': 'getSwitch',
         'text': 'getText'
     }
+    __prop_caster = {
+        'blob':   PyIndi.PropertyBlob,
+        'light':  PyIndi.PropertyLight,
+        'number': PyIndi.PropertyNumber,
+        'switch': PyIndi.PropertySwitch,
+        'text':   PyIndi.PropertyText
+    }
     # Set of useful dictionaries (put as class att to override behaviour ?)
     __state_str = {
         PyIndi.IPS_IDLE: 'IDLE',
@@ -109,22 +117,38 @@ class IndiDevice(Base):
     @property
     def is_connected(self):
         return self.device.isConnected()
+    # indi_client.isServerConnected()
+    # indi_client.disconnectServer()
 
     @property
     def name(self):
         return self.device_name
 
+    def _setup_indi_client(self):
+        """
+            setup the indi client that will communicate with devices
+        """
+        try:
+            if self.indi_client is None:
+                self.logger.info(f"Setting up indi client")
+                self.indi_client = IndiClient(config=self.indi_client_config)
+        except Exception:
+            raise RuntimeError('Problem setting up indi client')
+
     def _setup_device(self):
         self.logger.debug(f"IndiDevice: asking indi_client to look for device {self.device_name}")
-        if self.device is None:
+        if self.indi_client is None:
+            logger.warning(f"Cannot setup device as indi client with config {self.indi_client_config} has not been initialized yet. About to setup it")
+            self._setup_indi_client()
+        if self.device is None or not self.device.isValid():
+            self.device = None
             started = time.time()
             while not self.device:
                 self.device = self.indi_client.getDevice(self.device_name)
                 if 0 < self.timeout < time.time() - started:
-                    self.logger.error(f"IndiDevice: Timeout while waiting for "
-                                      f"device {self.device_name}")
-                    raise RuntimeError(f"IndiDevice Timeout while waiting for "
-                                       f"device {self.device_name}")
+                    msg = f"IndiDevice: Timeout while waiting for device {self.device_name}"
+                    self.logger.error(msg)
+                    raise RuntimeError(msg)
                 time.sleep(0.01)
             self.logger.debug(f"Indi Device: indi_client has found device "
                               f"{self.device_name}")
@@ -162,24 +186,13 @@ class IndiDevice(Base):
         }
         self.interfaces = (
             [interfaces[x] for x in interfaces if x & device_interfaces])
-        self.logger.debug(f"device {self.device_name}, interfaces are: "
-                          f"{self.interfaces}")
+        self.logger.debug(f"device {self.device_name}, interfaces are: {self.interfaces}")
 
-    def _setup_indi_client(self):
+    def connect_client(self):
         """
-            setup the indi client that will communicate with devices
+        connect client to indi server
         """
-        try:
-            self.logger.info(f"Setting up indi client")
-            self.indi_client = IndiClient(config=self.indi_client_config)
-        except Exception:
-            raise RuntimeError('Problem setting up indi client')
-
-    # def connect_client(self):
-    #     """
-    #     connect to indi server
-    #     """
-    #     self.indi_client.connect()
+        self.indi_client.connect_to_server(sync=True, timeout=defaultTimeout)
 
     def connect_driver(self):
         # Try first to ask server to give us the device handle, through client
@@ -187,12 +200,15 @@ class IndiDevice(Base):
 
     def connect_device(self, force_reconnect=False):
         """
-
         """
         # Now connect
         if self.device is None:
-            raise RuntimeError(f"Cannot connect device as device object named {self.device_name} has not bee initialized")
-
+            logger.warning(f"Cannot connect device as device object named {self.device_name} has not been initialized yet. About to setup it")
+            self._setup_device()
+        if not self.device.isValid():
+            self.device = None
+            logger.warning(f"Cannot connect device as device object named {self.device_name} is invalid")
+            self._setup_device()
         if self.device.isConnected():
             self.logger.warning(f"already connected to device {self.device_name}")
             if force_reconnect:
@@ -217,62 +233,131 @@ class IndiDevice(Base):
             self.connect_device()
 
     def disconnect(self):
-        if not (self.device is None):
-            if not self.device.isConnected():
-                self.logger.warning(f"Not connected to device {self.device_name}")
-                return
-            self.logger.info(f"Disconnecting from device {self.device_name}")
+        self.logger.info(f"Disconnecting from device {self.device_name}")
+        if self.indi_client is not None:
+            self.indi_client.disconnectDevice(deviceName=self.device_name)
             self.disable_blob()
             self.unregister_vector_handler_to_client()
-            # set the corresponding switch to off
-            self.set_switch('CONNECTION', on_switches=['DISCONNECT'])
-            self.device = None
 
     def get_values(self, ctl_name, ctl_type):
         return dict(map(lambda c: (c.name, c.value),
                         self.get_prop(ctl_name, ctl_type)))
-
-    def get_switch(self, name, ctl=None):
-        return self.get_prop_dict(name, 'switch',
-                                  #lambda c: {'value': c.getState() == PyIndi.ISS_ON},
-                                  lambda c: c.getState() == PyIndi.ISS_ON,
-                                  ctl)
+        # # set
+        # anyProperty.setDeviceName("Some device")
+        # anyProperty.setName("Some name")
+        # anyProperty.setLabel("Some label")
+        # anyProperty.setGroupName("Some group")
+        # anyProperty.setState(PyIndi.IPS_IDLE)
+        # anyProperty.setTimestamp("123")
+        # anyProperty.setPermission(PyIndi.IP_RO) # no effect for Light Property
+        # anyProperty.setTimeout(123)             # no effect for Light Property
+        #
+        # anyProperty[0].setName("Some name of widget")
+        # anyProperty[0].setLabel("Some label of widget")
+        #
+        # # get
+        # device    = anyProperty.getDeviceName()
+        # name      = anyProperty.getName()
+        # label     = anyProperty.getLabel()
+        # group     = anyProperty.getGroupName()
+        # state     = anyProperty.getState()
+        # timestamp = anyProperty.getTimestamp()
+        # perm      = anyProperty.getPermission() # returns IP_RO for Light Property
+        # timeout   = anyProperty.getTimeout()    # returns 0 for Light Property
+        #
+        # name      = anyProperty[0].getName()
+        # label     = anyProperty[0].getLabel()
+        #
+        # # auxiliary functions
+        # if anyProperty.isNameMatch("Some name"):
+        #     # anyProperty.getName() is equal to "Some name"
+        #     pass
+        #
+        # if anyProperty.isLabelMatch("Some label"):
+        #     # anyProperty.getLabel() is equal to "Some label"
+        #     pass
+        #
+        # if not anyProperty.isValid():
+        #     # e.g. PyIndi.Property() is not valid because type is unknown
+        #     # PyIndi.PropertyText(somePropertySwitch) is also not valid because type
+        #     # is mismatch (invalid cast)
+        #     pass
+        #
+        # stringState  = anyProperty.getStateAsString()            # returns Idle/Ok/Busy/Alert
+        # stringPerm   = anyProperty.getPermissionAsString()       # returns ro/wo/rw
+        # someWidget   = anyProperty.findWidgetByName("Some name") # returns widget with `Some name` name
 
     def get_text(self, name, ctl=None):
-        return self.get_prop_dict(name, 'text',
-                                  #lambda c: {"value": c.text},
-                                  lambda c: c.text,
-                                  ctl)
+        pv = self.get_prop(name, "text")
+        return {p.getName():p.getText() for p in pv}
+        # # set
+        # textProperty[0].setText("Some text")
+        #
+        # # get
+        # text  = textProperty[0].getText()
+
+    def set_text(self, text_name, value_vector, sync=True, timeout=None):
+        pv = self.device.getText(text_name)
+        for property_name, index in self.__get_prop_vect_indices_having_values(
+                pv, value_vector.keys()).items():
+            pv[index].text = value_vector[property_name]
+        self.indi_client.sendNewText(pv)
+        if sync:
+            ret = self.__wait_prop_status(pv, statuses=[PyIndi.IPS_ALERT, PyIndi.IPS_OK, PyIndi.IPS_IDLE], timeout=timeout)
+            if ret == PyIndi.IPS_ALERT:
+                raise RuntimeError(f"Indi alert upon set_text, {text_name} : {value_vector}")
+        return pv
 
     def get_number(self, name, ctl=None):
-        return self.get_prop_dict(name, 'number',
-                                  # lambda c: {'value': c.value, 'min': c.min,
-                                  #            'max': c.max, 'step': c.step,
-                                  #            'format': c.format},
-                                  lambda c: c.value,
-                                  ctl)
+        pv = self.get_prop(name, "number")
+        return {p.getName():p.getValue() for p in pv}
+        # # set
+        # numberProperty[0].setFormat("Some format")
+        # numberProperty[0].setMin(0)
+        # numberProperty[0].setMax(1000)
+        # numberProperty[0].setMinMax(0, 1000) # simplification
+        # numberProperty[0].setStep(1)
+        # numberProperty[0].setValue(123)
+        #
+        # # get
+        # format = numberProperty[0].getFormat()
+        # min    = numberProperty[0].getMin()
+        # max    = numberProperty[0].getMax()
+        # step   = numberProperty[0].getStep()
+        # value  = numberProperty[0].getValue()
 
-    def get_light(self, name, ctl=None):
-        return self.get_prop_dict(name, 'light',
-                                  lambda c: c.getStateAsString(), #lambda c: {'value': c.getStateAsString()},
-                                  ctl)
+    def set_number(self, number_name, value_vector, sync=True, timeout=None):
+        pv = self.device.getNumber(number_name)
+        for property_name, index in self.__get_prop_vect_indices_having_values(
+                pv, value_vector.keys()).items():
+            pv[index].value = value_vector[property_name]
+        self.indi_client.sendNewNumber(pv)
+        if sync:
+            ret = self.__wait_prop_status(pv, statuses=[PyIndi.IPS_ALERT, PyIndi.IPS_OK], timeout=timeout)
+            if ret == PyIndi.IPS_ALERT:
+                raise RuntimeError(f"Indi alert upon set_number {number_name}: {value_vector}")
+        return pv
 
-    def get_prop_dict(self, prop_name, prop_type, transform,
-                      prop=None, timeout=None):
-        #def get_dict(element):
-        #    dest = {'name': element.getName(), 'label': element.getLabel()}
-        #    dest.update(transform(element))
-        #    return dest
+    def get_switch(self, name, ctl=None):
+        pv = self.get_prop(name, "switch")
+        return {p.getName():p.getState()==PyIndi.ISS_ON for p in pv}
+        # # set
+        # switchProperty.setRule(PyIndi.ISR_NOFMANY)
+        # switchProperty[0].setState(PyIndi.ISS_ON)
+        #
+        # # get
+        # rule  = switchProperty.getRule()
+        # state = switchProperty[0].getState()
+        #
+        # # auxiliary functions
+        # stringRule  = switchProperty.getRuleAsString()     # returns OneOfMany/AtMostOne/AnyOfMany
+        # stringState = switchProperty[0].getStateAsString() # returns On/Off
+        # switchProperty.reset()                             # reset all widget switches to Off
+        # switchProperty.findOnSwitchIndex()                 # find index of Widget with On state
+        # switchProperty.findOnSwitch()                      # returns widget with On state
 
-        prop = prop if prop else self.get_prop(prop_name, prop_type, timeout)
-        #d = dict((c.getName(), get_dict(c)) for c in prop)
-        d = {c.getName():transform(c) for c in prop}
-        #d["state"] = prop.getStateAsString()
-        return d
-
-    def set_switch(self, name, on_switches=[], off_switches=[],
-                   sync=True, timeout=None):
-        pv = self.get_prop(name, 'switch')
+    def set_switch(self, name, on_switches=[], off_switches=[], sync=True, timeout=None):
+        pv = self.device.getSwitch(name)
         is_exclusive = pv.getRule() == PyIndi.ISR_ATMOST1 or pv.getRule() == PyIndi.ISR_1OFMANY
         if is_exclusive:
             on_switches = on_switches[0:1]
@@ -282,47 +367,36 @@ class IndiDevice(Base):
             new_state = current_state
             if pv[index].getName() in on_switches:
                 new_state = PyIndi.ISS_ON
-            elif is_exclusive or pv[index].getName() in off_switches:
+            elif pv[index].getName() in off_switches:
                 new_state = PyIndi.ISS_OFF
             pv[index].setState(new_state)
         self.indi_client.sendNewSwitch(pv)
         if sync:
-            self.__wait_prop_status(pv, statuses=[PyIndi.IPS_IDLE,
-                                                  PyIndi.IPS_OK],
-                                    timeout=timeout)
+            # TODO TN, there is something weird here, sometimes we are stuck if awaiting for something else than Busy
+            self.__wait_prop_status(pv, statuses=[PyIndi.IPS_IDLE, PyIndi.IPS_OK], timeout=timeout)
         return pv
 
-    def set_number(self, number_name, value_vector, sync=True, timeout=None):
-        pv = self.get_prop(number_name, 'number', timeout)
-        for property_name, index in self.__get_prop_vect_indices_having_values(
-                pv, value_vector.keys()).items():
-            pv[index].value = value_vector[property_name]
-        self.indi_client.sendNewNumber(pv)
-        if sync:
-            ret = self.__wait_prop_status(pv, statuses=[PyIndi.IPS_ALERT,
-                                                        PyIndi.IPS_OK],
-                                          timeout=timeout)
-            if ret == PyIndi.IPS_ALERT:
-                raise RuntimeError(f"Indi alert upon set_number, {number_name}: {value_vector}")
-        return pv
-
-    def set_text(self, text_name, value_vector, sync=True, timeout=None):
-        pv = self.get_prop(text_name, 'text')
-        for property_name, index in self.__get_prop_vect_indices_having_values(
-                pv, value_vector.keys()).items():
-            pv[index].text = value_vector[property_name]
-        self.indi_client.sendNewText(pv)
-        if sync:
-            ret = self.__wait_prop_status(pv, timeout=timeout)
-            if ret == PyIndi.IPS_ALERT:
-                raise RuntimeError(f"Indi alert upon set_text, {text_name} "
-                                   f": {value_vector}")
-        return pv
+    def get_light(self, name, ctl=None):
+        pv = self.get_prop(name, "light")
+        return {p.getName():p.getStateAsString() for p in pv} # p.getState()==PyIndi.IPS_OK
+        # # set
+        # switchProperty.setRule(PyIndi.ISR_NOFMANY)
+        # switchProperty[0].setState(PyIndi.ISS_ON)
+        #
+        # # get
+        # rule  = switchProperty.getRule()
+        # state = switchProperty[0].getState()
+        #
+        # # auxiliary functions
+        # stringRule  = switchProperty.getRuleAsString()     # returns OneOfMany/AtMostOne/AnyOfMany
+        # stringState = switchProperty[0].getStateAsString() # returns On/Off
+        # switchProperty.reset()                             # reset all widget switches to Off
+        # switchProperty.findOnSwitchIndex()                 # find index of Widget with On state
+        # switchProperty.findOnSwitch()                      # returns widget with On state
 
     def __wait_prop_status(self, prop, statuses=[PyIndi.IPS_OK, PyIndi.IPS_IDLE],
                            timeout=None):
         """Wait for the specified property to take one of the status in param"""
-
         started = time.time()
         if timeout is None:
             timeout = self.timeout
@@ -342,48 +416,48 @@ class IndiDevice(Base):
                 result[p.getName()] = i
         return result
 
-    def get_prop(self, propName, propType, timeout=None):
+    def get_prop(self, prop_name, prop_type, timeout=None):
         """ Return the value corresponding to the given propName
-            A prop often has the following attributes:
-            prop.device   : 'OpenWeatherMap'
-            prop.group    : 'Parameters', equiv to UI panel
-            prop.getLabel()    : 'Parameters', equiv to UI subtable name
-            prop.name     : 'WEATHER_PARAMETERS'
-            prop.nnp      : 9
-            prop.np       : Swig_stuff
-            prop.p        : 0
-            prop.s        : 1 , equiv to status: PyIndi.IPS_OK, PyIndi.IPS_ALERT
-            prop.timeout  : 60.0
-            prop.timestamp: ''
-
             EDIT: the Python API completely changed after V2 see: https://github.com/indilib/pyindi-client
         """
-        prop = None
-        attr = IndiDevice.__prop_getter[propType]
         if timeout is None:
             timeout = self.timeout
+        prop = self.device.getProperty(prop_name)
         started = time.time()
-        while not (prop):
-            prop = getattr(self.device, attr)(propName)
-            if not prop and 0 < timeout < time.time() - started:
-                self.logger.debug(f"Timeout while waiting for property "
-                                  f"{propName} of type {propType}  for device "
-                                  f"{self.device_name}")
-                raise RuntimeError(f"Timeout finding property {propName}")
+        while not prop.isValid():
+            prop = self.device.getProperty(prop_name)
+            if not prop.isValid() and 0 < timeout < time.time() - started:
+                msg = f"Timeout while waiting for property {prop_name} of type {prop_type}  for device {self.device_name}"
+                logger.error(msg)
+                raise RuntimeError(msg)
             time.sleep(0.01)
+        prop = IndiDevice.__prop_caster[prop_type](prop)
         return prop
+        # prop = None
+        # attr = IndiDevice.__prop_getter[propType]
+        # if timeout is None:
+        #     timeout = self.timeout
+        # started = time.time()
+        # while not (prop):
+        #     prop = getattr(self.device, attr)(propName)
+        #     if not prop and 0 < timeout < time.time() - started:
+        #         self.logger.debug(f"Timeout while waiting for property "
+        #                           f"{propName} of type {propType}  for device "
+        #                           f"{self.device_name}")
+        #         raise RuntimeError(f"Timeout finding property {propName}")
+        #     time.sleep(0.01)
+        # return prop
 
-    def has_property(self, propName, propType):
-        try:
-            self.get_prop(propName, propType, timeout=1)
-            return True
-        except:
-            return False
+    def has_property(self, prop_name, prop_type):
+        prop = self.device.getProperty(prop_name)
+        return prop.isValid()
 
     def enable_blob(self):
         self.logger.debug(f"About to enable blob, and allocate associated control structures")
-        self.blob_listener = self.indi_client.add_blob_listener(
-            device_name=self.device_name
+        self.blob_queue.clear()
+        self.blob_listener = self.indi_client.reset_blob_listener(
+            device_name=self.device_name,
+            queue_size=1
         )
         self.indi_client.enable_blob(
             blob_mode=PyIndi.B_ALSO,
@@ -534,12 +608,6 @@ class IndiDevice(Base):
 #             self.logger.error(msg)
 #             raise RuntimeError(msg)
 #
-    def connect_client(self):
-        """
-        connect client to indi server
-        """
-        self.indi_client.connect_to_server(sync=True, timeout=defaultTimeout)
-
 
 #     def connect_device(self):
 #         """
@@ -663,8 +731,7 @@ class IndiDevice(Base):
                 f"size={blob.size}, queue size: {self.blob_listener.queue.qsize()} (isEmpty: {self.blob_listener.queue.empty()})")
             self.blob_queue.append(blob)
         except queue.Empty:
-            raise BLOBError(f"Timeout while waiting for BLOB on "
-                            f"{self.device.name}")
+            raise BLOBError(f"Timeout while waiting for BLOB on {self.device.name}")
 
     def get_last_incoming_blob_vector(self):
         blob = self.blob_queue.pop() # deque Append + pop = LIFO

@@ -41,7 +41,7 @@ class BLOB:
             file.write(self.data)
 
 class BLOBListener(Base):
-    def __init__(self, device_name, queue_size=0):
+    def __init__(self, device_name, queue_size=1):
         # Init "our" Base class
         Base.__init__(self)
         self.device_name = device_name
@@ -72,9 +72,9 @@ class SingletonIndiClientHolder:
             config = kwargs["config"]
         else:
             config = args[0]
-        if "use_unique_client" in config:
-            if config["use_unique_client"] is True:
-                return object.__new__(cls)
+
+        if config.get("use_unique_client", False):
+            return object.__new__(cls)
 
         key = f"{config['indi_host']}:{config['indi_port']}"
         if key not in cls._instances:
@@ -121,18 +121,76 @@ class IndiClient(SingletonIndiClientHolder, PyIndi.BaseClient, Base):
         # Blob related attributes
         self.blob_event = threading.Event() #TODO TN THIS IS NOT USED ANYMORE
         self.__blob_listeners = []
-        self.queue_size = config.get('queue_size', 100)
+        self.queue_size = config.get('queue_size', 1)
         self.__pv_handlers = {}
 
         # Finished configuring
         logger.debug('Configured Indi Client successfully')
 
+    ###############################################################################
+    # <begin=Virtual methods>
+    ###############################################################################
+    def newDevice(self, d):
+        '''Emmited when a new device is created from INDI server.'''
+        logger.info(f"new device {d.getDeviceName()}")
+
+    def removeDevice(self, d):
+        '''Emmited when a device is deleted from INDI server.'''
+        logger.info(f"remove device {d.getDeviceName()}")
+
+    def newProperty(self, p):
+        '''Emmited when a new property is created for an INDI driver.'''
+        logger.info(f"new property {p.getName()} as {p.getTypeAsString()} for device {p.getDeviceName()}")
+
+    def updateProperty(self, p):
+        '''Emmited when a new property value arrives from INDI server.'''
+        # logger.info(f"update property {p.getName()} as {p.getTypeAsString()} for device {p.getDeviceName()}")
+        # if prop.getType() == PyIndi.INDI_NUMBER:
+        #     self.newNumber(PyIndi.PropertyNumber(prop))
+        # elif prop.getType() == PyIndi.INDI_SWITCH:
+        #     self.newSwitch(PyIndi.PropertySwitch(prop))
+        # elif prop.getType() == PyIndi.INDI_TEXT:
+        #     self.newText(PyIndi.PropertyText(prop))
+        # elif prop.getType() == PyIndi.INDI_LIGHT:
+        #     self.newLight(PyIndi.PropertyLight(prop))
+        # elif prop.getType() == PyIndi.INDI_BLOB:
+        #     self.newBLOB(PyIndi.PropertyBlob(prop)[0])
+        if p.getType() == PyIndi.INDI_BLOB:
+            self.process_blob_handlers(PyIndi.PropertyBlob(p)[0])
+        else:
+            self.process_generic_handlers(p)
+
+    def removeProperty(self, p):
+        '''Emmited when a property is deleted for an INDI driver.'''
+        logger.info(f"remove property {p.getName()} as {p.getTypeAsString()} for device {p.getDeviceName()}")
+
+    def newMessage(self, d, m):
+        '''Emmited when a new message arrives from INDI server.'''
+        logger.info(f"new Message {d.messageQueue(m)}")
+
+    def serverConnected(self):
+        '''Emmited when the server is connected.'''
+        logger.info(f"Server connected ({self.getHost()}:{self.getPort()})")
+
+    def serverDisconnected(self, code):
+        '''Emmited when the server gets disconnected.'''
+        logger.info(f"Server disconnected (exit code = {code},{self.getHost()}:{self.getPort()})")
+
+    ###############################################################################
+    # <end=Virtual methods>
+    ###############################################################################
+
+    def connect_device(self, device_name):
+        self.connectDevice(deviceName=device_name)
+    def disconnect_device(self, device_name):
+        self.disconnectDevice(deviceName=device_name)
+    def disconnect_from_server(self):
+        self.disconnectServer()
     def connect_to_server(self, sync=True, timeout=defaultTimeout):
       if self.isServerConnected():
-          logger.warning(f"Already connected to server at {self.getHost()}: {self.getPort()}")
+          logger.warning(f"Already connected fto server at {self.getHost()}: {self.getPort()}")
       else:
           logger.info(f"Connecting to server at {self.getHost()}: {self.getPort()}")
-
           if not self.connectServer():
               logger.error(f"No indiserver running on {self.getHost()}:{self.getPort()} - Try to run indiserver "
                   f"indi_simulator_telescope indi_simulator_ccd")
@@ -201,15 +259,6 @@ class IndiClient(SingletonIndiClientHolder, PyIndi.BaseClient, Base):
     def device_names(self):
         return [d.getDeviceName() for d in self.getDevices()]
 
-    def newDevice(self, d):
-        pass
-
-    def newProperty(self, p):
-        pass
-
-    def removeProperty(self, p):
-        pass
-
     def process_blob_handlers(self, bp):
         # this threading.Event is used for sync purpose in other part of the code
         logger.debug(f"new BLOB received: {bp.name}")
@@ -242,13 +291,15 @@ class IndiClient(SingletonIndiClientHolder, PyIndi.BaseClient, Base):
     #     finally:
     #         self.__listeners = [x for x in self.__listeners if x is not listener]
 
-    def add_blob_listener(self, device_name, queue_size=None):
+    def reset_blob_listener(self, device_name, queue_size=None):
         queue_size = self.queue_size if queue_size is None else queue_size
         # TODO TN you should use proper singleton pattern instead of this...
-        blob_listener = next((el for el in self.__blob_listeners if el.device_name == device_name), None)
-        if blob_listener is None:
-            blob_listener = BLOBListener(device_name, queue_size)
-            self.__blob_listeners.append(blob_listener)
+        # And any part manipulating __blob_listeners should be protected against concurrent access...
+        #blob_listener = next((el for el in self.__blob_listeners if el.device_name == device_name), None)
+        self.remove_blob_listener(device_name)
+        #if blob_listener is None:
+        blob_listener = BLOBListener(device_name, queue_size)
+        self.__blob_listeners.append(blob_listener)
         return blob_listener
 
     def remove_blob_listener(self, device_name):
@@ -276,45 +327,6 @@ class IndiClient(SingletonIndiClientHolder, PyIndi.BaseClient, Base):
                     self.__pv_handlers[device_name][pv_name].pop(handler_name, None)
 
             self.__pv_handlers[device_name][pv_name].pop(handler_name, None)
-
-    # Call functions in old style
-    def updateProperty(self, prop):
-        # if prop.getType() == PyIndi.INDI_NUMBER:
-        #     self.newNumber(PyIndi.PropertyNumber(prop))
-        # elif prop.getType() == PyIndi.INDI_SWITCH:
-        #     self.newSwitch(PyIndi.PropertySwitch(prop))
-        # elif prop.getType() == PyIndi.INDI_TEXT:
-        #     self.newText(PyIndi.PropertyText(prop))
-        # elif prop.getType() == PyIndi.INDI_LIGHT:
-        #     self.newLight(PyIndi.PropertyLight(prop))
-        # elif prop.getType() == PyIndi.INDI_BLOB:
-        #     self.newBLOB(PyIndi.PropertyBlob(prop)[0])
-        if prop.getType() == PyIndi.INDI_BLOB:
-            self.process_blob_handlers(PyIndi.PropertyBlob(prop)[0])
-        else:
-            self.process_generic_handlers(prop)
-
-
-    # def newSwitch(self, svp):
-    #     pass
-    #
-    # def newNumber(self, nvp):
-    #     pass
-    #
-    # def newText(self, tvp):
-    #     pass
-    #
-    # def newLight(self, lvp):
-    #     pass
-
-    def newMessage(self, d, m):
-        pass
-
-    def serverConnected(self):
-        logger.debug('Server connected')
-
-    def serverDisconnected(self, code):
-        logger.debug('Server disconnected')
 
     def __str__(self):
         return f"INDI client connected to {self.remote_host}:{self.remote_port}"
