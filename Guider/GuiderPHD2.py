@@ -42,6 +42,8 @@ class GuiderPHD2(Base):
         Stopped       PHD is idle
         StarSelected  A star is selected but PHD is neither looping exposures,
                       calibrating, or guiding
+        Selected	    A star is selected but PHD is neither looping exposures,
+                      calibrating, or guiding
         Calibrating   PHD is calibrating
         Guiding       PHD is guiding, but can still be shaky (while stabilizing)
         SteadyGuiding PHD is guiding, and settle conditions are met
@@ -51,7 +53,7 @@ class GuiderPHD2(Base):
         Looping       PHD is looping exposures
     """
     states = ['NotConnected', 'Connected', 'Guiding', 'Settling',
-              'SteadyGuiding', 'Paused', 'Resuming', 'Calibrating',
+              'SteadyGuiding', 'Paused', 'Resuming', 'Calibrating', 'Selected',
               'StarSelected', 'LostLock', 'Looping', 'GuidingStopped', 'Stopped']
     transitions = [
         {'trigger': 'connection_trig', 'source': '*', 'dest': 'Connected'},
@@ -70,6 +72,7 @@ class GuiderPHD2(Base):
         {'trigger': 'SettleDone', 'source': '*', 'dest': 'SteadyGuiding'},
         {'trigger': 'StarLost', 'source': '*', 'dest': 'LostLock'},
         {'trigger': 'StarSelected', 'source': '*', 'dest': 'StarSelected'},
+        {'trigger': 'Selected', 'source': '*', 'dest': 'Selected'},
         {'trigger': 'ConnectionLost', 'source': '*', 'dest': 'NotConnected'}
         ]
 
@@ -300,9 +303,21 @@ class GuiderPHD2(Base):
 
     def set_connected(self, connect=True):
         """
-           params: boolean: connect
-           result: integer(0)
-           desc. : connect or disconnect all equipment
+            params: boolean: connect
+            result: integer(0)
+            desc. : connect or disconnect all equipment
+
+            Note: for some unknown reason, it seems, that sometimes set_connected False is not properly taken into account,
+            See the following serie of events:
+            2025-04-23 20:34:03,257 - GuiderPHD2 - DEBUG - sending msg {"jsonrpc": "2.0", "method": "stop_capture", "params": [], "id": 12}
+            2025-04-23 20:34:03,266 - GuiderPHD2 - DEBUG - Received event: {'Event': 'Resumed', 'Timestamp': 1745440443.266, 'Host': 'ubuntu', 'Inst': 1}
+            2025-04-23 20:34:03,266 - GuiderPHD2 - DEBUG - Guiding has resumed {'Event': 'Resumed', 'Timestamp': 1745440443.266, 'Host': 'ubuntu', 'Inst': 1}
+            2025-04-23 20:34:03,266 - GuiderPHD2 - WARNING - Received , still waiting for expected {'id': 12} while loop mode is False
+            2025-04-23 20:34:03,266 - GuiderPHD2 - DEBUG - Received event: {'jsonrpc': '2.0', 'result': 0, 'id': 12}
+            2025-04-23 20:34:03,267 - GuiderPHD2 - DEBUG - sending msg {"jsonrpc": "2.0", "method": "set_connected", "params": [false], "id": 13}
+            2025-04-23 20:34:03,267 - GuiderPHD2 - DEBUG - Received event: {'jsonrpc': '2.0', 'error': {'code': 1, 'message': 'cannot disconnect equipment while capture active'}, 'id': 13}
+            2025-04-23 20:34:03,267 - GuiderPHD2 - ERROR - Received error msg: {'code': 1, 'message': 'cannot disconnect equipment while capture active'}
+            2025-04-23 20:34:03,267 - GuidingError - ERROR - GuidingError: Wrong answer to set_connected request: {'jsonrpc': '2.0', 'error': {'code': 1, 'message': 'cannot disconnect equipment while capture active'}, 'id': 13}
         """
         req={"method": "set_connected",
              "params": [connect],
@@ -1192,6 +1207,18 @@ class GuiderPHD2(Base):
                           f"x:{event['X']}, y:{event['Y']}")
         self.StarSelected()
         self.send_message(self.status(), channel='GUIDING_STATUS')
+
+    def _handle_Selected(self, event):
+        """A star has been selected.
+           Attribute  Type    Description
+           X          number  lock position X-coordinate
+           Y          number  lock position Y-coordinate
+        """
+        self.logger.debug(f"Star has been selected at coordinates "
+                          f"x:{event['X']}, y:{event['Y']}")
+        self.Selected()
+        self.send_message(self.status(), channel='GUIDING_STATUS')
+
 
     def _handle_StarLost(self, event):
         """A frame has been dropped due to the star being lost.

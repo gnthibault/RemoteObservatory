@@ -6,6 +6,7 @@ This project either uses, or is directly inspired by:
 
 * KStars: https://github.com/KDE/kstars
 * Indi: https://github.com/indilib/indi (Jasem Mutlaq + contributors)
+* Pyindi-client: https://github.com/indilib/pyindi-client
 * Starquew: https://github.com/GuLinux/StarQuew/tree/master/backend/indi (Marco Gulino)
 * npindi: https://github.com/geehalel/npindi (Geehalel)
 * Panoptes: https://github.com/panoptes/POCS

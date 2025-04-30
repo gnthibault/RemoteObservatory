@@ -202,10 +202,6 @@ class AutoFocuser(Base):
             ValueError: If invalid values are passed for any of the focus parameters.
         """
         self.logger.debug('Starting autofocus')
-        assert self.camera.is_connected, self.logger.error(
-            f"Camera {self.camera} must be connected for autofocus")
-        assert self.camera.focuser.is_connected, self.logger.error(
-            f"Focuser {self.camera.focuser} must be connected for autofocus")
 
         if autofocus_status is None:
             autofocus_status = [False]
@@ -291,6 +287,13 @@ class AutoFocuser(Base):
             focus_event.wait()
         return focus_event
 
+    def initialize_camera(self):
+        self.logger.debug(f"Initialize camera {self.camera} before actual autofocus")
+        self.camera.set_frame_type('FRAME_LIGHT')
+        self.camera.prepare_shoot()
+        assert self.camera.is_connected, f"Camera {self.camera} must be connected for autofocus"
+        assert self.camera.focuser.is_connected, f"Focuser {self.camera.focuser} must be connected for autofocus"
+
     def get_thumbnail(self, seconds, thumbnail_size):
         fits = self.camera.get_thumbnail(seconds, thumbnail_size)
         try:
@@ -363,6 +366,8 @@ class AutoFocuser(Base):
 
         See public `autofocus` for information about the parameters.
         """
+        self.initialize_camera()
+
         focus_type = 'fine'
         if coarse:
             focus_type = 'coarse'
@@ -429,7 +434,7 @@ class AutoFocuser(Base):
             initial_focus = self.position
         focus_positions = np.arange(max(initial_focus - cur_focus_range / 2, self.min_position),
                                     min(initial_focus + cur_focus_range / 2, self.max_position) + 1,
-                                    cur_focus_step, dtype=np.int)
+                                    cur_focus_step, dtype=int)
         self.logger.debug(f"Autofocuser {self}  is going to sweep over the "
                           f"following positions for autofocusing {focus_positions}")
         n_positions = len(focus_positions)
@@ -507,7 +512,7 @@ class AutoFocuser(Base):
 
             # Select data range for fitting. Tries to use points on both side of
             # best, if in range.
-            #margin = max(3, np.int(np.ceil(n_positions/3)))
+            #margin = max(3, int(np.ceil(n_positions/3)))
             #fitting_indices = (max(ibest - margin, 0), min(ibest + margin, n_positions - 1))
             fitting_indices = (0, n_positions - 1)
 

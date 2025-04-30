@@ -28,13 +28,13 @@ class IndiAltairCamera(IndiAbstractCamera):
             #                 f"{self.get_dynamic()}")
 
     def get_current_format(self):
-        return [key for key, val in self.get_switch('CCD_CAPTURE_FORMAT').items() if val == "On"]
+        return [key for key, val in self.get_switch('CCD_CAPTURE_FORMAT').items() if val]
 
     def get_maximum_dynamic(self):
         return 16
 
     def set_gain(self, value):
-        self.set_number('CCD_CONTROLS', {'Gain': value}, sync=True, timeout=self.defaultTimeout)
+        self.set_number('CCD_CONTROLS', {'Gain': value}, sync=True, timeout=self.timeout)
 
     def get_gain(self):
         gain = self.get_number('CCD_CONTROLS')
