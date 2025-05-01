@@ -314,6 +314,11 @@ First, if you have a custom configuration for your own setup, set the proper var
 export REMOTE_OBSERVATORY_CONFIG=backyard_config
 ```
 
+## Run the config server
+```console
+PYTHONPATH=. python ./config/cli.py run --config-file ./conf_files/config.yaml
+```
+
 ## If you want to try the software with simulators:
 ```console
 ./apps/launch_indi_simu.sh

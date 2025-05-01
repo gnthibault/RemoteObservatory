@@ -15,10 +15,9 @@ observatory:
         180 : 0
         270 : 0
     twilight_horizon: -18 # Degrees
-    timezone: Europe/Paris
     # Paris is in the Central European Time Zone ( CET ) is 1 hours ahead of
     # Greenwich Mean Time ( GMT+1 ).
-    gmt_offset: 60 # Minutes
+#    gmt_offset: 60 # Minutes
 #    webcam:
 #        rtsp_url: rtsp://user:password@192.168.0.16
     scope_controller:
