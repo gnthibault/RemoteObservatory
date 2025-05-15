@@ -27,6 +27,7 @@ class IndiAbstractCamera(IndiCamera, AbstractCamera):
 
     def park(self):
         self.logger.debug(f"Parking camera {self.camera_name}")
+        self.focuser.park()
         self.deinitialize_working_conditions()
         self.disconnect()
         self.stop_indi_server()
@@ -36,6 +37,7 @@ class IndiAbstractCamera(IndiCamera, AbstractCamera):
     def unpark(self):
         self.logger.debug(f"Unparking camera {self.camera_name} with a reset-like behaviour")
         self.park()
+        self.focuser.unpark()
         self.start_indi_server()
         self.start_indi_driver()
         self.connect(connect_device=True)
@@ -63,7 +65,7 @@ class IndiAbstractCamera(IndiCamera, AbstractCamera):
             if temperature is not None:
                 self.set_cooling_on()
                 self.set_temperature(temperature)
-            self.indi_client.enable_blob()
+            self.enable_blob()
             # Now shoot
             self.setExpTimeSec(exp_time_sec)
             self.logger.debug(f"Camera {self.camera_name}, about to shoot for {self.exp_time_sec}")
@@ -115,7 +117,6 @@ class IndiAbstractCamera(IndiCamera, AbstractCamera):
         w = threading.Thread(target=self.autofocus_async,
                              kwargs={"autofocus_event": autofocus_event,
                                      "autofocus_status": autofocus_status})
-        self.set_frame_type('FRAME_LIGHT')
         w.start()
         return autofocus_event, autofocus_status
 

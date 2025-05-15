@@ -54,17 +54,36 @@ class IndiFocuser(IndiDevice):
         # Finished configuring
         self.logger.debug('Indi Focuser configured successfully')
 
+    def park(self):
+        self.logger.debug(f"Parking focuser {self.device_name}")
+        self.deinitialize()
+        self.disconnect()
+        self.stop_indi_server()
+        self.logger.debug(f"Successfully parked focuser {self.device_name}")
+
+    def unpark(self):
+        self.logger.debug(f"Unparking focuser {self.device_name} with a reset-like behaviour")
+        self.park()
+        self.start_indi_server()
+        self.start_indi_driver()
+        self.connect(connect_device=True)
+        self.initialize()
+        self.logger.debug(f"Successfully unparked focuser {self.device_name}")
+
+    def deinitialize(self):
+        self.logger.debug(f"Deinitializing {self.device_name}")
     def initialize(self):
         """
         This is not as simple a just connecting, because we must also set some
         specific values
         :return:
         """
+        self.logger.debug(f"Initializing {self.device_name}")
         self.connect()
         self.set_port()
 
     def set_port(self):
-        self.set_text("DEVICE_PORT", {"PORT": self.port}, sync=True, timeout=self.defaultTimeout)
+        self.set_text("DEVICE_PORT", {"PORT": self.port}, sync=True, timeout=self.timeout)
 
     def on_emergency(self):
         self.logger.debug('Indi Focuser: on emergency routine started...')
@@ -82,7 +101,7 @@ class IndiFocuser(IndiDevice):
         self.logger.debug(f"{self}  moving to position {position}")
         self.set_number('ABS_FOCUS_POSITION', #REL_FOCUS_POSITION
                         {'FOCUS_ABSOLUTE_POSITION': np.float64(position)}, #FOCUS_RELATIVE_POSITION
-                        sync=True, timeout=self.defaultTimeout)
+                        sync=True, timeout=self.timeout)
         new_position = self.get_position()
         self.logger.debug(f"{self} Now position is {new_position}")
         return new_position

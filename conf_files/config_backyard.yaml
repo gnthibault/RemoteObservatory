@@ -99,7 +99,7 @@ observatory:
             indi_host : robot-scope
             indi_port : 7624
 directories:
-    base: /var/RemoteObservatory
+    base: /opt/RemoteObservatory
     images: images
     webcam: webcams
     data: data
@@ -107,7 +107,7 @@ directories:
     targets: resources/targets
     mounts: resources/mounts
 db:
-    name: /var/RemoteObservatory/DB
+    name: /opt/RemoteObservatory/DB
     type: file
 ntp:
     ntpserver: time.google.com
@@ -310,7 +310,7 @@ weather_service :
     #service_name: OpenWeatherMap
     module : IndiWeather
     service_name : Weather Simulator
-    key_path : /var/RemoteObservatory/keys.json
+    key_path : /opt/RemoteObservatory/keys.json
     delay_sec : 10
     observatory:
         latitude: 43.934807501800606 # Degrees

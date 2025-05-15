@@ -1,0 +1,1936 @@
+{
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": {
+          "type": "datasource",
+          "uid": "grafana"
+        },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "target": {
+          "limit": 100,
+          "matchAny": false,
+          "tags": [],
+          "type": "dashboard"
+        },
+        "type": "dashboard"
+      }
+    ]
+  },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "id": 2,
+  "links": [],
+  "liveNow": false,
+  "panels": [
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      },
+      "id": 30,
+      "panels": [],
+      "title": "Weather",
+      "type": "row"
+    },
+    {
+      "datasource": "InfluxDB_v2_InfluxQL",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "displayName": "Rain/hour",
+          "mappings": [],
+          "max": 40,
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 1
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 10,
+        "w": 5,
+        "x": 0,
+        "y": 1
+      },
+      "id": 43,
+      "options": {
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showThresholdLabels": true,
+        "showThresholdMarkers": true
+      },
+      "pluginVersion": "9.3.2",
+      "targets": [
+        {
+          "datasource": {
+            "type": "influxdb",
+            "uid": "P3C147723CB20F3EF"
+          },
+          "query": "from(bucket: \"$bucket\")\n    |> range(start: v.timeRangeStart, stop:v.timeRangeStop)\n  |> filter(fn: (r) => r.host == \"$host\")\n  |> filter(fn: (r) => r._measurement == \"mqtt_observatory_weather\")\n  |> filter(fn: (r) => r._field == \"WEATHER_RAIN_HOUR\")\n  |> yield(name: \"rain\")",
+          "refId": "A"
+        }
+      ],
+      "title": "Rain",
+      "type": "gauge"
+    },
+    {
+      "datasource": "InfluxDB_v2_InfluxQL",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "displayName": "Wind Speed",
+          "mappings": [],
+          "max": 80,
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 30
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 10,
+        "w": 5,
+        "x": 5,
+        "y": 1
+      },
+      "id": 39,
+      "options": {
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showThresholdLabels": true,
+        "showThresholdMarkers": true
+      },
+      "pluginVersion": "9.3.2",
+      "targets": [
+        {
+          "datasource": {
+            "type": "influxdb",
+            "uid": "P3C147723CB20F3EF"
+          },
+          "query": "from(bucket: \"$bucket\")\n    |> range(start: v.timeRangeStart, stop:v.timeRangeStop)\n  |> filter(fn: (r) => r.host == \"$host\")\n  |> filter(fn: (r) => r._measurement == \"mqtt_observatory_weather\")\n  |> filter(fn: (r) => r._field == \"WEATHER_WIND_SPEED\")\n  |> yield(name: \"wind_speed\")",
+          "refId": "A"
+        }
+      ],
+      "title": "Wind Speed",
+      "type": "gauge"
+    },
+    {
+      "datasource": "InfluxDB_v2_InfluxQL",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "fillOpacity": 70,
+            "lineWidth": 0,
+            "spanNulls": false
+          },
+          "displayName": "Safe",
+          "mappings": [
+            {
+              "options": {
+                "false": {
+                  "color": "red",
+                  "index": 1
+                },
+                "true": {
+                  "color": "green",
+                  "index": 0
+                }
+              },
+              "type": "value"
+            }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 10,
+        "w": 12,
+        "x": 10,
+        "y": 1
+      },
+      "id": 32,
+      "options": {
+        "alignValue": "center",
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": false
+        },
+        "mergeValues": true,
+        "rowHeight": 0.9,
+        "showValue": "never",
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "8.2.6",
+      "targets": [
+        {
+          "datasource": {
+            "type": "influxdb",
+            "uid": "P3C147723CB20F3EF"
+          },
+          "query": "from(bucket: \"$bucket\")\n    |> range(start: v.timeRangeStart, stop:v.timeRangeStop)\n  |> filter(fn: (r) => r.host == \"$host\")\n  |> filter(fn: (r) => r._measurement == \"mqtt_observatory_weather\")\n  |> filter(fn: (r) => r._field == \"safe\")\n  |> yield(name: \"safe\")",
+          "refId": "A"
+        }
+      ],
+      "title": "Safety state",
+      "type": "state-timeline"
+    },
+    {
+      "datasource": "InfluxDB_v2_InfluxQL",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "displayName": "Temperature",
+          "mappings": [],
+          "max": 40,
+          "min": -20,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 30
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 10,
+        "w": 5,
+        "x": 0,
+        "y": 11
+      },
+      "id": 41,
+      "options": {
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showThresholdLabels": true,
+        "showThresholdMarkers": true
+      },
+      "pluginVersion": "9.3.2",
+      "targets": [
+        {
+          "datasource": {
+            "type": "influxdb",
+            "uid": "P3C147723CB20F3EF"
+          },
+          "query": "from(bucket: \"$bucket\")\n    |> range(start: v.timeRangeStart, stop:v.timeRangeStop)\n  |> filter(fn: (r) => r.host == \"$host\")\n  |> filter(fn: (r) => r._measurement == \"mqtt_observatory_weather\")\n  |> filter(fn: (r) => r._field == \"WEATHER_TEMPERATURE\")\n  |> yield(name: \"temperature\")",
+          "refId": "A"
+        }
+      ],
+      "title": "Temperature",
+      "type": "gauge"
+    },
+    {
+      "datasource": "InfluxDB_v2_InfluxQL",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "displayName": "Wind Gust",
+          "mappings": [],
+          "max": 80,
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 40
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 10,
+        "w": 5,
+        "x": 5,
+        "y": 11
+      },
+      "id": 35,
+      "options": {
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showThresholdLabels": true,
+        "showThresholdMarkers": true
+      },
+      "pluginVersion": "9.3.2",
+      "targets": [
+        {
+          "datasource": {
+            "type": "influxdb",
+            "uid": "P3C147723CB20F3EF"
+          },
+          "query": "from(bucket: \"$bucket\")\n    |> range(start: v.timeRangeStart, stop:v.timeRangeStop)\n  |> filter(fn: (r) => r.host == \"$host\")\n  |> filter(fn: (r) => r._measurement == \"mqtt_observatory_weather\")\n  |> filter(fn: (r) => r._field == \"WEATHER_WIND_GUST\")\n  |> yield(name: \"rain\")",
+          "refId": "A"
+        }
+      ],
+      "title": "Wind Gust",
+      "type": "gauge"
+    },
+    {
+      "datasource": "InfluxDB_v2_InfluxQL",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "displayName": "Rain/hour",
+          "mappings": [],
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 10,
+        "w": 12,
+        "x": 10,
+        "y": 11
+      },
+      "id": 45,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "9.3.2",
+      "targets": [
+        {
+          "datasource": {
+            "type": "influxdb",
+            "uid": "P3C147723CB20F3EF"
+          },
+          "query": "from(bucket: \"$bucket\")\n    |> range(start: v.timeRangeStart, stop:v.timeRangeStop)\n  |> filter(fn: (r) => r.host == \"$host\")\n  |> filter(fn: (r) => r._measurement == \"mqtt_observatory_weather\")\n  |> filter(fn: (r) => r._field == \"WEATHER_RAIN_HOUR\")\n  |> yield(name: \"wind_speed\")",
+          "refId": "A"
+        }
+      ],
+      "title": "Rain",
+      "type": "timeseries"
+    },
+    {
+      "datasource": "InfluxDB_v2_InfluxQL",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "displayName": "Temperature",
+          "mappings": [],
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 10,
+        "w": 10,
+        "x": 0,
+        "y": 21
+      },
+      "id": 34,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "9.3.2",
+      "targets": [
+        {
+          "datasource": {
+            "type": "influxdb",
+            "uid": "P3C147723CB20F3EF"
+          },
+          "query": "from(bucket: \"$bucket\")\n    |> range(start: v.timeRangeStart, stop:v.timeRangeStop)\n  |> filter(fn: (r) => r.host == \"$host\")\n  |> filter(fn: (r) => r._measurement == \"mqtt_observatory_weather\")\n  |> filter(fn: (r) => r._field == \"WEATHER_TEMPERATURE\")\n  |> yield(name: \"temperature\")",
+          "refId": "A"
+        }
+      ],
+      "title": "Temperature",
+      "type": "timeseries"
+    },
+    {
+      "datasource": "InfluxDB_v2_InfluxQL",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "displayName": "Wind Speed",
+          "mappings": [],
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 10,
+        "w": 12,
+        "x": 10,
+        "y": 21
+      },
+      "id": 36,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "9.3.2",
+      "targets": [
+        {
+          "datasource": {
+            "type": "influxdb",
+            "uid": "P3C147723CB20F3EF"
+          },
+          "query": "from(bucket: \"$bucket\")\n    |> range(start: v.timeRangeStart, stop:v.timeRangeStop)\n  |> filter(fn: (r) => r.host == \"$host\")\n  |> filter(fn: (r) => r._measurement == \"mqtt_observatory_weather\")\n  |> filter(fn: (r) => r._field == \"WEATHER_WIND_SPEED\")\n  |> yield(name: \"wind_speed\")",
+          "refId": "A"
+        }
+      ],
+      "title": "Wind speed",
+      "type": "timeseries"
+    },
+    {
+      "collapsed": false,
+      "datasource": {
+        "type": "datasource",
+        "uid": "grafana"
+      },
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 31
+      },
+      "id": 8,
+      "panels": [],
+      "targets": [
+        {
+          "datasource": {
+            "type": "datasource",
+            "uid": "grafana"
+          },
+          "refId": "A"
+        }
+      ],
+      "title": "Observatory",
+      "type": "row"
+    },
+    {
+      "datasource": "InfluxDB_v2_InfluxQL",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [
+            {
+              "options": {
+                "pattern": "^parked$|^sleeping$|^ready$",
+                "result": {
+                  "color": "super-light-yellow",
+                  "index": 0
+                }
+              },
+              "type": "regex"
+            },
+            {
+              "options": {
+                "pattern": "^analyzing$|^scheduling$",
+                "result": {
+                  "color": "super-light-purple",
+                  "index": 1
+                }
+              },
+              "type": "regex"
+            },
+            {
+              "options": {
+                "pattern": "^slewing$|^pointing$",
+                "result": {
+                  "color": "dark-blue",
+                  "index": 2
+                }
+              },
+              "type": "regex"
+            },
+            {
+              "options": {
+                "pattern": "^focusing$",
+                "result": {
+                  "color": "blue",
+                  "index": 3
+                }
+              },
+              "type": "regex"
+            },
+            {
+              "options": {
+                "pattern": "^tracking$|^offset_pointing$",
+                "result": {
+                  "color": "super-light-blue",
+                  "index": 4
+                }
+              },
+              "type": "regex"
+            },
+            {
+              "options": {
+                "pattern": "^observing$",
+                "result": {
+                  "color": "dark-green",
+                  "index": 5
+                }
+              },
+              "type": "regex"
+            },
+            {
+              "options": {
+                "pattern": "^parking$",
+                "result": {
+                  "color": "red",
+                  "index": 6
+                }
+              },
+              "type": "regex"
+            },
+            {
+              "options": {
+                "pattern": "^housekeeping$|^calib_acq$",
+                "result": {
+                  "color": "purple",
+                  "index": 7
+                }
+              },
+              "type": "regex"
+            }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 10,
+        "w": 4,
+        "x": 0,
+        "y": 32
+      },
+      "id": 2,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "/^state \\{host=\"observatory\", topic=\"observatory/STATUS\"\\}$/",
+          "values": false
+        },
+        "text": {},
+        "textMode": "auto"
+      },
+      "pluginVersion": "9.3.2",
+      "targets": [
+        {
+          "datasource": {
+            "type": "influxdb",
+            "uid": "P3C147723CB20F3EF"
+          },
+          "groupBy": [
+            {
+              "params": [
+                "$__interval"
+              ],
+              "type": "time"
+            },
+            {
+              "params": [
+                "null"
+              ],
+              "type": "fill"
+            }
+          ],
+          "measurement": "/^$bucket$/",
+          "orderByTime": "ASC",
+          "policy": "observatory",
+          "query": "from(bucket: \"$bucket\")\n  |> range(start: v.timeRangeStart, stop:v.timeRangeStop)\n  |> filter(fn: (r) => r.host == \"$host\")\n  |> filter(fn: (r) => r._measurement == \"mqtt_observatory_status\")\n  |> filter(fn: (r) => r._field == \"state\")\n  |> yield(name: \"state\")",
+          "refId": "A",
+          "resultFormat": "time_series",
+          "select": [
+            [
+              {
+                "params": [
+                  "value"
+                ],
+                "type": "field"
+              },
+              {
+                "params": [],
+                "type": "mean"
+              }
+            ]
+          ],
+          "tags": []
+        }
+      ],
+      "title": "Observatory Last State",
+      "type": "stat"
+    },
+    {
+      "datasource": "InfluxDB_v2_InfluxQL",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "fixedColor": "blue",
+            "mode": "fixed"
+          },
+          "custom": {
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            }
+          },
+          "mappings": []
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 10,
+        "w": 6,
+        "x": 4,
+        "y": 32
+      },
+      "id": 24,
+      "options": {
+        "displayLabels": [
+          "percent",
+          "name"
+        ],
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "pieType": "donut",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "/^state_duration$/",
+          "values": true
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "9.3.2",
+      "targets": [
+        {
+          "datasource": {
+            "type": "influxdb",
+            "uid": "P3C147723CB20F3EF"
+          },
+          "query": "import \"array\"\n\nstates_time_serie = from(bucket: \"$bucket\")\n  |> range(start: v.timeRangeStart, stop:v.timeRangeStop)\n  |> filter(fn: (r) => r.host == \"$host\")\n  |> filter(fn: (r) => r._measurement == \"mqtt_observatory_status\")\n  |> filter(fn: (r) => r._field == \"state\")\n\nunique_states = states_time_serie\n  |> unique()\n  |> findColumn(fn: (key) => true, column: \"_value\")\n\n// Define a helper function to extract a row as a record\ngetRow = (tables=<-, idx=0) => {\n    extract = tables\n        |> findRecord(fn: (key) => true, idx: idx)\n    return extract\n}\n\nget_state_duration = (x) => {\n  state_duration = states_time_serie\n    // For each input table, elapsed() returns the same table without the first row (because there is no previous time to derive the elapsed time from) and an additional column containing the elapsed time.\n    |> stateDuration(fn: (r) =>\n      r._value == x,\n      column: \"state_duration\",\n      unit: 1s\n      )\n    // We need to sort backward in order to get positive value when doing difference on elapsed time to correspond on the current state\n    //|> sort(columns: [\"_time\"], desc: true)\n    // For each input table with n rows, difference() outputs a table with n - 1 rows.\n    |> difference(columns: [\"state_duration\"], nonNegative: false)\n    |> keep(columns: [\"_time\", \"state_duration\"])\n    |> filter(fn: (r) => r[\"state_duration\"] >= 0)\n    |> sum(column: \"state_duration\")\n    |> set(key: \"state_name\", value: x)\n    |> getRow()\n  return state_duration\n}\n\n// Computer the state duration for each state\nstates_durations = unique_states |> array.map(fn: get_state_duration)\n\n// Output the array of records as a table\narray.from(rows: states_durations)",
+          "refId": "A"
+        }
+      ],
+      "title": "Observatory utilization",
+      "type": "piechart"
+    },
+    {
+      "datasource": "InfluxDB_v2_InfluxQL",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "fillOpacity": 70,
+            "lineWidth": 0,
+            "spanNulls": false
+          },
+          "displayName": "State",
+          "mappings": [
+            {
+              "options": {
+                "pattern": "^parked$|^sleeping$|^ready$",
+                "result": {
+                  "color": "super-light-yellow",
+                  "index": 0
+                }
+              },
+              "type": "regex"
+            },
+            {
+              "options": {
+                "pattern": "^analyzing$|^scheduling$",
+                "result": {
+                  "color": "super-light-purple",
+                  "index": 1
+                }
+              },
+              "type": "regex"
+            },
+            {
+              "options": {
+                "pattern": "^slewing$|^pointing$",
+                "result": {
+                  "color": "dark-blue",
+                  "index": 2
+                }
+              },
+              "type": "regex"
+            },
+            {
+              "options": {
+                "pattern": "^focusing$",
+                "result": {
+                  "color": "blue",
+                  "index": 3
+                }
+              },
+              "type": "regex"
+            },
+            {
+              "options": {
+                "pattern": "^tracking$|^offset_pointing$",
+                "result": {
+                  "color": "super-light-blue",
+                  "index": 4
+                }
+              },
+              "type": "regex"
+            },
+            {
+              "options": {
+                "pattern": "^observing$",
+                "result": {
+                  "color": "dark-green",
+                  "index": 5
+                }
+              },
+              "type": "regex"
+            },
+            {
+              "options": {
+                "pattern": "^parking$",
+                "result": {
+                  "color": "red",
+                  "index": 6
+                }
+              },
+              "type": "regex"
+            },
+            {
+              "options": {
+                "pattern": "^housekeeping$|^calib_acq$",
+                "result": {
+                  "color": "purple",
+                  "index": 7
+                }
+              },
+              "type": "regex"
+            }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 10,
+        "w": 12,
+        "x": 10,
+        "y": 32
+      },
+      "id": 12,
+      "options": {
+        "alignValue": "center",
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": false
+        },
+        "mergeValues": true,
+        "rowHeight": 0.9,
+        "showValue": "never",
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "8.2.6",
+      "targets": [
+        {
+          "datasource": {
+            "type": "influxdb",
+            "uid": "P3C147723CB20F3EF"
+          },
+          "query": "from(bucket: \"$bucket\")\n    |> range(start: v.timeRangeStart, stop:v.timeRangeStop)\n  |> filter(fn: (r) => r.host == \"$host\")\n  |> filter(fn: (r) => r._measurement == \"mqtt_observatory_status\")\n  |> filter(fn: (r) => r._field == \"state\")\n  |> yield(name: \"state\")",
+          "refId": "A"
+        }
+      ],
+      "title": "State timeline",
+      "type": "state-timeline"
+    },
+    {
+      "collapsed": false,
+      "datasource": {
+        "type": "datasource",
+        "uid": "grafana"
+      },
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 42
+      },
+      "id": 6,
+      "panels": [],
+      "targets": [
+        {
+          "datasource": {
+            "type": "datasource",
+            "uid": "grafana"
+          },
+          "refId": "A"
+        }
+      ],
+      "title": "Guiding",
+      "type": "row"
+    },
+    {
+      "datasource": "InfluxDB_v2_InfluxQL",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [
+            {
+              "options": {
+                "pattern": "^Guiding$|^SteadyGuiding$",
+                "result": {
+                  "color": "dark-green",
+                  "index": 0
+                }
+              },
+              "type": "regex"
+            },
+            {
+              "options": {
+                "pattern": "^Paused$",
+                "result": {
+                  "color": "super-light-green",
+                  "index": 1
+                }
+              },
+              "type": "regex"
+            },
+            {
+              "options": {
+                "pattern": "^Calibrating$|^StarSelected$|^Looping$|^Settling$",
+                "result": {
+                  "color": "super-light-blue",
+                  "index": 2
+                }
+              },
+              "type": "regex"
+            },
+            {
+              "options": {
+                "pattern": "^Connected$",
+                "result": {
+                  "color": "dark-blue",
+                  "index": 3
+                }
+              },
+              "type": "regex"
+            },
+            {
+              "options": {
+                "pattern": "^NotConnected$",
+                "result": {
+                  "color": "transparent",
+                  "index": 4
+                }
+              },
+              "type": "regex"
+            },
+            {
+              "options": {
+                "pattern": "^LostLock$",
+                "result": {
+                  "color": "dark-orange",
+                  "index": 5
+                }
+              },
+              "type": "regex"
+            },
+            {
+              "options": {
+                "pattern": "^Stopped$",
+                "result": {
+                  "color": "dark-red",
+                  "index": 6
+                }
+              },
+              "type": "regex"
+            }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 10,
+        "w": 4,
+        "x": 0,
+        "y": 43
+      },
+      "id": 4,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "/^state \\{host=\"observatory\", topic=\"observatory/GUIDING_STATUS\"\\}$/",
+          "values": false
+        },
+        "text": {},
+        "textMode": "auto"
+      },
+      "pluginVersion": "9.3.2",
+      "targets": [
+        {
+          "datasource": {
+            "type": "influxdb",
+            "uid": "P3C147723CB20F3EF"
+          },
+          "query": "from(bucket: \"$bucket\")\n  |> range(start: v.timeRangeStart, stop:v.timeRangeStop)\n  |> filter(fn: (r) => r.host == \"$host\")\n  |> filter(fn: (r) => r._measurement == \"mqtt_observatory_guiding_status\")\n  |> filter(fn: (r) => r._field == \"state\")",
+          "refId": "A"
+        }
+      ],
+      "title": "Guiding State",
+      "type": "stat"
+    },
+    {
+      "datasource": "InfluxDB_v2_InfluxQL",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "fixedColor": "blue",
+            "mode": "fixed"
+          },
+          "custom": {
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            }
+          },
+          "mappings": []
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 10,
+        "w": 6,
+        "x": 4,
+        "y": 43
+      },
+      "id": 28,
+      "options": {
+        "displayLabels": [
+          "percent",
+          "name"
+        ],
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "pieType": "donut",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "/^state_duration$/",
+          "values": true
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "9.3.2",
+      "targets": [
+        {
+          "datasource": {
+            "type": "influxdb",
+            "uid": "P3C147723CB20F3EF"
+          },
+          "query": "import \"array\"\n\nstates_time_serie = from(bucket: \"$bucket\")\n  |> range(start: v.timeRangeStart, stop:v.timeRangeStop)\n  |> filter(fn: (r) => r.host == \"$host\")\n  |> filter(fn: (r) => r._measurement == \"mqtt_observatory_guiding_status\")\n  |> filter(fn: (r) => r._field == \"state\")\n\nunique_states = states_time_serie\n  |> unique()\n  |> findColumn(fn: (key) => true, column: \"_value\")\n\n// Define a helper function to extract a row as a record\ngetRow = (tables=<-, idx=0) => {\n    extract = tables\n        |> findRecord(fn: (key) => true, idx: idx)\n    return extract\n}\n\nget_state_duration = (x) => {\n  state_duration = states_time_serie\n    // For each input table, elapsed() returns the same table without the first row (because there is no previous time to derive the elapsed time from) and an additional column containing the elapsed time.\n    |> stateDuration(fn: (r) =>\n      r._value == x,\n      column: \"state_duration\",\n      unit: 1s\n      )\n    // We need to sort backward in order to get positive value when doing difference on elapsed time to correspond on the current state\n    //|> sort(columns: [\"_time\"], desc: true)\n    // For each input table with n rows, difference() outputs a table with n - 1 rows.\n    |> difference(columns: [\"state_duration\"], nonNegative: false)\n    |> keep(columns: [\"_time\", \"state_duration\"])\n    |> filter(fn: (r) => r[\"state_duration\"] >= 0)\n    |> sum(column: \"state_duration\")\n    |> set(key: \"state_name\", value: x)\n    |> getRow()\n  return state_duration\n}\n\n// Computer the state duration for each state\nstates_durations = unique_states |> array.map(fn: get_state_duration)\n\n// Output the array of records as a table\narray.from(rows: states_durations)",
+          "refId": "A"
+        }
+      ],
+      "title": "Guiding utilization",
+      "type": "piechart"
+    },
+    {
+      "datasource": "InfluxDB_v2_InfluxQL",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "fillOpacity": 70,
+            "lineWidth": 0,
+            "spanNulls": false
+          },
+          "displayName": "state",
+          "mappings": [
+            {
+              "options": {
+                "LostLock": {
+                  "color": "dark-orange",
+                  "index": 5
+                },
+                "NotConnected": {
+                  "color": "transparent",
+                  "index": 4
+                },
+                "Paused": {
+                  "color": "super-light-green",
+                  "index": 1
+                },
+                "Stopped": {
+                  "color": "dark-red",
+                  "index": 6
+                }
+              },
+              "type": "value"
+            },
+            {
+              "options": {
+                "pattern": "^Guiding$|^SteadyGuiding$",
+                "result": {
+                  "color": "dark-green",
+                  "index": 0
+                }
+              },
+              "type": "regex"
+            },
+            {
+              "options": {
+                "pattern": "^Calibrating$|^StarSelected$|^Looping$|^Settling$",
+                "result": {
+                  "color": "super-light-blue",
+                  "index": 2
+                }
+              },
+              "type": "regex"
+            },
+            {
+              "options": {
+                "pattern": "^Connected$",
+                "result": {
+                  "color": "dark-blue",
+                  "index": 3
+                }
+              },
+              "type": "regex"
+            }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 10,
+        "w": 12,
+        "x": 10,
+        "y": 43
+      },
+      "id": 14,
+      "options": {
+        "alignValue": "left",
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": false
+        },
+        "mergeValues": true,
+        "rowHeight": 0.9,
+        "showValue": "never",
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "8.2.6",
+      "targets": [
+        {
+          "datasource": {
+            "type": "influxdb",
+            "uid": "P3C147723CB20F3EF"
+          },
+          "query": "from(bucket: \"$bucket\")\n  |> range(start: v.timeRangeStart, stop:v.timeRangeStop)\n  |> filter(fn: (r) => r.host == \"$host\")\n  |> filter(fn: (r) => r._measurement == \"mqtt_observatory_guiding_status\")\n  |> filter(fn: (r) => r._field == \"state\")",
+          "refId": "A"
+        }
+      ],
+      "title": "Guiding State",
+      "type": "state-timeline"
+    },
+    {
+      "datasource": "InfluxDB_v2_InfluxQL",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "hidden",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": "SNR.*"
+            },
+            "properties": [
+              {
+                "id": "custom.axisPlacement",
+                "value": "right"
+              },
+              {
+                "id": "unit",
+                "value": "none"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": "[HFD|AvgDist].*"
+            },
+            "properties": [
+              {
+                "id": "custom.axisPlacement",
+                "value": "left"
+              },
+              {
+                "id": "unit",
+                "value": "arcsec"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byType",
+              "options": "time"
+            },
+            "properties": [
+              {
+                "id": "custom.axisPlacement",
+                "value": "auto"
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 11,
+        "w": 10,
+        "x": 0,
+        "y": 53
+      },
+      "id": 20,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "influxdb",
+            "uid": "P3C147723CB20F3EF"
+          },
+          "query": "from(bucket: \"$bucket\")\n  |> range(start: v.timeRangeStart, stop:v.timeRangeStop)\n  |> filter(fn: (r) => r.host == \"$host\")\n  |> filter(fn: (r) => r._measurement == \"mqtt_observatory_guiding\")\n  |> filter(fn: (r) => contains(value: r._field, set: [\"HFD\", \"AvgDist\", \"SNR\"]))",
+          "refId": "A"
+        }
+      ],
+      "title": "Guiding Image metrics",
+      "transformations": [
+        {
+          "id": "renameByRegex",
+          "options": {
+            "regex": "(.+) {.*",
+            "renamePattern": "$1"
+          }
+        }
+      ],
+      "type": "timeseries"
+    },
+    {
+      "datasource": "InfluxDB_v2_InfluxQL",
+      "description": "",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 11,
+        "w": 12,
+        "x": 10,
+        "y": 53
+      },
+      "id": 10,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "8.2.6",
+      "targets": [
+        {
+          "datasource": {
+            "type": "influxdb",
+            "uid": "P3C147723CB20F3EF"
+          },
+          "query": "from(bucket: \"$bucket\")\n  |> range(start: v.timeRangeStart, stop:v.timeRangeStop)\n  |> filter(fn: (r) => r.host == \"$host\")\n  |> filter(fn: (r) => r._measurement == \"mqtt_observatory_guiding\")\n  |> filter(fn: (r) => contains(value: r._field, set: [\"RADistanceRaw\", \"DECDistanceRaw\"]))",
+          "refId": "A"
+        }
+      ],
+      "title": "RA/DEC guiding error",
+      "transformations": [
+        {
+          "id": "renameByRegex",
+          "options": {
+            "regex": "(.+) {.*",
+            "renamePattern": "$1"
+          }
+        }
+      ],
+      "type": "timeseries"
+    },
+    {
+      "collapsed": false,
+      "datasource": {
+        "type": "datasource",
+        "uid": "grafana"
+      },
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 64
+      },
+      "id": 16,
+      "panels": [],
+      "targets": [
+        {
+          "datasource": {
+            "type": "datasource",
+            "uid": "grafana"
+          },
+          "refId": "A"
+        }
+      ],
+      "title": "Observations",
+      "type": "row"
+    },
+    {
+      "datasource": "InfluxDB_v2_InfluxQL",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 5,
+        "w": 9,
+        "x": 0,
+        "y": 65
+      },
+      "id": 22,
+      "options": {
+        "colorMode": "none",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "/^name \\{host=\"observatory\", topic=\"observatory/FIELD\"\\}$/",
+          "values": false
+        },
+        "text": {},
+        "textMode": "auto"
+      },
+      "pluginVersion": "9.3.2",
+      "targets": [
+        {
+          "datasource": {
+            "type": "influxdb",
+            "uid": "P3C147723CB20F3EF"
+          },
+          "query": "from(bucket: \"$bucket\")\n  |> range(start:-4w, stop:now())\n  |> filter(fn: (r) => r.host == \"$host\")\n  |> filter(fn: (r) => r._measurement == \"mqtt_observatory_field\")\n  |> filter(fn: (r) => r._field == \"name\")",
+          "refId": "A"
+        }
+      ],
+      "title": "Last Observation",
+      "type": "stat"
+    },
+    {
+      "datasource": "InfluxDB_v2_InfluxQL",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "align": "left",
+            "displayMode": "auto",
+            "inspect": false
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Time"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 170
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 14,
+        "w": 13,
+        "x": 9,
+        "y": 65
+      },
+      "id": 47,
+      "options": {
+        "footer": {
+          "fields": "",
+          "reducer": [
+            "sum"
+          ],
+          "show": false
+        },
+        "showHeader": true,
+        "sortBy": [
+          {
+            "desc": false,
+            "displayName": "Time"
+          }
+        ]
+      },
+      "pluginVersion": "9.3.2",
+      "targets": [
+        {
+          "datasource": {
+            "type": "influxdb",
+            "uid": "P3C147723CB20F3EF"
+          },
+          "query": "from(bucket: \"$bucket\")\n  |> range(start:-1w, stop:now())\n  |> filter(fn: (r) => r.host == \"$host\")\n  |> filter(fn: (r) => r._measurement == \"mqtt_observatory_broker\")\n  |> filter(fn: (r) => r._field == \"data\")",
+          "refId": "A"
+        }
+      ],
+      "title": "Latest GCN Notifications",
+      "transformations": [
+        {
+          "id": "renameByRegex",
+          "options": {
+            "regex": "(.*) {.*",
+            "renamePattern": "GCN notification $1"
+          }
+        }
+      ],
+      "type": "table"
+    },
+    {
+      "datasource": "InfluxDB_v2_InfluxQL",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "align": "left",
+            "displayMode": "auto",
+            "inspect": false
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 16,
+        "w": 9,
+        "x": 0,
+        "y": 70
+      },
+      "id": 18,
+      "options": {
+        "footer": {
+          "fields": "",
+          "reducer": [
+            "sum"
+          ],
+          "show": false
+        },
+        "showHeader": true,
+        "sortBy": [
+          {
+            "desc": false,
+            "displayName": "Time"
+          }
+        ]
+      },
+      "pluginVersion": "9.3.2",
+      "targets": [
+        {
+          "datasource": {
+            "type": "influxdb",
+            "uid": "P3C147723CB20F3EF"
+          },
+          "query": "from(bucket: \"$bucket\")\n  |> range(start:-1w, stop:now())\n  |> filter(fn: (r) => r.host == \"$host\")\n  |> filter(fn: (r) => r._measurement == \"mqtt_observatory_field\")\n  |> filter(fn: (r) => r._field == \"name\")",
+          "refId": "A"
+        }
+      ],
+      "title": "Observation history",
+      "transformations": [
+        {
+          "id": "renameByRegex",
+          "options": {
+            "regex": "(.*) {.*",
+            "renamePattern": "Field $1"
+          }
+        }
+      ],
+      "type": "table"
+    }
+  ],
+  "refresh": false,
+  "schemaVersion": 37,
+  "style": "dark",
+  "tags": [],
+  "templating": {
+    "list": [
+      {
+        "current": {
+          "selected": false,
+          "text": "observatory",
+          "value": "observatory"
+        },
+        "hide": 0,
+        "label": "Bucket",
+        "name": "bucket",
+        "options": [
+          {
+            "selected": true,
+            "text": "observatory",
+            "value": "observatory"
+          }
+        ],
+        "query": "observatory",
+        "skipUrlSync": false,
+        "type": "textbox"
+      },
+      {
+        "current": {
+          "selected": false,
+          "text": "observatory",
+          "value": "observatory"
+        },
+        "hide": 0,
+        "label": "Host",
+        "name": "host",
+        "options": [
+          {
+            "selected": true,
+            "text": "observatory",
+            "value": "observatory"
+          }
+        ],
+        "query": "observatory",
+        "skipUrlSync": false,
+        "type": "textbox"
+      },
+      {
+        "current": {
+          "isNone": true,
+          "selected": false,
+          "text": "None",
+          "value": ""
+        },
+        "datasource": {
+          "type": "datasource",
+          "uid": "grafana"
+        },
+        "definition": "",
+        "hide": 0,
+        "includeAll": false,
+        "multi": false,
+        "name": "query0",
+        "options": [],
+        "query": "",
+        "refresh": 1,
+        "regex": "",
+        "skipUrlSync": false,
+        "sort": 0,
+        "type": "query"
+      }
+    ]
+  },
+  "time": {
+    "from": "2023-01-05T19:34:15.660Z",
+    "to": "2023-01-05T21:16:13.424Z"
+  },
+  "timepicker": {},
+  "timezone": "",
+  "title": "Observatory",
+  "uid": "dad3t6p4z",
+  "version": 89,
+  "weekStart": ""
+}

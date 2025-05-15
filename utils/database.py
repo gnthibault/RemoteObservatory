@@ -9,6 +9,9 @@ from uuid import uuid4
 from warnings import warn
 import weakref
 
+# DB
+#from sqlmodel import Field, Session, SQLModel, create_engine, select
+
 # Local
 from Service.HostTimeService import HostTimeService
 from utils import serializers as json_util
@@ -121,6 +124,127 @@ class AbstractDB(metaclass=abc.ABCMeta):
                 should be cleared.
         """
         raise NotImplementedError
+
+###############################################################################
+#    SQLite implementation
+###############################################################################
+
+# class TransactionalFileDB(metaclass=abc.ABCMeta):
+#     def __init__(self, db_name=None, collection_names=list(), logger=None,
+#                  serv_time=HostTimeService(), **kwargs):
+#         """
+#         Init base class for db instances.
+#
+#         Args:
+#             db_name: Name of the database, typically panoptes or
+#                      panoptes_testing.
+#             collection_names (list of str): Names of the valid collections.
+#             logger: (Optional) logger to use for warnings.
+#         """
+#         super().__init__(db_name=db_name, **kwargs)
+#         self.db_folder = db_name
+#         self.sqlite_file_path = os.path.join(self.db_folder, "database.db")
+#         # Set up storage directory.
+#         self._storage_dir = self.db_folder
+#         os.makedirs(self._storage_dir, exist_ok=True)
+#         self.engine = None
+#         self.create_db_and_tables()
+#
+#     def create_db_and_tables(self):
+#         sqlite_url = f"sqlite:///{self.sqlite_file_path}"
+#         connect_args = {"check_same_thread": False}
+#         self.engine = create_engine(sqlite_url, echo=True, connect_args=connect_args)
+#         SQLModel.metadata.create_all(self.engine)
+#
+#     def _warn(self, *args, **kwargs):
+#         if self.logger:
+#             self.logger.warning(*args, **kwargs)
+#         else:
+#             warn(*args)
+#
+#     def validate_collection(self, collection):
+#         if collection not in self.collection_names:
+#             msg = f"Collection type {collection} not available"
+#             self._warn(msg)
+#             # Can't import utils.error earlier
+#             from utils.error import InvalidCollection
+#             raise InvalidCollection(msg)
+#
+#     @abc.abstractclassmethod
+#     def insert_current(self, collection, obj, store_permanently=True):
+#         """Insert an object into both the `current` collection and the
+#            collection provided.
+#
+#         Args:
+#             collection (str): Name of valid collection within the db.
+#             obj (dict or str): Object to be inserted.
+#             store_permanently (bool): Whether to also update the collection,
+#                 defaults to True.
+#
+#         Returns:
+#             str: identifier of inserted record. If `store_permanently` is True,
+#                 will be the identifier of the object in the `collection`,
+#                 otherwise will be the identifier of object in the `current`
+#                 collection. These may or may not be the same.
+#                 Returns None if unable to insert into the collection.
+#         """
+#         raise NotImplementedError
+#
+#     @abc.abstractclassmethod
+#     def insert(self, collection, obj):
+#         """Insert an object into the collection provided.
+#
+#         The `obj` to be stored in a collection should include the `type`
+#         and `date` metadata as well as a `data` key that contains the actual
+#         object data. If these keys are not provided then `obj` will be wrapped
+#         in a corresponding object that does contain the metadata.
+#
+#         Args:
+#             collection (str): Name of valid collection within the db.
+#             obj (dict or str): Object to be inserted.
+#
+#         Returns:
+#             str: identifier of inserted record in `collection`.
+#                 Returns None if unable to insert into the collection. Can be
+#                 considered as an object_id
+#         """
+#         raise NotImplementedError
+#
+#     @abc.abstractclassmethod
+#     def get_current(self, collection):
+#         """Returns the most current record for the given collection
+#
+#         Args:
+#             collection (str): Name of the collection to get most current from
+#
+#         Returns:
+#             dict|None: Current object of the collection or None.
+#         """
+#         raise NotImplementedError
+#
+#     @abc.abstractclassmethod
+#     def find(self, collection, obj_id):
+#         """Find an object by it's identifier.
+#
+#         Args:
+#             collection (str): Collection to search for object.
+#             obj_id (ObjectID|str): Record identifier returned earlier by insert
+#                 or insert_current.
+#
+#         Returns:
+#             dict|None: Object matching identifier or None.
+#         """
+#         raise NotImplementedError
+#
+#     @abc.abstractclassmethod
+#     def clear_current(self, type):
+#         """Clear the current record of a certain type
+#
+#         Args:
+#             type (str): The type of entry in the current collection that
+#                 should be cleared.
+#         """
+#         raise NotImplementedError
 
 
 ###############################################################################

@@ -20,7 +20,7 @@ class IndiOpenWeatherMap(IndiWeather):
         if config is None:
             config = dict(
                 service_name="OpenWeatherMap",
-                key_path="/var/RemoteObservatory/keys.json",
+                key_path="/opt/RemoteObservatory/keys.json",
                 publish_port=6510,
                 delay_sec=60,
                 indi_client=dict(

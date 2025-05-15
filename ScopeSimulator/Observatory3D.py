@@ -223,10 +223,11 @@ class Observatory3D:
             callback=shutter_status_callback)
 
     def update_dome_position(self, dome_position_vector):
-        angle = [float(i._value) for i in dome_position_vector.elements if i.name == "DOME_ABSOLUTE_POSITION"][0]
+        angle = [float(i.getValue()) for i in dome_position_vector.getNumber() if i.isNameMatch("DOME_ABSOLUTE_POSITION")][0]
         self.apply_dome_rotation(angle)
 
     def update_shutter_status(self, shutter_status_vector):
-        shutter_status = [i._value for i in shutter_status_vector.elements if i.name == "SHUTTER_OPEN"][0] == "On"
-        if shutter_status_vector._light.is_ok():
+        shutter_status = [i.getStateAsString() for i in shutter_status_vector.getSwitch() if i.isNameMatch("SHUTTER_OPEN")][0] == "On"
+
+        if shutter_status_vector.getStateAsString() == "On":
             self.apply_shutter_status(shutter_status=shutter_status)

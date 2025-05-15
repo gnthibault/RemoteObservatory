@@ -1,0 +1,26 @@
+label: gpt
+label-id: 0x5d8b75fc
+device: new.img
+unit: sectors
+sector-size: 4096
+
+
+esp   : start=1Mib, size= 100MiB, type=C12A7328-F81F-11D2-BA4B-00A0C93EC93B, name="EFI system partition"
+linux : start=,     size=+ , type=0FC63DAF-8483-4772-8E79-3D69D8477DE4, name="Linux"
+
+# Some explanations:
+
+# header lines: all optional:
+# label: type of partition table. dos (MBR) is the old an widely supported one, gpt the new shiny thing.
+# unit: only sectors is supported. 1 sector usually equals 512 bytes. Find with cat /sys/block/sda/queue/hw_sector_size See also: https://unix.stackexchange.com/questions/2668/finding-the-sector-size-of-a-partition
+# device: informative only I think
+# partition lines:
+# start: offset inside the disk at which the partition starts.
+
+# start has very good defaults, and can often be ommited:
+
+# on the first line, start is 2048, i.e. 1Mb (2048 + 512), which is a sane default for disk compatibility
+# further start default to the first unallocated position
+# size: man sfdisk says: The default value of size indicates "as much as possible". So to fill the disk with a single partition use: /dev/sda : start=2048, type=83
+
+# type: See https://man7.org/linux/man-pages/man8/sfdisk.8.html and for GUID https://fr.wikipedia.org/wiki/GUID_Partition_Table

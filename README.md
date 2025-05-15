@@ -6,6 +6,7 @@ This project either uses, or is directly inspired by:
 
 * KStars: https://github.com/KDE/kstars
 * Indi: https://github.com/indilib/indi (Jasem Mutlaq + contributors)
+* Pyindi-client: https://github.com/indilib/pyindi-client
 * Starquew: https://github.com/GuLinux/StarQuew/tree/master/backend/indi (Marco Gulino)
 * npindi: https://github.com/geehalel/npindi (Geehalel)
 * Panoptes: https://github.com/panoptes/POCS
@@ -20,6 +21,7 @@ This project either uses, or is directly inspired by:
 * Aladin-lite (mostly for PAWS actually): https://github.com/cds-astro/aladin-lite
 * MMTO Observatory indi client: https://github.com/MMTObservatory/indiclient
 * Meshcat: https://github.com/rdeits/meshcat-python but we might want to replace meshcat with scenepic in the future: https://microsoft.github.io/scenepic/python/
+* PockerISO: https://github.com/shantanoo-desai/PockerISO/tree/main
 
 
 # Overview, scratching the surface
@@ -31,6 +33,18 @@ Quick overview of what you will be able to see and manage through this project
 ![Monitoring dashboard overview 2](https://gnthibault.github.io/RemoteObservatory/assets/images/dashboard_grafana_2.png)
 
 # Install
+
+## System requirements when using macOS
+```bash
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+brew install python@3.9 
+brew install virtualenv
+brew install graphviz
+export GRAPHVIZ_DIR="$(brew --prefix graphviz)"
+export C_INCLUDE_PATH=/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/Headers
+export CPLUS_INCLUDE_PATH=/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/Headers
+pip install pygraphviz --global-option=build_ext --global-option="-I$GRAPHVIZ_DIR/include" --global-option="-L$GRAPHVIZ_DIR/lib"
+```
 
 ## System requirements when using ubuntu
 ```bash
@@ -99,6 +113,101 @@ sudo apt-get install \
     source venv/bin/activate
     pip install -r requirements.txt
 ```
+
+## Build and use docker for development (for macos dev for instance)
+
+```console
+    # Increase base side with: 1) sudo dockerd --storage-opt dm.basesize=100G
+    # 2) Changing DOCKER_OPTS ="--storage-opt dm.basesize=50G" in /etc/default/docker.
+    # Or in UI: Docker > Settings > Resources > Advanced > Disk usage limit > Apply & Restart
+    docker image prune -f && docker buildx prune -f && docker container prune -f && docker volume prune -af && docker system prune -af && docker builder prune -af
+    gcloud auth login --update-adc
+    docker buildx build --platform linux/amd64 -t europe-west1-docker.pkg.dev/remote-observatory-dev-jcy/remote-observatory-main-repo/remote_observatory:latest .
+```
+
+## Build iso with packer
+
+### Installing packer
+On mac:
+```console
+    brew tap hashicorp/tap
+    brew install hashicorp/tap/packer
+    packer # you should see a list of Packer commands and options.
+    brew install qemu
+```
+
+On ubuntu:
+
+```console
+    wget -O - https://apt.releases.hashicorp.com/gpg | sudo gpg --dearmor -o /usr/share/keyrings/hashicorp-archive-keyring.gpg
+    echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/hashicorp-archive-keyring.gpg] https://apt.releases.hashicorp.com $(lsb_release -cs) main" | sudo tee /etc/apt/sources.list.d/hashicorp.list
+    sudo apt update && sudo apt install packer
+    packer # you should see a list of Packer commands and options
+    # You might also have to run sudo chmod 666 /var/run/docker.sock after installing docker in utm for instance
+    sudo apt install qemu-kvm qemu-system libvirt-daemon bridge-utils virt-manager virtinst libvirt-daemon-system
+```
+
+### Build iso with packer
+
+```console
+    # On ubuntu you might need to do echo '{ "experimental": true }' | sudo tee -a /etc/docker/daemon.json
+    cd packer
+	packer init -upgrade ./templates/ubuntu-template.pkr.hcl
+	# You might want to make sure you have proper formatting with
+	packer fmt .
+	# You might also want to make sure your template is valid
+	packer validate -var-file=./vars/ubuntu.pkrvars.hcl ./templates/ubuntu-template.pkr.hcl
+	# Then build the filesystem only from docker image base, on mac, make sure docker is started with "open -a Docker"
+    packer build -var-file=./vars/ubuntu.pkrvars.hcl -only="gen-fs-tarball.*" ./templates/ubuntu-template.pkr.hcl
+	mkdir ubuntu.dir
+	tar -vxf ubuntu.tar -C ubuntu.dir
+	packer build -var-file=./vars/ubuntu.pkrvars.hcl -only="gen-boot-img.*" ./templates/ubuntu-template.pkr.hcl
+	# You can test image with
+	sudo qemu-system-x86_64 -m 6192 -smp 8 \
+	  -drive file=customized_ubuntu.img,index=0,media=disk,format=raw \
+      -drive if=pflash,format=raw,readonly=on,file=./config/OVMF_CODE.fd \
+      -drive if=pflash,format=raw,readonly=on,file=./config/OVMF_VARS.fd \
+      -netdev user,id=net0 \
+      -net user,hostfwd=tcp::22-:22,hostfwd=tcp::5901-:5901,\
+hostfwd=tcp::1883-:1883,hostfwd=tcp::3000-:3000,\
+hostfwd=tcp::7000-:7000,\
+hostfwd=tcp::8086-:8086,hostfwd=tcp::9001-:9001,\
+hostfwd=tcp::7624-:7624,hostfwd=tcp::8624-:8624,\
+hostfwd=tcp::7626-:7624,hostfwd=tcp::8626-:8626,\
+hostfwd=tcp::7627-:7624,hostfwd=tcp::8627-:8627,\
+hostfwd=tcp::7628-:7624,hostfwd=tcp::8628-:8628 \
+      -net nic -device virtio-net,netdev=net0
+    
+    PACKER_LOG=1 packer build -var-file=./vars/ubuntu.pkrvars.hcl -only="customize-boot-img.*" ./templates/ubuntu-template.pkr.hcl
+    # Compress for artifact
+    xz --compress --threads=4 --keep --suffix=.tomove ubuntu.img
+    mv ubuntu.img.tomove image.img.xz
+	rm -rf mnt ubuntu.*
+	# Uncompress and burn to usb disk
+    xz --keep --decompress --threads=4 --stdout ./image.img.xz > image.img
+    sudo dd if=/dev/zero of=/dev/sdc
+    sudo dd if=./image.img of=/dev/sdc bs=128M status=progress
+```
+
+
+### Deploying iso - Commissioning docker composer
+
+When running the iso for the first time, here are a few useful tips:
+
+#### Grafana
+user: admin
+pwod: admin
+
+
+#### Mosquitto
+
+```console
+  sudo apt-get install mosquitto-clients # brew install mosquitto
+  mosquitto_sub -h 127.0.0.1 -p 1883 -t observatory/WEATHER
+  mosquitto_pub -h localhost -p 1883 -t observatory/GUIDING --insecure -m '{"data": {"state": {"test": 0}}}'
+  mosquitto_pub -h localhost -p 1883 -t observatory/WEATHER --insecure -m '{"data": {"state": "OK", "WEATHER_FORECAST": 0.5, "WEATHER_TEMPERATURE": 17.2, "WEATHER_WIND_SPEED": 10, "WEATHER_WIND_GUST": 5.9, "WEATHER_RAIN_HOUR": 1.5, "safe": "True"}}'
+```
+
 
 ## Building the nice reporting / latex reports
 ```bash

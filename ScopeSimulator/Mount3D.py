@@ -239,14 +239,15 @@ class Mount3D:
             callback=pier_side_callback)
 
     def update_telescope_position(self, telescope_position_vector):
-        ra_angle = [float(i._value) for i in telescope_position_vector.elements if i.name == "RA"][0]*u.hourangle
-        de_angle = [float(i._value) for i in telescope_position_vector.elements if i.name == "DEC"][0]*u.degree
+        ra_angle = [float(i.getValue()) for i in telescope_position_vector.getNumber() if i.isNameMatch("RA")][0]*u.hourangle
+        de_angle = [float(i.getValue()) for i in telescope_position_vector.getNumber() if i.isNameMatch("DEC")][0]*u.degree
         self.apply_celestial_ra_transform(angle_astropy=ra_angle)
         self.apply_celestial_de_transform(angle_astropy=de_angle)
 
     def update_pier_side(self, pier_side_vector):
-        pier_side = [i.name for i in pier_side_vector.elements if i._value == "On"][0]
-        if pier_side_vector._light.is_ok():
+        pier_side = [i.getName() for i in pier_side_vector.getSwitch() if i.getStateAsString()=="On"][0]
+
+        if pier_side_vector.getStateAsString() == "On":
             self.last_pier_side = pier_side
 
     def get_celestial_time(self):

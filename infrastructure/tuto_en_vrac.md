@@ -46,9 +46,9 @@ Open the /etc/pulse/daemon.conf and set
 daemonize = no
 
 ## Automount the data directory
-sudo mkdir /var/RemoteObservatory/
-sudo chown 1000:1000 /var/RemoteObservatory
-echo "/dev/nvme0n1 /var/RemoteObservatory ext4 defaults 0 0" | sudo tee -a /etc/fstab
+sudo mkdir /opt/RemoteObservatory/
+sudo chown 1000:1000 /opt/RemoteObservatory
+echo "/dev/nvme0n1 /opt/RemoteObservatory ext4 defaults 0 0" | sudo tee -a /etc/fstab
 
 # astrometry
 

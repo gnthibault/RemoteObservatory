@@ -28,20 +28,20 @@ class IndiASICamera(IndiAbstractCamera):
             #                 f"{self.get_dynamic()}")
 
     def get_current_format(self):
-        return [key for key, val in self.get_switch('CCD_VIDEO_FORMAT').items() if val == "On"]
+        return [key for key, val in self.get_switch('CCD_VIDEO_FORMAT').items() if val]
 
     def get_maximum_dynamic(self):
         return self.get_number('ADC_DEPTH')['BITS']
 
     def set_gain(self, value):
-        self.set_number('CCD_CONTROLS', {'Gain': value}, sync=True, timeout=self.defaultTimeout)
+        self.set_number('CCD_CONTROLS', {'Gain': value}, sync=True, timeout=self.timeout)
 
     def get_gain(self):
         gain = self.get_number('CCD_CONTROLS')
         return gain["Gain"]
 
     def set_offset(self, value):
-        self.set_number('CCD_CONTROLS', {'Offset': value}, sync=True, timeout=self.defaultTimeout)
+        self.set_number('CCD_CONTROLS', {'Offset': value}, sync=True, timeout=self.timeout)
 
     def get_offset(self):
         offset = self.get_number('CCD_CONTROLS')

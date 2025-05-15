@@ -140,11 +140,11 @@ class IndiMount(IndiDevice):
         """
         self.logger.debug('Setting ON_COORD_SET behaviour: {}'.format(
                           what_to_do))
-        self.set_switch('ON_COORD_SET', [what_to_do], sync=True, timeout=self.defaultTimeout)
+        self.set_switch('ON_COORD_SET', [what_to_do], sync=True, timeout=self.timeout)
 
     def abort_motion(self):
         self.logger.debug('Abort Motion')
-        self.set_switch('TELESCOPE_ABORT_MOTION', ['ABORT_MOTION'], sync=True, timeout=self.defaultTimeout)
+        self.set_switch('TELESCOPE_ABORT_MOTION', ['ABORT_MOTION'], sync=True, timeout=self.timeout)
 
     def park(self):
         """
@@ -156,7 +156,7 @@ class IndiMount(IndiDevice):
 
     def unpark(self):
         self.logger.debug('Unparking with indi mount semantic')
-        self.set_switch('TELESCOPE_PARK', ['UNPARK'], sync=True, timeout=self.defaultTimeout)
+        self.set_switch('TELESCOPE_PARK', ['UNPARK'], sync=True, timeout=self.timeout)
 
     def get_guide_rate(self):
         """
@@ -208,7 +208,7 @@ class IndiMount(IndiDevice):
         slew_dict = self.get_switch('TELESCOPE_SLEW_RATE')
         #self.logger.debug(f"Got mount slewing rate dict: {slew_dict}")
         if len(slew_dict) > 0:
-            return [k for k, v in slew_dict.items() if v == "On"][0]
+            return [k for k, v in slew_dict.items() if v][0]
         else:
             return None
 
@@ -224,7 +224,7 @@ class IndiMount(IndiDevice):
         self.logger.debug(f"Setting mount slewing rate: {slew_rate} while "
                           f"dictionary is {slew_dict}")
         if slew_rate in slew_dict:
-            self.set_switch('TELESCOPE_SLEW_RATE', [slew_rate], sync=True, timeout=self.defaultTimeout)
+            self.set_switch('TELESCOPE_SLEW_RATE', [slew_rate], sync=True, timeout=self.timeout)
         else:
             msg = f"Trying to set mount slewing rate: {slew_rate} while "\
                   f"dictionary is {slew_dict}"
@@ -250,7 +250,7 @@ class IndiMount(IndiDevice):
         track_dict = self.get_switch('TELESCOPE_TRACK_MODE')
         #self.logger.debug(f"Got mount tracking rate dict: {track_dict}")
         if len(track_dict) > 0:
-            return [k for k, v in track_dict.items() if v == "On"][0]
+            return [k for k, v in track_dict.items() if v][0]
         else:
             return None
 

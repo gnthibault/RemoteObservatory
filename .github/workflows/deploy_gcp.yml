@@ -1,0 +1,98 @@
+# This workflow will install Python dependencies, run tests and lint with a single version of Python
+# For more information see: https://help.github.com/actions/language-and-framework-guides/using-python-with-github-actions
+# The full GCP authentication setup is described in this nice blog post: https://cloud.google.com/blog/products/identity-security/enabling-keyless-authentication-from-github-actions
+# Here you see how to push to google cloud artifact registry: https://roger-that-dev.medium.com/push-code-with-github-actions-to-google-clouds-artifact-registry-60d256f8072f
+# Here you see how to deploy a cloudrun: https://github.com/google-github-actions/deploy-cloudrun
+# Or more generically, setup gcloud: https://github.com/google-github-actions/setup-gcloud
+name: GCP docker build
+
+
+on:
+  push:
+    branches: [ deployment/dev, deployment/prd ]
+#  pull_request:
+#    branches: [ master ]
+
+#virtualenv venv
+#source venv/bin/activate
+#pip install -r ./requirements.txt
+#
+#gcloud auth configure-docker     europe-west1-docker.pkg.dev
+#docker build -t europe-west1-docker.pkg.dev/tom-toolkit-dev-hxm/remote-observatory-tom-repo/tom_app .
+#OR
+#docker buildx build --platform linux/arm64/v8,linux/amd64 -t europe-west1-docker.pkg.dev/tom-toolkit-dev-hxm/remote-observatory-tom-repo/tom_app .
+#docker tag europe-west1-docker.pkg.dev/tom-toolkit-dev-hxm/remote-observatory-tom-repo/tom_app europe-west1-docker.pkg.dev/tom-toolkit-dev-hxm/remote-observatory-tom-repo/tom_app:test1
+#docker push europe-west1-docker.pkg.dev/tom-toolkit-dev-hxm/remote-observatory-tom-repo/tom_app:test1
+#docker run -it -e PORT=8080 -p 8080:8080 --rm europe-west1-docker.pkg.dev/tom-toolkit-dev-hxm/remote-observatory-tom-repo/tom_app:test
+## Cloudrun deployment
+# gcloud run deploy tom-toolkit-instance-dev-b614bde8 --image europe-west1-docker.pkg.dev/tom-toolkit-dev-hxm/remote-observatory-tom-repo/tom_app:test1 --update-labels ^,^managed-by=manual_deploy,commit-sha=XXXXXXXXXXXXXXX --format json --region europe-west1 --project tom-toolkit-dev-hxm
+# gcloud run services proxy tom-toolkit-instance-dev-b614bde8 --port=8080 --project=tom-toolkit-dev-hxm --region=europe-west1
+# cloud-sql-proxy --auto-iam-authn tom-toolkit-dev-hxm:europe-west1:tom-toolkit-instance-dev-ae78f371
+#Then go to http://localhost:8080
+
+
+#env:
+#  IMAGE_NAME: ''
+#  PROJECT_ID: ''
+#  AR_REPO_LOCATION: ''
+#  AR_URL: ''
+#  SERVICE_ACCOUNT: ''
+#  WORKLOAD_IDENTITY_PROVIDER: ''
+
+jobs:
+  push_push_deploy:
+    permissions:
+      id-token: write # This is required for requesting the JWT
+      contents: read  # This is required for actions/checkout
+    runs-on: ubuntu-latest
+    environment: |-
+      ${{ github.ref_name == 'deployment/dev'  && 'dev'
+       || github.ref_name == 'deployment/prd'  && 'prd' }}
+    env:
+      GOOGLE_CLOUD_PROJECT: ${{ vars.PROJECT_ID }}
+      DEBUG: ${{ github.ref_name == 'deployment/dev'  && 'True' }}
+    steps:
+#      - shell: bash
+#        run: |
+#          echo "YOUR WIP is ${{ vars.AR_URL }}/${{ vars.IMAGE_NAME }} "
+      - uses: 'actions/checkout@v4'
+      - id: 'auth' # The exact debug procedure is described here: https://cloud.google.com/iam/docs/audit-logging/examples-workload-identity#exchange-federated
+        uses: 'google-github-actions/auth@v2' # https://github.com/google-github-actions/auth
+        with:
+          token_format: access_token
+          project_id: ${{ vars.PROJECT_ID }}
+          workload_identity_provider: ${{ vars.WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ vars.SERVICE_ACCOUNT }}
+      - id: 'docker-auth'
+        uses: 'docker/login-action@v3'
+        with:
+          username: 'oauth2accesstoken'
+          password: '${{ steps.auth.outputs.access_token }}'
+          registry: '${{ vars.AR_REPO_LOCATION }}-docker.pkg.dev'
+#        - id: 'Set up Cloud SDK'
+#          uses: 'google-github-actions/setup-gcloud@v2'
+#          with:
+#            version: '>= 363.0.0'
+      - id: 'get_gcp_client'
+        uses: 'google-github-actions/setup-gcloud@v2'
+        with:
+          version: '>= 416.0.0'
+      - id: 'build_docker_and_push'
+        run: |-
+          mkdir -p ./astrometry_data/ && gsutil -m cp -n gs://astrometry_data/* ./astrometry_data/
+          docker image prune -f && docker buildx prune -f && docker container prune -f
+          docker buildx build --platform linux/amd64 -t ${{ vars.AR_URL }}/${{ vars.IMAGE_NAME }} .
+          docker tag ${{ vars.AR_URL }}/${{ vars.IMAGE_NAME }} ${{ vars.AR_URL }}/${{ vars.IMAGE_NAME }}:${{ github.sha }}
+          docker push ${{ vars.AR_URL }}/${{ vars.IMAGE_NAME }}:${{ github.sha }}
+          docker tag ${{ vars.AR_URL }}/${{ vars.IMAGE_NAME }} ${{ vars.AR_URL }}/${{ vars.IMAGE_NAME }}:latest
+          docker push ${{ vars.AR_URL }}/${{ vars.IMAGE_NAME }}:latest
+      - id: 'build_packer'
+        run: |-
+          cd packer
+          packer build -var-file=./vars/ubuntu.pkrvars.hcl -var "base_docker_image=${{ vars.AR_URL }}/${{ vars.IMAGE_NAME }}" -only="gen-fs-tarball.*" ./templates/ubuntu-template.pkr.hcl
+          mkdir ubuntu.dir
+          tar -vxf ubuntu.tar -C ubuntu.dir
+          packer build -var-file=./vars/ubuntu.pkrvars.hcl -only="gen-boot-img.*" ./templates/ubuntu-template.pkr.hcl
+          packer build -var-file=./vars/ubuntu.pkrvars.hcl -only="customize-boot-img.*" ./templates/ubuntu-template.pkr.hcl 
+          mv customized_ubuntu.img.gz  customized_ubuntu-:${{ github.sha }}.img.gz
+          rm -rf mnt ubuntu.*
