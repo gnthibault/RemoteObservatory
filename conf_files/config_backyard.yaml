@@ -78,16 +78,6 @@ observatory:
                 indi_host: robot-scope
                 indi_port: 7624
         indi_driver_connect_delay_s: 5
-        indi_resetable_instruments_driver_map:
-            ZWO CCD: ZWO CCD ASI290MM Mini
-            Altair: Altair AA183MPRO
-            Shelyak SPOX: Shelyak SPOX
-            PlayerOne CCD: PlayerOne CCD Ares-M PRO
-            Arduino telescope controller: Arduino
-        indi_mount_driver_name: Losmandy Gemini
-        indi_mount_device_name: Losmandy Gemini
-        indi_webserver_host: robot-scope
-        indi_webserver_port: 8624
         indi_client: #TODO TN urgent
             indi_host: robot-scope
             indi_port: 7624
@@ -146,6 +136,9 @@ mount:
     equatorial_eod: J2000 # JNOW
     tcp_host: 192.168.8.63
     tcp_port: 11110
+    max_east_safety_deg: 95
+    max_west_safety_deg: 95
+    max_west_post_meridian_deg: 2.5
     indi_client:
         indi_host: robot-scope
         indi_port: 7624
@@ -165,7 +158,7 @@ cameras:
         adjust_center_x: 877
         adjust_center_y: 637
         adjust_roi_search_size: 50
-        adjust_pointing_seconds: 40
+        adjust_pointing_seconds: 20
         do_autofocus: false
         autofocus_seconds: 4
         autofocus_roi_size : 750
@@ -194,7 +187,7 @@ cameras:
         do_guiding: false
         do_pointing: false
         pointing_seconds: 5
-        do_adjust_pointing: true
+        do_adjust_pointing: false
         adjust_center_x: 400
         adjust_center_y: 400
         adjust_roi_search_size: 50
@@ -281,7 +274,7 @@ pointer:
     gen_hips: False
     timeout_seconds: 900
     max_iterations: 10
-    max_pointing_error_seconds: 10
+    max_pointing_error_seconds: 15
 offset_pointer:
     module: StarOffsetPointer #StarOffsetPointer #NoOffsetPointer #InvisibleObjectOffsetPointer
     timeout_seconds: 300

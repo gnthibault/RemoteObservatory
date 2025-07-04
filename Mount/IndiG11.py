@@ -230,12 +230,18 @@ class IndiG11(IndiAbstractMount):
                 equatorial_eod="J2000",  # JNOW
                 tcp_host="192.168.8.63",
                 tcp_port="11110",
+                max_east_safety_deg=95,
+                max_west_safety_deg=95,
+                max_west_post_meridian_deg=2.5,
                 indi_client=dict(
                     indi_host="localhost",
                     indi_port=7625)
             )
         self.tcp_host = config["tcp_host"]
         self.tcp_port = config["tcp_port"]
+        self.max_east_safety_deg = config["max_east_safety_deg"]
+        self.max_west_safety_deg = config["max_west_safety_deg"]
+        self.max_west_post_meridian_deg = config["max_west_post_meridian_deg"]
 
         super().__init__(location=location,
                          serv_time=serv_time,
@@ -247,10 +253,11 @@ class IndiG11(IndiAbstractMount):
         self.connect(connect_device=False)
         self.set_connectivity_config()
         self.connect_device()
-        self.set_startup_mode(mode='WARM_RESTART')
+        self.set_startup_mode(mode='WARM_RESTART') #COLD_START')
         self.set_park_settings(mode='HOME')
         self.set_geographic_config()
         self.set_time_config()
+        self.set_limit_config()
         #TODO TN URGENT as a temporary fix. we decided to park at startup but
         # the proper behaviour for the mount should be parked status by default
         # at startup, see https://indilib.org/forum/general/5497-indi-losmandy-driver-impossible-to-get-proper-park-status.html#41664
@@ -267,6 +274,20 @@ class IndiG11(IndiAbstractMount):
         utc_offset_value = self.serv_time.timezone.localize(self.serv_time.get_astropy_time_from_utc().value).utcoffset().total_seconds()/60/60
         self.set_text("TIME_UTC", {"UTC": utc_time_str}, sync=True)
         self.set_number('TIME_UTC', {'OFFSET': utc_offset_value}, sync=True)
+
+    def set_limit_config(self):
+        """
+            Losmandy Gemini.SAFETY_LIMITS.EAST_SAFTEY=114
+            Losmandy Gemini.SAFETY_LIMITS.WEST_SAFTEY=123
+            Losmandy Gemini.SAFETY_LIMITS.WEST_GOTO=2.5
+        :return:
+        """
+        self.set_number(
+            'SAFETY_LIMITS',
+            {   'EAST_SAFTEY': self.max_east_safety_deg,
+                'WEST_SAFTEY': self.max_west_safety_deg,
+                'WEST_GOTO': self.max_west_post_meridian_deg},
+            sync=True)
 
     def set_geographic_config(self):
         self.set_number('GEOGRAPHIC_COORD', {

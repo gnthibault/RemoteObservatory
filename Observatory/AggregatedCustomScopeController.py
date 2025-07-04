@@ -588,29 +588,14 @@ class AggregatedCustomScopeController(Base):
             config = dict(
                 config_upbv2=None,
                 config_arduino=None,
-                indi_driver_connect_delay_s=10,
-                indi_resetable_instruments_driver_map={
-                    "ZWO CCD": "ZWO CCD ASI290MM Mini",
-                    "Altair": "Altair AA183MPRO",
-                    "Shelyak SPOX": "Shelyak SPOX",
-                    "PlayerOne CCD": "PlayerOne CCD Ares-M PRO",
-                    "Arduino telescope controller": "Arduino"
-                },
-                indi_mount_driver_name="Losmandy Gemini",
-                indi_webserver_host="localhost",
-                indi_webserver_port="8624")
+                indi_driver_connect_delay_s=10)
 
         # Actual device config
         self.config_upbv2 = config["config_upbv2"]
         self.config_arduino = config["config_arduino"]
 
         # Local features
-        self._indi_resetable_instruments_driver_map = config["indi_resetable_instruments_driver_map"]
         self._indi_driver_connect_delay_s = config["indi_driver_connect_delay_s"]
-        self._indi_mount_driver_name = config["indi_mount_driver_name"]
-        self._indi_mount_device_name = config["indi_mount_device_name"]
-        self._indi_webserver_host = config["indi_webserver_host"]
-        self._indi_webserver_port = config["indi_webserver_port"]
 
         # device related intialization will happen at initialization
         self.upbv2 = UPBV2(
