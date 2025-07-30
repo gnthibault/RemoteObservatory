@@ -17,6 +17,7 @@ pyaml==20.4.0
 pydantic==2.2.1
 pydantic-core==2.6.1
 #pygraphviz==1.6
+#pyindi-client==2.1.9
 PyLaTeX==1.4.2
 pymongo==3.11.3
 paho-mqtt==1.6.1

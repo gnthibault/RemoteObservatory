@@ -81,18 +81,18 @@ calibration:
         #module: IndiSpectroController
         #device_name: spox
 mount:
-    #module: IndiG11
-    #mount_name: Losmandy Gemini
-    module: IndiAbstractMountSimulator
-    mount_name : Telescope Simulator
+    module: Indi10Micron
+    mount_name: LX200 10micron
+    #module: IndiAbstractMountSimulator
+    #mount_name : Telescope Simulator
     equatorial_eod: J2000 # JNOW
-    is_simulator: true
+    is_simulator: false
     simulator_settings:
         switches:
             MOUNT_TYPE: ['EQ_GEM']
             SIM_PIER_SIDE: ['PS_ON']
     indi_client :
-        indi_host : localhost
+        indi_host : 192.168.8.202
         indi_port : 7624
         use_unique_client: True
 cameras:

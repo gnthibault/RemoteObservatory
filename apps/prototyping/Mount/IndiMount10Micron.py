@@ -42,9 +42,10 @@ if __name__ == '__main__':
     #JNow: 15h 20m 40s  71° 46' 13"
     #J2000:  15h 20m 43s  71° 50' 02"
     #AzAlt:   332° 12' 25"  61° 48' 28"
-    ra = 19.9
-    dec = 9
-    c = SkyCoord(ra=ra*u.hourangle, dec=dec*u.degree, frame='icrs')
+    #ra = 15.9
+    #dec = 9
+    #c = SkyCoord(ra=ra*u.hourangle, dec=dec*u.degree, frame='icrs')
+    c = SkyCoord.from_name("Vega")
     print("BEFORE SLEWING --------------------------")
     mount.set_slew_rate('3x')
     mount.slew_to_coord_and_track(c)

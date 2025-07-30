@@ -3,81 +3,18 @@ constraints :
     maxairmass : 17 #for testing, normally use 2
     minmoonseparationdeg : 2 # normally put 45
 targets :
-    "Altair":
-        priority : 0
-        count : 1
-        temperature : 10
-        gain: 150
-        offset: 30
-        exp_time_sec : 20
-    "Capella":
-        priority: 0
-        count: 1
-        temperature: 15
-        gain: 150
-        offset: 30
-        exp_time_sec: 20
-    "10 Lacertae":
-        priority: 0
-        count: 1
-        temperature: 15
-        gain: 150
-        offset: 30
-        exp_time_sec: 20
-    "Gamma Cassiopeiae" :
-        priority : 0
-        count : 2
-        temperature : 10
-        gain: 150
-        offset: 30
-        exp_time_sec : 5
     "T CrB" :
         priority : 0
-        count : 1
-        temperature : 10
-        gain: 150
-        offset: 30
-        exp_time_sec : 20
-    "V375 Lac" :
-        priority : 0
-        count : 2
-        temperature : 10
-        gain: 150
-        offset: 30
-        exp_time_sec : 5
-    "GK Per":
-        priority: 0
-        count: 2
-        temperature: 15
-        gain: 150
-        offset: 30
-        exp_time_sec: 5
-    "Alkaid":
-        priority: 0
-        count: 2
-        temperature: 15
-        gain: 150
-        offset: 30
-        exp_time_sec: 5
-    "Mizar":
-        priority: 0
-        count: 2
-        temperature: 15
-        gain: 150
-        offset: 30
-        exp_time_sec: 5
-    "Alioth":
-        priority: 0
-        count: 2
-        temperature: 15
-        gain: 150
-        offset: 30
-        exp_time_sec: 5
+        count : 10
+        temperature : -10
+        gain: 255
+        offset: 35
+        exp_time_sec : 30
 
 reference_observation:
     count : 10
-    temperature : 10
-    gain : 150
-    offset: 30
-    exp_time_sec : 20
+    temperature : -10
+    gain : 255
+    offset: 35
+    exp_time_sec : 10
 

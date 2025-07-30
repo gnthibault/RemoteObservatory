@@ -9,7 +9,7 @@ from skimage import exposure
 from helper.IndiClient import IndiClient
 
 # Local stuff : Camera
-from Camera.IndiASICamera import IndiASICamera
+from Camera.IndiPlayerOneCamera import IndiPlayerOneCamera
 from Service.NTPTimeService import HostTimeService
 
 if __name__ == '__main__':
@@ -24,8 +24,8 @@ if __name__ == '__main__':
     #     indi_port="7624"
     # ))
     config = dict(
-        camera_name='ZWO CCD ASI183MM Pro',
-        pointing_seconds=30,
+        camera_name='PlayerOne CCD Ares-M PRO',
+        pointing_seconds=5,
         adjust_center_x=400,
         adjust_center_y=400,
         adjust_roi_search_size=50,
@@ -34,7 +34,7 @@ if __name__ == '__main__':
         autofocus_roi_size=500,
         autofocus_merit_function="half_flux_radius",
         indi_client=dict(
-            indi_host="192.168.144.32",
+            indi_host="192.168.8.202",
             indi_port=7624),
         # focuser=dict(
         #     module="IndiFocuser",
@@ -56,7 +56,7 @@ if __name__ == '__main__':
     )
 
     # test indi virtual camera class
-    cam = IndiASICamera(config=config,
+    cam = IndiPlayerOneCamera(config=config,
                         serv_time=HostTimeService(),
                         connect_on_create=False)
     cam.connect()
