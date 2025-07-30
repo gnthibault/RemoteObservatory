@@ -261,7 +261,7 @@ USER $USERNAME
 RUN --mount=type=cache,target=$HOME/.cache,uid=$USERID \
     mkdir -p $HOME/projects/phd2 \
     && git -C $HOME/.cache/phd2/ fetch || retry -t 8 -d 10 git clone https://github.com/gnthibault/phd2.git $HOME/.cache/phd2/ \
-    && cd $HOME/.cache/phd2/ && git checkout master && cp -r --parents ./* $HOME/projects/phd2/ \
+    && cd $HOME/.cache/phd2/ && git checkout thibault/fix_find_star && cp -r --parents ./* $HOME/projects/phd2/ \
     && mkdir -p $HOME/projects/build/phd2 \
     && cd $HOME/projects/build/phd2 \
     && cmake -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_SYSTEM_PROCESSOR=$BARCH $HOME/projects/phd2 \
