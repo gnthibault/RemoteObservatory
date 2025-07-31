@@ -51,7 +51,7 @@ class IndiCamera(IndiDevice):
                 autofocus_merit_function="half_flux_radius",
                 focuser=dict(
                     module="IndiFocuser",
-                    focuser_name="Focuser Simulator",
+                    device_name="Focuser Simulator",
                     port="/dev/ttyUSB0",
                     focus_range=dict(
                         min=1,
@@ -82,17 +82,17 @@ class IndiCamera(IndiDevice):
             self.connect()
 
         # Specific initialization
-        self.pointing_seconds = float(config['pointing_seconds'])
+        self.pointing_seconds = float(config.get('pointing_seconds',5))
         self.default_exp_time_sec = config.get('default_exp_time_sec', 5)
         self.default_gain = config.get('default_gain', 50)
         self.default_offset = config.get('default_offset', 30)
-        self.adjust_center_x = float(config['adjust_center_x'])
-        self.adjust_center_y = float(config['adjust_center_y'])
-        self.adjust_roi_search_size = int(config['adjust_roi_search_size'])
-        self.adjust_pointing_seconds = float(config['adjust_pointing_seconds'])
-        self.autofocus_seconds = float(config['autofocus_seconds'])
-        self.autofocus_roi_size = int(config['autofocus_roi_size'])
-        self.autofocus_merit_function = config['autofocus_merit_function']
+        self.adjust_center_x = float(config.get('adjust_center_x',500))
+        self.adjust_center_y = float(config.get('adjust_center_y',500))
+        self.adjust_roi_search_size = int(config.get('adjust_roi_search_size',50))
+        self.adjust_pointing_seconds = float(config.get('adjust_pointing_seconds',5))
+        self.autofocus_seconds = float(config.get('autofocus_seconds',5))
+        self.autofocus_roi_size = config.get('autofocus_roi_size', None)
+        self.autofocus_merit_function = config.get("autofocus_merit_function", "half_flux_radius")
         self._setup_focuser(config, connect_on_create)
         self._setup_filter_wheel(config, connect_on_create)
 
@@ -115,7 +115,6 @@ class IndiCamera(IndiDevice):
             focuser = load_module('Focuser.'+focuser_name)
             #TODO TN, we need to better handle optional connection of focuser
             self.focuser = getattr(focuser, focuser_name)(
-                logger=None,
                 config=cfg,
                 connect_on_create=connect_on_create)
         except Exception as e:
@@ -199,7 +198,7 @@ class IndiCamera(IndiDevice):
     def get_remaining_exposure_time(self):
         return self.get_number('CCD_EXPOSURE')['CCD_EXPOSURE_VALUE']
 
-    def get_thumbnail(self, exp_time_sec, thumbnail_size):
+    def get_thumbnail(self, exp_time_sec, thumbnail_size=None):
         """
             There are 4 cases:
             -ccd size is even, thumb size is even
@@ -215,26 +214,28 @@ class IndiCamera(IndiDevice):
             2.5-2.5 = 0 ok
             2.5-1.5 = 1 ok
         """
-        sensor_size = self.get_sensor_size()
-        thumbnail_size = min(thumbnail_size, sensor_size["CCD_MAX_X"])
-        thumbnail_size = min(thumbnail_size, sensor_size["CCD_MAX_Y"])
-        center_x = sensor_size["CCD_MAX_X"] / 2
-        center_y = sensor_size["CCD_MAX_Y"] / 2
-        left_most = np.floor(center_x - thumbnail_size / 2)
-        top_most = np.floor(center_y - thumbnail_size / 2)
-        roi = {'X': left_most, 'Y': top_most, 'WIDTH': thumbnail_size,
-                     'HEIGHT': thumbnail_size}
-        self.logger.debug(f"Setting camera {self.name} roi to {roi}")
-        self.set_roi(roi)
+        if thumbnail_size is not None:
+            sensor_size = self.get_sensor_size()
+            thumbnail_size = min(thumbnail_size, sensor_size["CCD_MAX_X"])
+            thumbnail_size = min(thumbnail_size, sensor_size["CCD_MAX_Y"])
+            center_x = sensor_size["CCD_MAX_X"] / 2
+            center_y = sensor_size["CCD_MAX_Y"] / 2
+            left_most = np.floor(center_x - thumbnail_size / 2)
+            top_most = np.floor(center_y - thumbnail_size / 2)
+            roi = {'X': left_most, 'Y': top_most, 'WIDTH': thumbnail_size,
+                         'HEIGHT': thumbnail_size}
+            self.logger.debug(f"Setting camera {self.name} roi to {roi}")
+            self.set_roi(roi)
         old_exp_time_sec = self.exp_time_sec
         self.exp_time_sec = exp_time_sec
         self.shoot_async()
         self.synchronize_with_image_reception()
         fits = self.get_received_image()
-        roi = {'X': 0, 'Y': 0, 'WIDTH': sensor_size["CCD_MAX_X"],
-                     'HEIGHT': sensor_size["CCD_MAX_Y"]}
-        self.logger.debug(f"Resetting camera {self.name} roi to {roi}")
-        self.set_roi(roi)
+        if thumbnail_size is not None:
+            roi = {'X': 0, 'Y': 0, 'WIDTH': sensor_size["CCD_MAX_X"],
+                         'HEIGHT': sensor_size["CCD_MAX_Y"]}
+            self.logger.debug(f"Resetting camera {self.name} roi to {roi}")
+            self.set_roi(roi)
         self.exp_time_sec = old_exp_time_sec
         return fits
 

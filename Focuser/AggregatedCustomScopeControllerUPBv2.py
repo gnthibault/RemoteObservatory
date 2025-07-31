@@ -10,7 +10,7 @@ from Focuser.IndiFocuserMixin import IndiFocuserMixin
 from utils.error import ScopeControllerError
 from utils.error import IndiClientPredicateTimeoutError
 
-class UPBV2(IndiDevice, IndiFocuserMixin):
+class AggregatedCustomScopeControllerUPBv2(IndiDevice, IndiFocuserMixin):
     """
         'CONNECTION': <helper.device.indiswitchvector at 0x7effc16842e0>,
         'DRIVER_INFO': <helper.device.inditextvector at 0x7effc1638040>,
@@ -240,7 +240,7 @@ class UPBV2(IndiDevice, IndiFocuserMixin):
 
         # dew parameters
         self.auto_dew_identifiers = config["auto_dew_identifiers"]
-        self.auto_dew_aggressivity = str(config["auto_dew_aggressivity"])
+        self.auto_dew_aggressivity = float(config.get("auto_dew_aggressivity", 150))
 
         # Focus parameters
         self.focus_range = config['focus_range']
@@ -255,7 +255,7 @@ class UPBV2(IndiDevice, IndiFocuserMixin):
                             indi_client_config=config["indi_client"])
 
         if connect_on_create:
-            self.initialize()
+            self.default_connect()
 
         # Finished configuring
         self.logger.debug('configured successfully')
@@ -267,7 +267,7 @@ class UPBV2(IndiDevice, IndiFocuserMixin):
         self.initialize()
         self.logger.debug("Successfully unparked")
 
-    def initialize(self):
+    def default_connect(self):
         """
         Connection is made in two phases:
           * connect client to server so that we can setup options, like port
@@ -281,6 +281,19 @@ class UPBV2(IndiDevice, IndiFocuserMixin):
         self.connect(connect_device=False)
         self.set_device_communication_options()
         self.connect_device()
+
+    def initialize(self):
+        """
+        Connection is made in two phases:
+          * connect client to server so that we can setup options, like port
+          * connect server to actual physical device
+
+        Then "initialize" all outputs such that the telescope is in a steady
+        state, that can last a very long time (multiple days without operation)
+        :return:
+        """
+        self.logger.debug("Initializing")
+        self.default_connect()
         self.set_all_labels()
         self.initialize_all_power_on_boot()
         self.initialize_all_power()
@@ -328,10 +341,12 @@ class UPBV2(IndiDevice, IndiFocuserMixin):
             self.polling_ms = polling_ms
         self.set_number("POLLING_PERIOD", {'PERIOD_MS': self.polling_ms})
 
-    def set_auto_dew_aggressivity(self, auto_dew_aggressivity=None):
+    def set_auto_dew_aggressivity(self, auto_dew_aggressivity=150): #50->250
         if auto_dew_aggressivity is not None:
-            self.auto_dew_aggressivity = str(auto_dew_aggressivity)
-        self.set_text("AUTO_DEW_AGG", {'AUTO_DEW_AGG_VALUE': self.auto_dew_aggressivity})
+            self.auto_dew_aggressivity = float(auto_dew_aggressivity)
+        else:
+            self.auto_dew_aggressivity = 150
+        self.set_number("AUTO_DEW_AGG", {'AUTO_DEW_AGG_VALUE': self.auto_dew_aggressivity})
 
     def set_all_labels(self):
         self.set_text("POWER_CONTROL_LABEL", self.power_labels)

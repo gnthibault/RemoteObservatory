@@ -51,7 +51,7 @@ if __name__ == '__main__':
         autofocus_merit_function="half_flux_radius",
         focuser=dict(
             module="IndiFocuser",
-            focuser_name="Focuser Simulator",
+            device_name="Focuser Simulator",
             port="/dev/ttyUSB0",
             focus_range=dict(
                 min=25000,

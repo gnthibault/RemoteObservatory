@@ -1,19 +1,13 @@
 # Basic stuff
 import logging
-import time
 
 # Local stuff : IndiClient
 #from helper.IndiClient import IndiClient
 
 # Local stuff : Mount
-from Observatory.AggregatedCustomScopeController import UPBV2
-from Observatory.AggregatedCustomScopeController import ArduinoServoController
-from Observatory.AggregatedCustomScopeController import AggregatedCustomScopeController
-
+from Focuser.AggregatedCustomScopeControllerUPBv2 import UPBV2
 
 #Astropy stuff
-from astropy import units as u
-from astropy.coordinates import SkyCoord
 logging.getLogger().setLevel(logging.DEBUG)
 
 if __name__ == '__main__':
@@ -26,7 +20,7 @@ if __name__ == '__main__':
         baud_rate="9600",
         polling_ms="1000",
         dustcap_travel_delay_s="10",
-        adjustable_voltage_value="5",
+        adjustable_voltage_value=5,
         power_labels= dict(
             POWER_LABEL_1="MAIN_TELESCOPE_DUSTCAP_CONTROL",
             POWER_LABEL_2="SPOX_AND_DUSTCAP_POWER",
@@ -59,7 +53,7 @@ if __name__ == '__main__':
             PRIMARY_FAN="False",
             SECONDARY_DEW_HEATER="True",
             FINDER_DEW_HEATER="True"),
-        auto_dew_aggressivity="150 # Number between 50 and 250",
+        auto_dew_aggressivity=150 # Number between 50 and 250",
         indi_client= dict(
             indi_host="localhost",
             indi_port="7625")

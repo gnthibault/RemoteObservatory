@@ -21,7 +21,7 @@ class IndiFocuser(IndiDevice, IndiFocuserMixin):
         if config is None:
             config = dict(
                 module="IndiFocuser",
-                focuser_name="Focuser Simulator",
+                device_name="Focuser Simulator",
                 port="/dev/ttyUSB0",
                 focus_range=dict(
                     min=1,
@@ -42,11 +42,11 @@ class IndiFocuser(IndiDevice, IndiFocuserMixin):
         self.autofocus_step = config['autofocus_step']
         self.autofocus_range = config['autofocus_range']
 
-        logger.debug(f"Indi Focuser, focuser name is: {config['focuser_name']}")
+        logger.debug(f"Indi Focuser, focuser name is: {config['device_name']}")
 
         # device related intialization
         IndiDevice.__init__(self,
-                            device_name=config['focuser_name'],
+                            device_name=config['device_name'],
                             indi_driver_name=config.get('indi_driver_name', None),
                             indi_client_config=config["indi_client"])
         if connect_on_create:

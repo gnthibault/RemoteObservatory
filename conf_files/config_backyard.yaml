@@ -205,7 +205,7 @@ cameras:
         autofocus_merit_function : half_flux_radius #vollath_F4
         #focuser:
         #    module: IndiFocuser
-        #    focuser_name: Focuser Simulator
+        #    device_name: Focuser Simulator
         #    port: /dev/ttyUSB0
         #    focus_range:
         #        min: 32500

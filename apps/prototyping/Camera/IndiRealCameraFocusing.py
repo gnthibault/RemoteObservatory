@@ -1,17 +1,11 @@
 # Basic stuff
-import logging
 import logging.config
-import threading
 
 # Miscellaneous
-from astropy.io import fits
-import io
 import matplotlib.pyplot as plt
-import numpy as np
 
 # Local stuff : Camera
 from Camera.IndiASICameraNonCool import IndiASICameraNonCool
-from Observatory.AggregatedCustomScopeController import AggregatedCustomScopeController
 from Service.NTPTimeService import HostTimeService
 
 # For this t
@@ -25,19 +19,21 @@ if __name__ == '__main__':
         # SCOPE_INFO=dict(
         #     FOCAL_LENGTH=800,
         #     APERTURE=200),
-        pointing_seconds=30,
-        autofocus_seconds=5,
-        autofocus_roi_size=650,
-        autofocus_merit_function="half_flux_radius",
+        default_exp_time_sec=5,
+        default_gain=300,
+        default_offset=10,
+        autofocus_seconds=4,
+        autofocus_roi_size=None,
+        autofocus_merit_function="half_flux_radius", #"vollath_F4"
         focuser=dict(
-            module="AggregatedCustomScopeController",
-            focuser_name="Pegasus UPB",
+            module="AggregatedCustomScopeControllerUPBv2",
+            device_name="Pegasus UPB",
             device_port="/dev/serial/by-id/usb-Pegasus_Astro_UPBv2_revD_UPB25S4VWV-if00-port0",
             connection_type="CONNECTION_SERIAL",
             baud_rate="9600",
             polling_ms="1000",
             dustcap_travel_delay_s="10",
-            adjustable_voltage_value="5",
+            adjustable_voltage_value=5,
             power_labels=dict(
                 POWER_LABEL_1="MAIN_TELESCOPE_DUSTCAP_CONTROL",
                 POWER_LABEL_2="SPOX_AND_DUSTCAP_POWER",
@@ -70,16 +66,16 @@ if __name__ == '__main__':
                 PRIMARY_FAN="False",
                 SECONDARY_DEW_HEATER="True",
                 FINDER_DEW_HEATER="True"),
-            auto_dew_aggressivity="150 # Number between 50 and 250",
+            auto_dew_aggressivity=150, # Number between 50 and 250
             focus_range=dict(
-                min=25000,
-                max=50000),
+                min=16000,
+                max=17000),
             autofocus_step=dict(
-                coarse=2500,
-                fine=1000),
+                coarse=100,
+                fine=50),
             autofocus_range=dict(
-                coarse=25000,
-                fine=10000),
+                coarse=1000,
+                fine=500),
             indi_client=dict(
                 indi_host="192.168.8.202",
                 indi_port="7624")
