@@ -8,8 +8,9 @@ import numpy as np
 
 # Indi stuff
 from helper.IndiDevice import IndiDevice
+from Focuser.IndiFocuserMixin import IndiFocuserMixin
 
-class IndiFocuser(IndiDevice):
+class IndiFocuser(IndiDevice, IndiFocuserMixin):
     """
 
     """
@@ -88,23 +89,6 @@ class IndiFocuser(IndiDevice):
     def on_emergency(self):
         self.logger.debug('Indi Focuser: on emergency routine started...')
         self.logger.debug('Indi Focuser: on emergency routine finished')
-
-    def get_position(self):
-        """ Current encoder position of the focuser """
-        #ret = self.get_number("REL_FOCUS_POSITION")["FOCUS_RELATIVE_POSITION"]
-        ret = self.get_number("ABS_FOCUS_POSITION")["FOCUS_ABSOLUTE_POSITION"]
-        self.logger.debug(f"{self} : current position is {ret}")
-        return ret
-
-    def move_to(self, position):
-        """ Move focuser to new encoder position """
-        self.logger.debug(f"{self}  moving to position {position}")
-        self.set_number('ABS_FOCUS_POSITION', #REL_FOCUS_POSITION
-                        {'FOCUS_ABSOLUTE_POSITION': np.float64(position)}, #FOCUS_RELATIVE_POSITION
-                        sync=True, timeout=self.timeout)
-        new_position = self.get_position()
-        self.logger.debug(f"{self} Now position is {new_position}")
-        return new_position
 
     def __str__(self):
         return f"Focuser: {self.device_name}"

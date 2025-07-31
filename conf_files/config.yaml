@@ -97,8 +97,8 @@ mount:
         use_unique_client: True
 cameras:
     -
-        module: IndiAbstractCameraSimulatorNonCoolNonOffset
-        camera_name : Guide Simulator
+        module: IndiASICameraNonCool
+        camera_name : ZWO CCD ASI290MM Mini
         do_acquisition: false
         SIMULATOR_SETTINGS: # 290MM
             SIM_XRES: 1000 #1936
@@ -127,11 +127,11 @@ cameras:
         do_pointing: true
         pointing_seconds: 5
         default_exp_time_sec: 5
-        default_gain: 50
-        default_offset: 30
+        default_gain: 100
+        default_offset: 35
         do_adjust_pointing: true
-        adjust_center_x: 580
-        adjust_center_y: 400
+        adjust_center_x: 978
+        adjust_center_y: 657
         adjust_roi_search_size: 50
         adjust_pointing_seconds: 5
         do_autofocus: true # true

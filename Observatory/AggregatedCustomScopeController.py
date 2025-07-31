@@ -6,10 +6,11 @@ import time
 # Local
 from Base.Base import Base
 from helper.IndiDevice import IndiDevice
+from Focuser.IndiFocuserMixin import IndiFocuserMixin
 from utils.error import ScopeControllerError
 from utils.error import IndiClientPredicateTimeoutError
 
-class UPBV2(IndiDevice, Base):
+class UPBV2(IndiDevice, IndiFocuserMixin):
     """
         'CONNECTION': <helper.device.indiswitchvector at 0x7effc16842e0>,
         'DRIVER_INFO': <helper.device.inditextvector at 0x7effc1638040>,
@@ -57,6 +58,117 @@ class UPBV2(IndiDevice, Base):
         'WEATHER_TEMPERATURE': <helper.device.indinumbervector at 0x7effc1587ac0>,
         'WEATHER_HUMIDITY': <helper.device.indinumbervector at 0x7effc1587c40>,
         'WEATHER_DEWPOINT': <helper.device.indinumbervector at 0x7effc1587dc0>}
+
+        Return of indi_getprop -h 192.168.8.202 -p 7624 "Pegasus UPB.*.*"
+        Pegasus UPB.CONNECTION.CONNECT=On
+        Pegasus UPB.CONNECTION.DISCONNECT=Off
+        Pegasus UPB.DRIVER_INFO.DRIVER_NAME=Pegasus UPB
+        Pegasus UPB.DRIVER_INFO.DRIVER_EXEC=indi_pegasus_upb
+        Pegasus UPB.DRIVER_INFO.DRIVER_VERSION=1.6
+        Pegasus UPB.DRIVER_INFO.DRIVER_INTERFACE=32904
+        Pegasus UPB.DEBUG.ENABLE=Off
+        Pegasus UPB.DEBUG.DISABLE=On
+        Pegasus UPB.SIMULATION.ENABLE=Off
+        Pegasus UPB.SIMULATION.DISABLE=On
+        Pegasus UPB.CONFIG_PROCESS.CONFIG_LOAD=Off
+        Pegasus UPB.CONFIG_PROCESS.CONFIG_SAVE=Off
+        Pegasus UPB.CONFIG_PROCESS.CONFIG_DEFAULT=Off
+        Pegasus UPB.CONFIG_PROCESS.CONFIG_PURGE=Off
+        Pegasus UPB.POLLING_PERIOD.PERIOD_MS=1000
+        Pegasus UPB.CONNECTION_MODE.CONNECTION_SERIAL=On
+        Pegasus UPB.SYSTEM_PORTS.Pegasus_Astro_UPBv2_revD_UPB25S4VWV=Off
+        Pegasus UPB.SYSTEM_PORTS.FTDI_FT232R_USB_UART_AD0JE0ID=Off
+        Pegasus UPB.DEVICE_PORT.PORT=/dev/serial/by-id/usb-Pegasus_Astro_UPBv2_revD_UPB25S4VWV-if00-port0
+        Pegasus UPB.DEVICE_BAUD_RATE.9600=On
+        Pegasus UPB.DEVICE_BAUD_RATE.19200=Off
+        Pegasus UPB.DEVICE_BAUD_RATE.38400=Off
+        Pegasus UPB.DEVICE_BAUD_RATE.57600=Off
+        Pegasus UPB.DEVICE_BAUD_RATE.115200=Off
+        Pegasus UPB.DEVICE_BAUD_RATE.230400=Off
+        Pegasus UPB.DEVICE_AUTO_SEARCH.INDI_ENABLED=Off
+        Pegasus UPB.DEVICE_AUTO_SEARCH.INDI_DISABLED=On
+        Pegasus UPB.DEVICE_PORT_SCAN.Scan Ports=Off
+        Pegasus UPB.POWER_CYCLE.POWER_CYCLE_OFF=Off
+        Pegasus UPB.POWER_CYCLE.POWER_CYCLE_ON=Off
+        Pegasus UPB.POWER_SENSORS.SENSOR_VOLTAGE=13.800000000000000711
+        Pegasus UPB.POWER_SENSORS.SENSOR_CURRENT=1.1999999999999999556
+        Pegasus UPB.POWER_SENSORS.SENSOR_POWER=16
+        Pegasus UPB.POWER_CONSUMPTION.CONSUMPTION_AVG_AMPS=1.2900000000000000355
+        Pegasus UPB.POWER_CONSUMPTION.CONSUMPTION_AMP_HOURS=6.7199999999999997513
+        Pegasus UPB.POWER_CONSUMPTION.CONSUMPTION_WATT_HOURS=92.989999999999994884
+        Pegasus UPB.REBOOT_DEVICE.REBOOT=Off
+        Pegasus UPB.POWER_CONTROL.POWER_CONTROL_1=Off
+        Pegasus UPB.POWER_CONTROL.POWER_CONTROL_2=On
+        Pegasus UPB.POWER_CONTROL.POWER_CONTROL_3=On
+        Pegasus UPB.POWER_CONTROL.POWER_CONTROL_4=On
+        Pegasus UPB.POWER_CURRENT.POWER_CURRENT_1=0
+        Pegasus UPB.POWER_CURRENT.POWER_CURRENT_2=0.10833333333333333703
+        Pegasus UPB.POWER_CURRENT.POWER_CURRENT_3=0.10833333333333333703
+        Pegasus UPB.POWER_CURRENT.POWER_CURRENT_4=0.18124999999999999445
+        Pegasus UPB.POWER_ON_BOOT.POWER_PORT_1=On
+        Pegasus UPB.POWER_ON_BOOT.POWER_PORT_2=Off
+        Pegasus UPB.POWER_ON_BOOT.POWER_PORT_3=Off
+        Pegasus UPB.POWER_ON_BOOT.POWER_PORT_4=Off
+        Pegasus UPB.POWER_OVER_CURRENT.DEW_A=Ok
+        Pegasus UPB.POWER_OVER_CURRENT.DEW_B=Ok
+        Pegasus UPB.POWER_OVER_CURRENT.DEW_C=Ok
+        Pegasus UPB.POWER_OVER_CURRENT.POWER_PORT_4=Ok
+        Pegasus UPB.POWER_OVER_CURRENT.=Idle
+        Pegasus UPB.POWER_OVER_CURRENT.=Idle
+        Pegasus UPB.POWER_OVER_CURRENT.=Idle
+        Pegasus UPB.ADJUSTABLE_VOLTAGE.ADJUSTABLE_VOLTAGE_VALUE=5
+        Pegasus UPB.AUTO_DEW.DEW_A=Off
+        Pegasus UPB.AUTO_DEW.DEW_B=Off
+        Pegasus UPB.AUTO_DEW.DEW_C=Off
+        Pegasus UPB.AUTO_DEW_AGG.AUTO_DEW_AGG_VALUE=150
+        Pegasus UPB.DEW_PWM.DEW_A=0
+        Pegasus UPB.DEW_PWM.DEW_B=0
+        Pegasus UPB.DEW_PWM.DEW_C=0
+        Pegasus UPB.DEW_CURRENT.DEW_CURRENT_A=0
+        Pegasus UPB.DEW_CURRENT.DEW_CURRENT_B=0
+        Pegasus UPB.DEW_CURRENT.DEW_CURRENT_C=0
+        Pegasus UPB.USB_HUB_CONTROL.INDI_ENABLED=On
+        Pegasus UPB.USB_HUB_CONTROL.INDI_DISABLED=Off
+        Pegasus UPB.USB_PORT_CONTROL.PORT_1=On
+        Pegasus UPB.USB_PORT_CONTROL.PORT_2=On
+        Pegasus UPB.USB_PORT_CONTROL.PORT_3=On
+        Pegasus UPB.USB_PORT_CONTROL.PORT_4=On
+        Pegasus UPB.USB_PORT_CONTROL.PORT_5=On
+        Pegasus UPB.USB_PORT_CONTROL.PORT_6=On
+        Pegasus UPB.FOCUS_MOTION.FOCUS_INWARD=On
+        Pegasus UPB.FOCUS_MOTION.FOCUS_OUTWARD=Off
+        Pegasus UPB.REL_FOCUS_POSITION.FOCUS_RELATIVE_POSITION=0
+        Pegasus UPB.ABS_FOCUS_POSITION.FOCUS_ABSOLUTE_POSITION=16500
+        Pegasus UPB.FOCUS_MAX.FOCUS_MAX_VALUE=100000
+        Pegasus UPB.FOCUS_ABORT_MOTION.ABORT=Off
+        Pegasus UPB.FOCUS_SYNC.FOCUS_SYNC_VALUE=0
+        Pegasus UPB.FOCUS_REVERSE_MOTION.INDI_ENABLED=Off
+        Pegasus UPB.FOCUS_REVERSE_MOTION.INDI_DISABLED=On
+        Pegasus UPB.FOCUS_BACKLASH_TOGGLE.INDI_ENABLED=Off
+        Pegasus UPB.FOCUS_BACKLASH_TOGGLE.INDI_DISABLED=On
+        Pegasus UPB.FOCUS_BACKLASH_STEPS.FOCUS_BACKLASH_VALUE=0
+        Pegasus UPB.FOCUSER_SETTINGS.SETTING_MAX_SPEED=200
+        Pegasus UPB.WEATHER_UPDATE.PERIOD=60
+        Pegasus UPB.WEATHER_REFRESH.REFRESH=Off
+        Pegasus UPB.WEATHER_OVERRIDE.OVERRIDE=Off
+        Pegasus UPB.WEATHER_STATUS.WEATHER_TEMPERATURE=Ok
+        Pegasus UPB.WEATHER_PARAMETERS.WEATHER_TEMPERATURE=16.5
+        Pegasus UPB.WEATHER_PARAMETERS.WEATHER_HUMIDITY=59
+        Pegasus UPB.WEATHER_PARAMETERS.WEATHER_DEWPOINT=8.5
+        Pegasus UPB.WEATHER_TEMPERATURE.MIN_OK=-15
+        Pegasus UPB.WEATHER_TEMPERATURE.MAX_OK=35
+        Pegasus UPB.WEATHER_TEMPERATURE.PERC_WARN=15
+        Pegasus UPB.WEATHER_TEMPERATURE.ALERT_TYPE=0
+        Pegasus UPB.WEATHER_HUMIDITY.MIN_OK=0
+        Pegasus UPB.WEATHER_HUMIDITY.MAX_OK=100
+        Pegasus UPB.WEATHER_HUMIDITY.PERC_WARN=15
+        Pegasus UPB.WEATHER_HUMIDITY.ALERT_TYPE=0
+        Pegasus UPB.WEATHER_DEWPOINT.MIN_OK=0
+        Pegasus UPB.WEATHER_DEWPOINT.MAX_OK=100
+        Pegasus UPB.WEATHER_DEWPOINT.PERC_WARN=15
+        Pegasus UPB.WEATHER_DEWPOINT.ALERT_TYPE=0
+        Pegasus UPB.FIRMWARE_INFO.VERSION=2.4
+        Pegasus UPB.FIRMWARE_INFO.UPTIME=5.223
     """
     def __init__(self,
                  config=None,
@@ -129,6 +241,12 @@ class UPBV2(IndiDevice, Base):
         # dew parameters
         self.auto_dew_identifiers = config["auto_dew_identifiers"]
         self.auto_dew_aggressivity = str(config["auto_dew_aggressivity"])
+
+        # Focus parameters
+        self.focus_range = config['focus_range']
+        self.autofocus_step = config['autofocus_step']
+        self.autofocus_range = config['autofocus_range']
+
 
         # device related intialization
         IndiDevice.__init__(self,
