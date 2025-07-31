@@ -150,7 +150,7 @@ RUN mkdir -p $HOME/projects/astrometry.net \
 # Now Download astrometry.net index files -- This needs to be moved when gsutil is updated
 # RUN pyenv install 3.11 \
 #  && pyenv global 3.11 \
-#  && gsutil -m cp gs://astrometry_data/* /usr/local/astrometry/data/ \
+#  && gcloud storage rsync gs://astrometry_data/ /usr/local/astrometry/data/ --recursive --verbosity=info --delete-unmatched-destination-objects \
 #  && pyenv global $PYTHON_VERSION
 #RUN mv /opt/remote_observatory/astrometry_data/* /usr/local/astrometry/data/
 USER root
