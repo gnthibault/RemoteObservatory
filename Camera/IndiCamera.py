@@ -301,6 +301,7 @@ class IndiCamera(IndiDevice):
         if isinstance(temperature, u.Quantity):
             temperature = temperature.to(u.deg_C).value
         if np.isfinite(temperature):
+            self.logger.debug(f"Camera {self.device_name} setting temperature to {temperature}")
             self.set_number('CCD_TEMPERATURE',
                            {'CCD_TEMPERATURE_VALUE': temperature},
                            sync=True, timeout=1200)

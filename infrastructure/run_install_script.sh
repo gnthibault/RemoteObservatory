@@ -121,6 +121,8 @@ su - ${username} -c "BASH_ENV=$userhome/.nibashrc bash -c 'pip3 install -r ${req
 #echo 'SUBSYSTEM=="vchiq",GROUP="video",MODE="0660"' > /etc/udev/rules.d/10-vchiq-permissions.rules
 #chmod a+x ${parent_path}/telegraf/scripts/*.sh
 #chmod o+x /bin/vcgencmd
+# Conflicts with some devices for some input keyboard we do not use
+rm /usr/lib/udev/rules.d/85-brltty.rules
 
 # Enable serial access
 usermod -a -G dialout $username
