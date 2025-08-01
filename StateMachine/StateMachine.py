@@ -268,7 +268,7 @@ class StateMachine(Machine, Base):
                 time, defaults to False to loop continuously. after run
                 don't do state anymore but still read messages
         """
-        assert self.is_initialized, self.logger.error("not initialized")
+        assert self.is_initialized, "not initialized"
 
         self._keep_running = True
         self._do_states = True

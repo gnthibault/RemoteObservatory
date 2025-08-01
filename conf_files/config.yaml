@@ -132,26 +132,26 @@ cameras:
                 POWER_LABEL_1: MAIN_TELESCOPE_DUSTCAP_CONTROL
                 POWER_LABEL_2: SPOX_AND_DUSTCAP_POWER
                 POWER_LABEL_3: MAIN_CAMERA_POWER
-                POWER_LABEL_4: MOUNT_POWER"
+                POWER_LABEL_4: MOUNT_POWER
             always_on_power_identifiers:
                 MAIN_TELESCOPE_DUSTCAP_CONTROL: True
                 SPOX_AND_DUSTCAP_POWER: False
                 MAIN_CAMERA_POWER: False
-                MOUNT_POWER: False"
+                MOUNT_POWER: False
             usb_labels:
                 USB_LABEL_1: FIELD_CAMERA
                 USB_LABEL_2: PRIMARY_CAMERA
                 USB_LABEL_3: SPECTRO_CONTROL_BOX
                 USB_LABEL_4: ARDUINO_CONTROL_BOX
                 USB_LABEL_5: WIFI_ROUTER
-                USB_LABEL_6: GUIDE_CAMERA"
+                USB_LABEL_6: GUIDE_CAMERA
             always_on_usb_identifiers:
                 FIELD_CAMERA: False
                 PRIMARY_CAMERA: False
                 SPECTRO_CONTROL_BOX: False
                 ARDUINO_CONTROL_BOX: False
                 WIFI_ROUTER: True
-                GUIDE_CAMERA: False"
+                GUIDE_CAMERA: False
             dew_labels:
                 DEW_LABEL_1: PRIMARY_FAN
                 DEW_LABEL_2: SECONDARY_DEW_HEATER
@@ -192,7 +192,7 @@ cameras:
         default_gain: 125
         default_offset: 5
         indi_client :
-            indi_host : localhost
+            indi_host: 192.168.8.202
             indi_port : 7624
             use_unique_client: True
     - module: IndiASICamera
@@ -210,6 +210,9 @@ cameras:
       default_gain: 50
       default_offset: 30
       do_autofocus: false
+      indi_client:
+          indi_host: 192.168.8.202
+          indi_port: 7624
 pointer:
     module: DifferentialPointer #DifferentialPointer #IterativeSync
     gen_hips: False
@@ -227,10 +230,10 @@ offset_pointer:
     max_pointing_error_seconds: 2
 guider:
     module : GuiderPHD2
-    host : 192.168.8.202
+    host : localhost
     port : 4400
-    do_calibration : False
-    profile_name : ohp
+    do_calibration : True
+    profile_name : spectro_br
     exposure_time_sec : 2
     settle :
         pixels : 3

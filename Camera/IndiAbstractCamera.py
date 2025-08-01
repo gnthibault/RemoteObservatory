@@ -27,7 +27,10 @@ class IndiAbstractCamera(IndiCamera, AbstractCamera):
 
     def park(self):
         self.logger.debug(f"Parking camera {self.camera_name}")
-        self.focuser.park()
+        if self.focuser:
+            self.focuser.park()
+        # if self.filter_wheel:
+        #     self.filter_wheel.park()
         self.deinitialize_working_conditions()
         self.disconnect()
         self.stop_indi_server()
@@ -37,7 +40,10 @@ class IndiAbstractCamera(IndiCamera, AbstractCamera):
     def unpark(self):
         self.logger.debug(f"Unparking camera {self.camera_name} with a reset-like behaviour")
         self.park()
-        self.focuser.unpark()
+        if self.focuser:
+            self.focuser.unpark()
+        # if self.filter_wheel:
+        #     self.filter_wheel.unpark()
         self.start_indi_server()
         self.start_indi_driver()
         self.connect(connect_device=True)
