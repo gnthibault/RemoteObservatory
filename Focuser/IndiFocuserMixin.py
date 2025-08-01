@@ -14,6 +14,13 @@ class IndiFocuserMixin:
     Mixin for devices that provide focuser functionality.
     Assumes the base class provides IndiDevice methods like set_number, get_number.
     """
+
+    def park_focuser(self):
+        self.logger.debug(f"{self} : parking focuser")
+
+    def unpark_focuser(self):
+        self.logger.debug(f"{self} : unparking focuser")
+
     def get_position(self):
         """ Current encoder position of the focuser """
         #ret = self.get_number("REL_FOCUS_POSITION")["FOCUS_RELATIVE_POSITION"]
