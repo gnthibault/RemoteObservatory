@@ -4,7 +4,7 @@ constraints :
     minmoonseparationdeg : 2 # normally put 45
 targets :
 #    "T CrB" :
-    "Mirfak" :
+    "Atik" :
         priority : 0
         count : 10
         temperature : 10

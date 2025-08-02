@@ -162,7 +162,7 @@ cameras:
                 FINDER_DEW_HEATER: True
             auto_dew_aggressivity: 150 # Number between 50 and 250
             focus_range:
-                min: 16000,
+                min: 16000
                 max: 17000
             autofocus_step:
                 coarse: 100
