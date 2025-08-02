@@ -243,9 +243,9 @@ class AggregatedCustomScopeControllerUPBv2(IndiDevice, IndiFocuserMixin):
         self.auto_dew_aggressivity = float(config.get("auto_dew_aggressivity", 150))
 
         # Focus parameters
-        self.focus_range = config['focus_range']
-        self.autofocus_step = config['autofocus_step']
-        self.autofocus_range = config['autofocus_range']
+        self.focus_range = {k:float(v) for k,v in config['focus_range'].items()}
+        self.autofocus_step = {k:float(v) for k,v in config['autofocus_step'].items()}
+        self.autofocus_range = {k:float(v) for k,v in config['autofocus_range'].items()}
 
 
         # device related intialization
@@ -266,6 +266,13 @@ class AggregatedCustomScopeControllerUPBv2(IndiDevice, IndiFocuserMixin):
         self.start_indi_driver()
         self.initialize()
         self.logger.debug("Successfully unparked")
+
+    def unpark_focuser(self):
+        self.logger.debug("Unparking focuser")
+        self.start_indi_server()
+        self.start_indi_driver()
+        self.default_connect()
+        self.logger.debug("Focuser successfully unparked")
 
     def default_connect(self):
         """

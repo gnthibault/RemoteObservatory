@@ -134,10 +134,10 @@ cameras:
                 POWER_LABEL_3: MAIN_CAMERA_POWER
                 POWER_LABEL_4: MOUNT_POWER
             always_on_power_identifiers:
-                MAIN_TELESCOPE_DUSTCAP_CONTROL: True
-                SPOX_AND_DUSTCAP_POWER: False
-                MAIN_CAMERA_POWER: False
-                MOUNT_POWER: False
+                MAIN_TELESCOPE_DUSTCAP_CONTROL: True # to hold dustocover closed
+                SPOX_AND_DUSTCAP_POWER: True
+                MAIN_CAMERA_POWER: True
+                MOUNT_POWER: True
             usb_labels:
                 USB_LABEL_1: FIELD_CAMERA
                 USB_LABEL_2: PRIMARY_CAMERA
@@ -146,12 +146,12 @@ cameras:
                 USB_LABEL_5: WIFI_ROUTER
                 USB_LABEL_6: GUIDE_CAMERA
             always_on_usb_identifiers:
-                FIELD_CAMERA: False
-                PRIMARY_CAMERA: False
-                SPECTRO_CONTROL_BOX: False
-                ARDUINO_CONTROL_BOX: False
+                FIELD_CAMERA: True
+                PRIMARY_CAMERA: True
+                SPECTRO_CONTROL_BOX: True
+                ARDUINO_CONTROL_BOX: True
                 WIFI_ROUTER: True
-                GUIDE_CAMERA: False
+                GUIDE_CAMERA: True
             dew_labels:
                 DEW_LABEL_1: PRIMARY_FAN
                 DEW_LABEL_2: SECONDARY_DEW_HEATER
@@ -180,7 +180,7 @@ cameras:
         module: IndiPlayerOneCamera
         camera_name : PlayerOne CCD Ares-M PRO
         do_acquisition: true
-        working_temperature: -10
+        working_temperature: 10
         SCOPE_INFO: # 200/800 newtonian
             FOCAL_LENGTH: 800
             APERTURE: 200
@@ -232,7 +232,7 @@ guider:
     module : GuiderPHD2
     host : localhost
     port : 4400
-    do_calibration : True
+    do_calibration : False
     profile_name : spectro_br
     exposure_time_sec : 2
     settle :

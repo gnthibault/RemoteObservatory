@@ -3,17 +3,18 @@ constraints :
     maxairmass : 17 #for testing, normally use 2
     minmoonseparationdeg : 2 # normally put 45
 targets :
-    "T CrB" :
+#    "T CrB" :
+    "Mirfak" :
         priority : 0
         count : 10
-        temperature : -10
+        temperature : 10
         gain: 255
         offset: 35
         exp_time_sec : 30
 
 reference_observation:
     count : 10
-    temperature : -10
+    temperature : 10
     gain : 255
     offset: 35
     exp_time_sec : 10

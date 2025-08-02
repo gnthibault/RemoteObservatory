@@ -65,7 +65,7 @@ class DifferentialPointer(Base):
 
                 self.logger.debug(f"Exposing for camera: {camera.name}")
                 try:
-                    # Start the exposures
+                    # Start the exposures - TODO TN URGENT YOU NEED TO IMPLEMENT TAKE_POINTING, OTHERWISE IT WILL SET TEMPERATURE TO OBSERVATION VALUE
                     camera_event = camera.take_observation(
                         observation=observation,
                         headers=fits_headers,
