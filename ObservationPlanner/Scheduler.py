@@ -277,6 +277,7 @@ class Scheduler(Base):
         except:
             try:
                 #"5h12m43.2s +31d12m43s" is perfectly valid
+                #"22h37m03s.645 +34d25m7.96s"
                 target = FixedTarget(name=target_name.replace(" ", ""),
                                      coord=SkyCoord(
                                          target_name,

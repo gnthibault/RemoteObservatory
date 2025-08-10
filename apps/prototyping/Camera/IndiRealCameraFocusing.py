@@ -68,14 +68,14 @@ if __name__ == '__main__':
                 FINDER_DEW_HEATER="True"),
             auto_dew_aggressivity=150, # Number between 50 and 250
             focus_range=dict(
-                min=16000,
-                max=17000),
+                min=7500,
+                max=9000),
             autofocus_step=dict(
-                coarse=100,
-                fine=50),
+                coarse=250,
+                fine=100),
             autofocus_range=dict(
-                coarse=1000,
-                fine=500),
+                coarse=2500,
+                fine=2500),
             indi_client=dict(
                 indi_host="192.168.8.202",
                 indi_port="7624")
@@ -106,5 +106,6 @@ if __name__ == '__main__':
     #autofocus_event = cam.autofocus_async(coarse=True, autofocus_status=autofocus_status)
     autofocus_event = cam.autofocus_async(coarse=False, autofocus_status=autofocus_status)
     autofocus_event.wait()
+    cam.focuser.park_focuser()
     assert autofocus_status[0], "Focusing failed"
     print("Done")

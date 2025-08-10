@@ -116,6 +116,8 @@ class IndiDevice(Base):
 
     @property
     def is_connected(self):
+        if self.device is None:
+            return False
         return self.device.isConnected()
     # indi_client.isServerConnected()
     # indi_client.disconnectServer()

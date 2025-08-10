@@ -17,9 +17,13 @@ class IndiFocuserMixin:
 
     def park_focuser(self):
         self.logger.debug(f"{self} : parking focuser")
+        if self.is_connected:
+            self.move_to(self.focus_range['min'])
 
     def unpark_focuser(self):
         self.logger.debug(f"{self} : unparking focuser")
+        if self.is_connected:
+            self.move_to((self.focus_range['min']+self.focus_range['max'])/2)
 
     def get_position(self):
         """ Current encoder position of the focuser """

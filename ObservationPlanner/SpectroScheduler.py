@@ -285,7 +285,7 @@ class SpectroScheduler(Scheduler):
         """
         # Before doing anything, we want to know if we need to acquire a
         # reference observation
-        if self.current_observation is not None:
+        if False: #self.current_observation is not None: # TODO TN OHP
             # If observation is not itself a reference observation and it does not features a reference yet
             if ((not self.current_observation.is_reference_observation) and
                     (self.current_observation.reference_observation_id is None)):

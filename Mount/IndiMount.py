@@ -2,6 +2,7 @@
 import io
 import json
 import logging
+import time
 
 # Indi stuff
 from helper.IndiDevice import IndiDevice
@@ -92,6 +93,7 @@ class IndiMount(IndiDevice):
         """
         self.on_coord_set('TRACK')
         self.set_coord(coord)
+        time.sleep(10) # TODO TN: temporary solution to the fact that indi returns too early from pointing
 
     def sync_to_coord(self, coord):
         """

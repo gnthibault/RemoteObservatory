@@ -104,6 +104,7 @@ cameras:
             FOCAL_LENGTH: 800
             APERTURE: 200
         subsample_astrometry: 1
+        sampling_arcsec: 0.89
         do_guiding: true
         do_pointing: false
         pointing_seconds: 5
@@ -111,8 +112,8 @@ cameras:
         default_gain: 300
         default_offset: 10
         do_adjust_pointing: true
-        adjust_center_x: 868
-        adjust_center_y: 700
+        adjust_center_x: 952
+        adjust_center_y: 670
         adjust_roi_search_size: 50
         adjust_pointing_seconds: 5
         do_autofocus: true # true
@@ -162,14 +163,14 @@ cameras:
                 FINDER_DEW_HEATER: True
             auto_dew_aggressivity: 150 # Number between 50 and 250
             focus_range:
-                min: 16000
-                max: 17000
+                min: 7500
+                max: 9000
             autofocus_step:
-                coarse: 100
+                coarse: 200
                 fine: 50
             autofocus_range:
-                coarse: 1000
-                fine: 500
+                coarse: 2500
+                fine: 1500
             indi_client:
                 indi_host: 192.168.8.202
                 indi_port: 7624
@@ -180,11 +181,12 @@ cameras:
         module: IndiPlayerOneCamera
         camera_name : PlayerOne CCD Ares-M PRO
         do_acquisition: true
-        working_temperature: 10
+        working_temperature: -10
         SCOPE_INFO: # 200/800 newtonian
             FOCAL_LENGTH: 800
             APERTURE: 200
         subsample_astrometry: 2
+        sampling_arcsec: 0.97
         do_guiding: false
         do_pointing: false
         pointing_seconds: 5
@@ -198,17 +200,18 @@ cameras:
     - module: IndiASICamera
       camera_name: ZWO CCD ASI533MM Pro
       do_acquisition: false
-      working_temperature: 10
+      working_temperature: 5
       SCOPE_INFO: # 200/800 newtonian
           FOCAL_LENGTH: 800
           APERTURE: 200
       subsample_astrometry: 2
+      sampling_arcsec: 2.9
       do_guiding: false
       do_pointing: true
-      pointing_seconds: 5
+      pointing_seconds: 4
       default_exp_time_sec: 5
-      default_gain: 50
-      default_offset: 30
+      default_gain: 105
+      default_offset: 10
       do_autofocus: false
       indi_client:
           indi_host: 192.168.8.202
@@ -218,7 +221,7 @@ pointer:
     gen_hips: False
     timeout_seconds: 450
     max_iterations: 5
-    max_pointing_error_seconds: 2
+    max_pointing_error_seconds: 10
 offset_pointer:
     module: InvisibleObjectOffsetPointer #StarOffsetPointer #NoOffsetPointer #InvisibleObjectOffsetPointer
     timeout_seconds: 300

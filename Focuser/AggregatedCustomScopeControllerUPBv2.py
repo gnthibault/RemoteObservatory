@@ -268,11 +268,20 @@ class AggregatedCustomScopeControllerUPBv2(IndiDevice, IndiFocuserMixin):
         self.logger.debug("Successfully unparked")
 
     def unpark_focuser(self):
-        self.logger.debug("Unparking focuser")
+        self.logger.debug("About to unpark focuser in a reset-like manner")
+        self.park_focuser()
         self.start_indi_server()
         self.start_indi_driver()
         self.default_connect()
+        IndiFocuserMixin.unpark_focuser(self)
         self.logger.debug("Focuser successfully unparked")
+
+    def move_to(self, position):
+        """ Move focuser to new encoder position """
+        # We need to do this weird stuff because of weird indi implementation
+        if position == self.get_position():
+            position = position + 1
+        return IndiFocuserMixin.move_to(self, position)
 
     def default_connect(self):
         """

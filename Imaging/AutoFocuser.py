@@ -367,6 +367,7 @@ class AutoFocuser(Base):
 
         See public `autofocus` for information about the parameters.
         """
+        return self.position, self.position # TODO TN OHP
         self.initialize_camera()
 
         focus_type = 'fine'
@@ -435,7 +436,7 @@ class AutoFocuser(Base):
             initial_focus = self.position
         focus_positions = np.arange(max(initial_focus - cur_focus_range / 2, self.min_position),
                                     min(initial_focus + cur_focus_range / 2, self.max_position) + 1,
-                                    cur_focus_step, dtype=int)
+                                    cur_focus_step, dtype=int)[::-1]
         self.logger.debug(f"Autofocuser {self}  is going to sweep over the "
                           f"following positions for autofocusing {focus_positions}")
         n_positions = len(focus_positions)
