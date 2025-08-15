@@ -3,13 +3,13 @@ constraints :
     maxairmass : 17 #for testing, normally use 2
     minmoonseparationdeg : 2 # normally put 45
 targets :
-#    "10 lacerta":
-#        priority : 0
-#        count : 10
-#        temperature : -10
-#        gain: 125
-#        offset: 10
-#        exp_time_sec : 30
+    "10 lacerta":
+        priority : 0
+        count : 10
+        temperature : -10
+        gain: 125
+        offset: 10
+        exp_time_sec : 30
     "22h37m3.645s +34d25m7.96s":
         priority: 0
         count: 3
@@ -26,35 +26,35 @@ targets :
         exp_time_sec : 30
     "mu Her":
         priority : 0
-        count : 3
-        temperature : -10
-        gain: 125
-        offset: 10
-        exp_time_sec : 300
-    "30 Her":
-        priority : 0
-        count : 3
-        temperature : -10
-        gain: 125
-        offset: 10
-        exp_time_sec : 300
-    "Beta Lyr":
-        priority : 0
-        count : 10
+        count : 9
         temperature : -10
         gain: 125
         offset: 10
         exp_time_sec : 30
-#    "P Cyg": # Never done
+#    "30 Her":
 #        priority : 0
-#        count : 3
+#        count : 9
+#        temperature : -10
+#        gain: 125
+#        offset: 10
+#        exp_time_sec : 300
+#    "Beta Lyr":
+#        priority : 0
+#        count : 10
+#        temperature : -10
+#        gain: 125
+#        offset: 10
+#        exp_time_sec : 30
+#    "P Cyg":
+#        priority : 0
+#        count : 9
 #        temperature : -10
 #        gain: 125
 #        offset: 10
 #        exp_time_sec : 300
 #    "V Cyg":
 #        priority : 0
-#        count : 3
+#        count : 9
 #        temperature : -10
 #        gain: 125
 #        offset: 10

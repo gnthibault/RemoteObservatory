@@ -255,6 +255,8 @@ RUN for i in indi-duino libasi indi-asi libplayerone indi-playerone indi-shelyak
 # Dependencies to build phd2 from sources
 USER root
 RUN apt-get --assume-yes --quiet install --no-install-recommends \
+    libeigen3-dev \
+    libopencv-dev \
     libwxgtk3.2-dev
 
 USER $USERNAME
