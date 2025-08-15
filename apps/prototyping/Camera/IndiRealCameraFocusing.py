@@ -67,6 +67,7 @@ if __name__ == '__main__':
                 SECONDARY_DEW_HEATER="True",
                 FINDER_DEW_HEATER="True"),
             auto_dew_aggressivity=150, # Number between 50 and 250
+            default_focus=8000,
             focus_range=dict(
                 min=7500,
                 max=9000),

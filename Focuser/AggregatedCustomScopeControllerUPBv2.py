@@ -218,6 +218,16 @@ class AggregatedCustomScopeControllerUPBv2(IndiDevice, IndiFocuserMixin):
                     SECONDARY_DEW_HEATER=True,
                     FINDER_DEW_HEATER=True),
                 auto_dew_aggressivity=200, # Number between 50 and 250
+                default_focus=8000,
+                focus_range=dict(
+                    min=7500,
+                    max=9000),
+                autofocus_step=dict(
+                    coarse=250,
+                    fine=100),
+                autofocus_range=dict(
+                    coarse=2500,
+                    fine=2500),
                 indi_client=dict(indi_host="localhost",
                                  indi_port=7625))
 
@@ -243,6 +253,7 @@ class AggregatedCustomScopeControllerUPBv2(IndiDevice, IndiFocuserMixin):
         self.auto_dew_aggressivity = float(config.get("auto_dew_aggressivity", 150))
 
         # Focus parameters
+        self.default_focus = config['default_focus']
         self.focus_range = {k:float(v) for k,v in config['focus_range'].items()}
         self.autofocus_step = {k:float(v) for k,v in config['autofocus_step'].items()}
         self.autofocus_range = {k:float(v) for k,v in config['autofocus_range'].items()}

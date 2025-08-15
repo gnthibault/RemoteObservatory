@@ -21,6 +21,61 @@ observatory:
     gmt_offset: 60 # Minutes
 #    webcam:
 #        rtsp_url: rtsp://user:password@192.168.0.16
+    scope_controller_bak:
+        module: AggregatedCustomScopeControllerUPBv2
+        device_name: Pegasus UPB
+        device_port: /dev/serial/by-id/usb-Pegasus_Astro_UPBv2_revD_UPB25S4VWV-if00-port0
+        connection_type: CONNECTION_SERIAL
+        baud_rate: 9600
+        polling_ms: 1000
+        dustcap_travel_delay_s: 10
+        adjustable_voltage_value: 5
+        power_labels:
+            POWER_LABEL_1: MAIN_TELESCOPE_DUSTCAP_CONTROL
+            POWER_LABEL_2: SPOX_DUSTCAP_FINDERCAM_POWER
+            POWER_LABEL_3: SCI_CAMERA_FOCUS_POWER
+            POWER_LABEL_4: SECONDARY_SETUP_POWER
+        always_on_power_identifiers:
+            MAIN_TELESCOPE_DUSTCAP_CONTROL: True # to hold dustocover closed
+            SPOX_DUSTCAP_FIELDCAM_POWER: True
+            SCI_CAMERA_FOCUS_POWER: True
+            SECONDARY_SETUP_POWER: True
+        usb_labels:
+            USB_LABEL_1: FIELD_CAMERA
+            USB_LABEL_2: PRIMARY_CAMERA
+            USB_LABEL_3: SPECTRO_CONTROL_BOX
+            USB_LABEL_4: ARDUINO_CONTROL_BOX
+            USB_LABEL_5: WIFI_ROUTER
+            USB_LABEL_6: GUIDE_CAMERA
+        always_on_usb_identifiers:
+            FIELD_CAMERA: True
+            PRIMARY_CAMERA: True
+            SPECTRO_CONTROL_BOX: True
+            ARDUINO_CONTROL_BOX: True
+            WIFI_ROUTER: True
+            GUIDE_CAMERA: True
+        dew_labels:
+            DEW_LABEL_1: PRIMARY_FAN
+            DEW_LABEL_2: SECONDARY_DEW_HEATER
+            DEW_LABEL_3: FINDER_DEW_HEATER
+        auto_dew_identifiers:
+            PRIMARY_FAN: False
+            SECONDARY_DEW_HEATER: True
+            FINDER_DEW_HEATER: True
+        auto_dew_aggressivity: 150 # Number between 50 and 250
+        default_focus: 8000
+        focus_range:
+            min: 7500
+            max: 9000
+        autofocus_step:
+            coarse: 200
+            fine: 50
+        autofocus_range:
+            coarse: 2500
+            fine: 1500
+        indi_client:
+            indi_host: 192.168.0.194
+            indi_port: 7624
     scope_controller:
         module: DummyScopeController #IndiArduiScopeController
         port: /dev/ttyACM0
@@ -37,7 +92,7 @@ observatory:
         dome_movement_timeout_s: 300
         dome_name: Dome Simulator
         indi_client :
-            indi_host : localhost
+            indi_host : 192.168.0.194
             indi_port : 7624
             use_unique_client: True
 directories:
@@ -121,56 +176,23 @@ cameras:
         autofocus_roi_size :
         autofocus_merit_function: half_flux_radius #vollath_F4
         focuser:
-            module: AggregatedCustomScopeControllerUPBv2
-            device_name: Pegasus UPB
-            device_port: /dev/serial/by-id/usb-Pegasus_Astro_UPBv2_revD_UPB25S4VWV-if00-port0
+            module: IndiBaaderSteelDrive2Focuser
+            device_name: Baader SteelDriveII
+            device_port: /dev/serial/by-id/usb-FTDI_FT232R_USB_UART_AB0KCL5O-if00-port0
             connection_type: CONNECTION_SERIAL
-            baud_rate: 9600
+            baud_rate: 19200
             polling_ms: 1000
-            dustcap_travel_delay_s: 10
-            adjustable_voltage_value: 5
-            power_labels:
-                POWER_LABEL_1: MAIN_TELESCOPE_DUSTCAP_CONTROL
-                POWER_LABEL_2: SPOX_AND_DUSTCAP_POWER
-                POWER_LABEL_3: MAIN_CAMERA_POWER
-                POWER_LABEL_4: MOUNT_POWER
-            always_on_power_identifiers:
-                MAIN_TELESCOPE_DUSTCAP_CONTROL: True # to hold dustocover closed
-                SPOX_AND_DUSTCAP_POWER: True
-                MAIN_CAMERA_POWER: True
-                MOUNT_POWER: True
-            usb_labels:
-                USB_LABEL_1: FIELD_CAMERA
-                USB_LABEL_2: PRIMARY_CAMERA
-                USB_LABEL_3: SPECTRO_CONTROL_BOX
-                USB_LABEL_4: ARDUINO_CONTROL_BOX
-                USB_LABEL_5: WIFI_ROUTER
-                USB_LABEL_6: GUIDE_CAMERA
-            always_on_usb_identifiers:
-                FIELD_CAMERA: True
-                PRIMARY_CAMERA: True
-                SPECTRO_CONTROL_BOX: True
-                ARDUINO_CONTROL_BOX: True
-                WIFI_ROUTER: True
-                GUIDE_CAMERA: True
-            dew_labels:
-                DEW_LABEL_1: PRIMARY_FAN
-                DEW_LABEL_2: SECONDARY_DEW_HEATER
-                DEW_LABEL_3: FINDER_DEW_HEATER
-            auto_dew_identifiers:
-                PRIMARY_FAN: False
-                SECONDARY_DEW_HEATER: True
-                FINDER_DEW_HEATER: True
-            auto_dew_aggressivity: 150 # Number between 50 and 250
+            home_position: 2000
+            default_focus: 1300
             focus_range:
-                min: 7500
-                max: 9000
+                min: 1250
+                max: 2750
             autofocus_step:
                 coarse: 200
                 fine: 50
             autofocus_range:
-                coarse: 2500
-                fine: 1500
+                coarse: 1500
+                fine: 500
             indi_client:
                 indi_host: 192.168.0.194
                 indi_port: 7624

@@ -23,7 +23,7 @@ class IndiFocuserMixin:
     def unpark_focuser(self):
         self.logger.debug(f"{self} : unparking focuser")
         if self.is_connected:
-            self.move_to((self.focus_range['min']+self.focus_range['max'])/2)
+            self.move_to(self.default_focus)
 
     def get_position(self):
         """ Current encoder position of the focuser """
@@ -34,10 +34,18 @@ class IndiFocuserMixin:
 
     def move_to(self, position):
         """ Move focuser to new encoder position """
-        self.logger.debug(f"{self}  moving to position {position}")
+        self.logger.debug(f"{self} moving to position {position}")
         self.set_number('ABS_FOCUS_POSITION', #REL_FOCUS_POSITION
                         {'FOCUS_ABSOLUTE_POSITION': np.float64(position)}, #FOCUS_RELATIVE_POSITION
                         sync=True, timeout=self.timeout)
         new_position = self.get_position()
         self.logger.debug(f"{self} Now position is {new_position}")
         return new_position
+
+    def sync_position(self, position):
+        self.logger.debug(f"{self} Syncing to position {position}")
+        self.set_number('FOCUS_SYNC', #REL_FOCUS_POSITION
+                        {'FOCUS_SYNC_VALUE': np.float64(position)}, #FOCUS_RELATIVE_POSITION
+                        sync=True, timeout=self.timeout)
+        new_position = self.get_position()
+        self.logger.debug(f"{self} Now position is {new_position}")

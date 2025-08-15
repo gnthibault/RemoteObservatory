@@ -93,6 +93,17 @@ class IndiBaaderSteelDrive2Focuser(IndiDevice, IndiFocuserMixin):
                 connection_type="CONNECTION_SERIAL",
                 baud_rate=19200,
                 polling_ms=1000,
+                home_position=2000,
+                default_focus=1300,
+                focus_range={
+                    "min": 7500,
+                    "max": 9000},
+                autofocus_step={
+                    "coarse": 200,
+                    "fine": 50},
+                autofocus_range={
+                    "coarse": 2500,
+                    "fine": 1500},
                 indi_client=dict(indi_host="localhost",
                                  indi_port=7624))
 
@@ -103,6 +114,8 @@ class IndiBaaderSteelDrive2Focuser(IndiDevice, IndiFocuserMixin):
         self.polling_ms = float(config["polling_ms"])
 
         # Focus parameters
+        self.home_position = config["home_position"]
+        self.default_focus = config["default_focus"]
         self.focus_range = {k:float(v) for k,v in config['focus_range'].items()}
         self.autofocus_step = {k:float(v) for k,v in config['autofocus_step'].items()}
         self.autofocus_range = {k:float(v) for k,v in config['autofocus_range'].items()}
@@ -129,42 +142,32 @@ class IndiBaaderSteelDrive2Focuser(IndiDevice, IndiFocuserMixin):
         self.logger.debug("Successfully unparked")
 
     def unpark_focuser(self):
-        self.logger.debug("About to unpark focuser in a reset-like manner")
-        self.park_focuser()
-        self.start_indi_server()
-        self.start_indi_driver()
-        self.default_connect()
+        self.logger.debug("About to unpark focuser")
         if self.is_connected:
-            self.move_to(self.focus_range['min'])
+            self.zero_home()
+        # Move to default_focus
+        IndiFocuserMixin.unpark_focuser(self)
         self.logger.debug("Focuser successfully unparked")
 
-#            Baader SteelDriveII.OPERATION.OPERATION_REBOOT=Off
-#            Baader SteelDriveII.OPERATION.OPERATION_RESET=Off
-#            Baader SteelDriveII.OPERATION.OPERATION_ZEROING=Off
-
     def park(self):
-        self.logger.debug("Unparking")
-        self.start_indi_server()
-        self.start_indi_driver()
-        self.unpark_focuser()
-        self.logger.debug("Successfully unparked")
+        self.logger.debug("Parking")
+        self.park_focuser()
+        self.logger.debug("Successfully parked")
 
     def park_focuser(self):
         self.logger.debug("About to park focuser")
         if self.is_connected:
-            self.move_to(self.focus_range['min'])
+            self.zero_home()
 
     def zero_home(self):
-        pass
-        #            Baader SteelDriveII.OPERATION.OPERATION_ZEROING=Off
+        self.set_switch("OPERATION", on_switches=["OPERATION_ZEROING"])
+        self.sync_position(position=self.home_position)
 
     def reboot_device(self):
-        pass
-        #            Baader SteelDriveII.OPERATION.OPERATION_REBOOT=Off
+        self.set_switch("OPERATION", on_switches=["OPERATION_REBOOT"])
 
-    def reset_device(self):
-        pass
-    #            Baader SteelDriveII.OPERATION.OPERATION_RESET=Off
+    def factory_reset_device(self):
+        self.set_switch("OPERATION", on_switches=["OPERATION_RESET"])
 
     def default_connect(self):
         """
@@ -198,18 +201,7 @@ class IndiBaaderSteelDrive2Focuser(IndiDevice, IndiFocuserMixin):
         """
         self.logger.debug("Initializing")
         self.default_connect()
-        self.set_all_labels()
-        self.initialize_all_power_on_boot()
-        self.initialize_all_power()
-        self.initialize_adjustable_power_source()
-        self.initialize_all_dew_outputs()
-        self.set_auto_dew_aggressivity()
-        time.sleep(1) # this is a very specific case, see https://github.com/indilib/indi-3rdparty/issues/822
-        self.initialize_all_usb()
-        self.initialize_usb_hub()
-
         self.is_initialized = True
-
         self.logger.debug("Successfully Initialized")
 
     def park(self):
@@ -225,15 +217,5 @@ class IndiBaaderSteelDrive2Focuser(IndiDevice, IndiFocuserMixin):
             return
         self.logger.debug("Deinitializing")
         # Then switch off all electronic devices
-        self.close_scope_dustcap()
-        self.switch_off_scope_fan()
-        self.switch_off_dew_heater()
-        self.power_off_all_telescope_equipments()
-        self.power_off_mount()
-
         self.is_initialized = False
         self.logger.debug("Successfully deinitialized")
-
-
-    def __init__(self, driver):
-        self.driver = driver
