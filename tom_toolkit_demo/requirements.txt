@@ -1,0 +1,11 @@
+#brew install graphviz
+#export GRAPHVIZ_PREFIX=$(brew --prefix graphviz)
+#export CFLAGS="-I${GRAPHVIZ_PREFIX}/include"
+#export LDFLAGS="-L${GRAPHVIZ_PREFIX}/lib"
+alembic==1.16.4
+eralchemy==1.5.0
+erdantic==1.1.1
+fastapi==0.116.1
+numpy==2.3.2
+pyfarmhash==0.4.0
+sqlmodel==0.0.24
