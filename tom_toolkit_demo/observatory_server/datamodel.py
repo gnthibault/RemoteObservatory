@@ -1,9 +1,10 @@
 # Inspired by sample from https://docs.pydantic.dev/latest/concepts/models/#arbitrary-class-instances
-
-from datetime import datetime, timedelta
+from astropy.coordinates import SkyCoord
+from astropy.coordinates.name_resolve import NameResolveError
+from datetime import datetime, timedelta, timezone
 from enum import Enum
 
-from pydantic import BaseModel, ConfigDict, constr
+from pydantic import BaseModel, ConfigDict, constr, Field, field_validator
 #from sqlmodel import Field, Session, SQLModel, select
 from typing import List, Optional
 
@@ -30,7 +31,7 @@ from sqlalchemy.types import JSON
 from sqlalchemy.orm import relationship, DeclarativeBase
 
 # Local imports
-from observatory_server.db_utils import PKTYPE_MODEL, PKTYPE_ORM
+from observatory_server.db_utils import pk_hash, PKTYPE_MODEL, PKTYPE_ORM
 
 default_past_datetime = datetime(1900, 1, 1, 0, 0, 0)
 default_future_datetime = datetime(2099, 12, 31, 23, 59, 59)
@@ -50,6 +51,15 @@ class SequenceType(str, Enum):
 class ImageType(str, Enum):
     OBSERVATION            = "observation"
     CALIBRATION            = "calibration"
+
+class InstrumentSetup(str, Enum):
+    LR_SPECTROSCOPY        = "lr_spectroscopy"
+    HR_SPECTROSCOPY        = "hr_spectroscopy"
+    FIEL_IMAGING           = "field_imaging"
+
+class AcquisitionWorkflow(str, Enum):
+    DEFAULT                = "default"
+
 
 class ObservationStatus(str, Enum):
     SUBMITTED              = "submitted"
@@ -95,17 +105,38 @@ class ObservationOrm(Base):
     __tablename__          = 'observations'
     id                     = Column(PKTYPE_ORM, primary_key=True, nullable=False)
     name                   = Column(String, nullable=False)
-    submitted_at           = Column(DateTime, default=datetime.utcnow)
+    target                 = Column(String, nullable=False)
+    instrument_setup       = Column(String, nullable=False)
+    acquisition_workflow   = Column(String, default=AcquisitionWorkflow.DEFAULT)
+    number_exposure        = Column(Integer)
+    time_per_exposure      = Column(Float)
+    target_snr             = Column(Float)
+    submitted_at           = Column(DateTime, default=lambda: datetime.now(tz=timezone.utc))
     status                 = Column(String,)
     # Sequences can be observation sequences of calibration sequences
     sequences              = relationship("SequenceOrm", back_populates="observation")
 
 class Observation(BaseModel):
     model_config           = ConfigDict(from_attributes=True)
-    id                     : PKTYPE_MODEL
+    id                     : PKTYPE_MODEL = Field(default_factory=lambda: pk_hash(datetime.now(tz=timezone.utc).isoformat()))
     name                   : str
-    submitted_at           : datetime
+    target                 : str
+    instrument_setup       : InstrumentSetup
+    acquisition_workflow   : Optional[AcquisitionWorkflow]
+    number_exposure        : Optional[int]
+    time_per_exposure      : Optional[float]
+    target_snr             : Optional[float]
+    submitted_at           : datetime = Field(default_factory=lambda: datetime.now(tz=timezone.utc))
     status                 : ObservationStatus
+
+    @field_validator("target")
+    def validate_target(cls, v: str) -> str:
+        try:
+            t = SkyCoord.from_name(v)
+        except NameResolveError as e:
+            raise ValueError(f"{v} is not a valid target name: {e}")
+        return v
+
 
 class CameraOrm(Base):
     __tablename__          = 'cameras'
@@ -147,7 +178,7 @@ class ImageOrm(Base):
     latitude               = Column(Float)    # 43.93499999999999
     longitude              = Column(Float)    # 5.710999999999999
 
-    started_at             = Column(DateTime, default=datetime.utcnow)
+    started_at             = Column(DateTime)
     exp_time_sec           = Column(Float) # 10.0
     temperature_deg_c      = Column(Float) # 15
     gain                   = Column(Float) # 150 #TODO WARNING OBSERVATION
@@ -188,8 +219,8 @@ class CalibrationImageOrm(ImageOrm):
     __tablename__          = 'calibration_images'
     image_id               = Column(PKTYPE_ORM, ForeignKey('images.id'), primary_key=True)
     calibration_image_type = Column(String)
-    valid_from             = Column(DateTime, default=datetime.now(tz=None))
-    valid_to               = Column(DateTime, default=datetime.now(tz=None)+timedelta(days=30))
+    valid_from             = Column(DateTime, default=lambda: datetime.now(tz=timezone.utc))
+    valid_to               = Column(DateTime, default=lambda: datetime.now(tz=timezone.utc)+timedelta(days=30))
 
     __mapper_args__ = {
         'polymorphic_identity': 'calibration'
