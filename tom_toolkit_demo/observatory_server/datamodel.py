@@ -121,7 +121,7 @@ class ObservationOrm(Base):
 class Observation(BaseModel):
     model_config           = ConfigDict(from_attributes=True)
     #id                     : PKTYPE_MODEL = Field(default_factory=lambda: pk_hash(datetime.now(tz=timezone.utc).isoformat()))
-    id                     : Optional[int]
+    id                     : Optional[PKTYPE_MODEL] = Field(default=None)
     target                 : str
     instrument_setup       : InstrumentSetup
     acquisition_workflow   : Optional[AcquisitionWorkflow]
