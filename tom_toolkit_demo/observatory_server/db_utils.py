@@ -9,8 +9,8 @@ from sqlalchemy.orm import sessionmaker
 # Int primary key in BQ: https://cloud.google.com/bigquery/docs/best-practices-performance-compute#use_int64_data_types_in_joins
 #np.uint64(farmhash.fingerprint64('6823339101')).astype('int64')
 # Unfortunately not compatible with SQLite
-PKTYPE_MODEL = str
-PKTYPE_ORM   = String
+PKTYPE_MODEL = int #str
+PKTYPE_ORM   = Integer #String
 
 def pk_hash(pk_str: str) -> PKTYPE_MODEL:
     return PKTYPE_MODEL(farmhash.fingerprint64(pk_str))

@@ -38,7 +38,8 @@ default_future_datetime = datetime(2099, 12, 31, 23, 59, 59)
 
 
 class Base(DeclarativeBase):
-    pass
+    def to_dict(self):
+        return {field.name:getattr(self, field.name) for field in self.__table__.c}
 
 # TODO TN: https://sqlmodel.tiangolo.com/tutorial/fastapi/simple-hero-api/
 
@@ -59,7 +60,6 @@ class InstrumentSetup(str, Enum):
 
 class AcquisitionWorkflow(str, Enum):
     DEFAULT                = "default"
-
 
 class ObservationStatus(str, Enum):
     SUBMITTED              = "submitted"
@@ -103,23 +103,25 @@ class CalibrationImageType(str, Enum):
 
 class ObservationOrm(Base):
     __tablename__          = 'observations'
-    id                     = Column(PKTYPE_ORM, primary_key=True, nullable=False)
-    name                   = Column(String, nullable=False)
+    #id                     = Column(PKTYPE_ORM, primary_key=True, nullable=False)
+    id                     = Column(Integer, primary_key=True, autoincrement=True, nullable=False)
     target                 = Column(String, nullable=False)
     instrument_setup       = Column(String, nullable=False)
     acquisition_workflow   = Column(String, default=AcquisitionWorkflow.DEFAULT)
     number_exposure        = Column(Integer)
     time_per_exposure      = Column(Float)
     target_snr             = Column(Float)
-    submitted_at           = Column(DateTime, default=lambda: datetime.now(tz=timezone.utc))
+    submitted_at           = Column(DateTime)
     status                 = Column(String,)
+    updated_at             = Column(DateTime, onupdate=lambda: datetime.now(tz=timezone.utc)),
+
     # Sequences can be observation sequences of calibration sequences
     sequences              = relationship("SequenceOrm", back_populates="observation")
 
 class Observation(BaseModel):
     model_config           = ConfigDict(from_attributes=True)
-    id                     : PKTYPE_MODEL = Field(default_factory=lambda: pk_hash(datetime.now(tz=timezone.utc).isoformat()))
-    name                   : str
+    #id                     : PKTYPE_MODEL = Field(default_factory=lambda: pk_hash(datetime.now(tz=timezone.utc).isoformat()))
+    id                     : Optional[int]
     target                 : str
     instrument_setup       : InstrumentSetup
     acquisition_workflow   : Optional[AcquisitionWorkflow]
@@ -127,7 +129,8 @@ class Observation(BaseModel):
     time_per_exposure      : Optional[float]
     target_snr             : Optional[float]
     submitted_at           : datetime = Field(default_factory=lambda: datetime.now(tz=timezone.utc))
-    status                 : ObservationStatus
+    status                 : ObservationStatus = Field(default=ObservationStatus.SUBMITTED)
+    updated_at             : datetime = Field(default_factory=lambda: datetime.now(tz=timezone.utc))
 
     @field_validator("target")
     def validate_target(cls, v: str) -> str:
@@ -140,7 +143,8 @@ class Observation(BaseModel):
 
 class CameraOrm(Base):
     __tablename__          = 'cameras'
-    id                     = Column(PKTYPE_ORM, primary_key=True, nullable=False)
+    #id                     = Column(PKTYPE_ORM, primary_key=True, nullable=False)
+    id                     = Column(Integer, primary_key=True, autoincrement=True, nullable=False)
     serial                 = Column(String,  nullable=False)
     name                   = Column(String,  unique=True)
     # images                 = relationship("ImageOrm", back_populates="CameraOrm")
@@ -160,7 +164,8 @@ class Camera(BaseModel):
 
 class ImageOrm(Base):
     __tablename__          = 'images'
-    id                     = Column(PKTYPE_ORM, primary_key=True, nullable=False)   # Altair AA183MPRO_012345_20230822T220825
+    #id                     = Column(PKTYPE_ORM, primary_key=True, nullable=False)
+    id                     = Column(Integer, primary_key=True, autoincrement=True, nullable=False)   # Altair AA183MPRO_012345_20230822T220825
     camera_id              = Column(PKTYPE_ORM, ForeignKey('cameras.id'))   # 012345
 
     file_path              = Column(String) # /opt/RemoteObservatory/images/targets/Alioth/012345/20230822T220718/pointing01.fits
@@ -219,8 +224,8 @@ class CalibrationImageOrm(ImageOrm):
     __tablename__          = 'calibration_images'
     image_id               = Column(PKTYPE_ORM, ForeignKey('images.id'), primary_key=True)
     calibration_image_type = Column(String)
-    valid_from             = Column(DateTime, default=lambda: datetime.now(tz=timezone.utc))
-    valid_to               = Column(DateTime, default=lambda: datetime.now(tz=timezone.utc)+timedelta(days=30))
+    valid_from             = Column(DateTime)
+    valid_to               = Column(DateTime)
 
     __mapper_args__ = {
         'polymorphic_identity': 'calibration'
@@ -278,6 +283,8 @@ class CalibrationImage(BaseModel):
     calibration_image_type : CalibrationImageType
     valid_from             : datetime
     valid_to               : datetime
+    #     valid_from             = Column(DateTime, default=lambda: datetime.now(tz=timezone.utc))
+    #     valid_to               = Column(DateTime, default=lambda: datetime.now(tz=timezone.utc)+timedelta(days=60))
 
 class SequenceOrm(Base):
     __tablename__          = 'sequences'
