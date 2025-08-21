@@ -113,6 +113,8 @@ class ObservationOrm(Base):
     target_snr             = Column(Float)
     submitted_at           = Column(DateTime)
     status                 = Column(String,)
+    scheduled_start_at     = Column(DateTime)
+    scheduled_end_at       = Column(DateTime)
     updated_at             = Column(DateTime, onupdate=lambda: datetime.now(tz=timezone.utc)),
 
     # Sequences can be observation sequences of calibration sequences
@@ -130,6 +132,8 @@ class Observation(BaseModel):
     target_snr             : Optional[float]
     submitted_at           : datetime = Field(default_factory=lambda: datetime.now(tz=timezone.utc))
     status                 : ObservationStatus = Field(default=ObservationStatus.SUBMITTED)
+    scheduled_start_at     : Optional[datetime] = Field(default=None)
+    scheduled_end_at       : Optional[datetime] = Field(default=None)
     updated_at             : datetime = Field(default_factory=lambda: datetime.now(tz=timezone.utc))
 
     @field_validator("target")

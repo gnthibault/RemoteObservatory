@@ -60,13 +60,11 @@ from typing import List, Optional, Dict, Any
 #     name: str
 #     description: str | None = None
 
-# Create the database tables
-# Base.metadata.drop_all(bind=engine)
-# Base.metadata.create_all(bind=engine)
 ################################################################################
-@app.post("/request_observation")
 #def request_observation(observation: dict[Any, Any], db: Session = Depends(get_session)):
+@app.post("/request_observation")
 def request_observation(observation: Observation, db: Session = Depends(get_session)):
+    # Observation(**observation)
     db_item = ObservationOrm(**observation.model_dump())
     db.add(db_item)
     db.commit()
@@ -75,25 +73,32 @@ def request_observation(observation: Observation, db: Session = Depends(get_sess
 
 @app.get("/get_observation_status/{observation_id}")
 def get_observation_status(observation_id: int, db: Session = Depends(get_session)):
-    try:
-        # ✅ Only select some columns
-        # record.status = status['state']
-        # record.scheduled_start = status['scheduled_start']
-        # record.scheduled_end = status['scheduled_end']
+    stmt = (
+        select(
+            ObservationOrm.status,
+            ObservationOrm.scheduled_start_at,
+            ObservationOrm.scheduled_end_at,
+        )
+        .where(ObservationOrm.id == observation_id)
+    )
 
-        stmt = select(ObservationOrm.status).where(ObservationOrm.id == observation_id)
-        result = db.execute(stmt).scalars().all()
-        if not result:
-            raise HTTPException(status_code=404, detail="Observation not found")
-        if len(result) > 1:
-            raise HTTPException(status_code=500, detail="Multiple observations found with same ID")
-        return {"status": result[0]}
-    except MultipleResultsFound:
-        raise HTTPException(status_code=500, detail="Database integrity error: multiple rows found")
+    rows = db.execute(stmt).all()
+    if not rows:
+        raise HTTPException(status_code=404, detail="Observation not found")
+    if len(rows) > 1:
+        raise HTTPException(status_code=500, detail="Multiple observations found with same ID")
+    row = rows[0]
+    return {
+        "state": row.status,
+        "scheduled_start": row.scheduled_start_at,
+        "scheduled_end": row.scheduled_end_at,
+    }
 
 
 # Run the server with uvicorn main:app --reload
 # OR
 if __name__ == "__main__":
     # Create the database tables
+    # Base.metadata.drop_all(bind=engine)
+    # Base.metadata.create_all(bind=engine)
     uvicorn.run(app, host="0.0.0.0", port=8888)
