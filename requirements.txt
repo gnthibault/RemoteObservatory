@@ -33,3 +33,12 @@ sqlmodel==0.0.22
 transitions==0.7.1
 tzwhere==3.0.3
 watchdog==4.0.1
+
+
+gevent==25.4.2
+Flask==3.1.0
+gevent==25.4.2
+Flask==3.1.0
+scalpl==0.4.2
+serializers==0.2.4
+ruamel.yaml==0.18.10
