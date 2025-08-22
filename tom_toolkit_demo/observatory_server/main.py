@@ -13,6 +13,7 @@ import uvicorn
 # Local imports
 from observatory_server.datamodel import (
     Base,
+    DataProductType,
     Observation,
     ObservationOrm,
     ObservationStatus,
@@ -34,7 +35,7 @@ app = FastAPI()
 from fastapi.responses import FileResponse, JSONResponse
 import os
 import uuid
-from PIL import Image, ImageDraw, ImageFont
+#from PIL import Image, ImageDraw, ImageFont
 import asyncio
 
 # Directory to store dynamically generated images
@@ -46,53 +47,56 @@ TEMP_IMAGE_DIR = "temp_generated_images"
 @app.get("/get_observation_data/{observation_id}")
 def get_observation_data(observation_id: int, request: Request, db: Session = Depends(get_session)):
     """
-    Generates 3 dynamic JPEG files and returns their download URLs.
     """
     # First, retrieve all files for a given observation
 
     base_url = str(request.base_url)   # e.g. "http://127.0.0.1:8888/"
     data_products = []
-    for i in range(3):
-        # Generate a unique filename to avoid collisions
-        unique_id = uuid.uuid4()
-        file_name = f"dynamic_image_{unique_id}.jpeg"
-        file_path = os.path.join(TEMP_IMAGE_DIR, file_name)
+    unique_id = "UNIQUE_ID"
+    file_name = "instrumental_response.fits"
 
-        # --- Dynamic Image Generation using Pillow ---
-        try:
-            # Create a new image with a dynamic background color
-            img_size = (400, 300)
-            bg_color = (50 + i * 30, 100 + i * 20, 150 + i * 10) # Changes per image
-            img = Image.new('RGB', img_size, color=bg_color)
-            draw = ImageDraw.Draw(img)
+    # for i in range(3):
+    #     # Generate a unique filename to avoid collisions
+    #     unique_id = uuid.uuid4()
+    #     file_name = f"dynamic_image_{unique_id}.jpeg"
+    #     file_path = os.path.join(TEMP_IMAGE_DIR, file_name)
+    #
+    #     # --- Dynamic Image Generation using Pillow ---
+    #     try:
+    #         # Create a new image with a dynamic background color
+    #         img_size = (400, 300)
+    #         bg_color = (50 + i * 30, 100 + i * 20, 150 + i * 10) # Changes per image
+    #         img = Image.new('RGB', img_size, color=bg_color)
+    #         draw = ImageDraw.Draw(img)
+    #
+    #         # Add dynamic text to the image
+    #         text_color = (255, 255, 255) # White text
+    #         try:
+    #             # Try to load a default font, or use a generic one if not found
+    #             font = ImageFont.truetype("arial.ttf", 30)
+    #         except IOError:
+    #             font = ImageFont.load_default()
+    #
+    #         text = f"Image {i+1} - {unique_id}"
+    #         text_width, text_height = draw.textbbox((0,0), text, font=font)[2:] # Get text size
+    #         text_x = (img_size[0] - text_width) / 2
+    #         text_y = (img_size[1] - text_height) / 2
+    #         draw.text((text_x, text_y), text, fill=text_color, font=font)
+    #
+    #         # Save the image as JPEG
+    #         img.save(file_path, "JPEG")
 
-            # Add dynamic text to the image
-            text_color = (255, 255, 255) # White text
-            try:
-                # Try to load a default font, or use a generic one if not found
-                font = ImageFont.truetype("arial.ttf", 30)
-            except IOError:
-                font = ImageFont.load_default()
+    # Construct the URL for the generated file
+    download_url = f"{base_url}/download/{file_name}"
+    data_products.append({
+        'id':str(unique_id),
+        'url':download_url,
+        "data_product_type": DataProductType.SPECTROSCOPY,
+        'filename':file_name})
 
-            text = f"Image {i+1} - {unique_id}"
-            text_width, text_height = draw.textbbox((0,0), text, font=font)[2:] # Get text size
-            text_x = (img_size[0] - text_width) / 2
-            text_y = (img_size[1] - text_height) / 2
-            draw.text((text_x, text_y), text, fill=text_color, font=font)
-
-            # Save the image as JPEG
-            img.save(file_path, "JPEG")
-
-            # Construct the URL for the generated file
-            download_url = f"{base_url}/download/{file_name}"
-            data_products.append({
-                'id':str(unique_id),
-                'url':download_url,
-                'filename':file_name})
-
-        except Exception as e:
-            print(f"Error generating image {i+1}: {e}")
-            raise HTTPException(status_code=500, detail=f"Failed to generate image {i+1}")
+        # except Exception as e:
+        #     print(f"Error generating image {i+1}: {e}")
+        #     raise HTTPException(status_code=500, detail=f"Failed to generate image {i+1}")
 
     return JSONResponse(content={"data_products": data_products})
 

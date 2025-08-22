@@ -61,6 +61,12 @@ class InstrumentSetup(str, Enum):
 class AcquisitionWorkflow(str, Enum):
     DEFAULT                = "default"
 
+class DataProductType(str, Enum):
+    SPECTROSCOPY           = "spectroscopy" # Actual csv with "wavelength" and "flux
+    PHOTOMETRY             = "photometry"   # Actual csv
+    FITS_FILE              = "fits"
+    IMAGE_FILE             = "image"        # png or jpeg ?
+
 class ObservationStatus(str, Enum):
     SUBMITTED              = "submitted"
     SCHEDULED              = "scheduled"
