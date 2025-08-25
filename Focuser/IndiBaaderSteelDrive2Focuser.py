@@ -127,38 +127,37 @@ class IndiBaaderSteelDrive2Focuser(IndiDevice, IndiFocuserMixin):
                             indi_driver_name=config.get('indi_driver_name', None),
                             indi_client_config=config["indi_client"])
 
+        # The semantic is: we want to be able to use the device, ie both driver and device are connected
         if connect_on_create:
-            self.default_connect()
+            self.initialize()
 
         # Finished configuring
         self.logger.debug('configured successfully')
 
     def unpark(self):
         self.logger.debug("Unparking")
-        self.start_indi_server()
-        self.start_indi_driver()
         self.initialize()
-        self.unpark_focuser()
+        self.reboot_device()
+        self.zero_home()
+        self.move_to(self.default_focus)
         self.logger.debug("Successfully unparked")
 
     def unpark_focuser(self):
         self.logger.debug("About to unpark focuser")
-        if self.is_connected:
-            self.zero_home()
-        # Move to default_focus
-        IndiFocuserMixin.unpark_focuser(self)
+        self.unpark()
         self.logger.debug("Focuser successfully unparked")
 
     def park(self):
         self.logger.debug("Parking")
-        self.park_focuser()
+        if self.is_connected:
+            self.move_to(self.default_focus)
+        self.deinitialize()
         self.logger.debug("Successfully parked")
 
     def park_focuser(self):
         self.logger.debug("About to park focuser")
-        if self.is_connected:
-            self.reboot_device()
-            self.zero_home()
+        self.park()
+        self.logger.debug("Focuser successfully parked")
 
     def zero_home(self):
         if self.get_position() == int(self.home_position):
@@ -171,22 +170,6 @@ class IndiBaaderSteelDrive2Focuser(IndiDevice, IndiFocuserMixin):
 
     def factory_reset_device(self):
         self.set_switch("OPERATION", on_switches=["OPERATION_RESET"])
-
-    def default_connect(self):
-        """
-        Connection is made in two phases:
-          * connect client to server so that we can setup options, like port
-          * connect server to actual physical device
-
-        Then "initialize" all outputs such that the telescope is in a steady
-        state, that can last a very long time (multiple days without operation)
-        :return:
-        """
-        self.logger.debug("Initializing")
-        self.connect(connect_device=False)
-        self.set_device_communication_options()
-        self.connect_device()
-        self.reboot_device()
 
     def set_device_communication_options(self):
         self.set_text("DEVICE_PORT", {"PORT": self.device_port})
@@ -204,22 +187,22 @@ class IndiBaaderSteelDrive2Focuser(IndiDevice, IndiFocuserMixin):
         :return:
         """
         self.logger.debug("Initializing")
-        self.default_connect()
+        self.start_indi_server()
+        self.start_indi_driver()
+        self.connect(connect_device=False)
+        self.set_device_communication_options()
         self.is_initialized = True
+        self.connect_device()
         self.logger.debug("Successfully Initialized")
-
-    def park(self):
-        self.logger.debug("Parking")
-        self.deinitialize()
-        self.disconnect()
-        self.stop_indi_server()
-        self.logger.debug("Successfully parked")
 
     def deinitialize(self):
         if not self.is_initialized:
             self.logger.debug("No need for deinitializing")
             return
         self.logger.debug("Deinitializing")
+        self.disconnect()
+        self.stop_indi_driver()
+        self.stop_indi_server()
         # Then switch off all electronic devices
         self.is_initialized = False
         self.logger.debug("Successfully deinitialized")

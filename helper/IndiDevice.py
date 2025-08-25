@@ -692,7 +692,16 @@ class IndiDevice(Base):
         self.indi_client.indi_webmanager_client.start_driver(
             driver_name=self.indi_driver_name,
             check_started=True)
-#
+
+    def stop_indi_driver(self):
+        self.indi_client.indi_webmanager_client.stop_driver(
+            driver_name=self.indi_driver_name)
+
+    def restart_indi_driver(self):
+        self.indi_client.indi_webmanager_client.restart_driver(
+            driver_name=self.indi_driver_name)
+
+    #
 #     def get_switch(self, name):
 #         return self.get_vector_dict(name)
 #

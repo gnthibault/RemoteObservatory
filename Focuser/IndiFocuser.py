@@ -63,12 +63,12 @@ class IndiFocuser(IndiDevice, IndiFocuserMixin):
         self.logger.debug(f"Successfully parked focuser {self.device_name}")
 
     def unpark(self):
-        self.logger.debug(f"Unparking focuser {self.device_name} with a reset-like behaviour")
-        self.park()
+        self.logger.debug(f"Unparking focuser {self.device_name}")
         self.start_indi_server()
         self.start_indi_driver()
-        self.connect(connect_device=True)
+        self.connect()
         self.initialize()
+        self.connect_device()
         self.logger.debug(f"Successfully unparked focuser {self.device_name}")
 
     def deinitialize(self):

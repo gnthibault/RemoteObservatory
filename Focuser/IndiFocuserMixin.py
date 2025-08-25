@@ -18,7 +18,7 @@ class IndiFocuserMixin:
     def park_focuser(self):
         self.logger.debug(f"{self} : parking focuser")
         if self.is_connected:
-            self.move_to(self.focus_range['min'])
+            self.move_to(self.default_focus)
 
     def unpark_focuser(self):
         self.logger.debug(f"{self} : unparking focuser")
