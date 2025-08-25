@@ -367,7 +367,7 @@ class AutoFocuser(Base):
 
         See public `autofocus` for information about the parameters.
         """
-        return self.position, self.position # TODO TN OHP
+        #return self.position, self.position # TODO TN OHP
         self.initialize_camera()
 
         focus_type = 'fine'

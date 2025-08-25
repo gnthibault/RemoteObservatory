@@ -20,9 +20,9 @@ if __name__ == '__main__':
         #     FOCAL_LENGTH=800,
         #     APERTURE=200),
         default_exp_time_sec=5,
-        default_gain=300,
+        default_gain=150,
         default_offset=10,
-        autofocus_seconds=4,
+        autofocus_seconds=2,
         autofocus_roi_size=None,
         autofocus_merit_function="half_flux_radius", #"vollath_F4"
         focuser=dict(
@@ -33,16 +33,16 @@ if __name__ == '__main__':
             baud_rate="19200",
             polling_ms="1000",
             home_position="2000",
-            default_focus="1300",
+            default_focus="8450",
             focus_range=dict(
-                min=1250,
-                max=2750),
+                min=8200,
+                max=8700),
             autofocus_step=dict(
-                coarse=100,
-                fine=50),
+                coarse=50,
+                fine=10),
             autofocus_range=dict(
-                coarse=1500,
-                fine=500),
+                coarse=500,
+                fine=150),
             indi_client=dict(
                 indi_host="192.168.0.194",
                 indi_port="7624")
@@ -70,8 +70,8 @@ if __name__ == '__main__':
     # Now focus
     assert(cam.focuser.is_connected)
     autofocus_status = [False]
-    #autofocus_event = cam.autofocus_async(coarse=True, autofocus_status=autofocus_status)
-    autofocus_event = cam.autofocus_async(coarse=False, autofocus_status=autofocus_status)
+    autofocus_event = cam.autofocus_async(coarse=True, autofocus_status=autofocus_status)
+    #autofocus_event = cam.autofocus_async(coarse=False, autofocus_status=autofocus_status)
     autofocus_event.wait()
     cam.focuser.park_focuser()
     assert autofocus_status[0], "Focusing failed"

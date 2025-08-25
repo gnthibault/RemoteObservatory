@@ -94,16 +94,16 @@ class IndiBaaderSteelDrive2Focuser(IndiDevice, IndiFocuserMixin):
                 baud_rate=19200,
                 polling_ms=1000,
                 home_position=2000,
-                default_focus=1300,
+                default_focus=8450,
                 focus_range={
-                    "min": 7500,
-                    "max": 9000},
+                    "min": 8200,
+                    "max": 8700},
                 autofocus_step={
-                    "coarse": 200,
-                    "fine": 50},
+                    "coarse": 50,
+                    "fine": 10},
                 autofocus_range={
-                    "coarse": 2500,
-                    "fine": 1500},
+                    "coarse": 300,
+                    "fine": 150},
                 indi_client=dict(indi_host="localhost",
                                  indi_port=7624))
 
@@ -157,9 +157,12 @@ class IndiBaaderSteelDrive2Focuser(IndiDevice, IndiFocuserMixin):
     def park_focuser(self):
         self.logger.debug("About to park focuser")
         if self.is_connected:
+            self.reboot_device()
             self.zero_home()
 
     def zero_home(self):
+        if self.get_position() == int(self.home_position):
+            self.move_to(int(self.home_position)+500) # This is needed for the hall sensor to actually see the difference
         self.set_switch("OPERATION", on_switches=["OPERATION_ZEROING"])
         self.sync_position(position=self.home_position)
 
@@ -183,6 +186,7 @@ class IndiBaaderSteelDrive2Focuser(IndiDevice, IndiFocuserMixin):
         self.connect(connect_device=False)
         self.set_device_communication_options()
         self.connect_device()
+        self.reboot_device()
 
     def set_device_communication_options(self):
         self.set_text("DEVICE_PORT", {"PORT": self.device_port})
