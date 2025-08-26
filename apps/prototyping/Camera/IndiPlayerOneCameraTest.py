@@ -34,7 +34,7 @@ if __name__ == '__main__':
         autofocus_roi_size=500,
         autofocus_merit_function="half_flux_radius",
         indi_client=dict(
-            indi_host="192.168.8.202",
+            indi_host="192.168.0.194",
             indi_port=7624),
         # focuser=dict(
         #     module="IndiFocuser",

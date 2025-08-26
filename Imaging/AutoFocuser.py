@@ -433,7 +433,7 @@ class AutoFocuser(Base):
             central_focus = self.position
         focus_positions = np.arange(max(central_focus - cur_focus_range / 2, self.min_position),
                                     min(central_focus + cur_focus_range / 2, self.max_position) + 1,
-                                    cur_focus_step, dtype=int)[::-1]
+                                    cur_focus_step, dtype=int)
         self.logger.debug(f"Autofocuser {self}  is going to sweep over the "
                           f"following positions for autofocusing {focus_positions}")
         n_positions = len(focus_positions)

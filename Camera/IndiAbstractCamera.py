@@ -95,10 +95,12 @@ class IndiAbstractCamera(IndiCamera, AbstractCamera):
         self.logger.debug(f"Camera {self.camera_name} successfully initialized to working conditions")
 
     def deinitialize_working_conditions(self):
-        if self.is_initialized:
-            self.logger.debug(f"Camera {self.camera_name} deinitializing from working conditions")
+        self.logger.debug(f"Camera {self.camera_name} deinitializing from working conditions")
+        if self._is_initialized:
             self.set_cooling_off()
-            self.logger.debug(f"Camera {self.camera_name} successfully deinitialized")
+        else:
+            self.logger.debug(f"Camera {self.camera_name} No need to deinit, as camera was not in initialized state")
+        self.logger.debug(f"Camera {self.camera_name} successfully deinitialized")
 
     def take_exposure(self, exposure_time, filename, *args, **kwargs):
         """
