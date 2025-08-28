@@ -130,11 +130,17 @@ calibration:
         temperature: -10
     dark:
         dark_nb: 2
+    offset:
+        nb: 2
     controller:
-        module: DummySpectroController
-        device_name: dummy
-        #module: IndiSpectroController
-        #device_name: spox
+#        module: DummySpectroController
+#        device_name: dummy
+        module: IndiSpectroController
+        device_name: Shelyak SPOX
+        port: /dev/serial/by-id/usb-FTDI_FT232R_USB_UART_AD0JE0ID-if00-port0
+        indi_client:
+            indi_host: 192.168.0.194
+            indi_port: 7624
 mount:
     module: Indi10Micron
     mount_name: LX200 10micron
