@@ -131,6 +131,7 @@ calibration:
     dark:
         dark_nb: 2
     offset:
+        sec: 0.00001
         nb: 2
     controller:
 #        module: DummySpectroController

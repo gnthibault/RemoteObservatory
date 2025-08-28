@@ -39,6 +39,7 @@ class SpectralCalibration(Base):
         self.flat_offset = config["flat"]["offset"]
         self.flat_temperature = config["flat"]["temperature"]
         self.dark_nb = config["dark"]["dark_nb"]
+        self.offset_exp_sec = config["offset"]["sec"] * u.second
         self.offset_calib_nb = config["offset"]["nb"]
  
         # If controller is specified in the config, load
@@ -147,8 +148,7 @@ class SpectralCalibration(Base):
         offset_config_dict = dict()
         for seq_time, observation in observed_list.items():
             temp_deg = observation.configuration['temperature']
-            conf = (observation.time_per_exposure,
-                    observation.configuration['gain'],
+            conf = (observation.configuration['gain'],
                     observation.configuration['offset'])
             if temp_deg in offset_config_dict:
                 offset_config_dict[temp_deg].add(conf)
@@ -156,16 +156,16 @@ class SpectralCalibration(Base):
                 offset_config_dict[temp_deg] = set((conf,))
 
         self.controller.close_optical_path_for_dark()
-        for temp_deg, times_gains_offsets in offset_config_dict.items():
+        for temp_deg, gains_offsets in offset_config_dict.items():
             if temp_deg:
                 self.camera.set_temperature(temp_deg)
-            for (exp_time, gain, offset) in times_gains_offsets:
+            for (gain, offset) in gains_offsets:
                 for i in range(self.offset_calib_nb):
                     event = self.camera.take_calibration(
                         temperature=temp_deg,
                         gain=gain,
                         offset=offset,
-                        exp_time=exp_time,
+                        exp_time=self.offset_exp_sec,
                         headers={},
                         calibration_name="offset",
                         observations=observed_list.values())
