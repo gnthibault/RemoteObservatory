@@ -754,7 +754,7 @@ class IndiDevice(Base):
                 f"size={blob.size}, queue size: {self.blob_listener.queue.qsize()} (isEmpty: {self.blob_listener.queue.empty()})")
             self.blob_queue.append(blob)
         except queue.Empty:
-            raise BLOBError(f"Timeout while waiting for BLOB on {self.device.name}")
+            raise BLOBError(f"Timeout while waiting for BLOB on {self.device_name}")
 
     def get_last_incoming_blob_vector(self):
         blob = self.blob_queue.pop() # deque Append + pop = LIFO

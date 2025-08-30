@@ -132,7 +132,7 @@ calibration:
         dark_nb: 2
     offset:
         sec: 0.00001
-        nb: 2
+        nb: 15
     controller:
 #        module: DummySpectroController
 #        device_name: dummy
@@ -190,10 +190,10 @@ cameras:
             baud_rate: 19200
             polling_ms: 1000
             home_position: 2000
-            default_focus: 8450
+            default_focus: 7150
             focus_range:
-                min: 8200
-                max: 8700
+                min: 6750
+                max: 76000
             autofocus_step:
                 coarse: 50
                 fine: 10

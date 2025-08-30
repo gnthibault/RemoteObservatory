@@ -10,13 +10,13 @@ targets :
         gain: 125
         offset: 10
         exp_time_sec : 30
-    "22h37m3.645s +34d25m7.96s":
-        priority: 0
-        count: 20
-        temperature: -10
-        gain: 125
-        offset: 10
-        exp_time_sec: 300
+#    "22h37m3.645s +34d25m7.96s":
+#        priority: 0
+#        count: 20
+#        temperature: -10
+#        gain: 125
+#        offset: 10
+#        exp_time_sec: 300
     "alpha CrB":
         priority : 0
         count : 10
@@ -52,13 +52,20 @@ targets :
 #        gain: 125
 #        offset: 10
 #        exp_time_sec : 300
-#    "V Cyg":
-#        priority : 0
-#        count : 9
-#        temperature : -10
-#        gain: 125
-#        offset: 10
-#        exp_time_sec : 300
+    "V Cyg":
+        priority : 0
+        count : 9
+        temperature : -10
+        gain: 125
+        offset: 10
+        exp_time_sec : 300
+    "M57":
+        priority : 0
+        count : 9
+        temperature : -10
+        gain: 125
+        offset: 10
+        exp_time_sec : 300
 
 reference_observation:
     count : 5
