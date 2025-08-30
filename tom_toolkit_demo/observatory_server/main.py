@@ -110,8 +110,8 @@ async def download_file(filename: str):
     if ".." in filename or filename.startswith("/"):
         raise HTTPException(status_code=400, detail="Invalid filename.")
     # Check if the file exists and is a JPEG
-    if os.path.exists(file_path) and filename.endswith(".jpeg"):
-        return FileResponse(path=file_path, media_type="image/jpeg", filename=filename)
+    if os.path.exists(file_path):
+        return FileResponse(path=file_path, media_type="application/octet-stream", filename=filename)
     else:
         raise HTTPException(status_code=404, detail="File not found.")
 
