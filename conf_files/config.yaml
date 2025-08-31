@@ -21,6 +21,61 @@ observatory:
     gmt_offset: 60 # Minutes
 #    webcam:
 #        rtsp_url: rtsp://user:password@192.168.0.16
+    scope_controller_bak:
+        module: AggregatedCustomScopeControllerUPBv2
+        device_name: Pegasus UPB
+        device_port: /dev/serial/by-id/usb-Pegasus_Astro_UPBv2_revD_UPB25S4VWV-if00-port0
+        connection_type: CONNECTION_SERIAL
+        baud_rate: 9600
+        polling_ms: 1000
+        dustcap_travel_delay_s: 10
+        adjustable_voltage_value: 5
+        power_labels:
+            POWER_LABEL_1: MAIN_TELESCOPE_DUSTCAP_CONTROL
+            POWER_LABEL_2: SPOX_DUSTCAP_FINDERCAM_POWER
+            POWER_LABEL_3: SCI_CAMERA_FOCUS_POWER
+            POWER_LABEL_4: SECONDARY_SETUP_POWER
+        always_on_power_identifiers:
+            MAIN_TELESCOPE_DUSTCAP_CONTROL: True # to hold dustocover closed
+            SPOX_DUSTCAP_FIELDCAM_POWER: True
+            SCI_CAMERA_FOCUS_POWER: True
+            SECONDARY_SETUP_POWER: True
+        usb_labels:
+            USB_LABEL_1: FIELD_CAMERA
+            USB_LABEL_2: PRIMARY_CAMERA
+            USB_LABEL_3: SPECTRO_CONTROL_BOX
+            USB_LABEL_4: ARDUINO_CONTROL_BOX
+            USB_LABEL_5: WIFI_ROUTER
+            USB_LABEL_6: GUIDE_CAMERA
+        always_on_usb_identifiers:
+            FIELD_CAMERA: True
+            PRIMARY_CAMERA: True
+            SPECTRO_CONTROL_BOX: True
+            ARDUINO_CONTROL_BOX: True
+            WIFI_ROUTER: True
+            GUIDE_CAMERA: True
+        dew_labels:
+            DEW_LABEL_1: PRIMARY_FAN
+            DEW_LABEL_2: SECONDARY_DEW_HEATER
+            DEW_LABEL_3: FINDER_DEW_HEATER
+        auto_dew_identifiers:
+            PRIMARY_FAN: False
+            SECONDARY_DEW_HEATER: True
+            FINDER_DEW_HEATER: True
+        auto_dew_aggressivity: 150 # Number between 50 and 250
+        default_focus: 8000
+        focus_range:
+            min: 7500
+            max: 9000
+        autofocus_step:
+            coarse: 200
+            fine: 50
+        autofocus_range:
+            coarse: 2500
+            fine: 1500
+        indi_client:
+            indi_host: 192.168.0.194
+            indi_port: 7624
     scope_controller:
         module: DummyScopeController #IndiArduiScopeController
         port: /dev/ttyACM0
@@ -37,7 +92,7 @@ observatory:
         dome_movement_timeout_s: 300
         dome_name: Dome Simulator
         indi_client :
-            indi_host : localhost
+            indi_host : 192.168.0.194
             indi_port : 7624
             use_unique_client: True
 directories:
@@ -75,177 +130,127 @@ calibration:
         temperature: -10
     dark:
         dark_nb: 2
+    offset:
+        sec: 0.00001
+        nb: 15
     controller:
-        module: DummySpectroController
-        device_name: dummy
-        #module: IndiSpectroController
-        #device_name: spox
+#        module: DummySpectroController
+#        device_name: dummy
+        module: IndiSpectroController
+        device_name: Shelyak SPOX
+        port: /dev/serial/by-id/usb-FTDI_FT232R_USB_UART_AD0JE0ID-if00-port0
+        indi_client:
+            indi_host: 192.168.0.194
+            indi_port: 7624
 mount:
-    #module: IndiG11
-    #mount_name: Losmandy Gemini
-    module: IndiAbstractMountSimulator
-    mount_name : Telescope Simulator
+    module: Indi10Micron
+    mount_name: LX200 10micron
+    #module: IndiAbstractMountSimulator
+    #mount_name : Telescope Simulator
     equatorial_eod: J2000 # JNOW
-    is_simulator: true
+    is_simulator: false
     simulator_settings:
         switches:
             MOUNT_TYPE: ['EQ_GEM']
             SIM_PIER_SIDE: ['PS_ON']
     indi_client :
-        indi_host : localhost
+        indi_host : 192.168.0.194
         indi_port : 7624
         use_unique_client: True
 cameras:
     -
-        module: IndiAbstractCameraSimulatorNonCoolNonOffset
-        camera_name : Guide Simulator
+        module: IndiASICameraNonCool
+        camera_name : ZWO CCD ASI290MM Mini
         do_acquisition: false
-        SIMULATOR_SETTINGS: # 290MM
-            SIM_XRES: 1000 #1936
-            SIM_YRES: 1000 #1096
-            SIM_XSIZE: 9 #2.9
-            SIM_YSIZE: 9 #2.9
-            SIM_MAXVAL: 65000
-            SIM_SATURATION: 1
-            SIM_LIMITINGMAG: 17
-            SIM_NOISE: 0
-            SIM_SKYGLOW: 19.5
-            SIM_OAGOFFSET: 0
-            SIM_POLAR: 0
-            SIM_POLARDRIFT: 0
-            SIM_ROTATION: 0
-            SIM_KING_GAMMA: 0
-            SIM_KING_THETA: 0
-    #        SIM_PEPERIOD: 0
-    #        SIM_PEMAX: 0
-            SIM_TIME_FACTOR: 1
         SCOPE_INFO: # 200/800 newtonian
             FOCAL_LENGTH: 800
             APERTURE: 200
         subsample_astrometry: 1
+        sampling_arcsec: 0.89
         do_guiding: true
-        do_pointing: true
+        do_pointing: false
         pointing_seconds: 5
         default_exp_time_sec: 5
-        default_gain: 50
-        default_offset: 30
+        default_gain: 300
+        default_offset: 10
         do_adjust_pointing: true
-        adjust_center_x: 580
-        adjust_center_y: 400
+        adjust_center_x: 952
+        adjust_center_y: 660
         adjust_roi_search_size: 50
         adjust_pointing_seconds: 5
         do_autofocus: true # true
-        autofocus_seconds: 4
-        autofocus_roi_size : 750
+        autofocus_seconds: 5
+        autofocus_roi_size :
         autofocus_merit_function: half_flux_radius #vollath_F4
         focuser:
-            module: IndiFocuser
-            focuser_name: Focuser Simulator
-            port: /dev/ttyUSB0
+            module: IndiBaaderSteelDrive2Focuser
+            device_name: Baader SteelDriveII
+            device_port: /dev/serial/by-id/usb-FTDI_FT232R_USB_UART_AB0KCL5O-if00-port0
+            connection_type: CONNECTION_SERIAL
+            baud_rate: 19200
+            polling_ms: 1000
+            home_position: 2000
+            default_focus: 7150
             focus_range:
-                min: 32500
-                max: 40000
+                min: 6750
+                max: 76000
             autofocus_step:
-                fine: 750
-                coarse: 2500
+                coarse: 50
+                fine: 10
             autofocus_range:
-                fine: 10000
-                coarse: 30000
+                coarse: 500
+                fine: 150
             indi_client:
-                indi_host: localhost
+                indi_host: 192.168.0.194
                 indi_port: 7624
-                use_unique_client: True
-        indi_client :
-            indi_host : localhost
-            indi_port : 7624
-            use_unique_client: True #This doesn't seems to work
+        indi_client:
+            indi_host: 192.168.0.194
+            indi_port: 7624
     -
-        module: IndiAbstractCameraSimulator
-        camera_name : CCD Simulator
+        module: IndiPlayerOneCamera
+        camera_name : PlayerOne CCD Ares-M PRO
         do_acquisition: true
-        working_temperature: -12
-        SIMULATOR_SETTINGS: # 180mm
-            SIM_XRES: 1500
-            SIM_YRES: 1500
-            SIM_XSIZE: 4.8
-            SIM_YSIZE: 4.8
-            SIM_MAXVAL: 65000
-            SIM_SATURATION: 1
-            SIM_LIMITINGMAG: 17
-            SIM_NOISE: 0
-            SIM_SKYGLOW: 19.5
-            SIM_OAGOFFSET: 0
-            SIM_POLAR: 0
-            SIM_POLARDRIFT: 0
-            SIM_ROTATION: 0
-    #        SIM_KING_GAMMA: 0
-    #        SIM_KING_THETA: 0
-            SIM_PEPERIOD: 0
-            SIM_PEMAX: 0
-            SIM_TIME_FACTOR: 1
+        working_temperature: -10
         SCOPE_INFO: # 200/800 newtonian
             FOCAL_LENGTH: 800
             APERTURE: 200
         subsample_astrometry: 2
+        sampling_arcsec: 0.97
         do_guiding: false
         do_pointing: false
         pointing_seconds: 5
         default_exp_time_sec: 5
-        default_gain: 50
-        default_offset: 30
-        do_adjust_pointing: false
-        adjust_center_x: 400
-        adjust_center_y: 400
-        adjust_roi_search_size: 50
-        adjust_pointing_seconds: 5
-        do_autofocus: false
-        autofocus_seconds: 5
-        autofocus_roi_size : 750
-        autofocus_merit_function : half_flux_radius #vollath_F4
-        focuser:
-            module: IndiFocuser
-            focuser_name: Focuser Simulator
-            port: /dev/ttyUSB0
-            focus_range:
-                min: 32500
-                max: 40000
-            autofocus_step:
-                fine: 750
-                coarse: 2500
-            autofocus_range:
-                fine: 10000
-                coarse: 30000
-            indi_client:
-                indi_host: localhost
-                indi_port: 7624
-                use_unique_client: True
-        do_filter_wheel: false
-        filter_wheel:
-            module: IndiFilterWheel
-            filterwheel_name: Filter Simulator
-            filter_list:
-                Luminance: 1
-                Red: 2
-                Green: 3
-                Blue: 4
-                H_Alpha: 5
-                OIII: 6
-                SII: 7
-                LPR: 8
-            indi_client:
-                indi_host: localhost
-                indi_port: 7624
-                use_unique_client: True
+        default_gain: 125
+        default_offset: 5
         indi_client :
-            indi_host : localhost
+            indi_host: 192.168.0.194
             indi_port : 7624
             use_unique_client: True
+    - module: IndiASICamera
+      camera_name: ZWO CCD ASI533MM Pro
+      do_acquisition: false
+      working_temperature: -10
+      SCOPE_INFO: # 200/800 newtonian
+          FOCAL_LENGTH: 800
+          APERTURE: 200
+      subsample_astrometry: 2
+      sampling_arcsec: 2.9
+      do_guiding: false
+      do_pointing: true
+      pointing_seconds: 4
+      default_exp_time_sec: 5
+      default_gain: 105
+      default_offset: 10
+      do_autofocus: false
+      indi_client:
+          indi_host: 192.168.0.194
+          indi_port: 7624
 pointer:
     module: DifferentialPointer #DifferentialPointer #IterativeSync
     gen_hips: False
     timeout_seconds: 450
     max_iterations: 5
-    max_pointing_error_seconds: 2
+    max_pointing_error_seconds: 10
 offset_pointer:
     module: InvisibleObjectOffsetPointer #StarOffsetPointer #NoOffsetPointer #InvisibleObjectOffsetPointer
     timeout_seconds: 300
@@ -257,10 +262,10 @@ offset_pointer:
     max_pointing_error_seconds: 2
 guider:
     module : GuiderPHD2
-    host : 127.0.0.1
+    host : localhost
     port : 4400
     do_calibration : False
-    profile_name : Simulator
+    profile_name : spectro_br_real
     exposure_time_sec : 2
     settle :
         pixels : 3
@@ -285,7 +290,7 @@ weather_service :
         MAX_WEATHER_WIND_GUST_KPH : 30
         MAX_WEATHER_CLOUD_COVER : 5
     indi_client :
-        indi_host : localhost
+        indi_host : 192.168.0.194
         indi_port : 7624
         use_unique_client: True
 #vizualization_service:

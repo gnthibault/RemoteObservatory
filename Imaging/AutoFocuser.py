@@ -8,6 +8,8 @@ from threading import Thread
 from astropy.modeling import models, fitting
 import numpy as np
 import skimage.morphology
+from skimage import img_as_float
+from skimage import exposure
 
 # Viz
 import matplotlib.pyplot as plt
@@ -230,9 +232,6 @@ class AutoFocuser(Base):
         if not thumbnail_size:
             if self.autofocus_roi_size:
                 thumbnail_size = self.autofocus_roi_size
-            else:
-                raise ValueError(f"No focus thumbnail size specified, aborting"
-                                 f" autofocus of {self.camera}")
 
         if keep_files is None:
             if self.autofocus_keep_files:
@@ -291,10 +290,12 @@ class AutoFocuser(Base):
         self.logger.debug(f"Initialize camera {self.camera} before actual autofocus")
         self.camera.set_frame_type('FRAME_LIGHT')
         self.camera.prepare_shoot()
+        self.camera.set_offset(self.camera.default_offset)
+        self.camera.set_gain(self.camera.default_gain)
         assert self.camera.is_connected, f"Camera {self.camera} must be connected for autofocus"
         assert self.camera.focuser.is_connected, f"Focuser {self.camera.focuser} must be connected for autofocus"
 
-    def get_thumbnail(self, seconds, thumbnail_size):
+    def get_thumbnail(self, seconds, thumbnail_size=None):
         fits = self.camera.get_thumbnail(seconds, thumbnail_size)
         try:
             image = fits.data
@@ -366,6 +367,7 @@ class AutoFocuser(Base):
 
         See public `autofocus` for information about the parameters.
         """
+        #return self.position, self.position # TODO TN OHP
         self.initialize_camera()
 
         focus_type = 'fine'
@@ -373,8 +375,7 @@ class AutoFocuser(Base):
             focus_type = 'coarse'
 
         initial_focus = self.position
-        self.logger.debug(f"Beginning {focus_type} autofocus of {self.camera}"
-                          f" - initial position: {initial_focus}")
+        self.logger.debug(f"Beginning {focus_type} autofocus of {self.camera} - initial position: {initial_focus}")
 
         # Set up paths for temporary focus files, and plots if requested.
         image_dir = self.config['directories']['images']
@@ -420,28 +421,26 @@ class AutoFocuser(Base):
             cur_focus_range = focus_range["fine"]
             cur_focus_step = focus_step["fine"]
 
-        self.logger.debug(f"Initial focus is {initial_focus} minus range/2 "
-                          f"gives {initial_focus - cur_focus_range / 2}")
-        self.logger.debug(f"Initial focus is {initial_focus} plus range/2 gives "
-                          f"{initial_focus + cur_focus_range / 2}")
-        self.logger.debug(f"Min position is {self.min_position} and "
-                          f"Max position is {self.max_position}")
+        self.logger.debug(f"Initial focus is {initial_focus} minus range/2 gives {initial_focus - cur_focus_range / 2}")
+        self.logger.debug(f"Initial focus is {initial_focus} plus range/2 gives {initial_focus + cur_focus_range / 2}")
+        self.logger.debug(f"Min position is {self.min_position} and Max position is {self.max_position}")
         self.logger.debug(f"Focus step is {cur_focus_step}")
 
-        if not (self.min_position <= initial_focus <= self.max_position):
-            central_position = (self.min_position+self.max_position)/2
-            self.move_to(central_position)
-            initial_focus = self.position
-        focus_positions = np.arange(max(initial_focus - cur_focus_range / 2, self.min_position),
-                                    min(initial_focus + cur_focus_range / 2, self.max_position) + 1,
+        central_focus = initial_focus
+        if not (self.min_position <= central_focus <= self.max_position):
+            central_focus = (self.min_position+self.max_position)/2
+            self.move_to(central_focus)
+            central_focus = self.position
+        focus_positions = np.arange(max(central_focus - cur_focus_range / 2, self.min_position),
+                                    min(central_focus + cur_focus_range / 2, self.max_position) + 1,
                                     cur_focus_step, dtype=int)
         self.logger.debug(f"Autofocuser {self}  is going to sweep over the "
                           f"following positions for autofocusing {focus_positions}")
         n_positions = len(focus_positions)
 
-        thumbnails = np.zeros((n_positions, thumbnail_size, thumbnail_size),
+        thumbnails = np.zeros((n_positions, initial_thumbnail.shape[0], initial_thumbnail.shape[1]),
                               dtype=initial_thumbnail.dtype)
-        masks = np.empty((n_positions, thumbnail_size, thumbnail_size),
+        masks = np.empty((n_positions, initial_thumbnail.shape[0], initial_thumbnail.shape[1]),
                          dtype=bool)
         metric = np.empty(n_positions)
 
@@ -565,7 +564,7 @@ class AutoFocuser(Base):
             #                 cmap=self.get_palette(), norm=colours.LogNorm())
             self.plot_nice_detection_image(initial_thumbnail, ax[0])
             #fig.colorbar(im1,  ax=ax[0])
-            ax[0].set_title('Initial focus position: {}'.format(initial_focus))
+            ax[0].set_title(f"Initial focus position: {initial_focus}")
             ax[1].plot(focus_positions, metric, 'bo', label='{}'.format(merit_function))
             if fitted:
                 fs = np.linspace(focus_positions[fitting_indices[0]],
@@ -593,8 +592,8 @@ class AutoFocuser(Base):
             #                 cmap=self.get_palette(), norm=colours.LogNorm())
             #fig.colorbar(im3, ax=ax[2])
             self.plot_nice_detection_image(final_thumbnail, ax[2])
-            ax[2].set_title('Final focus position: {}'.format(final_focus))
-            plot_path = os.path.join(file_path_root, '{}_focus.png'.format(focus_type))
+            ax[2].set_title(f"Final focus position: {final_focus}")
+            plot_path = os.path.join(file_path_root, f"{focus_type}_focus.png")
 
             fig.tight_layout()
             latest_path = '{}/latest_focus.jpg'.format(
@@ -662,8 +661,11 @@ class AutoFocuser(Base):
 
     def plot_nice_detection_image(self, data, ax):
         objects = self.detect_objects(data)
-        norm = ImageNormalize(stretch=SqrtStretch())
-        ax.imshow(data, cmap='Greys', origin='lower', norm=norm, interpolation='nearest')
+        img_eq = exposure.equalize_hist(data)
+        print_ready_img = img_as_float(img_eq)
+        #norm = ImageNormalize(stretch=SqrtStretch())
+        #ax.imshow(data, cmap='Greys', origin='lower', norm=norm, interpolation='nearest')
+        ax.imshow(img_eq, cmap='Greys', origin='lower', interpolation='nearest')
         # plot an ellipse for each object
         for i in range(len(objects)):
             e = Ellipse(xy=(objects['x'][i], objects['y'][i]),

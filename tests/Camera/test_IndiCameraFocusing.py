@@ -58,7 +58,7 @@ def test_indiSimulatorCamera():
             indi_port="7624"),
         focuser=dict(
             module="IndiFocuser",
-            focuser_name="Focuser Simulator",
+            device_name="Focuser Simulator",
             port="/dev/ttyUSB0",
             focus_range=dict(
                 min=30000,

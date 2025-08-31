@@ -150,7 +150,7 @@ RUN mkdir -p $HOME/projects/astrometry.net \
 # Now Download astrometry.net index files -- This needs to be moved when gsutil is updated
 # RUN pyenv install 3.11 \
 #  && pyenv global 3.11 \
-#  && gsutil -m cp gs://astrometry_data/* /usr/local/astrometry/data/ \
+#  && gcloud storage rsync gs://astrometry_data/ /usr/local/astrometry/data/ --recursive --verbosity=info --delete-unmatched-destination-objects \
 #  && pyenv global $PYTHON_VERSION
 #RUN mv /opt/remote_observatory/astrometry_data/* /usr/local/astrometry/data/
 USER root
@@ -255,13 +255,15 @@ RUN for i in indi-duino libasi indi-asi libplayerone indi-playerone indi-shelyak
 # Dependencies to build phd2 from sources
 USER root
 RUN apt-get --assume-yes --quiet install --no-install-recommends \
+    libeigen3-dev \
+    libopencv-dev \
     libwxgtk3.2-dev
 
 USER $USERNAME
 RUN --mount=type=cache,target=$HOME/.cache,uid=$USERID \
     mkdir -p $HOME/projects/phd2 \
     && git -C $HOME/.cache/phd2/ fetch || retry -t 8 -d 10 git clone https://github.com/gnthibault/phd2.git $HOME/.cache/phd2/ \
-    && cd $HOME/.cache/phd2/ && git checkout master && cp -r --parents ./* $HOME/projects/phd2/ \
+    && cd $HOME/.cache/phd2/ && git checkout thibault/fix_find_star && cp -r --parents ./* $HOME/projects/phd2/ \
     && mkdir -p $HOME/projects/build/phd2 \
     && cd $HOME/projects/build/phd2 \
     && cmake -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_SYSTEM_PROCESSOR=$BARCH $HOME/projects/phd2 \

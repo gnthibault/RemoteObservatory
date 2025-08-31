@@ -79,7 +79,7 @@ jobs:
           version: '>= 416.0.0'
       - id: 'build_docker_and_push'
         run: |-
-          mkdir -p ./astrometry_data/ && gsutil -m cp -n gs://astrometry_data/* ./astrometry_data/
+          mkdir -p ./astrometry_data/ && gcloud storage rsync gs://astrometry_data/ ./astrometry_data/ --recursive --verbosity=info --delete-unmatched-destination-objects
           docker image prune -f && docker buildx prune -f && docker container prune -f
           docker buildx build --platform linux/amd64 -t ${{ vars.AR_URL }}/${{ vars.IMAGE_NAME }} .
           docker tag ${{ vars.AR_URL }}/${{ vars.IMAGE_NAME }} ${{ vars.AR_URL }}/${{ vars.IMAGE_NAME }}:${{ github.sha }}

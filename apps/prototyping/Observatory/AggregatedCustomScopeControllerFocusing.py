@@ -23,14 +23,14 @@ if __name__ == '__main__':
         adjustable_voltage_value=5,
         power_labels= dict(
             POWER_LABEL_1="MAIN_TELESCOPE_DUSTCAP_CONTROL",
-            POWER_LABEL_2="SPOX_AND_DUSTCAP_POWER",
+            POWER_LABEL_2="SPOX_DUSTCAP_FINDERCAM",
             POWER_LABEL_3="MAIN_CAMERA_POWER",
-            POWER_LABEL_4="MOUNT_POWER"),
+            POWER_LABEL_4="PPBA_POWER"),
         always_on_power_identifiers= dict(
             MAIN_TELESCOPE_DUSTCAP_CONTROL="True",
-            SPOX_AND_DUSTCAP_POWER="False",
+            SPOX_DUSTCAP_FINDERCAM="False",
             MAIN_CAMERA_POWER="False",
-            MOUNT_POWER="False"),
+            PPBA_POWER="False"),
         usb_labels= dict(
             USB_LABEL_1="FIELD_CAMERA",
             USB_LABEL_2="PRIMARY_CAMERA",
@@ -53,9 +53,18 @@ if __name__ == '__main__':
             PRIMARY_FAN="False",
             SECONDARY_DEW_HEATER="True",
             FINDER_DEW_HEATER="True"),
-        auto_dew_aggressivity=150 # Number between 50 and 250",
+        auto_dew_aggressivity=150, # Number between 50 and 250
+        focus_range=dict(
+            min=25000,
+            max=50000),
+        autofocus_step=dict(
+            coarse=2500,
+            fine=1000),
+        autofocus_range=dict(
+            coarse=25000,
+            fine=10000),
         indi_client= dict(
-            indi_host="localhost",
+            indi_host="192.168.8.202",
             indi_port="7625")
     )
 

@@ -3,81 +3,74 @@ constraints :
     maxairmass : 17 #for testing, normally use 2
     minmoonseparationdeg : 2 # normally put 45
 targets :
-    "Altair":
+    "10 lacerta":
         priority : 0
-        count : 1
-        temperature : 10
-        gain: 150
-        offset: 30
-        exp_time_sec : 20
-    "Capella":
-        priority: 0
-        count: 1
-        temperature: 15
-        gain: 150
-        offset: 30
-        exp_time_sec: 20
-    "10 Lacertae":
-        priority: 0
-        count: 1
-        temperature: 15
-        gain: 150
-        offset: 30
-        exp_time_sec: 20
-    "Gamma Cassiopeiae" :
+        count : 10
+        temperature : -10
+        gain: 125
+        offset: 10
+        exp_time_sec : 30
+#    "22h37m3.645s +34d25m7.96s":
+#        priority: 0
+#        count: 20
+#        temperature: -10
+#        gain: 125
+#        offset: 10
+#        exp_time_sec: 300
+    "alpha CrB":
         priority : 0
-        count : 2
-        temperature : 10
-        gain: 150
-        offset: 30
-        exp_time_sec : 5
-    "T CrB" :
+        count : 10
+        temperature : -10
+        gain: 125
+        offset: 10
+        exp_time_sec : 30
+    "mu Her":
         priority : 0
-        count : 1
-        temperature : 10
-        gain: 150
-        offset: 30
-        exp_time_sec : 20
-    "V375 Lac" :
+        count : 10
+        temperature : -10
+        gain: 125
+        offset: 10
+        exp_time_sec : 30
+#    "30 Her":
+#        priority : 0
+#        count : 9
+#        temperature : -10
+#        gain: 125
+#        offset: 10
+#        exp_time_sec : 300
+#    "Beta Lyr":
+#        priority : 0
+#        count : 10
+#        temperature : -10
+#        gain: 125
+#        offset: 10
+#        exp_time_sec : 30
+#    "P Cyg":
+#        priority : 0
+#        count : 9
+#        temperature : -10
+#        gain: 125
+#        offset: 10
+#        exp_time_sec : 300
+    "V Cyg":
         priority : 0
-        count : 2
-        temperature : 10
-        gain: 150
-        offset: 30
-        exp_time_sec : 5
-    "GK Per":
-        priority: 0
-        count: 2
-        temperature: 15
-        gain: 150
-        offset: 30
-        exp_time_sec: 5
-    "Alkaid":
-        priority: 0
-        count: 2
-        temperature: 15
-        gain: 150
-        offset: 30
-        exp_time_sec: 5
-    "Mizar":
-        priority: 0
-        count: 2
-        temperature: 15
-        gain: 150
-        offset: 30
-        exp_time_sec: 5
-    "Alioth":
-        priority: 0
-        count: 2
-        temperature: 15
-        gain: 150
-        offset: 30
-        exp_time_sec: 5
+        count : 9
+        temperature : -10
+        gain: 125
+        offset: 10
+        exp_time_sec : 300
+    "M57":
+        priority : 0
+        count : 9
+        temperature : -10
+        gain: 125
+        offset: 10
+        exp_time_sec : 300
 
 reference_observation:
-    count : 10
-    temperature : 10
-    gain : 150
-    offset: 30
-    exp_time_sec : 20
+    count : 5
+    temperature : -10
+    gain: 125
+    offset: 10
+    exp_time_sec : 30
 

@@ -12,13 +12,20 @@ from helper.IndiClient import IndiClient
 from Camera.IndiASICamera import IndiASICamera
 from Service.NTPTimeService import HostTimeService
 
-# Local
-from utils.error import IndiClientPredicateTimeoutError
-
 if __name__ == '__main__':
+    # test indi client
+    # config = dict(
+    # camera_name='Altair AA183MPRO',
+    # autofocus_seconds=5,
+    # pointing_seconds=30,
+    # autofocus_roi_size=500,
+    # indi_client=dict(
+    #     indi_host="192.168.0.33",
+    #     indi_port="7624"
+    # ))
     config = dict(
-        camera_name='ZWO CCD ASI120MC',
-        pointing_seconds=30,
+        camera_name='ZWO CCD ASI533MM Pro',
+        pointing_seconds=5,
         adjust_center_x=400,
         adjust_center_y=400,
         adjust_roi_search_size=50,
@@ -27,7 +34,7 @@ if __name__ == '__main__':
         autofocus_roi_size=500,
         autofocus_merit_function="half_flux_radius",
         indi_client=dict(
-            indi_host="localhost",
+            indi_host="192.168.8.202",
             indi_port=7624),
         # focuser=dict(
         #     module="IndiFocuser",
@@ -48,37 +55,6 @@ if __name__ == '__main__':
         # )
     )
 
-    # Try to probe camera driver status
-    from helper.IndiDevice import IndiDevice
-    probe = IndiDevice(
-        device_name=config["camera_name"],
-        indi_client_config=config["indi_client"])
-    # setup indi client
-    probe.connect(connect_device=False)
-    try:
-        probe.wait_for_any_property_vectors(timeout=5)
-    except IndiClientPredicateTimeoutError as e:
-        print(f"There was an error: {e}")
-    assert bool(probe.property_vectors)
-    print("test")
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     # test indi virtual camera class
     cam = IndiASICamera(config=config,
                         serv_time=HostTimeService(),
@@ -89,9 +65,22 @@ if __name__ == '__main__':
     cam.set_roi({'X': 256, 'Y': 480, 'WIDTH': 512, 'HEIGHT': 640})
     # get_roi
     print(f"Current camera ROI is: {cam.get_roi()}")
-    cam.set_roi({'X': 0, 'Y': 0, 'WIDTH': 1280, 'HEIGHT': 960})
+    cam.set_roi({'X': 0, 'Y': 0, 'WIDTH': 1280, 'HEIGHT': 1024})
     # get_roi
     print(f"Current camera ROI is: {cam.get_roi()}")
+
+    #print('Setting cooling on')
+    #cam.set_cooling_on() THIS VECTOR IS EXPECTED TO BE IN BUSY STATE, NOT IDLE NOR OK, THAT's WHY THERE IS TIMEOUT
+    print(f"Current camera temperature is: {cam.get_temperature()}")
+    target_temp = -5.5
+    print(f"Now, setting temperature to: {target_temp}")
+    cam.set_temperature(target_temp)
+    print(f"Current camera temperature is: {cam.get_temperature()}")
+    target_temp = -8
+    print(f"Now, setting temperature to: {target_temp}")
+    cam.set_temperature(target_temp)
+    print(f"Current camera temperature is: {cam.get_temperature()}")
+    #cam.set_cooling_off()
 
     # set frame type (mostly for simulation purpose
     cam.set_frame_type('FRAME_DARK')
@@ -106,7 +95,7 @@ if __name__ == '__main__':
 
     # Acquire data
     cam.prepare_shoot()
-    cam.setExpTimeSec(0.01)
+    cam.setExpTimeSec(10)
     cam.shoot_async()
     cam.synchronize_with_image_reception()
     fits = cam.get_received_image()

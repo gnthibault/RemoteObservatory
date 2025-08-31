@@ -181,13 +181,13 @@
       MAIN_TELESCOPE_DUSTCAP_CONTROL
   </oneText>
   <oneText name='POWER_LABEL_2'>
-      SPOX_N_DUSTCAP
+      SPOX_DUSTCAP_FINDERCAM
   </oneText>
   <oneText name='POWER_LABEL_3'>
       MAIN_CAMERA_POWER
   </oneText>
   <oneText name='POWER_LABEL_4'>
-      MOUNT_POWER
+      PPBA_POWER
   </oneText>
 </newTextVector>
 <newTextVector device='Pegasus UPB' name='DEW_CONTROL_LABEL'>

@@ -116,6 +116,8 @@ class IndiDevice(Base):
 
     @property
     def is_connected(self):
+        if self.device is None:
+            return False
         return self.device.isConnected()
     # indi_client.isServerConnected()
     # indi_client.disconnectServer()
@@ -690,7 +692,16 @@ class IndiDevice(Base):
         self.indi_client.indi_webmanager_client.start_driver(
             driver_name=self.indi_driver_name,
             check_started=True)
-#
+
+    def stop_indi_driver(self):
+        self.indi_client.indi_webmanager_client.stop_driver(
+            driver_name=self.indi_driver_name)
+
+    def restart_indi_driver(self):
+        self.indi_client.indi_webmanager_client.restart_driver(
+            driver_name=self.indi_driver_name)
+
+    #
 #     def get_switch(self, name):
 #         return self.get_vector_dict(name)
 #
@@ -743,7 +754,7 @@ class IndiDevice(Base):
                 f"size={blob.size}, queue size: {self.blob_listener.queue.qsize()} (isEmpty: {self.blob_listener.queue.empty()})")
             self.blob_queue.append(blob)
         except queue.Empty:
-            raise BLOBError(f"Timeout while waiting for BLOB on {self.device.name}")
+            raise BLOBError(f"Timeout while waiting for BLOB on {self.device_name}")
 
     def get_last_incoming_blob_vector(self):
         blob = self.blob_queue.pop() # deque Append + pop = LIFO

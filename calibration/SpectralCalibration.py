@@ -39,6 +39,8 @@ class SpectralCalibration(Base):
         self.flat_offset = config["flat"]["offset"]
         self.flat_temperature = config["flat"]["temperature"]
         self.dark_nb = config["dark"]["dark_nb"]
+        self.offset_exp_sec = config["offset"]["sec"] * u.second
+        self.offset_calib_nb = config["offset"]["nb"]
  
         # If controller is specified in the config, load
         try:
@@ -63,7 +65,9 @@ class SpectralCalibration(Base):
         event_flat = self.take_flat(observed_list)
         event_spectral = self.take_spectral_calib(observed_list, event=event_flat)
         event_dark = self.take_dark(observed_list, event=event_spectral)
-        return event_dark
+        event_offset = self.take_offset(observed_list, event=event_dark)
+        event_park   = self.async_park(event=event_offset)
+        return event_park
 
     def take_flat(self, observed_list, event=None):
         if event:
@@ -133,3 +137,65 @@ class SpectralCalibration(Base):
                     event.wait()
         self.controller.open_optical_path()
         return event
+
+    def take_offset(self, observed_list, event=None):
+        """
+        Temperature is the "most expensive" parameter to change, hence we will use this as our primary key
+        :param observed_list:
+        :return:
+        """
+        if event:
+            event.wait()
+        offset_config_dict = dict()
+        for seq_time, observation in observed_list.items():
+            temp_deg = observation.configuration['temperature']
+            conf = (observation.configuration['gain'],
+                    observation.configuration['offset'])
+            if temp_deg in offset_config_dict:
+                offset_config_dict[temp_deg].add(conf)
+            else:
+                offset_config_dict[temp_deg] = set((conf,))
+
+        self.controller.close_optical_path_for_dark()
+        for temp_deg, gains_offsets in offset_config_dict.items():
+            if temp_deg:
+                self.camera.set_temperature(temp_deg)
+            for (gain, offset) in gains_offsets:
+                for i in range(self.offset_calib_nb):
+                    event = self.camera.take_calibration(
+                        temperature=temp_deg,
+                        gain=gain,
+                        offset=offset,
+                        exp_time=self.offset_exp_sec,
+                        headers={},
+                        calibration_name="offset",
+                        observations=observed_list.values())
+                    event.wait()
+        self.controller.open_optical_path()
+        return event
+
+    def async_park(self, event=None, timeout_s=300):
+        """
+        Temperature is the "most expensive" parameter to change, hence we will use this as our primary key
+        :param event:
+        :param timeout_s:
+        :return:
+        """
+        park_event = Event()
+        def subroutine():
+            if event:
+                event.wait()
+            self.camera.park()
+            self.controller.open_optical_path()
+            park_event.set()
+
+        try:
+            # There's one local event for each subroutine that might never be set ontime by the thread
+            # and another event
+            thread = Thread(target=subroutine)
+            thread.start()
+        except Exception as e:
+            self.logger.error(f"There has been an error while trying to park with routine {subroutine}:{e}")
+            park_event.set()
+
+        return park_event

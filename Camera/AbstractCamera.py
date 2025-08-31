@@ -262,7 +262,7 @@ class AbstractCamera(Base):
             "calibrations",
             calibration_name,
             self.uid)
-        if calibration_name == "dark":
+        if calibration_name in ["dark", "offset"]:
             if temperature is None:
                 temperature = self.get_temperature()
             image_dir = os.path.join(

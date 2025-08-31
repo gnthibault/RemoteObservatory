@@ -27,7 +27,10 @@ class IndiAbstractCamera(IndiCamera, AbstractCamera):
 
     def park(self):
         self.logger.debug(f"Parking camera {self.camera_name}")
-        self.focuser.park()
+        if self.focuser:
+            self.focuser.park_focuser()
+        # if self.filter_wheel:
+        #     self.filter_wheel.park_filterwheel()
         self.deinitialize_working_conditions()
         self.disconnect()
         self.stop_indi_server()
@@ -37,7 +40,10 @@ class IndiAbstractCamera(IndiCamera, AbstractCamera):
     def unpark(self):
         self.logger.debug(f"Unparking camera {self.camera_name} with a reset-like behaviour")
         self.park()
-        self.focuser.unpark()
+        if self.focuser:
+            self.focuser.unpark_focuser()
+        # if self.filter_wheel:
+        #     self.filter_wheel.unpark_filterwheel()
         self.start_indi_server()
         self.start_indi_driver()
         self.connect(connect_device=True)
@@ -89,10 +95,12 @@ class IndiAbstractCamera(IndiCamera, AbstractCamera):
         self.logger.debug(f"Camera {self.camera_name} successfully initialized to working conditions")
 
     def deinitialize_working_conditions(self):
-        if self.is_initialized:
-            self.logger.debug(f"Camera {self.camera_name} deinitializing from working conditions")
+        self.logger.debug(f"Camera {self.camera_name} deinitializing from working conditions")
+        if self._is_initialized:
             self.set_cooling_off()
-            self.logger.debug(f"Camera {self.camera_name} successfully deinitialized")
+        else:
+            self.logger.debug(f"Camera {self.camera_name} No need to deinit, as camera was not in initialized state")
+        self.logger.debug(f"Camera {self.camera_name} successfully deinitialized")
 
     def take_exposure(self, exposure_time, filename, *args, **kwargs):
         """

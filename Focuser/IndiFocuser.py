@@ -8,8 +8,9 @@ import numpy as np
 
 # Indi stuff
 from helper.IndiDevice import IndiDevice
+from Focuser.IndiFocuserMixin import IndiFocuserMixin
 
-class IndiFocuser(IndiDevice):
+class IndiFocuser(IndiDevice, IndiFocuserMixin):
     """
 
     """
@@ -20,7 +21,7 @@ class IndiFocuser(IndiDevice):
         if config is None:
             config = dict(
                 module="IndiFocuser",
-                focuser_name="Focuser Simulator",
+                device_name="Focuser Simulator",
                 port="/dev/ttyUSB0",
                 focus_range=dict(
                     min=1,
@@ -41,11 +42,11 @@ class IndiFocuser(IndiDevice):
         self.autofocus_step = config['autofocus_step']
         self.autofocus_range = config['autofocus_range']
 
-        logger.debug(f"Indi Focuser, focuser name is: {config['focuser_name']}")
+        logger.debug(f"Indi Focuser, focuser name is: {config['device_name']}")
 
         # device related intialization
         IndiDevice.__init__(self,
-                            device_name=config['focuser_name'],
+                            device_name=config['device_name'],
                             indi_driver_name=config.get('indi_driver_name', None),
                             indi_client_config=config["indi_client"])
         if connect_on_create:
@@ -62,12 +63,12 @@ class IndiFocuser(IndiDevice):
         self.logger.debug(f"Successfully parked focuser {self.device_name}")
 
     def unpark(self):
-        self.logger.debug(f"Unparking focuser {self.device_name} with a reset-like behaviour")
-        self.park()
+        self.logger.debug(f"Unparking focuser {self.device_name}")
         self.start_indi_server()
         self.start_indi_driver()
-        self.connect(connect_device=True)
+        self.connect()
         self.initialize()
+        self.connect_device()
         self.logger.debug(f"Successfully unparked focuser {self.device_name}")
 
     def deinitialize(self):
@@ -88,23 +89,6 @@ class IndiFocuser(IndiDevice):
     def on_emergency(self):
         self.logger.debug('Indi Focuser: on emergency routine started...')
         self.logger.debug('Indi Focuser: on emergency routine finished')
-
-    def get_position(self):
-        """ Current encoder position of the focuser """
-        #ret = self.get_number("REL_FOCUS_POSITION")["FOCUS_RELATIVE_POSITION"]
-        ret = self.get_number("ABS_FOCUS_POSITION")["FOCUS_ABSOLUTE_POSITION"]
-        self.logger.debug(f"{self} : current position is {ret}")
-        return ret
-
-    def move_to(self, position):
-        """ Move focuser to new encoder position """
-        self.logger.debug(f"{self}  moving to position {position}")
-        self.set_number('ABS_FOCUS_POSITION', #REL_FOCUS_POSITION
-                        {'FOCUS_ABSOLUTE_POSITION': np.float64(position)}, #FOCUS_RELATIVE_POSITION
-                        sync=True, timeout=self.timeout)
-        new_position = self.get_position()
-        self.logger.debug(f"{self} Now position is {new_position}")
-        return new_position
 
     def __str__(self):
         return f"Focuser: {self.device_name}"
