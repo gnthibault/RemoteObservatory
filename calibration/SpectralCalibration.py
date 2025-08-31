@@ -66,7 +66,8 @@ class SpectralCalibration(Base):
         event_spectral = self.take_spectral_calib(observed_list, event=event_flat)
         event_dark = self.take_dark(observed_list, event=event_spectral)
         event_offset = self.take_offset(observed_list, event=event_dark)
-        return event_offset
+        event_park   = self.async_park(event=event_offset)
+        return event_park
 
     def take_flat(self, observed_list, event=None):
         if event:
@@ -172,3 +173,29 @@ class SpectralCalibration(Base):
                     event.wait()
         self.controller.open_optical_path()
         return event
+
+    def async_park(self, event=None, timeout_s=300):
+        """
+        Temperature is the "most expensive" parameter to change, hence we will use this as our primary key
+        :param event:
+        :param timeout_s:
+        :return:
+        """
+        park_event = Event()
+        def subroutine():
+            if event:
+                event.wait()
+            self.camera.park()
+            self.controller.open_optical_path()
+            park_event.set()
+
+        try:
+            # There's one local event for each subroutine that might never be set ontime by the thread
+            # and another event
+            thread = Thread(target=subroutine)
+            thread.start()
+        except Exception as e:
+            self.logger.error(f"There has been an error while trying to park with routine {subroutine}:{e}")
+            park_event.set()
+
+        return park_event
